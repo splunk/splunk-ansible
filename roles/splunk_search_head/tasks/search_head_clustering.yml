@@ -1,0 +1,55 @@
+---
+- name: Get search head count
+  set_fact:
+    num_search_head_hosts: "{{ groups['splunk_search_head'] | length }}"
+
+- name: Get default replication factor
+  set_fact:
+    shc_replication_factor: "{{ splunk.shc.replication_factor }}"
+
+- name: Lower SHC replication factor
+  set_fact:
+    shc_replication_factor: 1
+  when: num_search_head_hosts <= 3
+
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+  vars:
+    splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
+
+- name: Initialize SHC cluster config
+  command: "{{ splunk.exec }} init shcluster-config -auth 'admin:{{ splunk.password }}' -mgmt_uri 'https://{{ ansible_hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  notify:
+    - Restart the splunkd service
+
+- name: Flush restart handlers
+  meta: flush_handlers
+
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_process.yml
+
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+  vars:
+    splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
+
+- name: Boostrap SHC captain
+  command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}https://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth 'admin:{{ splunk.password }}'"
+  when:
+    - splunk.role == "splunk_search_head_captain"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  notify:
+    - Restart the splunkd service
+
+- name: Register with deployer
+  command: "{{ splunk.exec }} set deploy-poll 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -auth 'admin:{{ splunk.password }}'"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  notify:
+    - Restart the splunkd service

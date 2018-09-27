@@ -1,0 +1,98 @@
+---
+# Configure forwarding for index-clustered deployments
+- name: Setup indexer_discovery:splunk-indexer stanza in outputs.conf
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
+    method: POST
+    user: admin
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "name=indexer_discovery:splunk-indexer&pass4SymmKey={{ splunk.shc.secret }}&master_uri=https://{{ groups['splunk_cluster_master'][0] }}:{{ splunk.svc_port }}"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  when: splunk.indexer_cluster
+  register: setup_indexer_discovery_stanza
+  changed_when: setup_indexer_discovery_stanza.status == 201
+
+- name: Setup tcpout:group1 stanza in outputs.conf for clustered deployments
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
+    method: POST
+    user: admin
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "name=tcpout:group1&indexerDiscovery=splunk-indexer&forwardedindex.0.whitelist=_internal&forwardedindex.1.whitelist=_audit&forwardedindex.filter.disable=false"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  when: splunk.indexer_cluster
+  register: setup_tcpoutgroup_stanza
+  changed_when: setup_tcpoutgroup_stanza.status == 201
+
+- name: Setup tcpout stanza in outputs.conf for clustered deployments
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs/tcpout"
+    method: POST
+    user: admin
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "indexAndForward=false&defaultGroup=group1"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 200
+    timeout: 10
+  when: splunk.indexer_cluster
+  register: setup_tcpout_stanza
+  changed_when: setup_tcpout_stanza.status == 200
+
+# Configure forwarding for non-index-clustered deployments
+- name: Setup tcpout:group1 stanza in outputs.conf for non-clustered deployments
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
+    method: POST
+    user: admin
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "name=tcpout:group1&server={% for node in groups['splunk_indexer'] %}{{ node }}:{{ splunk.s2s_port }}{% if not loop.last %},{% endif %}{% endfor %}" 
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  when: not splunk.indexer_cluster
+  register: setup_tcpoutgroup_stanza
+  changed_when: setup_tcpoutgroup_stanza.status == 201
+
+- name: Setup tcpout stanza in outputs.conf for non-clustered deployments
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs/tcpout"
+    method: POST
+    user: admin
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "indexAndForward=false&defaultGroup=group1&forwardedindex.filter.disable=true"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 200
+    timeout: 10
+  when: not splunk.indexer_cluster
+  register: setup_tcpout_stanza
+  changed_when: setup_tcpout_stanza.status == 200
+
+- name: Disable indexing on the current node
+  uri:
+    url: "https://127.0.0.1:{{splunk.svc_port}}/servicesNS/nobody/system/configs/conf-outputs"
+    method: POST
+    user: admin
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "name=indexAndForward&index=false"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  when: not splunk.indexer_cluster
+  register: disable_indexing_stanza
+  changed_when: disable_indexing_stanza.status == 201

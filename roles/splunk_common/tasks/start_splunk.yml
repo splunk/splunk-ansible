@@ -1,0 +1,3 @@
+---
+- name: Start Splunk
+  command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"

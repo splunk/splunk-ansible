@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Upgrade role
+      include_role:
+        name: "splunk_upgrade"
+      when:
+        - splunk.upgrade is defined
+        - splunk.upgrade
+
+    - name: Provision role
+      include_role:
+        name: "{{ splunk.role }}"
+      when:
+        - splunk.role is defined
+        - splunk.role != 'splunk_search_head_captain'
+        - not splunk.upgrade
+
+    # Special case for search head captain
+    - name: Provision role
+      include_role:
+        name: "splunk_search_head"
+      when:
+        - splunk.role is defined
+        - splunk.role == 'splunk_search_head_captain'
+        - not splunk.upgrade

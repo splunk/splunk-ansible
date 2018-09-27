@@ -1,0 +1,12 @@
+---
+- name: Wait for the license master
+  include_tasks: wait_for_splunk_instance.yml splunk_instance_address={{ license_master_host }}
+
+- name: Set node as license slave
+  command: "{{ splunk.exec }} edit licenser-localslave -master_uri https://{{ license_master_host }}:{{ splunk.svc_port }} -auth 'admin:{{ splunk.password }}'"
+  register: linux_set_lic_slave
+  until: linux_set_lic_slave.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  notify:
+    - Restart the splunkd service

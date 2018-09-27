@@ -1,0 +1,17 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
+
+- name: Set security key and shcluster label
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server/shclustering"
+    method: POST
+    user: admin
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "pass4SymmKey={{ splunk.shc.secret }}&shcluster_label={{ splunk.shc.label }}"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 200,201,409
+    timeout: 10
+  register: configure_deployer
+  changed_when: configure_deployer.status in [200, 201]

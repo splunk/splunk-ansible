@@ -1,0 +1,17 @@
+---
+- include_tasks: search_head_clustering.yml
+  when:
+    - splunk.search_head_cluster
+    - splunk.deployer_included
+
+## Indexer Clustering Scenario
+- include_tasks: peer_cluster_master.yml
+  when:
+    - splunk.indexer_cluster
+
+## Non Indexer Clustering Scenario
+- include_tasks: peer_indexers.yml
+  when:
+    - not splunk.indexer_cluster
+
+- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml

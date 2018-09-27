@@ -1,0 +1,54 @@
+---
+- name: Get indexer count
+  set_fact:
+    num_indexer_hosts: "{{ groups['splunk_indexer'] | length }}"
+
+- name: Get default replication factor
+  set_fact:
+    idxc_search_factor: "{{ splunk.idxc.search_factor }}"
+    idxc_replication_factor: "{{ splunk.idxc.replication_factor }}"
+
+- name: Lower indexer search/replication factor
+  set_fact:
+    idxc_search_factor: 1
+    idxc_replication_factor: 1
+  when: num_indexer_hosts|int < 3
+
+- name: Set indexer discovery
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
+    method: POST
+    user: admin
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "name=indexer_discovery&pass4SymmKey={{ splunk.shc.secret }}"
+    body_format: json
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  register: set_indexer_discovery
+  changed_when: set_indexer_discovery.status == 201
+
+- name: Set the current node as a Splunk indexer cluster master
+  command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ splunk.idxc.replication_factor }} -search_factor {{ splunk.idxc.search_factor }} -secret '{{ splunk.idxc.secret }}' -cluster_label '{{ splunk.idxc.label }}' -auth 'admin:{{ splunk.password }}'"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  notify:
+    - Restart the splunkd service
+
+- name: Flush restart handlers
+  meta: flush_handlers
+
+- name: Apply the cluster bundle to the Splunk cluster master
+  command: "{{ splunk.exec }} apply cluster-bundle -auth admin:{{ splunk.password }} --skip-validation --answer-yes"
+  register: splunk_cluster_bundle_result
+  failed_when: >
+    ("No new bundle will be pushed" not in splunk_cluster_bundle_result.stderr)
+    and ("Rolling restart of the peers" not in splunk_cluster_bundle_result.stderr)
+    and ("Applying bundle" not in splunk_cluster_bundle_result.stdout)
+  changed_when: splunk_cluster_bundle_result.stdout.find('Applying bundle') != -1
+
+- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml

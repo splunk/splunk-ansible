@@ -1,0 +1,14 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+  vars:
+    splunk_instance_address: "{{ cluster_master_host }}"
+
+- name: Set current node as indexer cluster peer
+  command: "{{ splunk.exec }} edit cluster-config -mode slave -master_uri 'https://{{ cluster_master_host }}:{{ splunk.svc_port }}' -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.secret }}' -auth 'admin:{{ splunk.password }}'"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  ignore_errors: yes
+  notify:
+    - Restart the splunkd service

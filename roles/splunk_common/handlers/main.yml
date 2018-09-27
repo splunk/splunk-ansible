@@ -1,0 +1,8 @@
+---
+# handlers file for splunk_common
+- name: Restart the splunkd service
+  command: "{{splunk.exec}} restart -f --answer-yes --accept-license"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 3
+  delay: "{{ delay_num }}"

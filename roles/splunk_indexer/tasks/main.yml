@@ -1,0 +1,7 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
+
+- include_tasks: indexer_clustering.yml
+  vars:
+    cluster_master_host: "{{ groups['splunk_cluster_master'][0] }}"
+  when: splunk.indexer_cluster

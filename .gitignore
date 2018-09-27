@@ -1,0 +1,9 @@
+.DS_Store
+*.pyc
+*.idea
+*.pyo
+_book
+*.retry
+test*.xml
+**/.DS_Store
+.vscode

@@ -1,0 +1,31 @@
+---
+- name: Install Splunk
+  unarchive:
+    src: "{{ splunk.build_location }}"
+    dest: "{{ splunk.opt }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    remote_src: "{{ splunk.build_remote_src }}"
+  when: ansible_system is match("Linux")
+
+- name: Install Splunk (Windows)
+  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\splunk /passive /qn"
+  when: ansible_system is match("CYGWIN*|Win32NT")
+
+- name: Generate user-seed.conf
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
+    section: user_info
+    option: "{{ item.opt }}"
+    value: "{{ item.val }}"
+  with_items:
+    - { opt: 'USERNAME', val: 'admin' }
+    - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
+  loop_control:
+    label: "{{ item.opt }}"
+
+- include_tasks: enable_s2s_port.yml
+
+- include_tasks: start_splunk.yml
+
+- include_tasks: add_splunk_license.yml
