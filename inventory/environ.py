@@ -157,6 +157,7 @@ def getDefaultSplunkVariables(inv):
     vars_scope["splunk"]["idxc"]["search_factor"] = getValueFromDEFAULTS("splunk.idxc.search_factor", casting=int) or 3
     vars_scope["splunk"]["idxc"]["replication_factor"] = getValueFromDEFAULTS("splunk.idxc.replication_factor", casting=int) or 3
     vars_scope["splunk"]["idxc"]["replication_port"] = getValueFromDEFAULTS("splunk.idxc.replication_port", casting=int) or 4001
+    vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE') or False
 
     vars_scope["splunk"]["app_paths"] = {}
     if PLATFORM == "linux":
