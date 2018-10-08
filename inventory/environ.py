@@ -303,6 +303,13 @@ def prep_for_yaml_out(inventory):
         del inventory_to_dump["splunk"]["shc"]
     return inventory_to_dump
 
+def validate_splunk_default_password(inventory):
+    password = inventory["all"]["vars"]["splunk"]["password"]
+    if password and len(password) >= 8:
+        return True
+    return False
+    
+
 def main():
     global DEFAULTS
     parser = create_parser()
@@ -314,6 +321,12 @@ def main():
 
     getSplunkInventory(inventory)
     if args.write_to_file:
+        if not validate_splunk_default_password(inventory):
+            with open(os.path.join(HERE, "messages.txt"), "w") as outfile:
+                outfile.write("\n\n--------------- WARNING ---------------\n")
+                outfile.write("Supplied default password does not conform with the Splunk default password standard.\n")
+                outfile.write("Your default user will not be setup due to this issue.\n")
+                outfile.write("Please note the official Splunk documentation.\n")
         with open(os.path.join(HERE, "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True,indent=4, ensure_ascii=False)
     elif args.write_to_stdout:
