@@ -33,6 +33,7 @@
   command: "{{ splunk.exec }} add licenses {{ splunk_license_local_path }} -auth admin:{{ splunk.password }}"
   when:
     - splunk.license_uri is defined
+    - splunk_license_local_path is defined and splunk_license_local_path != ""
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
   ignore_errors: true
   notify: 
