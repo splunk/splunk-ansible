@@ -176,16 +176,16 @@ def getDefaultSplunkVariables(inv):
         vars_scope["splunk"]["home"] = convert_path_windows_to_nix(vars_scope["splunk"]["home"])
         vars_scope["splunk"]["pid"] = convert_path_windows_to_nix(vars_scope["splunk"]["pid"])
         vars_scope["splunk"]["group"] = getValueFromDEFAULTS("splunk.group") or "Administrators"
-        vars_scope["splunk"]["exec"] = getValueFromDEFAULTS(
-            "splunk.exec") or "{splunk_home_path}/bin/splunk.exe".format(splunk_home_path=splunk_home)
-        vars_scope["splunk"]["app_paths"]["default"] = getValueFromDEFAULTS(
-            "splunk.app_paths.default") or "{splunk_home_path}/etc/apps".format(splunk_home_path=splunk_home)
-        vars_scope["splunk"]["app_paths"]["shc"] = getValueFromDEFAULTS(
-            "splunk.app_paths.shc") or "{splunk_home_path}/etc/shcluster/apps".format(splunk_home_path=splunk_home)
-        vars_scope["splunk"]["app_paths"]["idxc"] = getValueFromDEFAULTS(
-            "splunk.app_paths.idxc") or "{splunk_home_path}/etc/master-apps".format(splunk_home_path=splunk_home)
-        vars_scope["splunk"]["app_paths"]["httpinput"] = getValueFromDEFAULTS(
-            "splunk.app_paths.httpinput") or "{splunk_home_path}/etc/apps/splunk_httpinput".format(splunk_home_path=splunk_home)
+        vars_scope["splunk"]["exec"] = convert_path_windows_to_nix(getValueFromDEFAULTS(
+            "splunk.exec") or "{splunk_home_path}/bin/splunk.exe".format(splunk_home_path=splunk_home))
+        vars_scope["splunk"]["app_paths"]["default"] = convert_path_windows_to_nix(getValueFromDEFAULTS(
+            "splunk.app_paths.default") or "{splunk_home_path}/etc/apps".format(splunk_home_path=splunk_home))
+        vars_scope["splunk"]["app_paths"]["shc"] =convert_path_windows_to_nix(getValueFromDEFAULTS(
+            "splunk.app_paths.shc") or "{splunk_home_path}/etc/shcluster/apps".format(splunk_home_path=splunk_home))
+        vars_scope["splunk"]["app_paths"]["idxc"] = convert_path_windows_to_nix(getValueFromDEFAULTS(
+            "splunk.app_paths.idxc") or "{splunk_home_path}/etc/master-apps".format(splunk_home_path=splunk_home))
+        vars_scope["splunk"]["app_paths"]["httpinput"] = convert_path_windows_to_nix(getValueFromDEFAULTS(
+            "splunk.app_paths.httpinput") or "{splunk_home_path}/etc/apps/splunk_httpinput".format(splunk_home_path=splunk_home))
 
 def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
