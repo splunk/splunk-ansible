@@ -11,7 +11,6 @@
       Content-Type: "application/x-www-form-urlencoded"
     status_code: [ 200, 201 ]
     timeout: 300
-  ignore_errors: yes
   when:
     - "'splunkbase.splunk.com' not in app_url"
 
@@ -27,7 +26,6 @@
       Content-Type: "application/x-www-form-urlencoded"
     status_code: [ 200, 201 ]
     timeout: 300
-  ignore_errors: yes
   when:
     - "'splunkbase.splunk.com' in app_url"
     - splunkbase_token is defined
