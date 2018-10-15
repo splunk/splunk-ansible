@@ -1,6 +1,9 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
-
+  when:
+    - not splunk.hec_disabled | bool
+    - splunk.hec_token is defined and splunk.hec_token != None
+    
 - name: Configure forwarding to indexers
   command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
   with_items: "{{ groups['splunk_indexer'] }}"
