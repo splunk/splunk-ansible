@@ -31,6 +31,12 @@
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
 
 - include_tasks: ../../splunk_common/tasks/enable_s2s_port.yml
+
+- include_tasks: ../../splunk_common/tasks/install_app.yml
+  vars:
+    app_url: "{{ item }}"
+  loop: "{{ splunk.apps_location }}"
+
 - include_tasks: setup_docker_monitoring.yml
   when:
     - docker_monitoring
