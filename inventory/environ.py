@@ -115,6 +115,17 @@ def getSplunkBuild(inv):
         inv["all"]["vars"]["splunk"]["build_remote_src"] = False
 
 def getSplunkApps(inv):
+    splunkbase_username = getValueFromDEFAULTS("splunkbase_username") or os.environ.get("SPLUNKBASE_USERNAME") or None
+    splunkbase_password = getValueFromDEFAULTS("splunkbase_password") or os.environ.get("SPLUNKBASE_PASSWORD") or None
+    if splunkbase_username and splunkbase_password:
+        splunkbase_username = urllib2.quote(splunkbase_username)
+        splunkbase_password = urllib2.quote(splunkbase_password)
+        response = urllib2.urlopen("https://splunkbase.splunk.com/api/account:login/", "username={}&password={}".format(splunkbase_username, splunkbase_password))
+        if response.getcode() != 200:
+            raise Exception("Invalid Splunkbase credentials - will not download apps from Splunkbase")
+        output = response.read()
+        splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
+        inv["all"]["vars"]["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
     apps = os.environ.get("SPLUNK_APPS_URL", None)
     if apps:
         inv["all"]["vars"]["splunk"]["apps_location"] = apps.split(",")

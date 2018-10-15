@@ -32,3 +32,8 @@
 - include_tasks: start_splunk.yml
 
 - include_tasks: add_splunk_license.yml
+
+- include_tasks: install_app.yml
+  vars:
+    app_url: "{{ item }}"
+  loop: "{{ splunk.apps_location }}"
