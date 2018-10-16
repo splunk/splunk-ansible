@@ -1,24 +1,10 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
 
-- name: Configure forwarding to indexers
-  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
-  with_items: "{{ groups['splunk_indexer'] }}"
-  when: "'splunk_indexer' in groups"
-  register: forward_to_indexers
-  until: forward_to_indexers.rc == 0
-  retries: "{{ retry_num }}"
-  delay: 3
-  notify:
-    - Restart the splunkd service
+- include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
+  vars:
+    role: splunk_indexer
 
-- name: Configure forwarding to standalones
-  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
-  with_items: "{{ groups['splunk_standalone'] }}"
-  when: "'splunk_standalone' in groups"
-  register: forward_to_standalones
-  until: forward_to_standalones.rc == 0
-  retries: "{{ retry_num }}"
-  delay: 3
-  notify:
-    - Restart the splunkd service
+- include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
+  vars:
+    role: splunk_standalone
