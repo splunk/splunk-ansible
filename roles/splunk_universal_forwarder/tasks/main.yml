@@ -37,6 +37,11 @@
     app_url: "{{ item }}"
   loop: "{{ splunk.apps_location }}"
 
+- include_tasks: ../../splunk_common/tasks/set_as_hec_receiver.yml
+  when:
+    - not splunk.hec_disabled | bool
+    - splunk.hec_token is defined and splunk.hec_token != None
+
 - include_tasks: setup_docker_monitoring.yml
   when:
     - docker_monitoring

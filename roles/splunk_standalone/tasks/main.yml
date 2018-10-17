@@ -1,1 +1,5 @@
 ---
+- include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
+  when:
+    - not splunk.hec_disabled | bool
+    - splunk.hec_token is defined and splunk.hec_token != None
