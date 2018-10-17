@@ -72,27 +72,13 @@
 
 # Setup forwarding server
 # http://docs.splunk.com/Documentation/Splunk/latest/Forwarding/Deployanixdfmanually
-- name: Set the current node as a Splunk universal forwarder (discover indexer)
-  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
-  with_items: "{{ groups['splunk_indexer'] }}"
-  register: task_result
-  until: task_result.rc == 0 or "forwarded-server already present" in task_result.stderr
-  retries: "{{retry_num}}"
-  delay: "{{ delay_num }}"
-  when: "'splunk_indexer' in groups"
-  notify:
-    - Restart the splunkd service
+- include_tasks: ../../splunk_common/tasks/add_forward_server.yml
+  vars:
+    role: splunk_indexer
 
-- name: Set the current node as a Splunk universal forwarder (discover standalone)
-  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
-  with_items: "{{ groups['splunk_standalone'] }}"
-  register: task_result
-  until: task_result.rc == 0 or "forwarded-server already present" in task_result.stderr
-  retries: "{{ retry_num }}"
-  delay: "{{ delay_num }}"
-  when: "'splunk_standalone' in groups"
-  notify:
-    - Restart the splunkd service
+- include_tasks: ../../splunk_common/tasks/add_forward_server.yml
+  vars:
+    role: splunk_standalone
 
 # Setup monitoring
 # http://docs.splunk.com/Documentation/Splunk/latest/Data/MonitorfilesanddirectoriesusingtheCLI
@@ -105,6 +91,9 @@
   retries: "{{ retry_num }}"
   delay: "{{ delay_num }}"
   when: splunk.add is defined
+  failed_when:
+    - task_result.rc != 0
+    - "'already exists' not in task_result.stderr"
   ignore_errors: true
   notify:
     - Restart the splunkd service
