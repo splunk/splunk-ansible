@@ -1,13 +1,12 @@
 ---
 - name: Wait for Splunk process to be running
-  wait_for: 
+  wait_for:
     path: "{{ splunk.pid }}"
     state: present
   when: ansible_system is match("Linux")
 
 - name: Wait for the Splunk service port to be available
-  wait_for: 
+  wait_for:
     host: 127.0.0.1
-    port: "{{ splunk.svc_port }}" 
+    port: "{{ splunk.svc_port }}"
     timeout: 180
-  

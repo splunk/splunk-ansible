@@ -1,6 +1,6 @@
 ---
 - name: Wait for the license master
-  include_tasks: wait_for_splunk_instance.yml 
+  include_tasks: wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ license_master_host }}"
 

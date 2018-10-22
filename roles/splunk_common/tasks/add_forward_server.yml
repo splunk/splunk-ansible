@@ -5,7 +5,7 @@
   when: "role in groups"
   register: forward_status
   until: forward_status.rc == 0 or 'forwarded-server already present' in forward_status.stderr
-  failed_when: 
+  failed_when:
     - forward_status.rc != 0
     - "'forwarded-server already present' not in forward_status.stderr"
   retries: "{{ retry_num }}"

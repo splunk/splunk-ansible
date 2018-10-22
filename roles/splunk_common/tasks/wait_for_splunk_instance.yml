@@ -5,9 +5,9 @@
     method: GET
     user: admin
     password: "{{ splunk.password }}"
-    validate_certs: False
+    validate_certs: false
   register: task_response
-  until: 
+  until:
     - task_response.status == 200
     - lookup('pipe', 'date +"%s"')|int - task_response.json.entry[0].content.startup_time > 10
   retries: "{{ retry_num }}"
