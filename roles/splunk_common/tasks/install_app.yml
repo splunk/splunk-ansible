@@ -5,7 +5,7 @@
     method: POST
     user: admin
     password: "{{ splunk.password }}"
-    validate_certs: False
+    validate_certs: false
     body: "name={{ app_url | urlencode() }}&update=true&filename=true"
     headers:
       Content-Type: "application/x-www-form-urlencoded"
@@ -20,7 +20,7 @@
     method: POST
     user: admin
     password: "{{ splunk.password }}"
-    validate_certs: False
+    validate_certs: false
     body: "name={{ app_url | urlencode() }}&update=true&filename=true&auth={{ splunkbase_token }}"
     headers:
       Content-Type: "application/x-www-form-urlencoded"
