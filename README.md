@@ -1,56 +1,45 @@
-# Required Defaults.yml File
-For security reasons, we do not ship with our defaults.  This means that it is required to be provided by the user of these images.  The file can be loaded in two different ways.  It can be loaded via a URL or through a mounted volume.
+# Welcome to the Splunk Ansible GitHub repository
 
-## Loading through a URL
-The url must be a text yml file, and accessible through a HTTP GET request.  Currently, no parameters are passed through the request.  Redirects are permitted.
+This is the official source code repository for configuring Splunk Enterprise and Universal Forwarder instances. It is currently being used by 
+[Splunk Official Docker Image](https://github.com/splunk/docker-splunk). It can be used to configure Splunk Enterprise on any linux platform. See the documentation for more details, including licensing and how to contribute.
 
-## Loading through a flat file
-The flat file must be mounted into the container at /tmp/defaults/default.yml.  It must be readable.
+## What is Splunk Enterprise?
 
-## Defaults.yml format
-An example implementation is provided
-```
----
-# Splunk defaults
+Splunk Enterprise is the platform for operational intelligence. The software lets you collect, analyze, and act upon the untapped value of big data that your technology infrastructure, security systems, and business applications generate. It gives you insights to drive operational performance and business results.
 
-retry_num: 100
-splunk:
-    opt: /opt
-    home: /opt/splunk
-    user: splunk
-    group: splunk
-    exec: /opt/splunk/bin/splunk
-    pid: /opt/splunk/var/run/splunk/splunkd.pid
-    password: "{{ splunk_password | default('invalid_password') }}"
-    svc_port: 8089
-    s2s_port: 9997
-    http_port: 8000
-    hec_port: 8088
-    hec_disabled: 0
-    hec_enableSSL: 1
-    #The hec_token here is used for INGESTION only (receiving splunk events).
-    #Setting up your environment to forward events out of the cluster is another matter entirely
-    hec_token: 00000000-0000-0000-0000-000000000000
-    app_paths:
-        default: /opt/splunk/etc/apps
-        shc: /opt/splunk/etc/shcluster/apps
-        idxc: /opt/splunk/etc/master-apps
-        httpinput: /opt/splunk/etc/apps/splunk_httpinput
+## What does this code do?
+This code is the ansible code used for configuring Splunk Enterprise and Splunk Universal Forwarder instances based on a declared configuration. The declared configuration.
 
-    # Search Head Clustering
-    shc:
-        enable: false
-		#Change these before deploying
-        secret: some_secret
-        replication_factor: 3
-        replication_port: 4001
+## When should I use this repo?
+This repo should be used by people interested in configuring Splunk according to recommended best practices. These are approved methods for configuring Splunk and are vetted through an internal process. 
 
-    # Indexer Clustering
-    idxc:
-	    #Change before deploying
-        secret: some_secret
-        search_factor: 2
-        replication_factor: 3
-        replication_port: 9887
-```
+# Get help and support
 
+If you have questions or need support, you can:
+
+* Post a question to [Splunk Answers](http://answers.splunk.com)
+* Join the [#docker](https://splunk-usergroups.slack.com/messages/C1RH09ERM/) room in the [Splunk Slack channel](http://splunk-usergroups.slack.com)
+* If you are a Splunk Enterprise customer with a valid support entitlement contract, and have a Splunk related question you can also open a support case on the https://www.splunk.com/ support portal.
+* For details on the supported architectures, please refer to the documentation http://docs.splunk.com/Documentation/Splunk/latest/Installation/Systemrequirements#Containerized_computing_platforms
+
+Please also see [TROUBLESHOOTING](documentation/TROUBLESHOOTING.md)
+
+
+# License
+
+See [LICENSING](documentation/LICENSING.md)
+
+
+# Contributing
+
+See [CONTRIBUTING](documentation/CONTRIBUTING.md)
+
+
+# History
+
+See [CHANGELOG](documentation/CHANGELOG.md)
+
+
+# Authors
+
+Splunk Inc. and the Splunk Community
