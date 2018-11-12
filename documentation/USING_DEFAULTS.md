@@ -1,4 +1,4 @@
-# Required Defaults.yml File
+# Required default.yml File
 For security reasons, we do not ship with our defaults.  This means that it is required to be provided by the user of these images.  The file can be loaded in two different ways.  It can be loaded via a URL or through a mounted volume.
 
 ## Loading through a URL
@@ -7,7 +7,7 @@ The url must be a text yml file, and accessible through a HTTP GET request.  Cur
 ## Loading through a flat file
 The flat file must be mounted into the container at /tmp/defaults/default.yml.  It must be readable.
 
-## Defaults.yml format
+## default.yml format
 An example implementation is provided
 ```
 ---
