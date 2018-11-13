@@ -169,6 +169,7 @@ def getDefaultSplunkVariables(inv):
     vars_scope["splunk"]["idxc"]["replication_factor"] = getValueFromDEFAULTS("splunk.idxc.replication_factor", casting=int) or 3
     vars_scope["splunk"]["idxc"]["replication_port"] = getValueFromDEFAULTS("splunk.idxc.replication_port", casting=int) or 4001
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE') or False
+    vars_scope["splunk"]["smartstore"] = getValueFromDEFAULTS("splunk.smartstore")
 
     vars_scope["splunk"]["app_paths"] = {}
     if PLATFORM == "linux":
@@ -245,7 +246,7 @@ def getRandomString():
 def push_defaults(url=None):
     '''
     This method accepts a url argument, but that argument can be None.  If it is None, then we load from a file
-    In this way, we manage two different methods of loading the default file (which contains potentially sentive
+    In this way, we manage two different methods of loading the default file (which contains potentially sensitive
     information
     '''
     if url:
@@ -324,6 +325,7 @@ def main():
     DEFAULTS = push_defaults(url)
 
     getSplunkInventory(inventory)
+
     if args.write_to_file:
         with open(os.path.join(HERE, "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True,indent=4, ensure_ascii=False)
