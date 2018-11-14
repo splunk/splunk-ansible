@@ -252,6 +252,9 @@ def push_defaults(url=None):
         if not os.path.exists('/tmp/defaults'):
             os.mkdir('/tmp/defaults')
 
+        max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', 60))
+        max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', 1200))
+        duration = 0
         delay = 1
         while True:
             response = urllib2.urlopen(url)
@@ -260,10 +263,17 @@ def push_defaults(url=None):
             if status_code >= 400:
                 #Any 2xx or 3xx status code should be okay. 4xx and 5xx should give us an error
                 print "ERROR - Download from URL {} failed CODE {} MESSAGE {}".format(url, status_code, text)
+
+                if max_timeout > 0 and duration >= max_timeout:
+                    sys.exit(3)
+
                 sleep(delay)
                 print "RETRYING"
+
+                duration += delay
                 delay = delay * 2
-                if delay >= 60:
+
+                if max_delay > 0 and delay >= max_delay:
                     delay = 60
             else:
                 break
