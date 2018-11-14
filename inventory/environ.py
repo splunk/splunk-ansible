@@ -251,13 +251,23 @@ def push_defaults(url=None):
     if url:
         if not os.path.exists('/tmp/defaults'):
             os.mkdir('/tmp/defaults')
-        response = urllib2.urlopen(url)
-        status_code = response.getcode()
-        text = response.read()
-        if status_code >= 400:
-            #Any 2xx or 3xx status code should be okay. 4xx and 5xx should give us an error
-            print "ABORTING - Download from URL {} failed CODE {} MESSAGE {}".format(url, status_code, text)
-            sys.exit(3)
+
+        delay = 1
+        while True:
+            response = urllib2.urlopen(url)
+            status_code = response.getcode()
+            text = response.read()
+            if status_code >= 400:
+                #Any 2xx or 3xx status code should be okay. 4xx and 5xx should give us an error
+                print "ERROR - Download from URL {} failed CODE {} MESSAGE {}".format(url, status_code, text)
+                sleep(delay)
+                print "RETRYING"
+                delay = delay * 2
+                if delay >= 60:
+                    delay = 60
+            else:
+                break
+
         if text is None or len(text) == 0:
             print "ABORTING - Required defaults empty URL {}".format(url)
             sys.exit(4)
