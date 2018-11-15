@@ -2,7 +2,7 @@
 - name: Add stanza for the index specified
   ini_file:
     dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
-    section: "{{ index.index }}"
+    section: "{{ index.indexName }}"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
   with_items:
@@ -34,12 +34,12 @@
 - name: Write paths for the index
   ini_file:
     dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
-    section: "{{ index.index }}"
+    section: "{{ index.indexName }}"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
   with_items:
     - { key: "homePath", value: "{{ index.homePath }}" }
     - { key: "thawedPath", value: "{{ index.thawedPath }}" }
     - { key: "coldPath", value: "{{ index.coldPath }}" }
-  when: index.index != "default"
+  when: index.indexName != "default"
 

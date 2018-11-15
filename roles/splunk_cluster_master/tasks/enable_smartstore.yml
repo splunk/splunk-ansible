@@ -1,12 +1,4 @@
 ---
-- name: Create indexes.conf conditionally
-  copy:
-    content: ""
-    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
-    force: no
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-
 - name: Configure each index
   include_tasks: configure_indexes.yml
   loop: "{{ splunk.smartstore }}"
