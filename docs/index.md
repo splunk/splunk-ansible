@@ -1,6 +1,6 @@
 # Splunk Ansible Scripts Documentation
 
-* [Introduction](../README.md)
+* [Introduction](INTRO.md)
 * [Usage](USING_DEFAULTS.md)
 * [Contributing](CONTRIBUTING.md)
 * [Licensing](LICENSING.md)
