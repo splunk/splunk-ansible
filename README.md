@@ -22,22 +22,26 @@ If you have questions or need support, you can:
 * If you are a Splunk Enterprise customer with a valid support entitlement contract, and have a Splunk related question you can also open a support case on the https://www.splunk.com/ support portal.
 * For details on the supported architectures, please refer to the documentation http://docs.splunk.com/Documentation/Splunk/latest/Installation/Systemrequirements#Containerized_computing_platforms
 
-Please also see [TROUBLESHOOTING](documentation/TROUBLESHOOTING.md)
+Please also see [TROUBLESHOOTING](docs/TROUBLESHOOTING.md)
+
+# Documentation
+
+See [Splunk Ansible Documentation](https://splunk.github.io/splunk-ansible/)
 
 
 # License
 
-See [LICENSING](documentation/LICENSING.md)
+See [LICENSING](docs/LICENSING.md)
 
 
 # Contributing
 
-See [CONTRIBUTING](documentation/CONTRIBUTING.md)
+See [CONTRIBUTING](docs/CONTRIBUTING.md)
 
 
 # History
 
-See [CHANGELOG](documentation/CHANGELOG.md)
+See [CHANGELOG](docs/CHANGELOG.md)
 
 
 # Authors
