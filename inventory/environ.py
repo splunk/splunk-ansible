@@ -148,6 +148,7 @@ def getDefaultSplunkVariables(inv):
     vars_scope["splunk"]["pid"] = os.environ.get('SPLUNK_PID') or getValueFromDEFAULTS(
         "splunk.pid") or "{splunk_home_path}/var/run/splunk/splunkd.pid".format(splunk_home_path=splunk_home)
     vars_scope["splunk"]["password"] = getSplunkPassword()
+    vars_scope["splunk"]["secret"] = getValueFromDEFAULTS("splunk.secret")
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT') or getValueFromDEFAULTS("splunk.svc_port", casting=int) or 8089
     vars_scope["splunk"]["s2s_port"] = os.environ.get('SPLUNK_S2S_PORT') or getValueFromDEFAULTS("splunk.s2s_port", casting=int) or 9997
     vars_scope["splunk"]["http_port"] = getValueFromDEFAULTS("splunk.http_port", casting=int) or 8000
