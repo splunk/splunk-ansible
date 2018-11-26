@@ -52,6 +52,7 @@
     ("No new bundle will be pushed" not in splunk_cluster_bundle_result.stderr)
     and ("Rolling restart of the peers" not in splunk_cluster_bundle_result.stderr)
     and ("Applying bundle" not in splunk_cluster_bundle_result.stdout)
+    and ("Applying new" not in splunk_cluster_bundle_result.stdout)
   changed_when: splunk_cluster_bundle_result.stdout.find('Applying bundle') != -1
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml

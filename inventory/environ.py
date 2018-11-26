@@ -282,6 +282,13 @@ def obfuscate_vars(inventory):
         inventory["all"]["vars"]["splunk"]["shc"]["secret"] = stars
     if inventory["all"]["vars"]["splunk"].get("idxc") and inventory["all"]["vars"]["splunk"]["idxc"].get("secret"):
         inventory["all"]["vars"]["splunk"]["idxc"]["secret"] = stars
+    if inventory["all"]["vars"]["splunk"].get("smartstore", False):
+        for index in range(0, len(inventory["all"]["vars"]["splunk"]["smartstore"])):
+            if inventory["all"]["vars"]["splunk"]["smartstore"][index].get("s3", False):
+                if inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"].get("access_key", False):
+                    inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"]["access_key"] = stars
+                if inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"].get("secret_key", False):
+                    inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"]["secret_key"] = stars
     return inventory
 
 def create_parser():
