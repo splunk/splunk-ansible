@@ -29,6 +29,11 @@
 - include_tasks: enable_service.yml
   when: splunk.enable_service and ansible_system is match("Linux")
 
+- include_tasks: set_splunk_secret.yml
+  when:
+      - splunk.secret is defined
+      - splunk.secret
+
 - include_tasks: start_splunk.yml
 
 - include_tasks: add_splunk_license.yml
