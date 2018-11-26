@@ -30,6 +30,9 @@
   register: set_indexer_discovery
   changed_when: set_indexer_discovery.status == 201
 
+- include_tasks: enable_smartstore.yml
+  when: splunk.smartstore
+
 - name: Set the current node as a Splunk indexer cluster master
   command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ splunk.idxc.replication_factor }} -search_factor {{ splunk.idxc.search_factor }} -secret '{{ splunk.idxc.secret }}' -cluster_label '{{ splunk.idxc.label }}' -auth 'admin:{{ splunk.password }}'"
   register: task_result
@@ -49,6 +52,9 @@
     ("No new bundle will be pushed" not in splunk_cluster_bundle_result.stderr)
     and ("Rolling restart of the peers" not in splunk_cluster_bundle_result.stderr)
     and ("Applying bundle" not in splunk_cluster_bundle_result.stdout)
-  changed_when: splunk_cluster_bundle_result.stdout.find('Applying bundle') != -1
+    and ("Applying new" not in splunk_cluster_bundle_result.stdout)
+  changed_when:
+    - splunk_cluster_bundle_result.stdout.find('Applying') != -1
+    - splunk_cluster_bundle_result.stdout.find('bundle') != -1
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml

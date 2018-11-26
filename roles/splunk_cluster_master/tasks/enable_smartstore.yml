@@ -1,0 +1,6 @@
+---
+- name: Configure each index
+  include_tasks: configure_indexes.yml
+  loop: "{{ splunk.smartstore }}"
+  loop_control:
+    loop_var: index
