@@ -22,9 +22,18 @@ splunk:
     exec: /opt/splunk/bin/splunk
     pid: /opt/splunk/var/run/splunk/splunkd.pid
     password: "{{ splunk_password | default('invalid_password') }}"
+    # This will be the secret that Splunk will use to encrypt/decrypt.
+    # secret: <secret>
     svc_port: 8089
     s2s_port: 9997
+    # s2s_enable opens the s2s_port for splunktcp ingestion.
+    s2s_enable: 0
     http_port: 8000
+    # This will turn on SSL on the GUI and sets the path to the certificate to be used.
+    http_enableSSL: 0
+    # http_enableSSL_cert:
+    # http_enableSSL_privKey:
+    # http_enableSSL_privKey_password:
     hec_port: 8088
     hec_disabled: 0
     hec_enableSSL: 1
