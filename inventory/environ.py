@@ -267,7 +267,8 @@ def push_defaults(url=None):
                 break
             except Exception as e:
                 if unlimited_retries or current_retry < max_retries:
-                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry+1, max_delay))
+                    current_retry += 1
+                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay))
                     sleep(max_delay)
                 else:
                     raise e
