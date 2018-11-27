@@ -1,0 +1,46 @@
+---
+- name: Add stanza for the index specified
+  ini_file:
+    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
+    section: "{{ index.indexName }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { key: "remotePath", value: "volume:{{ index.remoteName }}/$_index_name" }
+    - { key: "repFactor", value: "auto" }
+
+- name: Add path for the remote specified
+  ini_file:
+    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
+    section: "volume:{{ index.remoteName }}"
+    option: "{{ item.key }}"
+    value:  "{{ item.value }}"
+  with_items:
+    - { key: "storageType", value: "remote" }
+    - { key: "path", value: "{{ index.scheme }}://{{ index.remoteLocation }}" }
+
+- name: Write AWS credentials for the remote specified
+  ini_file:
+    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
+    section: "volume:{{ index.remoteName }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { key: "remote.s3.access_key", value: "{{ index.s3.access_key }}" }
+    - { key: "remote.s3.secret_key", value: "{{ index.s3.secret_key }}" }
+    - { key: "remote.s3.endpoint", value: "{{ index.s3.endpoint }}" }
+  when: index.s3 is defined
+  no_log: true
+        
+- name: Write paths for the index
+  ini_file:
+    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
+    section: "{{ index.indexName }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { key: "homePath", value: "{{ index.homePath }}" }
+    - { key: "thawedPath", value: "{{ index.thawedPath }}" }
+    - { key: "coldPath", value: "{{ index.coldPath }}" }
+  when: index.indexName != "default"
+

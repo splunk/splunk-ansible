@@ -10,5 +10,5 @@
   retries: "{{ retry_num }}"
   delay: 3
   ignore_errors: yes
-  notify:
+  notify: 
     - Restart the splunkd service

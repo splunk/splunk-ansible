@@ -148,6 +148,7 @@ def getDefaultSplunkVariables(inv):
     vars_scope["splunk"]["pid"] = os.environ.get('SPLUNK_PID') or getValueFromDEFAULTS(
         "splunk.pid") or "{splunk_home_path}/var/run/splunk/splunkd.pid".format(splunk_home_path=splunk_home)
     vars_scope["splunk"]["password"] = getSplunkPassword()
+    vars_scope["splunk"]["secret"] = getValueFromDEFAULTS("splunk.secret")
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT') or getValueFromDEFAULTS("splunk.svc_port", casting=int) or 8089
     vars_scope["splunk"]["s2s_port"] = os.environ.get('SPLUNK_S2S_PORT') or getValueFromDEFAULTS("splunk.s2s_port", casting=int) or 9997
     vars_scope["splunk"]["http_port"] = getValueFromDEFAULTS("splunk.http_port", casting=int) or 8000
@@ -169,6 +170,7 @@ def getDefaultSplunkVariables(inv):
     vars_scope["splunk"]["idxc"]["replication_factor"] = getValueFromDEFAULTS("splunk.idxc.replication_factor", casting=int) or 3
     vars_scope["splunk"]["idxc"]["replication_port"] = getValueFromDEFAULTS("splunk.idxc.replication_port", casting=int) or 4001
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE') or False
+    vars_scope["splunk"]["smartstore"] = getValueFromDEFAULTS("splunk.smartstore")
 
     vars_scope["splunk"]["app_paths"] = {}
     if PLATFORM == "linux":
@@ -245,7 +247,7 @@ def getRandomString():
 def push_defaults(url=None):
     '''
     This method accepts a url argument, but that argument can be None.  If it is None, then we load from a file
-    In this way, we manage two different methods of loading the default file (which contains potentially sentive
+    In this way, we manage two different methods of loading the default file (which contains potentially sensitive
     information
     '''
     if url:
@@ -281,6 +283,13 @@ def obfuscate_vars(inventory):
         inventory["all"]["vars"]["splunk"]["shc"]["secret"] = stars
     if inventory["all"]["vars"]["splunk"].get("idxc") and inventory["all"]["vars"]["splunk"]["idxc"].get("secret"):
         inventory["all"]["vars"]["splunk"]["idxc"]["secret"] = stars
+    if inventory["all"]["vars"]["splunk"].get("smartstore", False):
+        for index in range(0, len(inventory["all"]["vars"]["splunk"]["smartstore"])):
+            if inventory["all"]["vars"]["splunk"]["smartstore"][index].get("s3", False):
+                if inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"].get("access_key", False):
+                    inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"]["access_key"] = stars
+                if inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"].get("secret_key", False):
+                    inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"]["secret_key"] = stars
     return inventory
 
 def create_parser():
@@ -324,6 +333,7 @@ def main():
     DEFAULTS = push_defaults(url)
 
     getSplunkInventory(inventory)
+
     if args.write_to_file:
         with open(os.path.join(HERE, "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True,indent=4, ensure_ascii=False)
