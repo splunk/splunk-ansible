@@ -20,10 +20,11 @@ import argparse
 import re
 import random
 import string
-import shutil
+import requests
 import sys
 import urllib2
 import yaml
+from time import sleep
 
 HERE = os.path.dirname(os.path.normpath(__file__))
 PLATFORM = platform.platform().lower()
@@ -253,18 +254,25 @@ def push_defaults(url=None):
     if url:
         if not os.path.exists('/tmp/defaults'):
             os.mkdir('/tmp/defaults')
-        response = urllib2.urlopen(url)
-        status_code = response.getcode()
-        text = response.read()
-        if status_code >= 400:
-            #Any 2xx or 3xx status code should be okay. 4xx and 5xx should give us an error
-            print "ABORTING - Download from URL {} failed CODE {} MESSAGE {}".format(url, status_code, text)
-            sys.exit(3)
-        if text is None or len(text) == 0:
-            print "ABORTING - Required defaults empty URL {}".format(url)
-            sys.exit(4)
-        with open('/tmp/defaults/default.yml', 'wt') as f:
-            f.write(text)
+        max_retries = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_RETRIES', 3))
+        max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', 60))
+        max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', 1200))
+        unlimited_retries = (max_retries == -1)
+        current_retry = 0
+        while True:
+            try:
+                response = requests.get(url, timeout=max_timeout)
+                response.raise_for_status()
+                with open('/tmp/defaults/default.yml', 'wt') as f:
+                    f.write(response.content)
+                break
+            except Exception as e:
+                if unlimited_retries or current_retry < max_retries:
+                    current_retry += 1
+                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay))
+                    sleep(max_delay)
+                else:
+                    raise e
 
     if os.path.exists('/tmp/defaults/default.yml'):
         try:
