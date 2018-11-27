@@ -49,11 +49,14 @@
   command: "{{ splunk.exec }} apply cluster-bundle -auth admin:{{ splunk.password }} --skip-validation --answer-yes"
   register: splunk_cluster_bundle_result
   failed_when: >
-    ((splunk_cluster_bundle_result.stdout is not search("[Aa]pply")
-      or ("bundle" not in splunk_cluster_bundle_result.stdout)))
+    ((splunk_cluster_bundle_result.stdout is not search("[Aa]pply"))
+      or ("bundle" not in splunk_cluster_bundle_result.stdout))
     and ("already" not in splunk_cluster_bundle_result.stderr)
   changed_when: >
     (splunk_cluster_bundle_result.stdout is search("[Aa]pply"))
     and (splunk_cluster_bundle_result.stdout.find('bundle') != -1)
+
+- debug: var=splunk_cluster_bundle_result.stdout
+- debug: var=splunk_cluster_bundle_result.stderr
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
