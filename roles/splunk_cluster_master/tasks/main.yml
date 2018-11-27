@@ -45,6 +45,7 @@
 - name: Flush restart handlers
   meta: flush_handlers
 
+# Fails if a cluster bundle did not already exist and yet we did not apply a new bundle
 - name: Apply the cluster bundle to the Splunk cluster master
   command: "{{ splunk.exec }} apply cluster-bundle -auth admin:{{ splunk.password }} --skip-validation --answer-yes"
   register: splunk_cluster_bundle_result
