@@ -1,0 +1,8 @@
+---
+- name: Check if Splunk is running for the first time
+  stat: path="{{ splunk.build_location}}"
+  register: splunk_build_location
+
+- name: Set first run fact
+  set_fact:
+    first_run: "{{ splunk_build_location.stat.exists == True }}"
