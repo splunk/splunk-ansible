@@ -259,12 +259,12 @@ def push_defaults(url=None):
         for i in range(max_retries):
             try:
                 response = requests.get(url, timeout=max_timeout)
-                # Raises exception for 4xx and 5xx status codes
                 response.raise_for_status()
                 with open('/tmp/defaults/default.yml', 'wt') as f:
                     f.write(response.content)
             except Exception as e:
                 if i < max_retries:
+                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(i+1, max_delay))
                     sleep(max_delay)
                     continue
                 raise e
