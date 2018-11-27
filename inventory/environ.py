@@ -256,18 +256,21 @@ def push_defaults(url=None):
         max_retries = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_RETRIES', 3))
         max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', 60))
         max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', 1200))
-        for i in range(max_retries):
+        unlimited_retries = (max_retries == -1)
+        current_retry = 0
+        while True:
             try:
                 response = requests.get(url, timeout=max_timeout)
                 response.raise_for_status()
                 with open('/tmp/defaults/default.yml', 'wt') as f:
                     f.write(response.content)
+                break
             except Exception as e:
-                if i < max_retries:
-                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(i+1, max_delay))
+                if unlimited_retries or current_retry < max_retries:
+                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry+1, max_delay))
                     sleep(max_delay)
-                    continue
-                raise e
+                else:
+                    raise e
 
     if os.path.exists('/tmp/defaults/default.yml'):
         try:
