@@ -56,7 +56,4 @@
     (splunk_cluster_bundle_result.stdout is search("[Aa]pply"))
     and (splunk_cluster_bundle_result.stdout.find('bundle') != -1)
 
-- debug: var=splunk_cluster_bundle_result.stdout
-- debug: var=splunk_cluster_bundle_result.stderr
-
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
