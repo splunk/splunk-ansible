@@ -265,7 +265,7 @@ def push_defaults(url=None):
                     f.write(response.content)
             except Exception as e:
                 if i < max_retries:
-                    time.sleep(max_delay)
+                    sleep(max_delay)
                     continue
                 raise e
 
