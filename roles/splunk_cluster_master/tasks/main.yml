@@ -45,16 +45,16 @@
 - name: Flush restart handlers
   meta: flush_handlers
 
+# Fails if a cluster bundle did not already exist and yet we did not apply a new bundle
 - name: Apply the cluster bundle to the Splunk cluster master
   command: "{{ splunk.exec }} apply cluster-bundle -auth admin:{{ splunk.password }} --skip-validation --answer-yes"
   register: splunk_cluster_bundle_result
   failed_when: >
-    ("No new bundle will be pushed" not in splunk_cluster_bundle_result.stderr)
-    and ("Rolling restart of the peers" not in splunk_cluster_bundle_result.stderr)
-    and ("Applying bundle" not in splunk_cluster_bundle_result.stdout)
-    and ("Applying new" not in splunk_cluster_bundle_result.stdout)
-  changed_when:
-    - splunk_cluster_bundle_result.stdout.find('Applying') != -1
-    - splunk_cluster_bundle_result.stdout.find('bundle') != -1
+    ((splunk_cluster_bundle_result.stdout is not search("[Aa]pply"))
+      or ("bundle" not in splunk_cluster_bundle_result.stdout))
+    and ("already" not in splunk_cluster_bundle_result.stderr)
+  changed_when: >
+    (splunk_cluster_bundle_result.stdout is search("[Aa]pply"))
+    and (splunk_cluster_bundle_result.stdout.find('bundle') != -1)
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
