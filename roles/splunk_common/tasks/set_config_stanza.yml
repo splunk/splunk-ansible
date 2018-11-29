@@ -1,0 +1,20 @@
+---
+#- name: "Create section {{ stanza_name }} if not existing"
+#  lineinfile:
+#    path: "{{ splunk.home }}/etc/system/local/{{ conf_file}}"
+#    create: True
+#    line: "[{{ stanza_name }}]"
+#    regexp: "^{{ stanza_name }}"
+#    state: present
+
+- name: "Set options in {{ stanza_name }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/{{ conf_file}}"
+    section: "{{ stanza_name }}"
+    option: "{{ stanza_setting.key }}"
+    value: "{{ stanza_setting.value }}"
+    allow_no_value: True
+    state: present
+  with_dict: "{{ stanza_settings }}"
+  loop_control:
+    loop_var: stanza_setting

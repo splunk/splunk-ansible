@@ -29,6 +29,8 @@
     - splunk.http_enableSSL is defined
     - splunk.http_enableSSL | bool
 
+- include_tasks: set_any_generic_config.yml
+
 - include_tasks: start_splunk.yml
 
 - include_tasks: clean_user_seed.yml
