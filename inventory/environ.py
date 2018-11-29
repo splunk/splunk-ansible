@@ -152,7 +152,12 @@ def getDefaultSplunkVariables(inv):
     vars_scope["splunk"]["secret"] = getValueFromDEFAULTS("splunk.secret")
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT') or getValueFromDEFAULTS("splunk.svc_port", casting=int) or 8089
     vars_scope["splunk"]["s2s_port"] = os.environ.get('SPLUNK_S2S_PORT') or getValueFromDEFAULTS("splunk.s2s_port", casting=int) or 9997
+    vars_scope["splunk"]["s2s_enable"] = os.environ.get('SPLUNK_S2S_ENABLE') or getValueFromDEFAULTS("splunk.s2s_enable", casting=int) or 0
     vars_scope["splunk"]["http_port"] = getValueFromDEFAULTS("splunk.http_port", casting=int) or 8000
+    vars_scope["splunk"]["http_enableSSL"] = getValueFromDEFAULTS("splunk.http_enableSSL", casting=int) or 0
+    vars_scope["splunk"]["http_enableSSL_cert"] = getValueFromDEFAULTS("splunk.http_enableSSL_cert")
+    vars_scope["splunk"]["http_enableSSL_privKey"] = getValueFromDEFAULTS("splunk.http_enableSSL_privKey")
+    vars_scope["splunk"]["http_enableSSL_privKey_password"] = getValueFromDEFAULTS("splunk.http_enableSSL_privKey_password")
     vars_scope["splunk"]["hec_port"] = getValueFromDEFAULTS("splunk.hec_port", casting=int) or 8088
     vars_scope["splunk"]["hec_disabled"] = getValueFromDEFAULTS("splunk.hec_disabled", casting=int) or 0
     vars_scope["splunk"]["hec_enableSSL"] = getValueFromDEFAULTS("splunk.hec_enableSSL", casting=int) or 1
