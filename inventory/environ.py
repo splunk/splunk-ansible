@@ -343,7 +343,7 @@ def main():
     getSplunkInventory(inventory)
 
     if args.write_to_file:
-        with open(os.path.join(HERE, "ansible_inventory.json"), "w") as outfile:
+        with open(os.path.join("/tmp", "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True,indent=4, ensure_ascii=False)
     elif args.write_to_stdout:
         #remove keys we don't want to print
