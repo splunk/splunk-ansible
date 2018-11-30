@@ -29,6 +29,8 @@
 
 - name: Start Splunk
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - include_tasks: ../../splunk_common/tasks/enable_s2s_port.yml
 
@@ -58,6 +60,8 @@
 # http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients
 - name: Add a deployment server
   command: "{{splunk.exec}} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   register: task_result
   until: task_result.rc == 0
   retries: "{{retry_num}}"
@@ -85,6 +89,8 @@
 # http://docs.splunk.com/Documentation/Splunk/latest/Data/Monitornetworkports
 - name: Add monitoring items
   command: "{{splunk.exec}} add {{ item }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   with_items: "{{ splunk.add }}"
   register: task_result
   until: task_result.rc == 0 or "already exists" in task_result.stderr
@@ -101,6 +107,8 @@
 # Execute other Splunk commands
 - name: Execute splunk commands
   command: "{{splunk.exec}} {{ item }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   with_items: "{{ splunk.cmd }}"
   register: task_result
   until: task_result.rc == 0 or "already exists" in task_result.stderr

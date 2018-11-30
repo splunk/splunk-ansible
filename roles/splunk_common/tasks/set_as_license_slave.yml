@@ -6,6 +6,8 @@
 
 - name: Set node as license slave
   command: "{{ splunk.exec }} edit licenser-localslave -master_uri https://{{ license_master_host }}:{{ splunk.svc_port }} -auth 'admin:{{ splunk.password }}'"
+  become: yes
+  become_user: "{{ splunk.user }}"
   register: linux_set_lic_slave
   until: linux_set_lic_slave.rc == 0
   retries: "{{ retry_num }}"
