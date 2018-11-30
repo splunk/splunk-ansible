@@ -337,14 +337,12 @@ def main():
     global DEFAULTS
     parser = create_parser()
     args = parser.parse_args()
-
     sys_args = sys.argv[1:]
     # Parse command line arguments
     url = os.environ.get('SPLUNK_DEFAULTS_URL', None)
     DEFAULTS = push_defaults(url)
 
     getSplunkInventory(inventory)
-    # Remove any vars_scope attributes that are set to None
     if args.write_to_file:
         with open(os.path.join(HERE, "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True,indent=4, ensure_ascii=False)
