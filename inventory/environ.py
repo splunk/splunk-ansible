@@ -137,6 +137,8 @@ def getDefaultSplunkVariables(inv):
     # All variables have default value except for splunk.password, splunk.hec_token, splunk.shc.secret, and splunk.idxc.secret
     vars_scope = inv["all"]["vars"]
     vars_scope["ansible_ssh_user"] = getValueFromDEFAULTS("ansible_ssh_user") or "splunk"
+    vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS") or getValueFromDEFAULTS("ansible_pre_tasks")
+    vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS") or getValueFromDEFAULTS("ansible_post_tasks")
     vars_scope["delay_num"] = getValueFromDEFAULTS("delay_num", casting=int) or 3
     vars_scope["retry_num"] = getValueFromDEFAULTS("retry_num", casting=int) or 50
     vars_scope["splunk"]["opt"] = os.environ.get('SPLUNK_OPT') or getValueFromDEFAULTS("splunk.opt") or "/opt"
@@ -335,13 +337,14 @@ def main():
     global DEFAULTS
     parser = create_parser()
     args = parser.parse_args()
+
     sys_args = sys.argv[1:]
     # Parse command line arguments
     url = os.environ.get('SPLUNK_DEFAULTS_URL', None)
     DEFAULTS = push_defaults(url)
 
     getSplunkInventory(inventory)
-
+    # Remove any vars_scope attributes that are set to None
     if args.write_to_file:
         with open(os.path.join(HERE, "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True,indent=4, ensure_ascii=False)

@@ -1,7 +1,13 @@
 ---
-- hosts: localhost
+- name: Run Default Installation Plays
+  hosts: localhost
   gather_facts: true
   tasks:
+    - name: Checking for Pre-installation Ansible Tasks
+      include_tasks: "{{lookup('first_found', ansible_pre_tasks)}}"
+      when:
+        - ansible_pre_tasks is defined
+        - ansible_pre_tasks is not none
     - name: Upgrade role
       include_role:
         name: "splunk_upgrade"
@@ -25,3 +31,9 @@
         - splunk.role is defined
         - splunk.role == 'splunk_search_head_captain'
         - not splunk.upgrade
+    - name: Checking for Post-installation Ansible Tasks
+      include_tasks: "{{lookup('first_found', ansible_post_tasks)}}"
+      when:
+        - ansible_post_tasks is defined
+        - ansible_post_tasks is not none
+
