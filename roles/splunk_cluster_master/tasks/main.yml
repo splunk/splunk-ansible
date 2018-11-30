@@ -41,6 +41,8 @@
   delay: 3
   notify:
     - Restart the splunkd service
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Flush restart handlers
   meta: flush_handlers
@@ -62,6 +64,8 @@
 # will contain something to the effect of "Applying new bundle. Restarting indexers..". Thus, we
 - name: Apply the cluster bundle to the Splunk cluster master
   command: "{{ splunk.exec }} apply cluster-bundle -auth admin:{{ splunk.password }} --skip-validation --answer-yes"
+  become: yes
+  become_user: "{{ splunk.user }}"
   register: splunk_cluster_bundle_result
   failed_when: >
     ((splunk_cluster_bundle_result.stdout is not search("[Aa]pply"))

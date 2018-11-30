@@ -31,6 +31,8 @@
 
 - name: Apply Splunk license
   command: "{{ splunk.exec }} add licenses {{ splunk_license_local_path }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   when:
     - splunk.license_uri is defined
     - splunk_license_local_path is defined and splunk_license_local_path != ""
