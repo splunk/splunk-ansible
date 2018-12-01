@@ -17,6 +17,7 @@ config:
         verify: True
 
 splunk:
+    build_location: "/tmp/splunk.tgz"
     opt: &opt "/opt"
     home: &home !!python/object/apply:string.join [[*opt, "/splunk"],'']
     user: "splunk"

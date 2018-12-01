@@ -37,15 +37,6 @@ if "windows" in PLATFORM or "cygwin" in PLATFORM:
 else:
     PLATFORM = "linux"
 
-ansibleDefaultsMapping = {
-                            "windows": {
-                                "SPLUNK_BUILD_URL": "C:\\\\splunk.msi"
-                            },
-                            "linux": {
-                                "SPLUNK_BUILD_URL": "/tmp/splunk.tgz"
-                            }
-                        }
-
 roleNames = [
     'splunk_cluster_master', # (if it exists, set up indexer clustering)
     'splunk_deployer',
@@ -114,9 +105,8 @@ def getDefaultVars():
     return defaultVars
 
 def getSplunkBuild(vars_scope):
-    location = os.environ.get("SPLUNK_BUILD_URL", ansibleDefaultsMapping[PLATFORM]["SPLUNK_BUILD_URL"])
-    vars_scope["splunk"]["build_location"] = location
-    if location and location.startswith("http"):
+    vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"]["build_location"])
+    if vars_scope["splunk"]["build_location"] and vars_scope["splunk"]["build_location"].startswith("http"):
         vars_scope["splunk"]["build_remote_src"] = True
     else:
         vars_scope["splunk"]["build_remote_src"] = False
@@ -209,7 +199,7 @@ def loadDefaultSplunkVariables():
     '''
     loaded_yaml = {}
     ### Load the splunk defaults shipped with splunk-ansible
-    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults.yml"), 'r') as yaml_file:
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
         loaded_yaml = yaml.load(yaml_file)
     
     ### Load the defaults for the environment
@@ -237,7 +227,7 @@ def loadDefaultSplunkVariables():
         current_retry = 0
         while True:
             try:
-                response = requests.get(url, headers=headers, timeout=max_timeout, verify=verify)
+                response = requests.get(url.format(platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
                 response.raise_for_status()
                 loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content))
                 break
@@ -270,7 +260,7 @@ def loadHostVars(defaults, hostname=None):
         current_retry = 0
         while True:
             try:
-                response = requests.get(url.format(hostname=hostname), headers=headers, timeout=max_timeout, verify=verify)
+                response = requests.get(url.format(hostname=hostname, platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
                 response.raise_for_status()
                 loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content))
                 break
