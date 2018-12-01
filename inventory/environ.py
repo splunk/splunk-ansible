@@ -84,7 +84,7 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     if(os.path.isfile("/.dockerenv")):
         if("localhost" not in inventory["all"]["children"]):
             inventory["all"]["hosts"].append("localhost")
-        inventory["_meta"]["hostvars"]["localhost"] = loadHostVars(inventory["all"]["vars"], os.uname()[1])
+        inventory["_meta"]["hostvars"]["localhost"] = loadHostVars(inventory["all"]["vars"], os.uname()[1], PLATFORM)
         inventory["_meta"]["hostvars"]["localhost"]["ansible_connection"] = "local"
 
 def getDefaultVars():
@@ -240,7 +240,7 @@ def loadDefaultSplunkVariables():
                     raise e
     return loaded_yaml
 
-def loadHostVars(defaults, hostname=None):
+def loadHostVars(defaults, hostname=None, platform="linux"):
     loaded_yaml = {}
     if hostname == None:
         return loaded_yaml
@@ -260,7 +260,7 @@ def loadHostVars(defaults, hostname=None):
         current_retry = 0
         while True:
             try:
-                response = requests.get(url.format(hostname=hostname, platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
+                response = requests.get(url.format(hostname=hostname, platform=platform), headers=headers, timeout=max_timeout, verify=verify)
                 response.raise_for_status()
                 loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content))
                 break
