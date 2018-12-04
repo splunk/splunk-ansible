@@ -1,0 +1,69 @@
+ansible_ssh_user: "splunk"
+delay_num: 3
+retry_num: 50
+
+config:
+    max_retries: 3
+    max_delay: 60
+    max_timeout: 1200
+    baked: /tmp/defaults/default.yml
+    env:
+        var: SPLUNK_DEFAULTS_URL
+        headers:
+        verify: True
+    host:
+        url:
+        headers:
+        verify: True
+
+splunk:
+    build_location: "/tmp/splunk.tgz"
+    opt: &opt "/opt"
+    home: &home !!python/object/apply:string.join [[*opt, "/splunk"],'']
+    user: "splunk"
+    group: "splunk"
+    exec: !!python/object/apply:string.join [[*home, "/bin/splunk"], '']
+    pid: !!python/object/apply:string.join [[*home, "/var/run/splunk/splunkd.pid"], '']
+    password:
+    secret:
+    svc_port: 8089
+    s2s_port: 9997
+    s2s_enable: 0
+    http_port: 8000
+    http_enableSSL: 0
+    http_enableSSL_cert:
+    http_enableSSL_privKey:
+    http_enableSSL_privKey_password:
+    hec_port: 8088
+    hec_disabled: 0
+    hec_enableSSL: 1
+    hec_token:
+    shc:
+        enable: False
+        secret:
+        label: "shc_label"
+        replication_factor: 3
+        replication_port: 4001
+    idxc:
+        enable: False
+        secret:
+        label: "idxc_label"
+        search_factor: 3
+        replication_factor: 3
+        replication_port: 4001
+    enable_service: False
+    smartstore:
+    app_paths:
+        default: !!python/object/apply:string.join [[*home, "/etc/apps"], '']
+        shc: !!python/object/apply:string.join [[*home, "/etc/shcluster/apps"], '']
+        idxc: !!python/object/apply:string.join [[*home, "/etc/master-apps"], '']
+        httpinput: !!python/object/apply:string.join [[*home, "/etc/apps/splunk_httpinput"], '']
+    apps:
+        local:
+            path: !!python/object/apply:string.join [[*home, "/etc/apps"], '']
+        deployment:
+            path: !!python/object/apply:string.join [[*home, "/etc/deployment-apps"], '']
+        master:
+            path: !!python/object/apply:string.join [[*home, "/etc/master-apps"], '']
+        shcluster:
+            path: !!python/object/apply:string.join [[*home, "/etc/shcluster/apps"], '']
