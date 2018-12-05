@@ -12,3 +12,4 @@
   delay: 3
   notify:
     - Restart the splunkd service
+  ignore_errors: yes
