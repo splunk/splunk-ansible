@@ -3,6 +3,28 @@
   hosts: localhost
   gather_facts: true
   tasks:
+    # the get_url module is for linux only
+    - name: Check if Pre plays need downloaded
+      when:
+        - ansible_pre_tasks is defined
+        - ansible_pre_tasks is not none
+        - ansible_system is match("Linux")
+      get_url:
+        url: ansible_pre_tasks
+        dest: /tmp/defaults/splunk_ansible_pre_tasks.yml
+      ignore_errors: yes
+
+    # the get_url module is for windows only
+    - name: Check if Pre plays need downloaded
+      when:
+        - ansible_pre_tasks is defined
+        - ansible_pre_tasks is not none
+        - ansible_system is not match("Linux")
+      win_get_url:
+        url: ansible_pre_tasks
+        dest:
+      ignore_errors: yes
+
     - name: Checking for Pre-installation Ansible Tasks
       include_tasks: "{{lookup('first_found', ansible_pre_tasks)}}"
       when:
