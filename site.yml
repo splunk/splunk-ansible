@@ -11,10 +11,10 @@
         - ansible_system is match("Linux")
       get_url:
         url: ansible_pre_tasks
-        dest: /tmp/defaults/splunk_ansible_pre_tasks.yml
+        dest: "{{ config.defaults_dir }}/splunk_ansible_pre_tasks.yml"
       ignore_errors: yes
 
-    # the get_url module is for windows only
+    # the win_get_url module is for windows only
     - name: Check if Pre plays need downloaded
       when:
         - ansible_pre_tasks is defined
@@ -22,7 +22,7 @@
         - ansible_system is not match("Linux")
       win_get_url:
         url: ansible_pre_tasks
-        dest:
+        dest: "{{ config.defaults_dir }}\splunk_ansible_pre_tasks.yml"
       ignore_errors: yes
 
     - name: Checking for Pre-installation Ansible Tasks
@@ -44,6 +44,28 @@
         - splunk.role is defined
         - splunk.role != 'splunk_search_head_captain'
         - not splunk.upgrade
+
+    # the get_url module is for linux only
+    - name: Check if Post plays need downloaded
+      when:
+        - ansible_post_tasks is defined
+        - ansible_post_tasks is not none
+        - ansible_system is match("Linux")
+      get_url:
+        url: ansible_post_tasks
+        dest: "{{ config.defaults_dir }}/splunk_ansible_post_tasks.yml"
+      ignore_errors: yes
+
+    # the win_get_url module is for windows only
+    - name: Check if Post plays need downloaded
+      when:
+        - ansible_post_tasks is defined
+        - ansible_post_tasks is not none
+        - ansible_system is not match("Linux")
+      win_get_url:
+        url: ansible_post_tasks
+        dest: "{{ config.defaults_dir }}\splunk_ansible_post_tasks.yml"
+      ignore_errors: yes
 
     # Special case for search head captain
     - name: Provision role
