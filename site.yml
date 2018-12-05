@@ -11,7 +11,7 @@
         - ansible_system is match("Linux")
       get_url:
         url: ansible_pre_tasks
-        dest: "{{ config.defaults_dir }}/splunk_ansible_pre_tasks.yml"
+        dest: "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
       ignore_errors: yes
       register: downloaded_pre_plays
 
@@ -23,7 +23,7 @@
         - ansible_system is not match("Linux")
       win_get_url:
         url: ansible_pre_tasks
-        dest: "{{ config.defaults_dir }}\splunk_ansible_pre_tasks.yml"
+        dest: "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
       ignore_errors: yes
       register: downloaded_pre_plays
 
@@ -36,8 +36,8 @@
         pre_locations_to_look:
           - ansible_pre_tasks
           - downloaded_pre_plays.dest
-          - "{{ config.defaults_dir }}/splunk_ansible_pre_tasks.yml"
-          - "{{ config.defaults_dir }}\splunk_ansible_pre_tasks.yml"
+          - "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
+          - "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
 
     - name: Upgrade role
       include_role:
@@ -62,7 +62,7 @@
         - ansible_system is match("Linux")
       get_url:
         url: ansible_post_tasks
-        dest: "{{ config.defaults_dir }}/splunk_ansible_post_tasks.yml"
+        dest: "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
       ignore_errors: yes
       register: downloaded_post_plays
 
@@ -74,7 +74,7 @@
         - ansible_system is not match("Linux")
       win_get_url:
         url: ansible_post_tasks
-        dest: "{{ config.defaults_dir }}\splunk_ansible_post_tasks.yml"
+        dest: "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
       ignore_errors: yes
       register: downloaded_post_plays
 
@@ -95,5 +95,5 @@
         post_locations_to_look:
           - ansible_post_tasks
           - downloaded_post_plays.dest
-          - "{{ config.defaults_dir }}/splunk_ansible_post_tasks.yml"
-          - "{{ config.defaults_dir }}\splunk_ansible_post_tasks.yml"
+          - "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
+          - "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
