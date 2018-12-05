@@ -127,27 +127,11 @@ def getSplunkApps(vars_scope):
     if apps:
         vars_scope["splunk"]["apps_location"] = apps.split(",")
     else:
-<<<<<<< HEAD
-        inv["all"]["vars"]["splunk"]["apps_location"] = []
-
-def getDefaultSplunkVariables(inv):
-    # All variables have default value except for splunk.password, splunk.hec_token, splunk.shc.secret, and splunk.idxc.secret
-    vars_scope = inv["all"]["vars"]
-    vars_scope["ansible_ssh_user"] = getValueFromDEFAULTS("ansible_ssh_user") or "splunk"
-    vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS") or getValueFromDEFAULTS("ansible_pre_tasks")
-    vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS") or getValueFromDEFAULTS("ansible_post_tasks")
-    vars_scope["delay_num"] = getValueFromDEFAULTS("delay_num", casting=int) or 3
-    vars_scope["retry_num"] = getValueFromDEFAULTS("retry_num", casting=int) or 50
-    vars_scope["splunk"]["opt"] = os.environ.get('SPLUNK_OPT') or getValueFromDEFAULTS("splunk.opt") or "/opt"
-    vars_scope["splunk"]["home"] = os.environ.get('SPLUNK_HOME') or getValueFromDEFAULTS(
-        "splunk.home") or "{splunk_opt_path}/splunk".format(splunk_opt_path=vars_scope["splunk"]["opt"])
-=======
         vars_scope["splunk"]["apps_location"] = []
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["opt"] = os.environ.get('SPLUNK_OPT', vars_scope["splunk"]["opt"])
     vars_scope["splunk"]["home"] = os.environ.get('SPLUNK_HOME', vars_scope["splunk"]["home"])
->>>>>>> develop
     splunk_home = vars_scope["splunk"]["home"]
     vars_scope["splunk"]["exec"] = os.environ.get('SPLUNK_EXEC', vars_scope["splunk"]["exec"])
     vars_scope["splunk"]["pid"] = os.environ.get('SPLUNK_PID', vars_scope["splunk"]["pid"])
