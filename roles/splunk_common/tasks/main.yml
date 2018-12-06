@@ -30,6 +30,8 @@
     - splunk.http_enableSSL | bool
 
 - include_tasks: set_any_generic_config.yml
+  when:
+    - "'conf' in splunk"
 
 - include_tasks: start_splunk.yml
 

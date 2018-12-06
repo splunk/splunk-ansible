@@ -203,9 +203,10 @@ def loadDefaultSplunkVariables():
         loaded_yaml = yaml.load(yaml_file)
     
     ### Load the defaults for the environment
-    if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"] and os.path.exists(loaded_yaml["config"]["baked"]):
+    if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"] and \
+            os.path.exists(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"])):
         try:
-            with open(loaded_yaml["config"]["baked"], 'r') as yaml_file:
+            with open(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"]), 'r') as yaml_file:
                 loaded_yaml = merge_dict(loaded_yaml, yaml.load(yaml_file))
         except:
             raise
@@ -328,7 +329,6 @@ def main():
     sys_args = sys.argv[1:]
 
     getSplunkInventory(inventory)
-
     if args.write_to_file:
         with open(os.path.join(HERE, "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True,indent=4, ensure_ascii=False)

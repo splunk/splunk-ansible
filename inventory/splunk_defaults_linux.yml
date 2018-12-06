@@ -6,7 +6,8 @@ config:
     max_retries: 3
     max_delay: 60
     max_timeout: 1200
-    baked: /tmp/defaults/default.yml
+    defaults_dir: /tmp/defaults/
+    baked: default.yml
     env:
         var: SPLUNK_DEFAULTS_URL
         headers:
