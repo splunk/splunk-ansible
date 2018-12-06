@@ -1,7 +1,44 @@
 ---
-- hosts: localhost
+- name: Run Default Installation Plays
+  hosts: localhost
   gather_facts: true
   tasks:
+    # the get_url module is for linux only
+    - name: Check if Pre plays need downloaded
+      when:
+        - ansible_pre_tasks is defined
+        - ansible_pre_tasks is not none
+        - ansible_system is match("Linux")
+      get_url:
+        url: ansible_pre_tasks
+        dest: "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
+      ignore_errors: yes
+      register: downloaded_pre_plays
+
+    # the win_get_url module is for windows only
+    - name: Check if Pre plays need downloaded
+      when:
+        - ansible_pre_tasks is defined
+        - ansible_pre_tasks is not none
+        - ansible_system is not match("Linux")
+      win_get_url:
+        url: ansible_pre_tasks
+        dest: "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
+      ignore_errors: yes
+      register: downloaded_pre_plays
+
+    - name: Checking for Pre-installation Ansible Tasks
+      include_tasks: "{{lookup('first_found', pre_locations_to_look)}}"
+      when:
+        - ansible_pre_tasks is defined
+        - ansible_pre_tasks is not none
+      vars:
+        pre_locations_to_look:
+          - ansible_pre_tasks
+          - downloaded_pre_plays.dest
+          - "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
+          - "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
+
     - name: Upgrade role
       include_role:
         name: "splunk_upgrade"
@@ -17,6 +54,30 @@
         - splunk.role != 'splunk_search_head_captain'
         - not splunk.upgrade
 
+    # the get_url module is for linux only
+    - name: Check if Post plays need downloaded
+      when:
+        - ansible_post_tasks is defined
+        - ansible_post_tasks is not none
+        - ansible_system is match("Linux")
+      get_url:
+        url: ansible_post_tasks
+        dest: "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
+      ignore_errors: yes
+      register: downloaded_post_plays
+
+    # the win_get_url module is for windows only
+    - name: Check if Post plays need downloaded
+      when:
+        - ansible_post_tasks is defined
+        - ansible_post_tasks is not none
+        - ansible_system is not match("Linux")
+      win_get_url:
+        url: ansible_post_tasks
+        dest: "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
+      ignore_errors: yes
+      register: downloaded_post_plays
+
     # Special case for search head captain
     - name: Provision role
       include_role:
@@ -25,3 +86,14 @@
         - splunk.role is defined
         - splunk.role == 'splunk_search_head_captain'
         - not splunk.upgrade
+    - name: Checking for Post-installation Ansible Tasks
+      include_tasks: "{{lookup('first_found', post_locations_look)}}"
+      when:
+        - ansible_post_tasks is defined
+        - ansible_post_tasks is not none
+      vars:
+        post_locations_to_look:
+          - ansible_post_tasks
+          - downloaded_post_plays.dest
+          - "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
+          - "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"

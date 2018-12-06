@@ -12,6 +12,9 @@
     - first_run | bool
 
 - include_tasks: enable_s2s_port.yml
+  when:
+    - splunk.s2s_enable is defined
+    - splunk.s2s_enable | bool
 
 - include_tasks: enable_service.yml
   when: splunk.enable_service and ansible_system is match("Linux")
@@ -20,6 +23,15 @@
   when:
     - splunk.secret is defined
     - splunk.secret
+
+- include_tasks: enable_ssl_on_gui.yml
+  when:
+    - splunk.http_enableSSL is defined
+    - splunk.http_enableSSL | bool
+
+- include_tasks: set_any_generic_config.yml
+  when:
+    - "'conf' in splunk"
 
 - include_tasks: start_splunk.yml
 
