@@ -1,4 +1,6 @@
 ansible_ssh_user: "splunk"
+ansible_pre_tasks:
+ansible_post_tasks:
 delay_num: 3
 retry_num: 50
 

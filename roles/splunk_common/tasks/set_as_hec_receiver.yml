@@ -28,10 +28,14 @@
 
 - name: Enable HEC new-token
   command: "{{ splunk.exec }} http-event-collector enable -name splunk_hec_token -uri https://127.0.0.1:{{ splunk.svc_port }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   ignore_errors: true
   when: splunk_hec_input.status != 409
 
 - name: Enable SSL for HEC new-token
   command: "{{ splunk.exec }} http-event-collector update -uri https://127.0.0.1:{{ splunk.svc_port }} -enable-ssl {{ splunk.hec_enableSSL }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   ignore_errors: true
   when: splunk_hec_input.status != 409
