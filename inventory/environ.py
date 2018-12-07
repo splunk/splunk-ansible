@@ -130,6 +130,8 @@ def getSplunkApps(vars_scope):
         vars_scope["splunk"]["apps_location"] = []
 
 def overrideEnvironmentVars(vars_scope):
+    vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
+    vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope["ansible_post_tasks"])
     vars_scope["splunk"]["opt"] = os.environ.get('SPLUNK_OPT', vars_scope["splunk"]["opt"])
     vars_scope["splunk"]["home"] = os.environ.get('SPLUNK_HOME', vars_scope["splunk"]["home"])
     splunk_home = vars_scope["splunk"]["home"]

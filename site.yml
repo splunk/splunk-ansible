@@ -10,9 +10,10 @@
         - ansible_pre_tasks is not none
         - ansible_system is match("Linux")
       get_url:
-        url: ansible_pre_tasks
+        url: "{{ ansible_pre_tasks }}"
         dest: "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
       ignore_errors: yes
+      no_log: true
       register: downloaded_pre_plays
 
     # the win_get_url module is for windows only
@@ -22,9 +23,10 @@
         - ansible_pre_tasks is not none
         - ansible_system is not match("Linux")
       win_get_url:
-        url: ansible_pre_tasks
+        url: "{{ ansible_pre_tasks }}"
         dest: "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
       ignore_errors: yes
+      no_log: true
       register: downloaded_pre_plays
 
     - name: Checking for Pre-installation Ansible Tasks
@@ -34,8 +36,8 @@
         - ansible_pre_tasks is not none
       vars:
         pre_locations_to_look:
-          - ansible_pre_tasks
-          - downloaded_pre_plays.dest
+          - "{{ ansible_pre_tasks }}"
+          - "{% if downloaded_pre_plays.dest is defined %}{{downloaded_pre_plays.dest}}{% endif %}"
           - "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
 
@@ -61,9 +63,10 @@
         - ansible_post_tasks is not none
         - ansible_system is match("Linux")
       get_url:
-        url: ansible_post_tasks
+        url: "{{ ansible_post_tasks }}"
         dest: "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
       ignore_errors: yes
+      no_log: true
       register: downloaded_post_plays
 
     # the win_get_url module is for windows only
@@ -73,9 +76,10 @@
         - ansible_post_tasks is not none
         - ansible_system is not match("Linux")
       win_get_url:
-        url: ansible_post_tasks
+        url: "{{ ansible_post_tasks }}"
         dest: "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
       ignore_errors: yes
+      no_log: true
       register: downloaded_post_plays
 
     # Special case for search head captain
@@ -93,7 +97,7 @@
         - ansible_post_tasks is not none
       vars:
         post_locations_to_look:
-          - ansible_post_tasks
-          - downloaded_post_plays.dest
+          - "{{ ansible_post_tasks }}"
+          - "{% if downloaded_post_plays.dest is defined %}{{downloaded_post_plays.dest}}{% endif %}"
           - "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
