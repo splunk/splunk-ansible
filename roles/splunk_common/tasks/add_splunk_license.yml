@@ -1,10 +1,20 @@
 ---
+- name: Check /tmp for license
+  find:
+    paths: "/tmp"
+    patterns: "{{splunk.license_uri}}"
+  register: local_license_file
+  when:
+    - splunk.license_uri is defined
+    - splunk.license_uri is not search("^http.*")
+
 - name: Download Splunk license
   get_url:
     url: "{{ splunk.license_uri }}"
     dest: /tmp/splunk.lic
     timeout: 20
   when:
+    - local_license_file is not defined
     - splunk.license_uri is defined
     - splunk.license_uri is search("^http.*")
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
@@ -13,31 +23,13 @@
   retries: 5
   delay: 3
 
-- name: Set downloaded license location
-  set_fact:
-    splunk_license_local_path: /tmp/splunk.lic
-  when:
-    - splunk.license_uri is defined
-    - splunk.license_uri is search("^http.*")
-    - download_lic is success
-    - splunk.role == "splunk_license_master" or not splunk.license_master_included
-
-- name: Set local license location
-  set_fact:
-    splunk_license_local_path: "{{ splunk.license_uri }}"
-  when:
-    - splunk_license_local_path is not defined
-    - splunk.role == "splunk_license_master" or not splunk.license_master_included
-
 - name: Apply Splunk license
-  command: "{{ splunk.exec }} add licenses {{ splunk_license_local_path }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add licenses /tmp/splunk.lic -auth admin:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when:
     - splunk.license_uri is defined
-    - splunk_license_local_path is defined and splunk_license_local_path != ""
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
-  ignore_errors: true
   notify:
     - Restart the splunkd service
 
