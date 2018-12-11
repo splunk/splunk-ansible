@@ -14,7 +14,7 @@
     dest: /tmp/splunk.lic
     timeout: 20
   when:
-    - local_license_file is not defined
+    - local_license_file.matched == 1
     - splunk.license_uri is defined
     - splunk.license_uri is search("^http.*")
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
@@ -28,8 +28,9 @@
   become: yes
   become_user: "{{ splunk.user }}"
   when:
-    - splunk.license_uri is defined
+    - local_license_file.matched == 1 or download_lic is defined
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
+  register: applied_lic
   notify:
     - Restart the splunkd service
 
@@ -38,6 +39,7 @@
   vars:
     license_master_host: "{{ groups.splunk_license_master[0] }}"
   when:
+    - applied_lic is defined
     - splunk.license_master_included | bool
     - splunk.role != "splunk_license_master"
 
