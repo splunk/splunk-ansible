@@ -31,7 +31,6 @@
   vars:
     license_master_host: "{{ groups.splunk_license_master[0] }}"
   when:
-    - applied_lic is defined
     - splunk.license_master_included | bool
     - splunk.role != "splunk_license_master"
 
