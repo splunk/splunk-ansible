@@ -23,6 +23,7 @@
     license_locations:
       - splunk.license_uri
       - downloaded_license_path.dest
+      - splunk.nfr_license
   notify:
     - Restart the splunkd service
 
