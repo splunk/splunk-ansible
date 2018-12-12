@@ -8,19 +8,17 @@
     remote_src: "{{ splunk.build_remote_src }}"
   when: ansible_system is match("Linux")
   register: result
-  until: result.rc == 0
+  until: result is succeeded
   retries: "{{ retry_num }}"
   delay: 3
-  ignore_errors: false
 
 - name: Install Splunk (Windows)
   command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\splunk /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")
   register: result
-  until: result.rc == 0
+  until: result is succeeded
   retries: "{{ retry_num }}"
   delay: 3
-  ignore_errors: false
 
 - name: Remove installer
   file:

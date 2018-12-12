@@ -97,6 +97,7 @@ def getDefaultVars():
     defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
     defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', '')
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
+    defaultVars["splunk_home_ownership_enforcement"] = True if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT') else False
 
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
@@ -332,7 +333,7 @@ def main():
 
     getSplunkInventory(inventory)
     if args.write_to_file:
-        with open(os.path.join("/tmp", "ansible_inventory.json"), "w") as outfile:
+        with open(os.path.join("/opt/container_artifact", "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True,indent=4, ensure_ascii=False)
     elif args.write_to_stdout:
         #remove keys we don't want to print
