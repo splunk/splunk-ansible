@@ -98,6 +98,7 @@ def getDefaultVars():
     defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', '')
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
+    defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
 
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)

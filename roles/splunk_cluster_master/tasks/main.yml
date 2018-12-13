@@ -29,6 +29,7 @@
     timeout: 10
   register: set_indexer_discovery
   changed_when: set_indexer_discovery.status == 201
+  no_log: "{{ hide_password }}"
 
 - include_tasks: enable_smartstore.yml
   when: splunk.smartstore
@@ -43,6 +44,7 @@
     - Restart the splunkd service
   become: yes
   become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
 
 - name: Flush restart handlers
   meta: flush_handlers
@@ -77,6 +79,8 @@
       and ("bundle" in splunk_cluster_bundle_result.stdout)
       and (splunk_cluster_bundle_result.stdout is not search("[Ee]rror")))
     and ("already" not in splunk_cluster_bundle_result.stderr)
+  no_log: "{{ hide_password }}"
+  
 
 - debug: var=splunk_cluster_bundle_result.stdout
 - debug: var=splunk_cluster_bundle_result.stderr

@@ -13,3 +13,4 @@
   retries: "{{ retry_num }}"
   delay: 3
   ignore_errors: true
+  no_log: "{{ hide_password }}"

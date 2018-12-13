@@ -10,3 +10,4 @@
     - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
   loop_control:
     label: "{{ item.opt }}"
+  no_log: "{{ hide_password }}"

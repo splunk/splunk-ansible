@@ -16,3 +16,4 @@
   failed_when: set_indexer_as_peer.rc !=0 and 'already exists' not in set_indexer_as_peer.stderr
   notify:
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"

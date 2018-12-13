@@ -23,6 +23,7 @@
     - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
   loop_control:
     label: "{{ item.opt }}"
+  no_log: "{{ hide_password }}"
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
@@ -70,6 +71,7 @@
   ignore_errors: true
   notify:
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"
 
 - name: Flush restart handlers
   meta: flush_handlers
@@ -103,6 +105,7 @@
   ignore_errors: true
   notify:
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"
 
 # Execute other Splunk commands
 - name: Execute splunk commands
