@@ -21,9 +21,9 @@
   ignore_errors: true
   vars:
     license_locations:
-      - splunk.license_uri
-      - downloaded_license_path.dest
-      - splunk.nfr_license
+      - "{{ splunk.license_uri }}"
+      - "{% if downloaded_license_path.dest is defined %}{{downloaded_license_path.dest}}{% endif %}"
+      - "{{ splunk.nfr_license }}"
   notify:
     - Restart the splunkd service
 
