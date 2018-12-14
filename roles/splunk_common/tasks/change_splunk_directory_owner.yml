@@ -1,0 +1,9 @@
+---
+- file:
+    path: "{{ splunk.home }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    recurse: yes
+  become: yes
+  become_method: sudo
+  become_user: root

@@ -1,4 +1,9 @@
 ---
+- include_tasks: change_splunk_directory_owner.yml
+  when:
+    - splunk_home_ownership_enforcement is defined
+    - splunk_home_ownership_enforcement | bool
+
 - include_tasks: check_first_run.yml
 
 - include_tasks: install_splunk.yml
