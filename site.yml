@@ -91,7 +91,7 @@
         - splunk.role == 'splunk_search_head_captain'
         - not splunk.upgrade
     - name: Checking for Post-installation Ansible Tasks
-      include_tasks: "{{lookup('first_found', post_locations_look)}}"
+      include_tasks: "{{lookup('first_found', post_locations_to_look)}}"
       when:
         - ansible_post_tasks is defined
         - ansible_post_tasks is not none
