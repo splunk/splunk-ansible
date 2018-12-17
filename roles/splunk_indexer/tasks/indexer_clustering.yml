@@ -14,3 +14,4 @@
   ignore_errors: yes
   notify: 
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"

@@ -40,6 +40,7 @@
   ignore_errors: true
   notify:
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"
 
 - name: Set as license slave
   include_tasks: set_as_license_slave.yml

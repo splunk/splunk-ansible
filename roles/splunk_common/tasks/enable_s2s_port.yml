@@ -7,3 +7,4 @@
   failed_when:
     - enable_s2s_status.rc !=0
     - "'already exists' not in enable_s2s_status.stderr"
+  no_log: "{{ hide_password }}"
