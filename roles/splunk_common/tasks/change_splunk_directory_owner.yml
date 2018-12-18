@@ -1,5 +1,6 @@
 ---
-- file:
+- name: Update Splunk directory owner
+  file:
     path: "{{ splunk.home }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
