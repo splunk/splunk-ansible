@@ -43,9 +43,6 @@
 - include_tasks: clean_user_seed.yml
 
 - include_tasks: add_splunk_license.yml
-  when:
-    - first_run is defined
-    - first_run | bool
 
 - include_tasks: install_app.yml
   vars:

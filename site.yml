@@ -1,10 +1,11 @@
 ---
-- name: Run Default Installation Plays
+- name: Run default Splunk provisioning
   hosts: localhost
   gather_facts: true
   tasks:
+
     # the get_url module is for linux only
-    - name: Check if Pre plays need downloaded
+    - name: Download pre-setup playbooks
       when:
         - ansible_pre_tasks is defined
         - ansible_pre_tasks is not none
@@ -17,7 +18,7 @@
       register: downloaded_pre_plays
 
     # the win_get_url module is for windows only
-    - name: Check if Pre plays need downloaded
+    - name: Download pre-setup playbooks
       when:
         - ansible_pre_tasks is defined
         - ansible_pre_tasks is not none
@@ -29,7 +30,7 @@
       no_log: true
       register: downloaded_pre_plays
 
-    - name: Checking for Pre-installation Ansible Tasks
+    - name: Run pre-setup playbooks
       include_tasks: "{{lookup('first_found', pre_locations_to_look)}}"
       when:
         - ansible_pre_tasks is defined
@@ -56,8 +57,17 @@
         - splunk.role != 'splunk_search_head_captain'
         - not splunk.upgrade
 
+    # Special case for search head captain
+    - name: Provision role
+      include_role:
+        name: "splunk_search_head"
+      when:
+        - splunk.role is defined
+        - splunk.role == 'splunk_search_head_captain'
+        - not splunk.upgrade
+
     # the get_url module is for linux only
-    - name: Check if Post plays need downloaded
+    - name: Download post-setup playbooks
       when:
         - ansible_post_tasks is defined
         - ansible_post_tasks is not none
@@ -70,7 +80,7 @@
       register: downloaded_post_plays
 
     # the win_get_url module is for windows only
-    - name: Check if Post plays need downloaded
+    - name: Download post-setup playbooks
       when:
         - ansible_post_tasks is defined
         - ansible_post_tasks is not none
@@ -82,15 +92,7 @@
       no_log: true
       register: downloaded_post_plays
 
-    # Special case for search head captain
-    - name: Provision role
-      include_role:
-        name: "splunk_search_head"
-      when:
-        - splunk.role is defined
-        - splunk.role == 'splunk_search_head_captain'
-        - not splunk.upgrade
-    - name: Checking for Post-installation Ansible Tasks
+    - name: Run post-setup playbooks
       include_tasks: "{{lookup('first_found', post_locations_to_look)}}"
       when:
         - ansible_post_tasks is defined
