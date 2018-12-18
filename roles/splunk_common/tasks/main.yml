@@ -16,12 +16,6 @@
     - first_run is defined
     - first_run | bool
 
-# This needs to be done before any encrypted passkeys are generated
-- include_tasks: set_splunk_secret.yml
-  when:
-    - splunk.secret is defined
-    - splunk.secret
-
 - include_tasks: enable_s2s_port.yml
   when:
     - splunk.s2s_enable is defined
