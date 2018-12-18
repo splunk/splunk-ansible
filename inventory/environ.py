@@ -203,8 +203,12 @@ def loadDefaultSplunkVariables():
     '''
     loaded_yaml = {}
     ### Load the splunk defaults shipped with splunk-ansible
-    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-        loaded_yaml = yaml.load(yaml_file)
+    if os.environ.get("SPLUNK_ROLE", None) == "splunk_universal_forwarder":
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunkforwarder_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
+            loaded_yaml = yaml.load(yaml_file)
+    else:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
+            loaded_yaml = yaml.load(yaml_file)
     
     ### Load the defaults for the environment
     if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"] and \
