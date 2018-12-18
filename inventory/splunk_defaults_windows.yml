@@ -31,7 +31,7 @@ splunk:
     secret:
     svc_port: 8089
     s2s_port: 9997
-    s2s_enable: 0
+    s2s_enable: True
     http_port: 8000
     http_enableSSL: 0
     http_enableSSL_cert:
