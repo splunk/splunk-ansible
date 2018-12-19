@@ -2,7 +2,7 @@
 - name: Download Splunk license
   get_url:
     url: "{{ splunk.license_uri }}"
-    dest: /tmp/splunk.lic
+    dest: "{{ splunk.license_download_dest }}"
     timeout: 20
   when:
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
@@ -17,12 +17,12 @@
   become: yes
   become_user: "{{ splunk.user }}"
   when:
+    - not (splunk.ignore_license | bool)
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
   ignore_errors: true
   vars:
     license_locations:
-      - "{{ splunk.license_uri }}"
-      - "{% if downloaded_license_path.dest is defined %}{{downloaded_license_path.dest}}{% endif %}"
+      - "{{ splunk.license_download_dest }}"
       - "{{ splunk.nfr_license }}"
   notify:
     - Restart the splunkd service
