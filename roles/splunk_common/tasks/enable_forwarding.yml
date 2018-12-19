@@ -15,6 +15,7 @@
   when: splunk.indexer_cluster
   register: setup_indexer_discovery_stanza
   changed_when: setup_indexer_discovery_stanza.status == 201
+  no_log: "{{ hide_password }}"
 
 - name: Setup tcpout:group1 stanza in outputs.conf for clustered deployments
   uri:
@@ -31,6 +32,7 @@
   when: splunk.indexer_cluster
   register: setup_tcpoutgroup_stanza
   changed_when: setup_tcpoutgroup_stanza.status == 201
+  no_log: "{{ hide_password }}"
 
 - name: Setup tcpout stanza in outputs.conf for clustered deployments
   uri:
@@ -47,6 +49,7 @@
   when: splunk.indexer_cluster
   register: setup_tcpout_stanza
   changed_when: setup_tcpout_stanza.status == 200
+  no_log: "{{ hide_password }}"
 
 # Configure forwarding for non-index-clustered deployments
 - name: Setup tcpout:group1 stanza in outputs.conf for non-clustered deployments
@@ -64,6 +67,7 @@
   when: not splunk.indexer_cluster
   register: setup_tcpoutgroup_stanza
   changed_when: setup_tcpoutgroup_stanza.status == 201
+  no_log: "{{ hide_password }}"
 
 - name: Setup tcpout stanza in outputs.conf for non-clustered deployments
   uri:
@@ -80,6 +84,7 @@
   when: not splunk.indexer_cluster
   register: setup_tcpout_stanza
   changed_when: setup_tcpout_stanza.status == 200
+  no_log: "{{ hide_password }}"
 
 - name: Disable indexing on the current node
   uri:
@@ -96,3 +101,4 @@
   when: not splunk.indexer_cluster
   register: disable_indexing_stanza
   changed_when: disable_indexing_stanza.status == 201
+  no_log: "{{ hide_password }}"

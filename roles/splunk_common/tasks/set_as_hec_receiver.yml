@@ -10,6 +10,7 @@
     timeout: 10
   ignore_errors: true
   when: not splunk.hec_disabled|bool
+  no_log: "{{ hide_password }}"
 
 - name: Create new HEC token
   uri:
@@ -25,13 +26,20 @@
     timeout: 10
   ignore_errors: true
   register: splunk_hec_input
+  no_log: "{{ hide_password }}"
 
 - name: Enable HEC new-token
   command: "{{ splunk.exec }} http-event-collector enable -name splunk_hec_token -uri https://127.0.0.1:{{ splunk.svc_port }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   ignore_errors: true
   when: splunk_hec_input.status != 409
+  no_log: "{{ hide_password }}"
 
 - name: Enable SSL for HEC new-token
   command: "{{ splunk.exec }} http-event-collector update -uri https://127.0.0.1:{{ splunk.svc_port }} -enable-ssl {{ splunk.hec_enableSSL }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   ignore_errors: true
   when: splunk_hec_input.status != 409
+  no_log: "{{ hide_password }}"

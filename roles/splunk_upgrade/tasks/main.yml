@@ -9,6 +9,8 @@
 
 - name: Generate user-seed.conf
   ini_file:
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
     dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
     section: user_info
     option: "{{ item.opt }}"
@@ -18,6 +20,9 @@
     - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
   loop_control:
     label: "{{ item.opt }}"
+  no_log: "{{ hide_password }}"
 
 - name: Start Splunk
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
