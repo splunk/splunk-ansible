@@ -107,6 +107,7 @@ def getDefaultVars():
     getSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
     checkUpgrade(defaultVars)
+    checkSearchHeadCaptaincy(defaultVars)
     return defaultVars
 
 def getSplunkBuild(vars_scope):
@@ -165,6 +166,14 @@ def checkUpgrade(vars_scope):
         vars_scope["splunk"]["upgrade"] = True
     else:
         vars_scope["splunk"]["upgrade"] = False
+
+def checkSearchHeadCaptaincy(vars_scope):
+    if os.environ.get('SPLUNK_SEARCH_HEAD_DYNAMIC_CAPTAIN', False):
+        if os.uname()[1] == os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False):
+            vars_scope["splunk"]["role"] = "splunk_search_head_captain"
+            vars_scope["splunk"]["preferred_captain"] = "true"
+        else:
+            vars_scope["splunk"]["preferred_captain"] = "false"
 
 def getUFSplunkVariables(vars_scope):
     if os.environ.get('SPLUNK_DEPLOYMENT_SERVER', False):
