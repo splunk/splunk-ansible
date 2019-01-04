@@ -1,6 +1,30 @@
 ---
-- name: 1
-  command: "wget --header 'Cookie: oraclelicense=accept-securebackup-cookie' https://download.oracle.com/otn-pub/java/jdk/11.0.1+13/90cf5d8f270a4347a95050320eef3fb7/jdk-11.0.1_linux-x64_bin.tar.gz"
+- name: Download the Java distribution
+  command: "wget --header 'Cookie: oraclelicense=accept-securebackup-cookie' https://download.oracle.com/otn-pub/java/jdk/11.0.1+13/90cf5d8f270a4347a95050320eef3fb7/jdk-11.0.1_linux-x64_bin.tar.gz -P /opt/container_artifact"
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Untar the Java distribution
+  command: "tar xvzf /opt/container_artifact/jdk-11.0.1_linux-x64_bin.tar.gz -C /opt/container_artifact"
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Create alternatives for installed JRE
+  shell: update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk-11.0.1/bin/java 100
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Set Java version
+  shell: update-alternatives --set java /opt/container_artifact/jdk-11.0.1/bin/java
   when:
     - ansible_distribution == 'Debian'
   become: yes

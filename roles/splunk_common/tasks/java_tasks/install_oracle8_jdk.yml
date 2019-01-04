@@ -1,20 +1,33 @@
 ---
-- name: Install add-apt-repostory
+- name: Download the Java distribution
+  command: "wget --header 'Cookie: oraclelicense=accept-securebackup-cookie' https://download.oracle.com/otn-pub/java/jdk/8u191-b12/2787e4a523244c269598db4e85c51e0c/jdk-8u191-linux-x64.tar.gz -P /opt/container_artifact"
+  when:
+    - ansible_distribution == 'Debian'
   become: yes
-  apt: name=software-properties-common state=latest
+  become_method: sudo
+  become_user: root
 
-- name: Add Oracle Java Repository
+- name: Untar the Java distribution
+  command: "tar xvzf /opt/container_artifact/jdk-8u191-linux-x64.tar.gz -C /opt/container_artifact"
+  when:
+    - ansible_distribution == 'Debian'
   become: yes
-  apt_repository: repo='ppa:webupd8team/java'
+  become_method: sudo
+  become_user: root
 
-- name: Accept Java 8 License
+- name: Create alternatives for installed JRE
+  shell: update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk1.8.0_191/bin/java 100
+  when:
+    - ansible_distribution == 'Debian'
   become: yes
-  debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+  become_method: sudo
+  become_user: root
 
-- name: Install Oracle Java 8
+- name: Set Java version
+  shell: update-alternatives --set java /opt/container_artifact/jdk1.8.0_191/bin/java
+  when:
+    - ansible_distribution == 'Debian'
   become: yes
-  apt: name={{item}} state=latest
-  with_items:
-    - oracle-java8-installer
-    - ca-certificates
-    - oracle-java8-set-default
+  become_method: sudo
+  become_user: root
+
