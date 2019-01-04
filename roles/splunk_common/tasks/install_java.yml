@@ -1,0 +1,13 @@
+---
+- name: Install Oracle8 JDK
+  include_tasks: java_tasks/install_oracle8_jdk.yml
+  when:
+    - java_version == "oracle:8"
+    - ansible_system is match("Linux")
+
+- name: Install Oracle11 JDK
+  include_tasks: java_tasks/install_oracle11_jdk.yml
+  when:
+    - java_version == "oracle:11"
+    - ansible_system is match("Linux")
+
