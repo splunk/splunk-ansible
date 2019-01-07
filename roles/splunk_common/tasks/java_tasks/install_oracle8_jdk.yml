@@ -11,7 +11,6 @@
   become_method: sudo
   become_user: root
 
-
 - name: Untar the Java distribution
   unarchive:
     src: /opt/container_artifact/jdk-8u191-linux-x64.tar.gz 
