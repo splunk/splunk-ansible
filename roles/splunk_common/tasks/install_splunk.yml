@@ -1,5 +1,20 @@
 ---
-- name: Install Splunk
+- name: Download splunk package
+  get_url:
+    url: "{{ splunk.build_location }}"
+    dest: "/tmp/splunk.tgz"
+    mode: 0777
+    timeout: 600
+    force: true
+  register: item
+  until: item | succeeded
+  retries: "{{ retry_num }}"
+  delay: 10
+  when:
+  - splunk.build_location | regex_search("^(http).*")
+  - ansible_system is match("CYGWIN*|Win32NT")
+
+- name: Install Splunk (Linux)
   unarchive:
     src: "{{ splunk.build_location }}"
     dest: "{{ splunk.opt }}"
@@ -13,7 +28,7 @@
   delay: 3
 
 - name: Install Splunk (Windows)
-  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\splunk /passive /qn"
+  command: "msiexec /I /tmp/splunk.tgz AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\splunk /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")
   register: result
   until: result is succeeded
@@ -22,7 +37,7 @@
 
 - name: Remove installer
   file:
-    dest: "{{ splunk.build_location }}"
+    dest: "/tmp/splunk.tgz"
     state: "absent"
   ignore_errors: yes
   become: yes
