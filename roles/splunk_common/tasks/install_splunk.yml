@@ -1,4 +1,8 @@
 ---
+- name: debug
+  debug:
+    msg: "{{ splunk.build_location }}"
+
 - name: Download splunk package
   get_url:
     url: "{{ splunk.build_location }}"
