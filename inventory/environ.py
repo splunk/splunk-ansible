@@ -102,6 +102,10 @@ def getDefaultVars():
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
+    
+    # Check required Java installation
+    if os.environ.get("JAVA_VERSION", "").lower() in ['oracle:8', 'openjdk:8']:
+        defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
 
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
