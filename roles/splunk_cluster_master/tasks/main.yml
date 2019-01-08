@@ -3,15 +3,12 @@
   set_fact:
     num_indexer_hosts: "{{ groups['splunk_indexer'] | length }}"
 
-- name: Get default replication factor
-  set_fact:
-    idxc_search_factor: "{{ splunk.idxc.search_factor }}"
-    idxc_replication_factor: "{{ splunk.idxc.replication_factor }}"
-
 - name: Lower indexer search/replication factor
   set_fact:
-    idxc_search_factor: 1
-    idxc_replication_factor: 1
+    splunk:
+      idxc:
+        search_factor: 1
+        replication_factor: 1
   when: num_indexer_hosts|int < 3
 
 - name: Set indexer discovery
