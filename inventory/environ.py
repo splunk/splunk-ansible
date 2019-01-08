@@ -104,7 +104,7 @@ def getDefaultVars():
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
     
     # Check required Java installation
-    if os.environ.get("JAVA_VERSION", "").lower() in ['oracle:8', 'oracle:11', 'openjdk:8']:
+    if os.environ.get("JAVA_VERSION", "").lower() in ['oracle:8', 'openjdk:8']:
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
 
     getSplunkBuild(defaultVars)
