@@ -103,6 +103,11 @@ def getDefaultVars():
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
 
+    # Lower indexer search/replication factor when indexer hosts less than 3
+    if len(inventory["splunk_indexer"]["hosts"]) < 3:
+        defaultVars["splunk"]["idxc"]["search_factor"] = 1
+        defaultVars["splunk"]["idxc"]["replication_factor"] = 1
+
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
