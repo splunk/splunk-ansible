@@ -1,34 +1,28 @@
 ---
-- name: debug
-  debug:
-    msg: "{{ splunk.build_location }}"
-
 - name: Download splunk package
   get_url:
-    url: "{{ splunk.build_location }}"
+    url: "{{ splunk.uf_build_location }}"
     dest: "/tmp/splunk.tgz"
     mode: 0777
     timeout: 600
     force: true
-  register: item
-  until: item is succeeded
+  register: download_result
+  until: download_result is succeeded
   retries: 3
   delay: 10
   when:
-  - splunk.build_location is regex_search("^(http).*")
+  - splunk.uf_build_location | regex_search("^(http).*")
   - ansible_system is match("CYGWIN*|Win32NT")
 
 - name: Install Splunk universal forwarder (Linux)
   unarchive:
-    src: "{{ splunk.build_location }}"
+    src: "{{ splunk.uf_build_location }}"
     dest: "{{ splunk.opt }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    remote_src: "{{ splunk.build_remote_src }}"
-  become: yes
-  become_user: ansible
-  register: result
-  until: result is succeeded
+    remote_src: "{{ splunk.uf_build_remote_src }}"
+  register: install_result
+  until: install_result is succeeded
   retries: 5
   delay: 3
   when: ansible_system is match("Linux")

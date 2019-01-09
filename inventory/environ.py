@@ -112,10 +112,15 @@ def getDefaultVars():
 
 def getSplunkBuild(vars_scope):
     vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"]["build_location"])
+    vars_scope["splunk"]["uf_build_location"] = os.environ.get("UF_BUILD_URL", vars_scope["splunk"]["uf_build_location"])
     if vars_scope["splunk"]["build_location"] and vars_scope["splunk"]["build_location"].startswith("http"):
         vars_scope["splunk"]["build_remote_src"] = True
     else:
         vars_scope["splunk"]["build_remote_src"] = False
+    if vars_scope["splunk"]["uf_build_location"] and vars_scope["splunk"]["uf_build_location"].startswith("http"):
+        vars_scope["splunk"]["uf_build_remote_src"] = True
+    else:
+        vars_scope["splunk"]["uf_build_remote_src"] = False
 
 def getSplunkApps(vars_scope):
     splunkbase_username = (vars_scope["splunkbase_username"] if "splunkbase_username" in vars_scope else None) or os.environ.get("SPLUNKBASE_USERNAME") or None
