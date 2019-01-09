@@ -8,7 +8,7 @@
     force: true
   register: download_result
   until: download_result is succeeded
-  retries: 3
+  retries: 5
   delay: 10
   when:
   - splunk.uf_build_location | regex_search("^(http).*")

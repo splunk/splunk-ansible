@@ -8,7 +8,7 @@
     force: true
   register: item
   until: item | succeeded
-  retries: "{{ retry_num }}"
+  retries: 5
   delay: 10
   when:
   - splunk.build_location | regex_search("^(http).*")
@@ -24,7 +24,7 @@
   when: ansible_system is match("Linux")
   register: result
   until: result is succeeded
-  retries: "{{ retry_num }}"
+  retries: 5
   delay: 3
 
 - name: Install Splunk (Windows)
