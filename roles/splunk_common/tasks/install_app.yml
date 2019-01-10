@@ -14,8 +14,6 @@
   when:
     - "'splunkbase.splunk.com' not in app_url"
   no_log: "{{ hide_password }}"
-  notify:
-    - Restart the splunkd service
 
 - name: Install Splunkbase app
   uri:
@@ -34,5 +32,3 @@
     - splunkbase_token is defined
     - splunkbase_token != None
   no_log: "{{ hide_password }}"
-  notify:
-    - Restart the splunkd service

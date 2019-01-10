@@ -51,3 +51,5 @@
 - include_tasks: install_local_app.yml
   when:
     - splunk.local_apps_location is defined
+
+- include_tasks: check_for_required_restarts.yml
