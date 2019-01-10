@@ -95,7 +95,6 @@ def getDefaultVars():
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
     defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
-    defaultVars["splunk"]["dynamic"] = os.environ.get('SPLUNK_DYNAMIC', False)
     defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', None)
     defaultVars["splunk"]["nfr_license"] = os.environ.get('SPLUNK_NFR_LICENSE', '/tmp/nfr_enterprise.lic')
     defaultVars["splunk"]["ignore_license"] = os.environ.get('SPLUNK_IGNORE_LICENSE', False)
@@ -112,15 +111,10 @@ def getDefaultVars():
 
 def getSplunkBuild(vars_scope):
     vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"]["build_location"])
-    vars_scope["splunk"]["uf_build_location"] = os.environ.get("UF_BUILD_URL", vars_scope["splunk"]["uf_build_location"])
     if vars_scope["splunk"]["build_location"] and vars_scope["splunk"]["build_location"].startswith("http"):
         vars_scope["splunk"]["build_remote_src"] = True
     else:
         vars_scope["splunk"]["build_remote_src"] = False
-    if vars_scope["splunk"]["uf_build_location"] and vars_scope["splunk"]["uf_build_location"].startswith("http"):
-        vars_scope["splunk"]["uf_build_remote_src"] = True
-    else:
-        vars_scope["splunk"]["uf_build_remote_src"] = False
 
 def getSplunkApps(vars_scope):
     splunkbase_username = (vars_scope["splunkbase_username"] if "splunkbase_username" in vars_scope else None) or os.environ.get("SPLUNKBASE_USERNAME") or None

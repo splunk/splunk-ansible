@@ -1,7 +1,7 @@
 ---
-- name: Download splunk package
+- name: Download Splunk universal forwarder package (Windows)
   get_url:
-    url: "{{ splunk.uf_build_location }}"
+    url: "{{ splunk.build_location }}"
     dest: "/tmp/splunk.tgz"
     mode: 0777
     timeout: 600
@@ -16,11 +16,11 @@
 
 - name: Install Splunk universal forwarder (Linux)
   unarchive:
-    src: "{{ splunk.uf_build_location }}"
+    src: "{{ splunk.build_location }}"
     dest: "{{ splunk.opt }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    remote_src: "{{ splunk.uf_build_remote_src }}"
+    remote_src: "{{ splunk.build_remote_src }}"
   register: install_result
   until: install_result is succeeded
   retries: 5
@@ -30,6 +30,22 @@
 - name: Install Splunk universal forwarder (Windows)
   command: "msiexec /I /tmp/splunk.tgz AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\splunkforwarder /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")
+  register: install_result
+  until: install_result is succeeded
+  retries: "{{ retry_num }}"
+  delay: 3
+
+- name: Remove installers
+  file:
+    dest: "{{ item }}"
+    state: "absent"
+  ignore_errors: yes
+  become: yes
+  become_method: sudo
+  become_user: root
+  with_items:
+  - "/tmp/splunk.tgz"
+  - "{{ splunk.build_location }}"
 
 - name: Generate user-seed.conf
   ini_file:
