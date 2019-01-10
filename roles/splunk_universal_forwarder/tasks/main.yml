@@ -11,7 +11,7 @@
   retries: 5
   delay: 10
   when:
-  - splunk.uf_build_location | regex_search("^(http).*")
+  - splunk.build_location | regex_search("^(http).*")
   - ansible_system is match("CYGWIN*|Win32NT")
 
 - name: Install Splunk universal forwarder (Linux)
