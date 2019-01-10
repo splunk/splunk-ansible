@@ -24,7 +24,7 @@
   when: ansible_system is match("Linux")
   register: install_result
   until: install_result is succeeded
-  retries: {{ retry_num }}
+  retries: "{{ retry_num }}"
   delay: 3
 
 - name: Install Splunk (Windows)
