@@ -1,5 +1,5 @@
 ---
-- name: Download Slunk package (Windows)
+- name: Download Splunk package (Windows)
   get_url:
     url: "{{ splunk.build_location }}"
     dest: "/tmp/splunk.tgz"
