@@ -1,11 +1,5 @@
 ---
-- name: Install Splunk
-  unarchive:
-    src: "{{ splunk.build_location }}"
-    dest: "{{ splunk.opt }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-    remote_src: "{{ splunk.build_remote_src }}"
+- include_tasks: ../../splunk_common/tasks/install_splunk.yml
 
 - name: Generate user-seed.conf
   ini_file:
