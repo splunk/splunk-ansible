@@ -175,11 +175,7 @@ def convert_path_windows_to_nix(filepath):
         return filepath
 
 def checkUpgrade(vars_scope):
-    upgrade_var = os.environ.get('SPLUNK_UPGRADE', False)
-    if upgrade_var and upgrade_var.lower() == 'true':
-        vars_scope["splunk"]["upgrade"] = True
-    else:
-        vars_scope["splunk"]["upgrade"] = False
+    vars_scope["splunk"]["upgrade"] = os.environ.get('SPLUNK_UPGRADE', False)
 
 def getUFSplunkVariables(vars_scope):
     if os.environ.get('SPLUNK_DEPLOYMENT_SERVER', False):
