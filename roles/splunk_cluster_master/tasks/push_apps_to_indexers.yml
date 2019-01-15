@@ -1,0 +1,13 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/find_installed_apps.yml
+
+# TODO: Might be better to use synchronize here, but we'll need rsync installed
+- name: Copy installed apps to master-apps
+  shell: "cp -R {{ splunk.app_paths.default }}/{{ item }} {{ splunk.app_paths.idxc }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  #args:
+  #  warn: false
+  with_items: "{{ installed_apps }}"
+
+- include_tasks: apply_cluster_bundle.yml

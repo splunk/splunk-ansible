@@ -4,4 +4,6 @@
     - not splunk.hec_disabled | bool
     - splunk.hec_token is defined and splunk.hec_token != None
 
-- include_tasks: install_apps.yml
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when:
+    - splunk.apps_location

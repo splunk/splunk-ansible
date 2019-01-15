@@ -313,6 +313,7 @@ def create_parser():
     parser.add_argument('--write-to-file', action='store_true', default=False, help='Write to file for debugging')
     parser.add_argument('--write-to-stdout', action='store_true', default=False, help='create a default.yml file shown on stdout from current vars')
     return parser
+
 def prep_for_yaml_out(inventory):
     inventory_to_dump=inventory["all"]["vars"]
 
