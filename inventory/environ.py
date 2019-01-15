@@ -107,6 +107,11 @@ def getDefaultVars():
     if os.environ.get("JAVA_VERSION", "").lower() in ['oracle:8', 'openjdk:8']:
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
 
+    # Lower indexer search/replication factor when indexer hosts less than 3
+    if len(inventory["splunk_indexer"]["hosts"]) < 3:
+        defaultVars["splunk"]["idxc"]["search_factor"] = 1
+        defaultVars["splunk"]["idxc"]["replication_factor"] = 1
+
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
