@@ -1,37 +1,4 @@
 ---
-- name: Disable remote verification
-  uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
-    method: POST
-    user: admin
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body: "name=applicationsManagement&sslVerifyServerCert=0"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
-    status_code: [ 200, 409 ]
-    timeout: 10
-  register: disabled_verify
-  changed_when: disabled_verify.status_code == 200
-  ignore_errors: true
-  no_log: "{{ hide_password }}"
-
-- name: Install generic Splunk app
-  uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
-    method: POST
-    user: admin
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body: "name={{ app_url | urlencode() }}&update=true&filename=true"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
-    status_code: [ 200, 201 ]
-    timeout: 300
-  when:
-    - "'splunkbase.splunk.com' not in app_url"
-  no_log: "{{ hide_password }}"
-
 - name: Install Splunkbase app
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
@@ -49,3 +16,27 @@
     - splunkbase_token is defined
     - splunkbase_token != None
   no_log: "{{ hide_password }}"
+
+- name: Download generic Splunk app
+  get_url:
+    url: "{{ app_url }}"
+    dest: /tmp/app.spl
+    mode: 0777
+  register: 
+  when:
+    - "'splunkbase.splunk.com' not in app_url"
+    - app_url is search("http")
+
+- name: Install generic Splunk app
+  command: "{{ splunk.exec }} install app {% if 'http' in app_url %}/tmp/app.spl{% else %}{{ app_url }}{% endif %} -auth admin:{{ splunk.password }}"
+  no_log: "{{ hide_password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Remove downloaded app
+  file:
+    dest: /tmp/app.spl
+    state: absent
+  when:
+    - /tmp/app.spl is file
+  ignore_errors: yes

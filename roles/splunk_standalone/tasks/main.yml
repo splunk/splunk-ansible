@@ -3,3 +3,5 @@
   when:
     - not splunk.hec_disabled | bool
     - splunk.hec_token is defined and splunk.hec_token != None
+
+- include_tasks: install_apps.yml

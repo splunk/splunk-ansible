@@ -1,0 +1,26 @@
+---
+- name: Find existing apps
+  find:
+    paths: "{{ splunk.app_paths.default }}"
+    recurse: no
+    file_type: directory
+  register: existing_apps
+
+- include_tasks: install_app.yml
+  vars:
+    app_url: "{{ item }}"
+  loop: "{{ splunk.apps_location }}"
+
+- name: Find new apps
+  find:
+    paths: "{{ splunk.app_paths.default }}"
+    recurse: no
+    file_type: directory
+  register: new_apps
+
+- debug:
+    var: existing_apps
+
+- debug:
+    var: new_apps
+

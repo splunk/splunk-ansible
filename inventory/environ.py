@@ -109,7 +109,6 @@ def getDefaultVars():
 
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
-    getLocalSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
     checkUpgrade(defaultVars)
     return defaultVars
@@ -138,11 +137,6 @@ def getSplunkApps(vars_scope):
         vars_scope["splunk"]["apps_location"] = apps.split(",")
     else:
         vars_scope["splunk"]["apps_location"] = []
-
-def getLocalSplunkApps(vars_scope):
-    local_apps = os.environ.get("SPLUNK_LOCAL_APPS")
-    if local_apps:
-        vars_scope["splunk"]["local_apps_location"] = local_apps.split(",")
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
