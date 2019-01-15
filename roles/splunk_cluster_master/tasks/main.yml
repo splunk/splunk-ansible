@@ -1,19 +1,4 @@
 ---
-- name: Get indexer count
-  set_fact:
-    num_indexer_hosts: "{{ groups['splunk_indexer'] | length }}"
-
-- name: Get default replication factor
-  set_fact:
-    idxc_search_factor: "{{ splunk.idxc.search_factor }}"
-    idxc_replication_factor: "{{ splunk.idxc.replication_factor }}"
-
-- name: Lower indexer search/replication factor
-  set_fact:
-    idxc_search_factor: 1
-    idxc_replication_factor: 1
-  when: num_indexer_hosts|int < 3
-
 - name: Set indexer discovery
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"

@@ -1,5 +1,20 @@
 ---
-- name: Install Splunk
+- name: Download Splunk package (Windows)
+  get_url:
+    url: "{{ splunk.build_location }}"
+    dest: "/tmp/splunk.tgz"
+    mode: 0777
+    timeout: 600
+    force: true
+  register: download_result
+  until: download_result is succeeded
+  retries: 5
+  delay: 10
+  when:
+  - splunk.build_location | regex_search("^(http).*")
+  - ansible_system is match("CYGWIN*|Win32NT")
+
+- name: Install Splunk (Linux)
   unarchive:
     src: "{{ splunk.build_location }}"
     dest: "{{ splunk.opt }}"
@@ -7,24 +22,27 @@
     group: "{{ splunk.group }}"
     remote_src: "{{ splunk.build_remote_src }}"
   when: ansible_system is match("Linux")
-  register: result
-  until: result is succeeded
+  register: install_result
+  until: install_result is succeeded
   retries: "{{ retry_num }}"
   delay: 3
 
 - name: Install Splunk (Windows)
-  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\splunk /passive /qn"
+  command: "msiexec /I /tmp/splunk.tgz AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")
-  register: result
-  until: result is succeeded
+  register: install_result
+  until: install_result is succeeded
   retries: "{{ retry_num }}"
   delay: 3
 
-- name: Remove installer
+- name: Remove installers
   file:
-    dest: "{{ splunk.build_location }}"
+    dest: "{{ item }}"
     state: "absent"
   ignore_errors: yes
   become: yes
   become_method: sudo
   become_user: root
+  with_items:
+  - "/tmp/splunk.tgz"
+  - "{{ splunk.build_location }}"
