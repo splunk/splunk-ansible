@@ -13,17 +13,20 @@
   delay: 3
 
 - name: Apply Splunk license
-  command: "{{ splunk.exec }} add licenses {{lookup('first_found', license_locations)}} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add licenses {{ license_file }} -auth admin:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when:
     - not (splunk.ignore_license | bool)
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
   ignore_errors: true
-  vars:
-    license_locations:
+  with_first_found:
+    - files:
       - "{{ splunk.license_download_dest }}"
       - "{{ splunk.nfr_license }}"
+      skip: true
+  loop_control:
+    loop_var: license_file
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
