@@ -44,7 +44,7 @@
   when:
     - splunk_search_head_captain == true
   register: task_result
-  until: task_result.rc == 0 or task_result.rc == 22
+  until: task_result.rc == 0
   changed_when: task_result.rc == 0
   failed_when: task_result.rc !=0 and "node seems to have already joined another cluster" not in task_result.stderr
   retries: "{{ retry_num }}"
