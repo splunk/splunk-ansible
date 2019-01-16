@@ -41,13 +41,8 @@
   command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}https://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth 'admin:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
-  register: task_result
-  until: task_result.rc == 0
-  retries: "{{ retry_num }}"
-  delay: 3
   when:
     - splunk_search_head_captain == true
-
   register: task_result
   until: task_result.rc == 0 or task_result.rc == 22
   changed_when: task_result.rc == 0
