@@ -107,9 +107,13 @@ def getDefaultVars():
     if os.environ.get("JAVA_VERSION", "").lower() in ['oracle:8', 'openjdk:8']:
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
 
+    # Lower indexer search/replication factor when indexer hosts less than 3
+    if inventory.has_key("splunk_indexer") and inventory["splunk_indexer"].has_key("hosts") and len(inventory["splunk_indexer"]["hosts"]) < 3:
+        defaultVars["splunk"]["idxc"]["search_factor"] = 1
+        defaultVars["splunk"]["idxc"]["replication_factor"] = 1
+
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
-    getLocalSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
     checkUpgrade(defaultVars)
     return defaultVars
@@ -138,11 +142,6 @@ def getSplunkApps(vars_scope):
         vars_scope["splunk"]["apps_location"] = apps.split(",")
     else:
         vars_scope["splunk"]["apps_location"] = []
-
-def getLocalSplunkApps(vars_scope):
-    local_apps = os.environ.get("SPLUNK_LOCAL_APPS")
-    if local_apps:
-        vars_scope["splunk"]["local_apps_location"] = local_apps.split(",")
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
@@ -319,6 +318,7 @@ def create_parser():
     parser.add_argument('--write-to-file', action='store_true', default=False, help='Write to file for debugging')
     parser.add_argument('--write-to-stdout', action='store_true', default=False, help='create a default.yml file shown on stdout from current vars')
     return parser
+
 def prep_for_yaml_out(inventory):
     inventory_to_dump=inventory["all"]["vars"]
 

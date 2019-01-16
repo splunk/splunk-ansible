@@ -43,13 +43,4 @@
 
 - include_tasks: add_splunk_license.yml
 
-- include_tasks: install_app.yml
-  vars:
-    app_url: "{{ item }}"
-  loop: "{{ splunk.apps_location }}"
-
-- include_tasks: install_local_app.yml
-  when:
-    - splunk.local_apps_location is defined
-
 - include_tasks: check_for_required_restarts.yml

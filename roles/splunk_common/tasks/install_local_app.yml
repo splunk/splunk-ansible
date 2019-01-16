@@ -1,6 +1,0 @@
----
-- name: Install local Splunk apps
-  command: "{{ splunk.exec }} install app {{ item }} -auth admin:{{ splunk.password }}"
-  with_items:
-    - "{{ splunk.local_apps_location }}"
-  no_log: "{{ hide_password }}"

@@ -1,0 +1,21 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/find_installed_apps.yml
+
+# TODO: Might be better to use synchronize here, but we'll need rsync installed
+- name: Copy installed apps to shcluster/apps
+  shell: "cp -R {{ splunk.app_paths.default }}/{{ item }} {{ splunk.app_paths.shc }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ installed_apps }}"
+
+- name: Apply shcluster bundle
+  command: "{{ splunk.exec }} apply shcluster-bundle -target https://{{ groups['splunk_search_head_captain'][0] }}:{{ splunk.svc_port }} -auth admin:{{ splunk.password }} --answer-yes"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
+  register: shcluster_bundle
+  until: shcluster_bundle.rc == 0 or "Found zero deployable apps" in shcluster_bundle.stderr
+  changed_when: shcluster_bundle.rc == 0
+  failed_when: shcluster_bundle.rc != 0 and "Found zero deployable apps" not in shcluster_bundle.stderr
+  retries: 3
+  delay: 5
