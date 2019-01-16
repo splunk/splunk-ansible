@@ -8,3 +8,8 @@
   vars:
     cluster_master_host: "{{ groups['splunk_cluster_master'][0] }}"
   when: splunk.indexer_cluster
+
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when: 
+    - splunk.apps_location
+    - not splunk.indexer_cluster
