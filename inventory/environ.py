@@ -108,7 +108,7 @@ def getDefaultVars():
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
 
     # Lower indexer search/replication factor when indexer hosts less than 3
-    if len(inventory["splunk_indexer"]["hosts"]) < 3:
+    if inventory.has_key("splunk_indexer") and inventory["splunk_indexer"].has_key("hosts") and len(inventory["splunk_indexer"]["hosts"]) < 3:
         defaultVars["splunk"]["idxc"]["search_factor"] = 1
         defaultVars["splunk"]["idxc"]["replication_factor"] = 1
 
