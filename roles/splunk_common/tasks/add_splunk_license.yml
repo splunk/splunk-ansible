@@ -6,6 +6,7 @@
     timeout: 20
   when:
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
+    - splunk.license_uri is regex_search("^(http[s]|file)://.*")
   register: downloaded_license_path
   ignore_errors: yes
   until: downloaded_license_path is success
@@ -24,6 +25,7 @@
     license_locations:
       - "{{ splunk.license_download_dest }}"
       - "{{ splunk.nfr_license }}"
+      - "{{ splunk.license_uri }}"
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
