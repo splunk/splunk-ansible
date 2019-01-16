@@ -1,9 +1,4 @@
 ---
-- name: Print upgrade var
-  debug:
-    msg: "{{ splunk.upgrade }}"
-  ignore_errors: true
-
 - include_tasks: install_java.yml
   when:
     - java_version is defined
