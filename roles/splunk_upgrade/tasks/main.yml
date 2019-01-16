@@ -1,4 +1,9 @@
 ---
+- name: Stop Splunk
+  command: "{{ splunk.exec }} stop --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
 - include_tasks: ../../splunk_common/tasks/install_splunk.yml
 
 - name: Generate user-seed.conf
