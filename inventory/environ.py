@@ -104,7 +104,7 @@ def getDefaultVars():
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
 
     # Lower indexer search/replication factor when indexer hosts less than 3
-    if inventory.has_key("splunk_indexer") and len(inventory["splunk_indexer"]["hosts"]) < 3:
+    if inventory.has_key("splunk_indexer") and inventory["splunk_indexer"].has_key("hosts") and len(inventory["splunk_indexer"]["hosts"]) < 3:
         defaultVars["splunk"]["idxc"]["search_factor"] = 1
         defaultVars["splunk"]["idxc"]["replication_factor"] = 1
 
