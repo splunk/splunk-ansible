@@ -72,6 +72,7 @@
         - ansible_post_tasks is defined
         - ansible_post_tasks is not none
         - ansible_system is match("Linux")
+        - ansible_post_tasks is match("^(http|https)://.*")
       get_url:
         url: "{{ ansible_post_tasks }}"
         dest: "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
@@ -85,6 +86,7 @@
         - ansible_post_tasks is defined
         - ansible_post_tasks is not none
         - ansible_system is not match("Linux")
+        - ansible_post_tasks is match("^(http|https)://.*")
       win_get_url:
         url: "{{ ansible_post_tasks }}"
         dest: "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
