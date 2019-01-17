@@ -12,7 +12,7 @@
     - set_fact:
         splunk_search_head_captain: true
       when:
-        - actual_hostname.stdout == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL')
+        - actual_hostname.stdout == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or splunk.role == "splunk_search_head_captain"
 
     - set_fact:
         splunk_search_head_captain: false
