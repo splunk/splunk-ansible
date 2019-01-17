@@ -13,7 +13,11 @@
   register: new_apps
 
 - set_fact:
-    installed_apps: "{{ installed_apps | default([]) + [ item.path | basename ] | difference(default_apps) }}"
+    installed_apps: "{{ (installed_apps | default([]) + [ item.path | basename ] | difference(default_apps)) | unique }}"
   with_items: "{{ new_apps.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
+
+- debug:
+    var: installed_apps
+    
