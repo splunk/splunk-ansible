@@ -6,7 +6,7 @@
     timeout: 20
   when:
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
-    - splunk.license_uri is match("^(http[s]|file)://.*")
+    - splunk.license_uri is match("^(https?|file)://.*")
   register: downloaded_license_path
   ignore_errors: yes
   until: downloaded_license_path is success
