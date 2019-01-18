@@ -4,6 +4,21 @@
   gather_facts: true
   tasks:
 
+    # determine if this machine is the SHC captain
+    - name: Get actual hostname
+      command: hostname
+      register: actual_hostname
+
+    - set_fact:
+        splunk_search_head_captain: true
+      when:
+        - actual_hostname.stdout == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or splunk.role == "splunk_search_head_captain"
+
+    - set_fact:
+        splunk_search_head_captain: false
+      when:
+        - actual_hostname.stdout != lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') and splunk.role != "splunk_search_head_captain"
+
     # the get_url module is for linux only
     - name: Download pre-setup playbooks
       when:
@@ -54,16 +69,6 @@
         name: "{{ splunk.role }}"
       when:
         - splunk.role is defined
-        - splunk.role != 'splunk_search_head_captain'
-        - not splunk.upgrade
-
-    # Special case for search head captain
-    - name: Provision role
-      include_role:
-        name: "splunk_search_head"
-      when:
-        - splunk.role is defined
-        - splunk.role == 'splunk_search_head_captain'
         - not splunk.upgrade
 
     # the get_url module is for linux only
