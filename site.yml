@@ -24,6 +24,7 @@
       when:
         - ansible_pre_tasks is defined
         - ansible_pre_tasks is not none
+        - ansible_pre_tasks is match("^(http|https|file)://.*")
         - ansible_system is match("Linux")
       get_url:
         url: "{{ ansible_pre_tasks }}"
@@ -37,6 +38,7 @@
       when:
         - ansible_pre_tasks is defined
         - ansible_pre_tasks is not none
+        - ansible_pre_tasks is match("^(http|https|file)://.*")
         - ansible_system is not match("Linux")
       win_get_url:
         url: "{{ ansible_pre_tasks }}"
@@ -77,6 +79,7 @@
         - ansible_post_tasks is defined
         - ansible_post_tasks is not none
         - ansible_system is match("Linux")
+        - ansible_post_tasks is match("^(http|https|file)://.*")
       get_url:
         url: "{{ ansible_post_tasks }}"
         dest: "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
@@ -90,6 +93,7 @@
         - ansible_post_tasks is defined
         - ansible_post_tasks is not none
         - ansible_system is not match("Linux")
+        - ansible_post_tasks is match("^(http|https|file)://.*")
       win_get_url:
         url: "{{ ansible_post_tasks }}"
         dest: "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
