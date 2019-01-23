@@ -42,11 +42,6 @@
           - "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
 
-    - name: Print upgrade var
-      debug:
-        msg: "{{ splunk.upgrade }}"
-      ignore_errors: true
-
     - name: Upgrade role
       include_role:
         name: "splunk_upgrade"
