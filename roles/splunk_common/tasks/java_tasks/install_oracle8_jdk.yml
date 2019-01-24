@@ -1,9 +1,9 @@
 ---
 - name: Download the Java distribution
   get_url:
-    url: https://download.oracle.com/otn-pub/java/jdk/8u191-b12/2787e4a523244c269598db4e85c51e0c/jdk-8u191-linux-x64.tar.gz
+    url: https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz
     headers:
-        Cookie: oraclelicense=accept-securebackup-cookie
+      Cookie: oraclelicense=accept-securebackup-cookie
     dest: /opt/container_artifact
   when:
     - ansible_distribution == 'Debian'
@@ -13,7 +13,7 @@
 
 - name: Untar the Java distribution
   unarchive:
-    src: /opt/container_artifact/jdk-8u191-linux-x64.tar.gz 
+    src: /opt/container_artifact/jdk-8u201-linux-x64.tar.gz
     dest: /opt/container_artifact
   when:
     - ansible_distribution == 'Debian'
@@ -22,7 +22,7 @@
   become_user: root
 
 - name: Create alternatives for installed JDK Java binary
-  shell: update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk1.8.0_191/bin/java 100
+  shell: update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk1.8.0_201/bin/java 100
   when:
     - ansible_distribution == 'Debian'
   become: yes
@@ -30,7 +30,7 @@
   become_user: root
 
 - name: Create alternatives for installed JDK Javac binary
-  shell: update-alternatives --install /usr/bin/javac javac /opt/container_artifact/jdk1.8.0_191/bin/javac 100
+  shell: update-alternatives --install /usr/bin/javac javac /opt/container_artifact/jdk1.8.0_201/bin/javac 100
   when:
     - ansible_distribution == 'Debian'
   become: yes
@@ -38,7 +38,7 @@
   become_user: root
 
 - name: Set Java 
-  shell: update-alternatives --set java /opt/container_artifact/jdk1.8.0_191/bin/java
+  shell: update-alternatives --set java /opt/container_artifact/jdk1.8.0_201/bin/java
   when:
     - ansible_distribution == 'Debian'
   become: yes
@@ -46,7 +46,7 @@
   become_user: root
 
 - name: Set Javac 
-  shell: update-alternatives --set javac /opt/container_artifact/jdk1.8.0_191/bin/javac
+  shell: update-alternatives --set javac /opt/container_artifact/jdk1.8.0_201/bin/javac
   when:
     - ansible_distribution == 'Debian'
   become: yes
