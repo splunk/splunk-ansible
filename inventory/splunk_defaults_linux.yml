@@ -46,14 +46,14 @@ splunk:
         secret:
         label: "shc_label"
         replication_factor: 3
-        replication_port: 4001
+        replication_port: 9887
     idxc:
         enable: False
         secret:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3
-        replication_port: 4001
+        replication_port: 9887
     enable_service: False
     smartstore:
     app_paths:
