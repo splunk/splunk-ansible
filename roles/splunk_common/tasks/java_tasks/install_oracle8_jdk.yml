@@ -1,7 +1,7 @@
 ---
 - name: Download the Java distribution
   get_url:
-    url: https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz
+    url: "{{ java_oracle_url | default('https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz', true) }}"
     headers:
       Cookie: oraclelicense=accept-securebackup-cookie
     dest: /opt/container_artifact
