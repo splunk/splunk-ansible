@@ -5,6 +5,11 @@
     headers:
       Cookie: oraclelicense=accept-securebackup-cookie
     dest: /opt/container_artifact
+    timeout: 30
+  register: download_result
+  until: download_result.status_code == 200
+  retries: 5
+  delay: 10
   when:
     - ansible_distribution == 'Debian'
   become: yes
