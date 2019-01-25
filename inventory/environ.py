@@ -106,7 +106,8 @@ def getDefaultVars():
     # Check required Java installation
     if os.environ.get("JAVA_VERSION", "").lower() in ['oracle:8', 'openjdk:8']:
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
-        defaultVars["java_oracle_url"] = os.environ.get("JAVA_ORACLE_URL", None)
+        defaultVars["java_oracle_url"] = os.environ.get("JAVA_ORACLE_URL", "https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz")
+        defaultVars["java_update_version"] = re.search("jdk-8u(\d+)-linux-x64.tar.gz", defaultVars["java_oracle_url"]).group(1)
 
     # Lower indexer search/replication factor when indexer hosts less than 3
     if inventory.has_key("splunk_indexer") and inventory["splunk_indexer"].has_key("hosts") and len(inventory["splunk_indexer"]["hosts"]) < 3:
