@@ -1,0 +1,23 @@
+---
+- include_tasks: install_apps.yml
+  vars:
+    app_url: "{{ item }}"
+  loop: "{{ splunk.apps_location }}"
+
+- name: Flush restart handlers
+  meta: flush_handlers
+
+- include_tasks: find_installed_apps.yml
+
+- name: Configure Enterprise Security
+  include_tasks: premium_apps/configure_ess.yml
+  when:
+    - '"SplunkEnterpriseSecuritySuite" in installed_apps'
+
+- name: Configure IT Service Intelligence
+  include_tasks: premium_apps/configure_itsi.yml
+  when:
+    - '"itsi" in installed_apps'
+
+- name: Flush restart handlers
+  meta: flush_handlers

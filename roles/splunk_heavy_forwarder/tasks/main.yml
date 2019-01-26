@@ -11,3 +11,7 @@
 - include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
   vars:
     role: splunk_standalone
+
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when: 
+    - splunk.apps_location
