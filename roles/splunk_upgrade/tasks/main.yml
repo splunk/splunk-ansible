@@ -3,4 +3,8 @@
 - include_tasks: ../../splunk_common/tasks/install_splunk.yml
 - include_tasks: ../../splunk_common/tasks/set_user_seed.yml
 - include_tasks: ../../splunk_common/tasks/start_splunk.yml
+
 - include_tasks: ../../splunk_common/tasks/add_splunk_license.yml
+  when:
+  - splunk.role is defined
+  - splunk.role == 'splunk_universal_forwarder'
