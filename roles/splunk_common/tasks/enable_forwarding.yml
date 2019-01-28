@@ -17,6 +17,8 @@
   register: setup_indexer_discovery_stanza
   changed_when: setup_indexer_discovery_stanza.status == 201
   no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service
 
 - name: Setup tcpout group for index-clustering
   uri:
@@ -25,7 +27,7 @@
     user: admin
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name=tcpout:group1&indexerDiscovery=splunk-indexer&forwardedindex.0.whitelist=_internal&forwardedindex.1.whitelist=_audit&forwardedindex.filter.disable=false"
+    body: "name=tcpout:group1&indexerDiscovery=splunk-indexer"
     headers:
       Content-Type: "application/x-www-form-urlencoded"
     status_code: 201,409
