@@ -52,15 +52,3 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
-
-- name: Register with deployer
-  command: "{{ splunk.exec }} set deploy-poll 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -auth 'admin:{{ splunk.password }}'"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: task_result
-  until: task_result.rc == 0
-  retries: "{{ retry_num }}"
-  delay: 3
-  notify:
-    - Restart the splunkd service
-  no_log: "{{ hide_password }}"
