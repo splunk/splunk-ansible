@@ -4,13 +4,7 @@
     - not splunk.hec_disabled | bool
     - splunk.hec_token is defined and splunk.hec_token != None
 
-- include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
-  vars:
-    role: splunk_indexer
-
-- include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
-  vars:
-    role: splunk_standalone
+- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when: 
