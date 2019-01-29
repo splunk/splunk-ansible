@@ -30,12 +30,12 @@
 
 - name: Set desired preferred captaincy
   uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/services/configs/conf-server/shclustering"
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server/shclustering"
     method: POST
     user: admin
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "preferred_captain={{ splunk_search_head_captain }}"
+    body: "preferred_captain={{ splunk_search_head_captain | bool | lower }}"
     headers:
       Content-Type: "application/x-www-form-urlencoded"
     timeout: 10
