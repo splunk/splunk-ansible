@@ -1,6 +1,7 @@
 ---
-# Configure forwarding for index-clustered deployments
-- name: Setup indexer_discovery:splunk-indexer stanza in outputs.conf
+# Configure forwarding to indexer cluster master
+# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/indexerdiscovery
+- name: Setup indexer discovery for index-clustering
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
     method: POST
@@ -16,15 +17,17 @@
   register: setup_indexer_discovery_stanza
   changed_when: setup_indexer_discovery_stanza.status == 201
   no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service
 
-- name: Setup tcpout:group1 stanza in outputs.conf for clustered deployments
+- name: Setup tcpout group for index-clustering
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
     method: POST
     user: admin
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name=tcpout:group1&indexerDiscovery=splunk-indexer&forwardedindex.0.whitelist=_internal&forwardedindex.1.whitelist=_audit&forwardedindex.filter.disable=false"
+    body: "name=tcpout:group1&indexerDiscovery=splunk-indexer"
     headers:
       Content-Type: "application/x-www-form-urlencoded"
     status_code: 201,409
@@ -34,7 +37,7 @@
   changed_when: setup_tcpoutgroup_stanza.status == 201
   no_log: "{{ hide_password }}"
 
-- name: Setup tcpout stanza in outputs.conf for clustered deployments
+- name: Setup default tcpout group for index-clustering
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs/tcpout"
     method: POST
@@ -51,43 +54,20 @@
   changed_when: setup_tcpout_stanza.status == 200
   no_log: "{{ hide_password }}"
 
-# Configure forwarding for non-index-clustered deployments
-- name: Setup tcpout:group1 stanza in outputs.conf for non-clustered deployments
-  uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
-    method: POST
-    user: admin
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body: "name=tcpout:group1&server={% for node in groups['splunk_indexer'] %}{{ node }}:{{ splunk.s2s_port }}{% if not loop.last %},{% endif %}{% endfor %}"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
-    status_code: 201,409
-    timeout: 10
-  when:
-  - not splunk.indexer_cluster
-  - "'splunk_indexer' in groups"
-  register: setup_tcpoutgroup_stanza
-  changed_when: setup_tcpoutgroup_stanza.status == 201
-  no_log: "{{ hide_password }}"
-
-- name: Setup tcpout stanza in outputs.conf for non-clustered deployments
-  uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs/tcpout"
-    method: POST
-    user: admin
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body: "indexAndForward=false&defaultGroup=group1&forwardedindex.filter.disable=true"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
-    status_code: 200
-    timeout: 10
+# Configure forwarding to indexers directly
+# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
+- include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
+  vars:
+    role: splunk_indexer
   when: not splunk.indexer_cluster
-  register: setup_tcpout_stanza
-  changed_when: setup_tcpout_stanza.status == 200
-  no_log: "{{ hide_password }}"
 
+# Configure forwarding to standalones directly
+# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
+- include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
+  vars:
+    role: splunk_standalone
+
+# NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node
   uri:
     url: "https://127.0.0.1:{{splunk.svc_port}}/servicesNS/nobody/system/configs/conf-outputs"
@@ -100,7 +80,6 @@
       Content-Type: "application/x-www-form-urlencoded"
     status_code: 201,409
     timeout: 10
-  when: not splunk.indexer_cluster
   register: disable_indexing_stanza
   changed_when: disable_indexing_stanza.status == 201
   no_log: "{{ hide_password }}"
