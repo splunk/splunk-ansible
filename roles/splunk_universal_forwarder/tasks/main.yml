@@ -1,49 +1,31 @@
 ---
-- include_tasks: ../../splunk_common/tasks/install_splunk.yml
-
-- name: Generate user-seed.conf
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
-    section: user_info
-    option: "{{ item.opt }}"
-    value: "{{ item.val }}"
-  with_items:
-    - { opt: 'USERNAME', val: 'admin' }
-    - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
-  loop_control:
-    label: "{{ item.opt }}"
-  no_log: "{{ hide_password }}"
-
-- include_tasks: pre_splunk_start_commands.yml
-  ignore_errors: true
-
-- name: Start Splunk
-  command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
-  become: yes
-  become_user: "{{ splunk.user }}"
-
-- include_tasks: ../../splunk_common/tasks/enable_s2s_port.yml
-
-- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
-  when: 
-    - splunk.apps_location
-
-- include_tasks: ../../splunk_common/tasks/set_as_hec_receiver.yml
+- include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
   when:
     - not splunk.hec_disabled | bool
     - splunk.hec_token is defined and splunk.hec_token != None
+
+# Setup deployment server
+# http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients
+- name: Add a deployment server
+  command: "{{splunk.exec}} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{retry_num}}"
+  delay: "{{ delay_num }}"
+  when: splunk.deployment_server is defined
+  ignore_errors: true
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+  
+- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
 - include_tasks: setup_docker_monitoring.yml
   when:
     - docker_monitoring
   ignore_errors: true
-
-- name: Setup output forwarding rules
-  ini_file:
-    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
-    section: tcpout
-    option: forwardedindex.0.whitelist
-    value: ".*"
 
 # Setup deployment server
 # http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients
@@ -63,19 +45,13 @@
 
 - name: Flush restart handlers
   meta: flush_handlers
-
-# Setup forwarding server
-# http://docs.splunk.com/Documentation/Splunk/latest/Forwarding/Deployanixdfmanually
-- include_tasks: ../../splunk_common/tasks/add_forward_server.yml
-  vars:
-    role: splunk_indexer
-
-- include_tasks: ../../splunk_common/tasks/add_forward_server.yml
-  vars:
-    role: splunk_standalone
-
+  
 - include_tasks: ../../splunk_common/tasks/add_splunk_object.yml
   when: splunk.add is defined
+  
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when: 
+    - splunk.apps_location
 
 # Execute other Splunk commands
 - name: Execute splunk commands
