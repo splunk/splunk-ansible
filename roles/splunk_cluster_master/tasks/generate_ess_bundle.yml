@@ -1,0 +1,40 @@
+---
+- name: Copy bundle script
+  shell: "cp /opt/ansible/library/es_ta_for_indexers.py /tmp/es_ta_for_indexers.py"
+
+- name: Modify bundle script permissions
+  file:
+    path: /tmp/es_ta_for_indexers.py
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: 0777
+
+- name: Execute bundle script
+  command: "{{ splunk.exec }} cmd python /tmp/es_ta_for_indexers.py --password {{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
+  register: ta_location
+
+- name: Unarchive bundle
+  unarchive:
+    src: "{{ ta_location.stdout_lines[0] }}"
+    dest: "{{ splunk.app_paths.idxc }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    remote_src: yes
+  when:
+    - ta_location is success
+
+- set_fact:
+    ess_apps: ["DA-ESS-AccessProtection", "DA-ESS-EndpointProtection", "DA-ESS-IdentityManagement", "DA-ESS-NetworkProtection",
+               "DA-ESS-ThreatIntelligence", "SA-AccessProtection", "SA-AuditAndDataProtection", "SA-EndpointProtection", "SA-IdentityManagement",
+               "SA-NetworkProtection", "SA-ThreatIntelligence", "SA-UEBA", "SA-Utils", "SplunkEnterpriseSecuritySuite", "Splunk_SA_CIM",
+               "Splunk_SA_ExtremeSearch", "Splunk_TA_bluecoat-proxysg", "Splunk_TA_bro", "Splunk_TA_flowfix", "Splunk_TA_juniper", 
+               "Splunk_TA_mcafee", "Splunk_TA_nessus", "Splunk_TA_nix", "Splunk_TA_oracle", "Splunk_TA_ossec", "Splunk_TA_rsa-securid",
+               "Splunk_TA_sophos", "Splunk_TA_sourcefire", "Splunk_TA_symantec-ep", "Splunk_TA_ueba", "Splunk_TA_websense-cg", "Splunk_TA_windows",
+               "TA-airdefense", "TA-alcatel", "TA-cef", "TA-fortinet", "TA-ftp", "TA-nmap", "TA-tippingpoint", "TA-trendmicro"]
+
+- name: Remove ESS apps from installed apps list
+  set_fact:
+    installed_apps: "{{ installed_apps | difference(ess_apps) | unique }}"

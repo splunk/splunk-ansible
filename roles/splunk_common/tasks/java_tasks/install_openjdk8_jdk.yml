@@ -1,0 +1,21 @@
+---
+- name: Create a dependency file
+  file: 
+    path: /usr/share/man/man1
+    state: directory
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Install the JDK
+  apt:
+    name: openjdk-8-jdk-headless
+    state: present
+    update_cache: yes
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root

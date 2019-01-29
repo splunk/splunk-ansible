@@ -21,6 +21,7 @@ config:
 
 splunk:
     build_location: "/tmp/splunk.tgz"
+    tar_dir: "splunkforwarder"
     opt: &opt "/opt"
     home: &home !!python/object/apply:string.join [[*opt, "/splunkforwarder"],'']
     user: "splunk"
@@ -45,27 +46,19 @@ splunk:
         secret:
         label: "shc_label"
         replication_factor: 3
-        replication_port: 4001
+        replication_port: 9887
     idxc:
         enable: False
         secret:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3
-        replication_port: 4001
+        replication_port: 9887
     enable_service: False
     smartstore:
     app_paths:
         default: !!python/object/apply:string.join [[*home, "/etc/apps"], '']
         shc: !!python/object/apply:string.join [[*home, "/etc/shcluster/apps"], '']
         idxc: !!python/object/apply:string.join [[*home, "/etc/master-apps"], '']
+        deployment: !!python/object/apply:string.join [[*home, "/etc/deployment-apps"], '']
         httpinput: !!python/object/apply:string.join [[*home, "/etc/apps/splunk_httpinput"], '']
-    apps:
-        local:
-            path: !!python/object/apply:string.join [[*home, "/etc/apps"], '']
-        deployment:
-            path: !!python/object/apply:string.join [[*home, "/etc/deployment-apps"], '']
-        master:
-            path: !!python/object/apply:string.join [[*home, "/etc/master-apps"], '']
-        shcluster:
-            path: !!python/object/apply:string.join [[*home, "/etc/shcluster/apps"], '']
