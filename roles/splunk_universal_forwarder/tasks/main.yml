@@ -45,7 +45,7 @@
 
 - name: Flush restart handlers
   meta: flush_handlers
-  
+
 - include_tasks: ../../splunk_common/tasks/add_splunk_object.yml
   when: splunk.add is defined
   
@@ -54,7 +54,7 @@
     - splunk.apps_location
 
 # Execute other Splunk commands
-- name: Execute splunk commands
+- name: Execute Splunk commands
   command: "{{splunk.exec}} {{ item }}"
   become: yes
   become_user: "{{ splunk.user }}"
