@@ -1,0 +1,5 @@
+---
+- name: Stop Splunk
+  command: "{{ splunk.exec }} stop --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
