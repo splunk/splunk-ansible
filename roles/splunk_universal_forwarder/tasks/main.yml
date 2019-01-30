@@ -1,27 +1,11 @@
 ---
 - include_tasks: ../../splunk_common/tasks/install_splunk.yml
-
-- name: Generate user-seed.conf
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
-    section: user_info
-    option: "{{ item.opt }}"
-    value: "{{ item.val }}"
-  with_items:
-    - { opt: 'USERNAME', val: 'admin' }
-    - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
-  loop_control:
-    label: "{{ item.opt }}"
-  no_log: "{{ hide_password }}"
+- include_tasks: ../../splunk_common/tasks/set_user_seed.yml
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
 
-- name: Start Splunk
-  command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
-  become: yes
-  become_user: "{{ splunk.user }}"
-
+- include_tasks: ../../splunk_common/tasks/start_splunk.yml
 - include_tasks: ../../splunk_common/tasks/enable_s2s_port.yml
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
