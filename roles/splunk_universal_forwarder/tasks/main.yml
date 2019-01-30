@@ -55,7 +55,7 @@
 
 # Execute other Splunk commands
 - name: Execute Splunk commands
-  command: "{{splunk.exec}} {{ item }}"
+  command: "{{splunk.exec}} {{ item }} -auth admin:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ splunk.cmd }}"
@@ -64,6 +64,7 @@
   retries: "{{ retry_num }}"
   delay: "{{ delay_num }}"
   when: splunk.cmd is defined
+  no_log: "{{ hide_password }}"
   ignore_errors: true
   notify:
     - Restart the splunkd service
