@@ -1,7 +1,7 @@
 ---
 # TODO: This looks a lot like add_splunk_object.yml - we can probably condense this
 - name: Execute pre-start Splunk commands
-  command: "{{ splunk.exec }} {{ item }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} {{ item }} -auth admin:{{ splunk.password }} --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ splunk.before_start_cmd }}"
