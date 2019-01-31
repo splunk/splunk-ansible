@@ -9,11 +9,13 @@
   become_method: sudo
   become_user: root
 
-- name: Install the JDK
-  apt:
-    name: openjdk-8-jdk-headless
-    state: present
-    update_cache: yes
+- name: Download the Java distribution
+  unarchive:
+    src: "{{ java_download_url }}"
+    dest: /opt/container_artifact
+    remote_src: yes
+  retries: 5
+  delay: 10
   when:
     - ansible_distribution == 'Debian'
   become: yes
@@ -29,12 +31,20 @@
   when:
     - ansible_distribution == 'Debian'
 
-- name: Get JAVA_HOME
-  shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
-  register: java_home
+- name: Create symlink for Java binary
   become: yes
   become_method: sudo
   become_user: root
+  command: ln -s /opt/container_artifact/jdk-{{ java_update_version }}/bin/java /usr/bin/java
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Create symlink for Javac binary
+  become: yes
+  become_method: sudo
+  become_user: root
+  command: ln -s /opt/container_artifact/jdk-{{ java_update_version }}/bin/javac /usr/bin/javac
   ignore_errors: true
   when:
     - ansible_distribution == 'Debian'
@@ -46,8 +56,6 @@
   lineinfile:
     path: "{{splunk.home}}/etc/splunk-launch.conf"
     regexp: '^JAVA_HOME'
-    line: "JAVA_HOME={{ java_home.stdout }}"
-  ignore_errors: true
+    line: "JAVA_HOME=/opt/container_artifact/jdk-{{ java_update_version }}"
   when:
     - ansible_distribution == 'Debian'
-  

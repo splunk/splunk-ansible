@@ -1,8 +1,4 @@
 ---
-- include_tasks: install_java.yml
-  when:
-    - java_version is defined
-
 - include_tasks: change_splunk_directory_owner.yml
   when:
     - splunk_home_ownership_enforcement is defined
@@ -14,6 +10,10 @@
   when:
     - first_run is defined
     - first_run | bool
+
+- include_tasks: install_java.yml
+  when:
+    - java_version is defined
 
 - include_tasks: set_user_seed.yml
   when:

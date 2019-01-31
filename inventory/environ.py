@@ -104,13 +104,24 @@ def getDefaultVars():
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
     
     # Check required Java installation
-    if os.environ.get("JAVA_VERSION", "").lower() in ['oracle:8', 'openjdk:8']:
+    java_version = os.environ.get("JAVA_VERSION", "").lower()
+    if java_version in ['oracle:8', 'openjdk:8', 'openjdk:11']:
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
-        defaultVars["java_oracle_url"] = os.environ.get("JAVA_ORACLE_URL", "https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz")
-        try:
-            defaultVars["java_update_version"] = re.search("jdk-8u(\d+)-linux-x64.tar.gz", defaultVars["java_oracle_url"]).group(1)
-        except:
-            raise Exception("Invalid Java download URL format")
+        if java_version == "oracle:8":
+            defaultVars["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz")
+            try:
+                defaultVars["java_update_version"] = re.search("jdk-8u(\d+)-linux-x64.tar.gz", defaultVars["java_download_url"]).group(1)
+            except:
+                raise Exception("Invalid Java download URL format")
+        elif java_version == "openjdk:11":
+            defaultVars["java_download_url"] = os.environ.get(
+                "JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz")
+            try:
+                defaultVars["java_update_version"] = re.search(
+                    "openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", defaultVars["java_download_url"]).group(1)
+            except:
+                raise Exception("Invalid Java download URL format")
+
 
     # Lower indexer search/replication factor when indexer hosts less than 3
     if inventory.has_key("splunk_indexer") and inventory["splunk_indexer"].has_key("hosts") and len(inventory["splunk_indexer"]["hosts"]) < 3:
