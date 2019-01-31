@@ -1,9 +1,0 @@
----
-- name: Restart the splunkd service
-  command: "{{splunk.exec}} restart --answer-yes --accept-license"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: task_result
-  until: task_result.rc == 0
-  retries: 3
-  delay: "{{ delay_num }}"
