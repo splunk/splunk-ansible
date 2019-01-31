@@ -11,3 +11,9 @@
     - java_version == "openjdk:8"
     - ansible_system is match("Linux")
 
+- name: Install Openjdk11 JDK
+  include_tasks: java_tasks/install_openjdk11_jdk.yml
+  when:
+    - java_version == "openjdk:11"
+    - ansible_system is match("Linux")
+

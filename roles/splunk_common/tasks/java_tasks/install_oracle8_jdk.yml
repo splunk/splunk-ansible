@@ -1,7 +1,7 @@
 ---
 - name: Download the Java distribution
   get_url:
-    url: "{{ java_oracle_url }}"
+    url: "{{ java_download_url }}"
     headers:
       Cookie: oraclelicense=accept-securebackup-cookie
     dest: /opt/container_artifact
@@ -57,3 +57,34 @@
   become: yes
   become_method: sudo
   become_user: root
+
+- name: Create splunk-launch.conf
+  become: yes
+  become_method: sudo
+  become_user: root
+  command: cp {{splunk.home}}/etc/splunk-launch.conf.default {{splunk.home}}/etc/splunk-launch.conf
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Get JAVA_HOME
+  shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
+  register: java_home
+  become: yes
+  become_method: sudo
+  become_user: root
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Set JAVA_HOME in splunk-launch.conf
+  become: yes
+  become_method: sudo
+  become_user: root
+  lineinfile:
+    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    regexp: '^JAVA_HOME'
+    line: "JAVA_HOME={{ java_home.stdout }}"
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
