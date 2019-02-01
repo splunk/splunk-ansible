@@ -29,6 +29,7 @@ splunk:
     exec: !!python/object/apply:string.join [[*home, "\\bin\\splunk.exe"], '']
     pid: !!python/object/apply:string.join [[*home, "\\var\\run\\splunk\\splunkd.pid"], '']
     password:
+    secret: 
     svc_port: 8089
     s2s_port: 9997
     s2s_enable: True
