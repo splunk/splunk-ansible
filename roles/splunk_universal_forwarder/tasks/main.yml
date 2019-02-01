@@ -7,7 +7,7 @@
 # Setup deployment server
 # http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients
 - name: Add a deployment server
-  command: "{{splunk.exec}} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
+  command: "{{splunk.exec}} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.svc_port }} -auth admin:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
@@ -26,22 +26,6 @@
   when:
     - docker_monitoring
   ignore_errors: true
-
-# Setup deployment server
-# http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients
-- name: Add a deployment server
-  command: "{{splunk.exec}} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: task_result
-  until: task_result.rc == 0
-  retries: "{{retry_num}}"
-  delay: "{{ delay_num }}"
-  when: splunk.deployment_server is defined
-  ignore_errors: true
-  notify:
-    - Restart the splunkd service
-  no_log: "{{ hide_password }}"
 
 - name: Flush restart handlers
   meta: flush_handlers
