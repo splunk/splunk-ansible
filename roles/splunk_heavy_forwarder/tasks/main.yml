@@ -12,3 +12,5 @@
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when: 
     - splunk.apps_location
+
+- include_tasks: check_for_required_restarts.yml

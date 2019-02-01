@@ -8,3 +8,5 @@
   when:
   - splunk.role is defined
   - splunk.role != 'splunk_universal_forwarder'
+
+- include_tasks: check_for_required_restarts.yml

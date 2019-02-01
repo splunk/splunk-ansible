@@ -68,3 +68,5 @@
   ignore_errors: true
   notify:
     - Restart the splunkd service
+
+- include_tasks: check_for_required_restarts.yml

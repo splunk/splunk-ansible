@@ -45,5 +45,3 @@
 - include_tasks: clean_user_seed.yml
 
 - include_tasks: add_splunk_license.yml
-
-- include_tasks: check_for_required_restarts.yml
