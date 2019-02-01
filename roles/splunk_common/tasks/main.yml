@@ -1,8 +1,4 @@
 ---
-- include_tasks: install_java.yml
-  when:
-    - java_version is defined
-
 - include_tasks: change_splunk_directory_owner.yml
   when:
     - splunk_home_ownership_enforcement is defined
@@ -15,12 +11,16 @@
     - first_run is defined
     - first_run | bool
 
+- include_tasks: install_java.yml
+  when:
+    - java_version is defined
+
 # This needs to be done before any encrypted passkeys are generated
 - include_tasks: set_splunk_secret.yml
   when:
     - first_run is defined
     - first_run | bool
-    
+
 - include_tasks: set_user_seed.yml
   when:
     - first_run is defined
@@ -51,5 +51,3 @@
 - include_tasks: clean_user_seed.yml
 
 - include_tasks: add_splunk_license.yml
-
-- include_tasks: check_for_required_restarts.yml

@@ -13,3 +13,5 @@
   when: 
     - splunk.apps_location
     - not splunk.indexer_cluster
+
+- include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

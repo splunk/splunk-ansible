@@ -20,6 +20,7 @@
   when:
     - not (splunk.ignore_license | bool)
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
+    - not (splunk.wildcard_license | bool)
   ignore_errors: true
   with_first_found:
     - files:
@@ -29,6 +30,21 @@
       skip: true
   loop_control:
     loop_var: license_file
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+
+- name: Apply wildcard licenses
+  command: "{{ splunk.exec }} add licenses {{ item }} -auth admin:{{ splunk.password }}"
+  with_fileglob:
+    - "{{ splunk.license_uri }}"
+  ignore_errors: true
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when:
+    - not (splunk.ignore_license | bool)
+    - splunk.role == "splunk_license_master" or not splunk.license_master_included
+    - splunk.wildcard_license | bool
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
