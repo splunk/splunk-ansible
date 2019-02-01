@@ -10,3 +10,5 @@
 - include_tasks: push_apps_to_indexers.yml
   when:
     - splunk.apps_location
+
+- include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
