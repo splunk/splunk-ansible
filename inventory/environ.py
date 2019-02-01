@@ -96,6 +96,10 @@ def getDefaultVars():
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
     defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
     defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', None)
+    if defaultVars["splunk"]["license_uri"] and '*' in defaultVars["splunk"]["license_uri"]:
+        defaultVars["splunk"]["wildcard_license"] = True
+    else:
+        defaultVars["splunk"]["wildcard_license"] = False
     defaultVars["splunk"]["nfr_license"] = os.environ.get('SPLUNK_NFR_LICENSE', '/tmp/nfr_enterprise.lic')
     defaultVars["splunk"]["ignore_license"] = os.environ.get('SPLUNK_IGNORE_LICENSE', False)
     defaultVars["splunk"]["license_download_dest"] = os.environ.get('SPLUNK_LICENSE_INSTALL_PATH', '/tmp/splunk.lic')
