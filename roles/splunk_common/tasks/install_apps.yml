@@ -46,6 +46,7 @@
 - name: Check app contents
   shell: "tar --exclude='*/*/*' --exclude='*.*' -tf /tmp/app.spl | awk -F'/' '{ print$1 }' | uniq"
   register: app_contents
+  when: "'splunkbase.splunk.com' not in app_url"
 
 - name: Install app via extraction
   unarchive:
@@ -55,7 +56,9 @@
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
-  when: "'itsi' in app_contents.stdout_lines"
+  when: 
+    - "'splunkbase.splunk.com' not in app_url"
+    - "'itsi' in app_contents.stdout_lines"
   notify:
     - Restart the splunkd service
 
@@ -71,7 +74,9 @@
       Content-Type: "application/x-www-form-urlencoded"
     status_code: [ 200, 201 ]
     timeout: 30
-  when: "'itsi' not in app_contents.stdout_lines"
+  when: 
+    - "'splunkbase.splunk.com' not in app_url"
+    - "'itsi' not in app_contents.stdout_lines"
   no_log: "{{ hide_password }}"
 
 - name: Remove downloaded app
