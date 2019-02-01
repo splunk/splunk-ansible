@@ -23,7 +23,7 @@
   register: app_source
 
 - name: Move generic app
-  command: "mv {{ app_url }} /tmp/app.spl" 
+  command: "cp {{ app_url }} /tmp/app.spl" 
   when: app_source.stat.exists
 
 - name: Download generic app
