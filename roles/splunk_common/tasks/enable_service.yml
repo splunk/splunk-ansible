@@ -2,4 +2,3 @@
 - name: Enable service via boot-start
   command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }}"
   become: yes
-  become_user: "{{ splunk.user }}"
