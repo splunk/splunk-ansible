@@ -1,0 +1,3 @@
+---
+dependencies:
+  - role: splunk_search_head

@@ -1,5 +1,0 @@
----
-- hosts: localhost
-  gather_facts: true
-  tasks:
-    - import_tasks: roles/splunk_common/tasks/start_splunk.yml

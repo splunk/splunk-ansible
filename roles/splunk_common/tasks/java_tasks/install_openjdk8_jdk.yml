@@ -1,0 +1,53 @@
+---
+- name: Create a dependency file
+  file: 
+    path: /usr/share/man/man1
+    state: directory
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Install the JDK
+  apt:
+    name: openjdk-8-jdk-headless
+    state: present
+    update_cache: yes
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Create splunk-launch.conf
+  become: yes
+  become_method: sudo
+  become_user: root
+  command: cp {{splunk.home}}/etc/splunk-launch.conf.default {{splunk.home}}/etc/splunk-launch.conf
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Get JAVA_HOME
+  shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
+  register: java_home
+  become: yes
+  become_method: sudo
+  become_user: root
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Set JAVA_HOME in splunk-launch.conf
+  become: yes
+  become_method: sudo
+  become_user: root
+  lineinfile:
+    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    regexp: '^JAVA_HOME'
+    line: "JAVA_HOME={{ java_home.stdout }}"
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+  
