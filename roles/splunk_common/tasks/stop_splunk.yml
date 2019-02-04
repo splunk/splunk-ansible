@@ -1,5 +1,18 @@
 ---
-- name: Stop Splunk
+- name: "Stop Splunk via cli"
   command: "{{ splunk.exec }} stop --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
+  when: not splunk.enable_service
+
+- name: "Stop Splunk via systemctl"
+  systemd:
+    state: stopped
+    name: Splunkd
+  when: splunk.enable_service and ansible_system is match("Linux")
+
+- name: "Stop Splunk via Windows service"
+  win_service:
+    name: splunkd
+    state: stopped
+  when: splunk.enable_service and not ansible_system is match("Linux")
