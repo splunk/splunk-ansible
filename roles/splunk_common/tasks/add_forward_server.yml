@@ -1,6 +1,8 @@
 ---
 - name: "Enable forwarding to {{ role }}"
   command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   with_items: "{{ groups[role] }}"
   when: "role in groups"
   register: forward_status
@@ -12,3 +14,4 @@
   delay: 3
   notify:
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"

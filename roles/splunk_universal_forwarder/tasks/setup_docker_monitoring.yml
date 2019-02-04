@@ -25,6 +25,8 @@
 
 - name: Download Docker community edition
   command: "wget -qO {{ splunk.app_paths.default }}/ta-dockerstats/bin/docker-{{ docker_version }}-ce.tgz https://download.docker.com/linux/static/stable/{{ ansible_architecture }}/docker-{{ docker_version }}-ce.tgz"
+  become: yes
+  become_user: "{{ splunk.user }}"
   ignore_errors: true
 
 - name: Create a tmp directory
@@ -35,6 +37,8 @@
 
 - name: Untar docker binary to apps tmp
   command: "tar xzvf {{ splunk.app_paths.default }}/ta-dockerstats/bin/docker-{{ docker_version }}-ce.tgz -C {{ splunk.app_paths.default }}/ta-dockerstats/bin/tmp"
+  become: yes
+  become_user: "{{ splunk.user }}"
   ignore_errors: true
 
 - name: Remove downloaded binary
@@ -49,6 +53,8 @@
 
 - name: Make files executable
   command: "chmod +x {{ splunk.app_paths.default }}/ta-dockerstats/bin/docker"
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 # must use shell module for globing
 - shell: "chown {{ splunk.user }}:{{ splunk.group }} {{ splunk.app_paths.default }}/ta-dockerstats/bin/*.sh"

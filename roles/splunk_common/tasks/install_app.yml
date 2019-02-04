@@ -13,6 +13,7 @@
     timeout: 300
   when:
     - "'splunkbase.splunk.com' not in app_url"
+  no_log: "{{ hide_password }}"
 
 - name: Install Splunkbase app
   uri:
@@ -30,3 +31,4 @@
     - "'splunkbase.splunk.com' in app_url"
     - splunkbase_token is defined
     - splunkbase_token != None
+  no_log: "{{ hide_password }}"

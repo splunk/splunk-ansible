@@ -18,12 +18,15 @@
 
 - name: Initialize SHC cluster config
   command: "{{ splunk.exec }} init shcluster-config -auth 'admin:{{ splunk.password }}' -mgmt_uri 'https://{{ ansible_hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
+  become: yes
+  become_user: "{{ splunk.user }}"
   register: task_result
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
   notify:
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"
 
 - name: Flush restart handlers
   meta: flush_handlers
@@ -36,20 +39,28 @@
 
 - name: Boostrap SHC captain
   command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}https://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth 'admin:{{ splunk.password }}'"
+  become: yes
+  become_user: "{{ splunk.user }}"
   when:
     - splunk.role == "splunk_search_head_captain"
   register: task_result
-  until: task_result.rc == 0
+  until: task_result.rc == 0 or task_result.rc == 22
+  changed_when: task_result.rc == 0
+  failed_when: task_result.rc !=0 and "node seems to have already joined another cluster" not in task_result.stderr
   retries: "{{ retry_num }}"
   delay: 3
   notify:
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"
 
 - name: Register with deployer
   command: "{{ splunk.exec }} set deploy-poll 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -auth 'admin:{{ splunk.password }}'"
+  become: yes
+  become_user: "{{ splunk.user }}"
   register: task_result
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
   notify:
     - Restart the splunkd service
+  no_log: "{{ hide_password }}"
