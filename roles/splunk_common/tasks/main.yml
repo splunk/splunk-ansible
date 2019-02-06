@@ -11,6 +11,8 @@
     - first_run is defined
     - first_run | bool
 
+- include_tasks: remove_first_login.yml
+
 - include_tasks: install_java.yml
   when:
     - java_version is defined
