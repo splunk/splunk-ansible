@@ -1,21 +1,9 @@
 ---
-- name: "Generate user-seed.conf - Hashed Password"
-  ini_file:
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-    dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
-    section: user_info
-    option: "{{ item.opt }}"
-    value: "{{ item.val }}"
-  with_items:
-    - { opt: 'USERNAME', val: '{{ splunk.admin_user }}' }
-    - { opt: 'HASHED_PASSWORD', val: '{{ splunk.password }}' }
-  loop_control:
-    label: "{{ item.opt }}"
-  no_log: "{{ hide_password }}"
-  when: splunk.password is match("^$\d$")
+- name: "Hash the password"
+  command: "{{ splunk.exec }} hash-passwd {{ splunk.password }}"
+  register: hashed_pwd
 
-- name: "Generate user-seed.conf - Clear Text"
+- name: "Generate user-seed.conf"
   ini_file:
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
@@ -25,8 +13,7 @@
     value: "{{ item.val }}"
   with_items:
     - { opt: 'USERNAME', val: '{{ splunk.admin_user }}' }
-    - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
+    - { opt: 'HASHED_PASSWORD', val: '{{ hashed_pwd }}' }
   loop_control:
     label: "{{ item.opt }}"
   no_log: "{{ hide_password }}"
-  when: not splunk.password is match("^$\d$")
