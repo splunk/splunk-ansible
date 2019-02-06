@@ -31,7 +31,7 @@
     - { key: "remote.s3.endpoint", value: "{{ index.s3.endpoint }}" }
   when: index.s3 is defined
   no_log: true
-        
+
 - name: Write paths for the index
   ini_file:
     dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"

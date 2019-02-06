@@ -12,7 +12,7 @@
     shc_replication_factor: 1
   when: num_search_head_hosts <= 3
 
-- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
@@ -48,7 +48,7 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_process.yml
 
-- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 

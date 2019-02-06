@@ -1,5 +1,5 @@
 ---
-- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ cluster_master_host }}"
 
@@ -12,6 +12,6 @@
   retries: "{{ retry_num }}"
   delay: 3
   ignore_errors: yes
-  notify: 
+  notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"

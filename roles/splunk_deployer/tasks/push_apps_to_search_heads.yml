@@ -21,7 +21,6 @@
   delay: 3
   ignore_errors: true
 
-- debug: 
+- debug:
     msg: "WARNING: Applying shcluster bundle failed - proceeding anyways..."
-  when: 
-    - shcluster_bundle.rc != 0
+  when: shcluster_bundle.rc != 0

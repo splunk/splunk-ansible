@@ -1,6 +1,6 @@
 ---
 - name: Create a dependency file
-  file: 
+  file:
     path: /usr/share/man/man1
     state: directory
   when:
@@ -26,7 +26,7 @@
   become: yes
   become_method: sudo
   become_user: root
-  command: cp {{splunk.home}}/etc/splunk-launch.conf.default {{splunk.home}}/etc/splunk-launch.conf
+  command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
   ignore_errors: true
   when:
     - ansible_distribution == 'Debian'
@@ -54,7 +54,7 @@
   become_method: sudo
   become_user: root
   lineinfile:
-    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
     regexp: '^JAVA_HOME'
     line: "JAVA_HOME=/opt/container_artifact/jdk-{{ java_update_version }}"
   when:

@@ -70,7 +70,7 @@
 # NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node
   uri:
-    url: "https://127.0.0.1:{{splunk.svc_port}}/servicesNS/nobody/system/configs/conf-outputs"
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
     method: POST
     user: admin
     password: "{{ splunk.password }}"

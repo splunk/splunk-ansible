@@ -3,3 +3,5 @@
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
+  register: start_splunk
+  changed_when: start_splunk.rc == 0
