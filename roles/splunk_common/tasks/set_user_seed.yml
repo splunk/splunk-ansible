@@ -8,7 +8,7 @@
     option: "{{ item.opt }}"
     value: "{{ item.val }}"
   with_items:
-    - { opt: 'USERNAME', val: 'admin' }
+    - { opt: 'USERNAME', val: '{{ splunk.admin_user }}' }
     - { opt: 'HASHED_PASSWORD', val: '{{ splunk.password }}' }
   loop_control:
     label: "{{ item.opt }}"
@@ -24,7 +24,7 @@
     option: "{{ item.opt }}"
     value: "{{ item.val }}"
   with_items:
-    - { opt: 'USERNAME', val: 'admin' }
+    - { opt: 'USERNAME', val: '{{ splunk.admin_user }}' }
     - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
   loop_control:
     label: "{{ item.opt }}"
