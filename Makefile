@@ -7,4 +7,10 @@ test_setup:
 	pip install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 lint: test_setup
-	ansible-lint -c ./tests/lint.cfg site.yml roles/*
+	ansible-lint -c ./tests/lint.cfg site.yml
+
+test: test_setup small-tests
+
+small-tests: 
+	@echo 'Running the super awesome tests; Debian 9'
+	pytest -sv tests/small/ --junitxml test-results/small-tests.xml

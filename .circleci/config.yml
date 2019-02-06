@@ -6,13 +6,18 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Setup tests
-          command: |
-            make test_setup
-      - run:
           name: Lint playbooks
           command: |
             make lint
+      - run:
+          name: Run small tests
+          command: |
+            make small-tests
+      - store_artifacts:
+          path: test-results
+          destination: test-results
+      - store_test_results:
+          path: test-results
 
 workflows:
   version: 2
