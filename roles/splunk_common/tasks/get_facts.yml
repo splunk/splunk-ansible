@@ -19,9 +19,9 @@
 
 - name: "Set target version fact"
   set_fact:
-    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1') | default('0.0.0') }}"
+    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1\\2\\3') | default('0') }}"
   vars:
-    regexp: 'splunk-(\d\.\d\.\d)-'
+    regexp: 'splunk(?:forwarder)?-(\d)\.(\d)\.(\d)-'
 
 - name: "Find manifests"
   find:
@@ -32,9 +32,9 @@
 
 - name: "Set current version fact"
   set_fact:
-    splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1') if (manifests.matched == 1) else '0.0.0' }}"
+    splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1\\2\\3') if (manifests.matched == 1) else '0' }}"
   vars:
-    regexp: 'splunk-(\d\.\d\.\d)-'
+    regexp: 'splunk(?:forwarder)?-(\d)\.(\d)\.(\d)-'
 
 - name: "Setting upgrade fact"
   set_fact:
