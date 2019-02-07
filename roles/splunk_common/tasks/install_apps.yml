@@ -3,7 +3,7 @@
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
     method: POST
-    user: admin
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
     body: "name={{ app_url | urlencode() }}&update=true&filename=true&auth={{ splunkbase_token }}"
@@ -66,7 +66,7 @@
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
     method: POST
-    user: admin
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
     body: "name=/tmp/app.spl&update=true&filename=true"

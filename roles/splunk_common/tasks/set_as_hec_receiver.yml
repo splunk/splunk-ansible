@@ -3,7 +3,7 @@
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_httpinput/data/inputs/http/http/enable"
     method: POST
-    user: admin
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
     status_code: 200
@@ -16,7 +16,7 @@
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_httpinput/data/inputs/http"
     method: POST
-    user: admin
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
     body: "name=splunk_hec_token&token={{ splunk.hec_token }}"
@@ -29,7 +29,7 @@
   no_log: "{{ hide_password }}"
 
 - name: Enable HEC new-token
-  command: "{{ splunk.exec }} http-event-collector enable -name splunk_hec_token -uri https://127.0.0.1:{{ splunk.svc_port }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} http-event-collector enable -name splunk_hec_token -uri https://127.0.0.1:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   ignore_errors: true
@@ -37,7 +37,7 @@
   no_log: "{{ hide_password }}"
 
 - name: Enable SSL for HEC new-token
-  command: "{{ splunk.exec }} http-event-collector update -uri https://127.0.0.1:{{ splunk.svc_port }} -enable-ssl {{ splunk.hec_enableSSL }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} http-event-collector update -uri https://127.0.0.1:{{ splunk.svc_port }} -enable-ssl {{ splunk.hec_enableSSL }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   ignore_errors: true

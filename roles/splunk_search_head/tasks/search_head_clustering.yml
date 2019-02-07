@@ -17,7 +17,7 @@
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
 - name: Initialize SHC cluster config
-  command: "{{ splunk.exec }} init shcluster-config -auth 'admin:{{ splunk.password }}' -mgmt_uri 'https://{{ ansible_hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
+  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri 'https://{{ ansible_hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
@@ -32,7 +32,7 @@
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server/shclustering"
     method: POST
-    user: admin
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
     body: "preferred_captain={{ splunk_search_head_captain | bool | lower }}"
@@ -53,7 +53,7 @@
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
 - name: Boostrap SHC captain
-  command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}https://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth 'admin:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}https://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   when:

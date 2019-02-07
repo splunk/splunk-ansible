@@ -3,7 +3,7 @@
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/itsi/authorization/roles"
     method: POST
-    user: admin
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
     body: "name=itsi_admin&imported_roles=itoa_user&imported_roles=itoa_analyst&imported_roles=itoa_admin"
@@ -24,7 +24,7 @@
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/itsi/authentication/users/admin"
     method: POST
-    user: admin
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
     body: "roles=itsi_admin&roles=admin"
