@@ -91,7 +91,6 @@ def getDefaultVars():
     defaultVars = loadDefaultSplunkVariables()
     overrideEnvironmentVars(defaultVars)
 
-    defaultVars["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', None)
     defaultVars["splunk"]["license_master_included"] = True if os.environ.get('SPLUNK_LICENSE_MASTER_URL', False) else False
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
@@ -183,6 +182,7 @@ def overrideEnvironmentVars(vars_scope):
         vars_scope["splunk"]["idxc"] = {}
     vars_scope["splunk"]["idxc"]["secret"] = os.environ.get('SPLUNK_IDXC_SECRET', vars_scope["splunk"]["idxc"]["secret"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
+    vars_scope["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', vars_scope["splunk"]["build_location"])
 
 def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
