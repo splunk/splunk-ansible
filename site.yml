@@ -59,19 +59,11 @@
           - "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
 
-    - name: Upgrade role
-      include_role:
-        name: "splunk_upgrade"
-      when:
-        - splunk.upgrade is defined
-        - splunk.upgrade
-
     - name: Provision role
       include_role:
         name: "{{ splunk.role }}"
       when:
         - splunk.role is defined
-        - not splunk.upgrade
 
     # the get_url module is for linux only
     - name: Download post-setup playbooks

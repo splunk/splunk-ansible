@@ -91,6 +91,7 @@ def getDefaultVars():
     defaultVars = loadDefaultSplunkVariables()
     overrideEnvironmentVars(defaultVars)
 
+    defaultVars["splunk"]["allow_upgrade"] = True if os.environ.get('SPLUNK_ALLOW_UPGRADE', "").lower() == "true" else False
     defaultVars["splunk"]["license_master_included"] = True if os.environ.get('SPLUNK_LICENSE_MASTER_URL', False) else False
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
@@ -135,7 +136,6 @@ def getDefaultVars():
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
-    checkUpgrade(defaultVars)
     return defaultVars
 
 def getSplunkBuild(vars_scope):
@@ -187,13 +187,6 @@ def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
         filepath = re.sub(r"\\+", "/", filepath.lstrip("C:"))
         return filepath
-
-def checkUpgrade(vars_scope):
-    upgrade_var = os.environ.get('SPLUNK_UPGRADE', False)
-    if upgrade_var and upgrade_var.lower() == 'true':
-        vars_scope["splunk"]["upgrade"] = True
-    else:
-        vars_scope["splunk"]["upgrade"] = False
 
 def getUFSplunkVariables(vars_scope):
     if os.environ.get('SPLUNK_DEPLOYMENT_SERVER', False):
