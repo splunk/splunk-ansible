@@ -30,7 +30,7 @@
   set_fact:
     is_docker: "{{ docker_env.stat.exists | default(False) }}"
 
-# Exctracting the numbers from the Splunk installer file name allows us to know the version we are targeting.
+# Extracting the numbers from the Splunk installer file name allows us to know the version we are targeting.
 - name: "Set target version fact"
   set_fact:
     splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1\\2\\3') | default('0') }}"
