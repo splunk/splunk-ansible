@@ -3,7 +3,7 @@
 # http://docs.splunk.com/Documentation/Splunk/latest/Data/MonitorfilesanddirectoriesusingtheCLI
 # http://docs.splunk.com/Documentation/Splunk/latest/Data/Monitornetworkports
 - name: Add Splunk object
-  command: "{{ splunk.exec }} add {{ item }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ splunk.add }}"

@@ -14,7 +14,7 @@
   delay: 3
 
 - name: Apply Splunk license
-  command: "{{ splunk.exec }} add licenses {{ license_file }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add licenses {{ license_file }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when:
@@ -35,7 +35,7 @@
   no_log: "{{ hide_password }}"
 
 - name: Apply wildcard licenses
-  command: "{{ splunk.exec }} add licenses {{ item }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add licenses {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   with_fileglob:
     - "{{ splunk.license_uri }}"
   ignore_errors: true

@@ -1,9 +1,0 @@
----
-- name: Check for existing installation
-  stat: 
-    path: "{{ splunk.exec }}"
-  register: pre_existing_splunk
-
-- name: Set first run fact
-  set_fact:
-    first_run: "{{ not pre_existing_splunk.stat.exists | default(True) }}"

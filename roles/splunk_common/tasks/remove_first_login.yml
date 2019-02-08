@@ -1,0 +1,8 @@
+---
+- name: "Create .ui_login"
+  copy:
+    dest: "{{ splunk.home }}/etc/.ui_login"
+    content: ""
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: "u=rw,g=,o="
