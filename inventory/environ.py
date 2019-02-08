@@ -91,6 +91,7 @@ def getDefaultVars():
     defaultVars = loadDefaultSplunkVariables()
     overrideEnvironmentVars(defaultVars)
 
+    defaultVars["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', None)
     defaultVars["splunk"]["license_master_included"] = True if os.environ.get('SPLUNK_LICENSE_MASTER_URL', False) else False
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
