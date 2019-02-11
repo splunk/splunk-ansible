@@ -182,6 +182,11 @@ def overrideEnvironmentVars(vars_scope):
         vars_scope["splunk"]["idxc"] = {}
     vars_scope["splunk"]["idxc"]["secret"] = os.environ.get('SPLUNK_IDXC_SECRET', vars_scope["splunk"]["idxc"]["secret"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
+    # add ssl variables
+    vars_scope["splunk"]["http_enableSSL"] = os.environ.get('SPLUNK_HTTP_ENABLESSL', vars_scope["splunk"]["http_enableSSL"])
+    vars_scope["splunk"]["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', vars_scope["splunk"]["http_enableSSL_cert"])
+    vars_scope["splunk"]["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', vars_scope["splunk"]["http_enableSSL_privKey"])
+    vars_scope["splunk"]["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', vars_scope["splunk"]["http_enableSSL_privKey_password"])
 
 def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
