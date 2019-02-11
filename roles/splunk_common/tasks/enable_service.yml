@@ -3,3 +3,6 @@
   command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }}"
   become: yes
   become_user: "{{ splunk.user }}"
+  register: enable_boot_start
+  changed_when: enable_boot_start.rc == 0
+  failed_when: enable_boot_start.rc != 0

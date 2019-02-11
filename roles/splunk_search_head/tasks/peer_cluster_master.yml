@@ -10,6 +10,7 @@
   become_user: "{{ splunk.user }}"
   register: set_cluster_master_as_peer
   until: set_cluster_master_as_peer.rc == 0
+  changed_when: set_cluster_master_as_peer.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
   ignore_errors: yes

@@ -43,7 +43,7 @@
 # We'll need to verify the contents of the package to see if it's a premium app
 
 - name: Check app contents
-  shell: "tar --exclude='*/*/*' --exclude='*.*' -tf /tmp/app.spl | awk -F'/' '{ print$1 }' | uniq"
+  shell: "set -o pipefail && tar --exclude='*/*/*' --exclude='*.*' -tf /tmp/app.spl | awk -F'/' '{ print$1 }' | uniq"
   register: app_contents
   when: "'splunkbase.splunk.com' not in app_url"
 

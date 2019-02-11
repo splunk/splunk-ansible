@@ -36,6 +36,7 @@
   register: cluster_bundle_status
   until: cluster_bundle_status.stdout.find("cluster_status=None") != -1
   retries: "{{ retry_num }}"
+  changed_when: cluster_bundle_status.rc == 0
   delay: 5
   ignore_errors: true
   become: yes

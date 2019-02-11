@@ -4,6 +4,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: enable_s2s_status
+  changed_when: enable_s2s_status.rc == 0
   failed_when:
     - enable_s2s_status.rc !=0
     - "'already exists' not in enable_s2s_status.stderr"

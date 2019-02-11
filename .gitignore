@@ -7,3 +7,4 @@ _book
 test*.xml
 **/.DS_Store
 .vscode
+**/*.xml

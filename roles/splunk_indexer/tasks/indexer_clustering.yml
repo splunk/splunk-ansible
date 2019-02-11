@@ -8,6 +8,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
+  changed_when: task_result.rc == 0
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
