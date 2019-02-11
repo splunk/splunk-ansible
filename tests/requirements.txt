@@ -1,4 +1,5 @@
 pytest
 mock
-ansible-lint
+docker
 requests
+molecule
