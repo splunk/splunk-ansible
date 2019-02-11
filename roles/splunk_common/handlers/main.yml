@@ -17,6 +17,8 @@
     name: splunk
     state: restarted
   when: splunk.enable_service and ansible_system is match("Linux")
+  become: yes
+  become_user: root
 
 - name: Restart the splunkd service via Windows service
   listen: "Restart the splunkd service"
