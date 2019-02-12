@@ -13,10 +13,12 @@
 
 - name: Restart the splunkd service via systemd
   listen: "Restart the splunkd service"
-  systemd:
+  service:
+    name: splunk
     state: restarted
-    name: Splunkd
   when: splunk.enable_service and ansible_system is match("Linux")
+  become: yes
+  become_user: root
 
 - name: Restart the splunkd service via Windows service
   listen: "Restart the splunkd service"

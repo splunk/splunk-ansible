@@ -5,11 +5,13 @@
   become_user: "{{ splunk.user }}"
   when: not splunk.enable_service
 
-- name: Start Splunk via systemd
-  systemd:
+- name: Start Splunk via service
+  service:
+    name: splunk
     state: restarted
-    name: Splunkd
   when: splunk.enable_service and ansible_system is match("Linux")
+  become: yes
+  become_user: root
 
 - name: Start Splunk via Windows service
   win_service:
