@@ -4,7 +4,7 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=/opt/splunk/bin/splunk start --accept-license --answer-yes --no-prompt
+ExecStart=/opt/splunk/bin/splunk _internal_launch_under_systemd
 LimitNOFILE=65536
 SuccessExitStatus=51 52
 RestartPreventExitStatus=51
