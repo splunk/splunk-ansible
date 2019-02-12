@@ -4,12 +4,14 @@
     - splunk_home_ownership_enforcement is defined
     - splunk_home_ownership_enforcement | bool
 
-- include_tasks: check_first_run.yml
+- include_tasks: get_facts.yml
 
 - include_tasks: install_splunk.yml
   when:
     - first_run is defined
     - first_run | bool
+
+- include_tasks: remove_first_login.yml
 
 - include_tasks: install_java.yml
   when:

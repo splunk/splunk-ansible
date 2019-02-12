@@ -7,7 +7,7 @@
 # Setup deployment server
 # http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients
 - name: Add a deployment server
-  command: "{{ splunk.exec }} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.svc_port }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
@@ -39,7 +39,7 @@
 
 # Execute other Splunk commands
 - name: Execute Splunk commands
-  command: "{{ splunk.exec }} {{ item }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ splunk.cmd }}"

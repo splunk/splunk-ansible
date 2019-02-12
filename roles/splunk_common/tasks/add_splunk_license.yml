@@ -6,7 +6,7 @@
     timeout: 20
   when:
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
-    - splunk.license_uri is match("^(https?|file)://.*")
+    - splunk.license_uri and splunk.license_uri is match("^(https?|file)://.*")
   register: downloaded_license_path
   ignore_errors: yes
   until: downloaded_license_path is success
@@ -14,11 +14,12 @@
   delay: 3
 
 - name: Apply Splunk license
-  command: "{{ splunk.exec }} add licenses {{ license_file }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add licenses {{ license_file }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when:
     - not (splunk.ignore_license | bool)
+    - splunk.role != "splunk_universal_forwarder"
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
     - not (splunk.wildcard_license | bool)
   ignore_errors: true
@@ -35,7 +36,7 @@
   no_log: "{{ hide_password }}"
 
 - name: Apply wildcard licenses
-  command: "{{ splunk.exec }} add licenses {{ item }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add licenses {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   with_fileglob:
     - "{{ splunk.license_uri }}"
   ignore_errors: true

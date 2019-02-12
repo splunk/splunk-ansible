@@ -12,7 +12,7 @@
   with_items: "{{ installed_apps }}"
 
 - name: Apply shcluster bundle
-  command: "{{ splunk.exec }} apply shcluster-bundle -target https://{{ groups['splunk_search_head_captain'][0] }}:{{ splunk.svc_port }} -auth admin:{{ splunk.password }} --answer-yes"
+  command: "{{ splunk.exec }} apply shcluster-bundle -target https://{{ groups['splunk_search_head_captain'][0] }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --answer-yes"
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"

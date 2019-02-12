@@ -15,7 +15,7 @@
 # 3) The cluster bundle does not exist and we successfully applied the cluster bundle. Then stdout
 # will contain something to the effect of "Applying new bundle. Restarting indexers..". Thus, we
 - name: Apply cluster bundle
-  command: "{{ splunk.exec }} apply cluster-bundle -auth admin:{{ splunk.password }} --skip-validation --answer-yes"
+  command: "{{ splunk.exec }} apply cluster-bundle -auth {{ splunk.admin_user }}:{{ splunk.password }} --skip-validation --answer-yes"
   become: yes
   become_user: "{{ splunk.user }}"
   register: splunk_cluster_bundle_result
@@ -32,7 +32,7 @@
   no_log: "{{ hide_password }}"
 
 - name: Wait for bundle push
-  command: "{{ splunk.exec }} show cluster-bundle-status -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} show cluster-bundle-status -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   register: cluster_bundle_status
   until: cluster_bundle_status.stdout.find("cluster_status=None") != -1
   retries: "{{ retry_num }}"

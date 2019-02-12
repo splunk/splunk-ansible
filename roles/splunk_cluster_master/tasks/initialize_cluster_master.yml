@@ -18,7 +18,7 @@
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
     method: POST
-    user: admin
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: False
     body: "name=indexer_discovery&pass4SymmKey={{ splunk.shc.secret }}"
