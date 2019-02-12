@@ -1,6 +1,7 @@
 ---
 # handlers file for splunk_common
-- name: Restart the splunkd service
+- name: Restart the splunkd service via cli
+  listen: "Restart the splunkd service"
   command: "{{splunk.exec}} restart -f --answer-yes --accept-license"
   become: yes
   become_user: "{{ splunk.user }}"
@@ -8,3 +9,20 @@
   until: task_result.rc == 0
   retries: 3
   delay: "{{ delay_num }}"
+  when: not splunk.enable_service
+
+- name: Restart the splunkd service via systemd
+  listen: "Restart the splunkd service"
+  service:
+    name: splunk
+    state: restarted
+  when: splunk.enable_service and ansible_system is match("Linux")
+  become: yes
+  become_user: root
+
+- name: Restart the splunkd service via Windows service
+  listen: "Restart the splunkd service"
+  win_service:
+    name: splunkd
+    state: restarted
+  when: splunk.enable_service and not ansible_system is match("Linux")

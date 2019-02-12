@@ -1,0 +1,42 @@
+---
+- name: Create ITSI admin role
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/itsi/authorization/roles"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body: "name=itsi_admin&imported_roles=itoa_user&imported_roles=itoa_analyst&imported_roles=itoa_admin"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: [201, 409]
+    timeout: 10
+  register: setup_itsi_role
+  retries: 3
+  delay: 5
+  until: setup_itsi_role.status in [201, 409]
+  changed_when: setup_itsi_role.status == 201
+  no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service
+
+- name: Create ITSI admin user
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/itsi/authentication/users/admin"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body: "roles=itsi_admin&roles=admin"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: [200, 409]
+    timeout: 10
+  register: setup_itsi_user
+  retries: 3
+  delay: 5
+  until: setup_itsi_user.status in [200, 409]
+  changed_when: setup_itsi_user.status == 200
+  no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service

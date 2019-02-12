@@ -17,13 +17,28 @@
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
 - name: Initialize SHC cluster config
-  command: "{{ splunk.exec }} init shcluster-config -auth 'admin:{{ splunk.password }}' -mgmt_uri 'https://{{ ansible_hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
+  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri 'https://{{ ansible_hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+
+- name: Set desired preferred captaincy
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server/shclustering"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body: "preferred_captain={{ splunk_search_head_captain | bool | lower }}"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    timeout: 10
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
@@ -38,27 +53,15 @@
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
 - name: Boostrap SHC captain
-  command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}https://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth 'admin:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}https://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   when:
-    - splunk.role == "splunk_search_head_captain"
+    - splunk_search_head_captain == true
   register: task_result
-  until: task_result.rc == 0 or task_result.rc == 22
+  until: task_result.rc == 0 or "node seems to have already joined another cluster" in task_result.stderr
   changed_when: task_result.rc == 0
   failed_when: task_result.rc !=0 and "node seems to have already joined another cluster" not in task_result.stderr
-  retries: "{{ retry_num }}"
-  delay: 3
-  notify:
-    - Restart the splunkd service
-  no_log: "{{ hide_password }}"
-
-- name: Register with deployer
-  command: "{{ splunk.exec }} set deploy-poll 'https://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -auth 'admin:{{ splunk.password }}'"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: task_result
-  until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
   notify:

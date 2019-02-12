@@ -3,10 +3,22 @@
   when:
     - splunk_home_ownership_enforcement is defined
     - splunk_home_ownership_enforcement | bool
-
-- include_tasks: check_first_run.yml
+  
+- include_tasks: get_facts.yml
 
 - include_tasks: install_splunk.yml
+  when:
+    - first_run is defined
+    - first_run | bool
+
+- include_tasks: remove_first_login.yml
+
+- include_tasks: install_java.yml
+  when:
+    - java_version is defined
+
+# This needs to be done before any encrypted passkeys are generated
+- include_tasks: set_splunk_secret.yml
   when:
     - first_run is defined
     - first_run | bool
@@ -16,6 +28,9 @@
     - first_run is defined
     - first_run | bool
 
+- include_tasks: pre_splunk_start_commands.yml
+  ignore_errors: true
+  
 - include_tasks: enable_s2s_port.yml
   when:
     - splunk.s2s_enable is defined
@@ -38,8 +53,3 @@
 - include_tasks: clean_user_seed.yml
 
 - include_tasks: add_splunk_license.yml
-
-- include_tasks: install_app.yml
-  vars:
-    app_url: "{{ item }}"
-  loop: "{{ splunk.apps_location }}"

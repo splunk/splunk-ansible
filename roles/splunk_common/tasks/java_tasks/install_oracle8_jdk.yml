@@ -1,0 +1,90 @@
+---
+- name: Download the Java distribution
+  get_url:
+    url: "{{ java_download_url }}"
+    headers:
+      Cookie: oraclelicense=accept-securebackup-cookie
+    dest: /opt/container_artifact
+    timeout: 30
+  register: download_result
+  until: download_result.status_code == 200
+  retries: 5
+  delay: 10
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Untar the Java distribution
+  unarchive:
+    src: "/opt/container_artifact/jdk-8u{{ java_update_version }}-linux-x64.tar.gz"
+    dest: /opt/container_artifact
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Create alternatives for installed JDK Java binary
+  shell: "update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java 100"
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Create alternatives for installed JDK Javac binary
+  shell: "update-alternatives --install /usr/bin/javac javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac 100"
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Set Java 
+  shell: "update-alternatives --set java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java"
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Set Javac 
+  shell: "update-alternatives --set javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac"
+  when:
+    - ansible_distribution == 'Debian'
+  become: yes
+  become_method: sudo
+  become_user: root
+
+- name: Create splunk-launch.conf
+  become: yes
+  become_method: sudo
+  become_user: root
+  command: cp {{splunk.home}}/etc/splunk-launch.conf.default {{splunk.home}}/etc/splunk-launch.conf
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Get JAVA_HOME
+  shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
+  register: java_home
+  become: yes
+  become_method: sudo
+  become_user: root
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Set JAVA_HOME in splunk-launch.conf
+  become: yes
+  become_method: sudo
+  become_user: root
+  lineinfile:
+    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    regexp: '^JAVA_HOME'
+    line: "JAVA_HOME={{ java_home.stdout }}"
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'

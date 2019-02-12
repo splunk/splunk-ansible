@@ -52,7 +52,7 @@ splunk:
 		#Change these before deploying
         secret: some_secret
         replication_factor: 3
-        replication_port: 4001
+        replication_port: 9887
 
     # Indexer Clustering
     idxc:

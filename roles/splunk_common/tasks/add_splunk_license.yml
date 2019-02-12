@@ -2,42 +2,50 @@
 - name: Download Splunk license
   get_url:
     url: "{{ splunk.license_uri }}"
-    dest: /tmp/splunk.lic
+    dest: "{{ splunk.license_download_dest }}"
     timeout: 20
   when:
-    - splunk.license_uri is defined
-    - splunk.license_uri is search("^http.*")
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
-  register: download_lic
-  until: download_lic is success
+    - splunk.license_uri and splunk.license_uri is match("^(https?|file)://.*")
+  register: downloaded_license_path
+  ignore_errors: yes
+  until: downloaded_license_path is success
   retries: 5
   delay: 3
 
-- name: Set downloaded license location
-  set_fact:
-    splunk_license_local_path: /tmp/splunk.lic
-  when:
-    - splunk.license_uri is defined
-    - splunk.license_uri is search("^http.*")
-    - download_lic is success
-    - splunk.role == "splunk_license_master" or not splunk.license_master_included
-
-- name: Set local license location
-  set_fact:
-    splunk_license_local_path: "{{ splunk.license_uri }}"
-  when:
-    - splunk_license_local_path is not defined
-    - splunk.role == "splunk_license_master" or not splunk.license_master_included
-
 - name: Apply Splunk license
-  command: "{{ splunk.exec }} add licenses {{ splunk_license_local_path }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add licenses {{ license_file }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when:
-    - splunk.license_uri is defined
-    - splunk_license_local_path is defined and splunk_license_local_path != ""
+    - not (splunk.ignore_license | bool)
+    - splunk.role != "splunk_universal_forwarder"
     - splunk.role == "splunk_license_master" or not splunk.license_master_included
+    - not (splunk.wildcard_license | bool)
   ignore_errors: true
+  with_first_found:
+    - files:
+      - "{{ splunk.license_download_dest }}"
+      - "{{ splunk.nfr_license }}"
+      - "{{ splunk.license_uri }}"
+      skip: true
+  loop_control:
+    loop_var: license_file
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+
+- name: Apply wildcard licenses
+  command: "{{ splunk.exec }} add licenses {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  with_fileglob:
+    - "{{ splunk.license_uri }}"
+  ignore_errors: true
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when:
+    - not (splunk.ignore_license | bool)
+    - splunk.role == "splunk_license_master" or not splunk.license_master_included
+    - splunk.wildcard_license | bool
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"

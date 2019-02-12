@@ -1,6 +1,6 @@
 ---
 - name: "Enable forwarding to {{ role }}"
-  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ groups[role] }}"

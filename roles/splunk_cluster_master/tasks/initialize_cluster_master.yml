@@ -1,0 +1,52 @@
+---
+- name: Get indexer count
+  set_fact:
+    num_indexer_hosts: "{{ groups['splunk_indexer'] | length }}"
+
+- name: Get default replication factor
+  set_fact:
+    idxc_search_factor: "{{ splunk.idxc.search_factor }}"
+    idxc_replication_factor: "{{ splunk.idxc.replication_factor }}"
+
+- name: Lower indexer search/replication factor
+  set_fact:
+    idxc_search_factor: 1
+    idxc_replication_factor: 1
+  when: num_indexer_hosts|int < 3
+
+- name: Set indexer discovery
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: False
+    body: "name=indexer_discovery&pass4SymmKey={{ splunk.shc.secret }}"
+    body_format: json
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  register: set_indexer_discovery
+  changed_when: set_indexer_discovery.status == 201
+  no_log: "{{ hide_password }}"
+
+- include_tasks: enable_smartstore.yml
+  when: splunk.smartstore
+
+- name: Set the current node as a Splunk indexer cluster master
+  command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ splunk.idxc.replication_factor }} -search_factor {{ splunk.idxc.search_factor }} -secret '{{ splunk.idxc.secret }}' -cluster_label '{{ splunk.idxc.label }}' -auth 'admin:{{ splunk.password }}'"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  notify:
+    - Restart the splunkd service
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
+
+- name: Flush restart handlers
+  meta: flush_handlers
+
+- include_tasks: apply_cluster_bundle.yml

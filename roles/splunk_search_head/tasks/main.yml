@@ -15,3 +15,10 @@
     - not splunk.indexer_cluster
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
+
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when:
+    - splunk.apps_location
+    - not splunk.search_head_cluster
+
+- include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

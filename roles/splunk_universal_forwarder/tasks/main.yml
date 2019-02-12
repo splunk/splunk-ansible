@@ -1,66 +1,13 @@
 ---
-- name: Install Splunk universal forwarder
-  unarchive:
-    src: "{{ splunk.build_location }}"
-    dest: "{{ splunk.opt }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-    remote_src: "{{ splunk.build_remote_src }}"
-  when: ansible_system is match("Linux")
-
-- name: Install Splunk universal forwarder (Windows)
-  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\splunkforwarder /passive /qn"
-  when: ansible_system is match("CYGWIN*|Win32NT")
-
-- name: Generate user-seed.conf
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
-    section: user_info
-    option: "{{ item.opt }}"
-    value: "{{ item.val }}"
-  with_items:
-    - { opt: 'USERNAME', val: 'admin' }
-    - { opt: 'PASSWORD', val: '{{ splunk.password }}' }
-  loop_control:
-    label: "{{ item.opt }}"
-  no_log: "{{ hide_password }}"
-
-- include_tasks: pre_splunk_start_commands.yml
-  ignore_errors: true
-
-- name: Start Splunk
-  command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
-  become: yes
-  become_user: "{{ splunk.user }}"
-
-- include_tasks: ../../splunk_common/tasks/enable_s2s_port.yml
-
-- include_tasks: ../../splunk_common/tasks/install_app.yml
-  vars:
-    app_url: "{{ item }}"
-  loop: "{{ splunk.apps_location }}"
-
-- include_tasks: ../../splunk_common/tasks/set_as_hec_receiver.yml
+- include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
   when:
     - not splunk.hec_disabled | bool
     - splunk.hec_token is defined and splunk.hec_token != None
 
-- include_tasks: setup_docker_monitoring.yml
-  when:
-    - docker_monitoring
-  ignore_errors: true
-
-- name: Setup output forwarding rules
-  ini_file:
-    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
-    section: tcpout
-    option: forwardedindex.0.whitelist
-    value: ".*"
-
 # Setup deployment server
 # http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients
 - name: Add a deployment server
-  command: "{{splunk.exec}} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.s2s_port }} -auth admin:{{ splunk.password }}"
+  command: "{{splunk.exec}} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
@@ -72,44 +19,27 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
+  
+- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
+
+- include_tasks: setup_docker_monitoring.yml
+  when:
+    - docker_monitoring
+  ignore_errors: true
 
 - name: Flush restart handlers
   meta: flush_handlers
 
-# Setup forwarding server
-# http://docs.splunk.com/Documentation/Splunk/latest/Forwarding/Deployanixdfmanually
-- include_tasks: ../../splunk_common/tasks/add_forward_server.yml
-  vars:
-    role: splunk_indexer
-
-- include_tasks: ../../splunk_common/tasks/add_forward_server.yml
-  vars:
-    role: splunk_standalone
-
-# Setup monitoring
-# http://docs.splunk.com/Documentation/Splunk/latest/Data/MonitorfilesanddirectoriesusingtheCLI
-# http://docs.splunk.com/Documentation/Splunk/latest/Data/Monitornetworkports
-- name: Add monitoring items
-  command: "{{splunk.exec}} add {{ item }} -auth admin:{{ splunk.password }}"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  with_items: "{{ splunk.add }}"
-  register: task_result
-  until: task_result.rc == 0 or "already exists" in task_result.stderr
-  retries: "{{ retry_num }}"
-  delay: "{{ delay_num }}"
+- include_tasks: ../../splunk_common/tasks/add_splunk_object.yml
   when: splunk.add is defined
-  failed_when:
-    - task_result.rc != 0
-    - "'already exists' not in task_result.stderr"
-  ignore_errors: true
-  notify:
-    - Restart the splunkd service
-  no_log: "{{ hide_password }}"
+  
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when: 
+    - splunk.apps_location
 
 # Execute other Splunk commands
-- name: Execute splunk commands
-  command: "{{splunk.exec}} {{ item }}"
+- name: Execute Splunk commands
+  command: "{{splunk.exec}} {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ splunk.cmd }}"
@@ -118,6 +48,9 @@
   retries: "{{ retry_num }}"
   delay: "{{ delay_num }}"
   when: splunk.cmd is defined
+  no_log: "{{ hide_password }}"
   ignore_errors: true
   notify:
     - Restart the splunkd service
+
+- include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

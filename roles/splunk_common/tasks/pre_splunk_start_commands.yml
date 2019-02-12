@@ -1,0 +1,20 @@
+---
+# TODO: This looks a lot like add_splunk_object.yml - we can probably condense this
+- name: Execute pre-start Splunk commands
+  command: "{{ splunk.exec }} {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ splunk.before_start_cmd }}"
+  when: splunk.before_start_cmd is defined
+  register: task_result
+  until: task_result.rc == 0 or "already exists" in task_result.stderr
+  changed_when: task_result.rc == 0
+  failed_when:
+    - task_result.rc != 0
+    - "'already exists' not in task_result.stderr"
+  retries: "{{ retry_num }}"
+  delay: "{{ delay_num }}"
+  ignore_errors: true
+  no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service

@@ -1,0 +1,22 @@
+---
+# Setup monitoring
+# http://docs.splunk.com/Documentation/Splunk/latest/Data/MonitorfilesanddirectoriesusingtheCLI
+# http://docs.splunk.com/Documentation/Splunk/latest/Data/Monitornetworkports
+- name: Add Splunk object
+  command: "{{ splunk.exec }} add {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ splunk.add }}"
+  when: splunk.add is defined
+  register: task_result
+  until: task_result.rc == 0 or "already exists" in task_result.stderr
+  changed_when: task_result.rc == 0
+  failed_when:
+    - task_result.rc != 0
+    - "'already exists' not in task_result.stderr"
+  retries: "{{ retry_num }}"
+  delay: "{{ delay_num }}"
+  ignore_errors: true
+  no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service
