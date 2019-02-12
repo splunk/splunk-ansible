@@ -17,4 +17,4 @@
   win_service:
     name: splunkd
     state: restarted
-  when: splunk.enable_service and not ansible_system is match("Linux")
+  when: splunk.enable_service and ansible_os_family == "Windows"
