@@ -2,7 +2,7 @@
 - name: "Enable service via boot-start - Linux"
   become: yes
   become_user: "root"
-  command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
+  command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} -systemd-unit-file-name splunk --accept-license --answer-yes --no-prompt"
   when: ansible_system is match("Linux")
 
 - name: "Enable service via boot-start - Windows"
