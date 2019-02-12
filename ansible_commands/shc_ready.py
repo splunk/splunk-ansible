@@ -19,16 +19,16 @@ class ShcReady(object):
         self.user = module.params["spl_user"]
         self.password = module.params["spl_pass"]
         self.retry_times = module.params["retry_times"]
+        self.shc_bootstrap_delay = module.params["shc_bootstrap_delay"]
 
     def run(self):
         URL = "https://{0}:8089/services/shcluster/status?output_mode=json".format(self.captain_url)
         peers_online = False
         peers_ready = False 
-        time.sleep(60) # give the SHC some initial time to setup
         online_peers = None 
         for _ in range(0, self.retry_times):
-            time.sleep(30) # wait some time before executing next loop
             try:
+                time.sleep(self.shc_bootstrap_delay) # wait some time before executing next loop
                 resp = requests.get(URL, auth=(self.user, self.password), verify=False).json()
                 if not peers_online:
                     shc_peers = resp['entry'][0]['content']['peers']
@@ -44,7 +44,7 @@ class ShcReady(object):
             except Exception as e:
                 pass 
         if not (peers_online and peers_ready):
-            raise Exception("SHC failure, setup time exceeded set limits.  peers_ready:{0}, peers_online:{1}, online_peers:{2}".format(peers_ready, peers_online, online_peers))
+            raise Exception("SHC failure, setup time exceeded set limits.  peers_ready:{0}, peers_online:{1}, online_peers:{2}, delay:{3}, retry_times:{4}".format(peers_ready, peers_online, online_peers, self.shc_bootstrap_delay, self.retry_times))
 
         return {1:self.captain_url, 2:self.shc_peers, 'two':str(type(self.shc_peers)), 3: self.user, 4: self.password, 5:shc_peers, 6:shc_peers.keys(), 7:online_peers}
 
@@ -55,7 +55,8 @@ def main():
             shc_peers=dict(required=True, type='list'),
             spl_user=dict(required=True, type='str'),
             spl_pass=dict(required=True, type='str'),
-            retry_times=dict(required=True, type='int')
+            retry_times=dict(required=True, type='int'),
+            shc_bootstrap_delay=dict(required=True, type='int')
         )
     )
     shc_ready = ShcReady(module).run()

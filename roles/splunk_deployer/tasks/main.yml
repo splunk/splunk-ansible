@@ -28,6 +28,7 @@
     spl_user="{{ splunk.admin_user }}"
     spl_pass="{{ splunk.password }}"
     retry_times="{{ retry_num }}"
+    shc_bootstrap_delay="{{ shc_bootstrap_delay }}"
   no_log: "{{ hide_password }}"
   when:
     - splunk.search_head_cluster
