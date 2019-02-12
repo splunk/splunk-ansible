@@ -6,18 +6,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Lint playbooks
-          command: |
-            make lint
+          name: Run linting
+          command: make lint
       - run:
           name: Run small tests
-          command: |
-            make small-tests
+          command: make small-tests
+      - run:
+          name: Run large (molecule) tests
+          command: make large-tests
       - store_artifacts:
-          path: test-results
-          destination: test-results
+          path: tests/results
+          destination: tests/results
       - store_test_results:
-          path: test-results
+          path: tests/results
 
 workflows:
   version: 2

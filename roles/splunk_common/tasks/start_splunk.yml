@@ -4,7 +4,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: start_splunk
-  changed_when: start_splunk.rc == 0
+  changed_when: start_splunk.rc == 0 and 'already running' not in start_splunk.stdout
   when: not splunk.enable_service
 
 - name: Start Splunk via systemd
