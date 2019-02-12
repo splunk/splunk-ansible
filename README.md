@@ -1,49 +1,54 @@
-# Welcome to the Splunk Ansible GitHub repository
+# splunk-ansible: Open source of our internal playbooks 
+------
+[![Build Status](https://circleci.com/gh/splunk/splunk-ansible/tree/develop.svg?style=svg)](https://circleci.com/gh/splunk/splunk-ansible/tree/develop)
 
-This is the official source code repository for configuring Splunk Enterprise and Universal Forwarder instances. It is currently being used by 
-[Splunk Official Docker Image](https://github.com/splunk/docker-splunk). It can be used to configure Splunk Enterprise on any linux platform. See the documentation for more details, including licensing and how to contribute.
+Welcome to Splunk's official repository containing Ansible playbooks for configuring and managing Splunk Enterprise and Universal Forwarder deployments. This repository contains plays that target all Splunk roles and deployment topologies, and currently work on any Linux-based platform. It is currently being used by the [Splunk's official Docker image](https://github.com/splunk/docker-splunk) project. 
 
-## What is Splunk Enterprise?
+Please refer to [Ansible documentation](http://docs.ansible.com/) for more details about Ansible concepts and how it works. 
 
-Splunk Enterprise is the platform for operational intelligence. The software lets you collect, analyze, and act upon the untapped value of big data that your technology infrastructure, security systems, and business applications generate. It gives you insights to drive operational performance and business results.
+------
 
-## What does this code do?
-This code is the ansible code used for configuring Splunk Enterprise and Splunk Universal Forwarder instances based on a declared configuration. The declared configuration.
+## Table of Contents
+1. [Purpose](#purpose)
+2. [Support](#support)
+3. [Documentation](#documentation)
+4. [Contributing](#contributing)
+5. [Changelog](#changelog)
 
-## When should I use this repo?
-This repo should be used by people interested in configuring Splunk according to recommended best practices. These are approved methods for configuring Splunk and are vetted through an internal process. 
+------
 
-# Get help and support
+## Purpose
+
+##### What is Splunk Enterprise?
+Splunk Enterprise is a platform for operational intelligence. Our software lets you collect, analyze, and act upon the untapped value of big data that your technology infrastructure, security systems, and business applications generate. It gives you insights to drive operational performance and business results.
+
+Please refer to [Splunk products](https://www.splunk.com/en_us/software.html) for more knowledge about the features and capabilities of Splunk, and how you can bring it into your organization.
+
+##### What does this codebase do?
+This code in this repository is used for configuring Splunk Enterprise and Splunk Universal Forwarder instances based on a declarative configuration. The role of Ansible here enables managing Splunk in a manner consistent with industry standards such as infrastructure automation and infrastructure-as-code.
+
+##### When should I use this repo?
+This repository should be used by people interested in configuring Splunk according to recommended best practices. The playbooks in this codebase are internally-vetted procedures and operations that administer and manage Splunk as done within the company.
+
+## Support
+Please use the [GitHub issue tracker](https://github.com/splunk/splunk-ansible/issues) to submit bugs or request features.
 
 If you have questions or need support, you can:
-
 * Post a question to [Splunk Answers](http://answers.splunk.com)
 * Join the [#docker](https://splunk-usergroups.slack.com/messages/C1RH09ERM/) room in the [Splunk Slack channel](http://splunk-usergroups.slack.com)
-* If you are a Splunk Enterprise customer with a valid support entitlement contract, and have a Splunk related question you can also open a support case on the https://www.splunk.com/ support portal.
-* For details on the supported architectures, please refer to the documentation http://docs.splunk.com/Documentation/Splunk/latest/Installation/Systemrequirements#Containerized_computing_platforms
+* If you are a Splunk Enterprise customer with a valid support entitlement contract and have a Splunk-related question, you can also open a support case on the https://www.splunk.com/ support portal
 
-Please also see [TROUBLESHOOTING](docs/TROUBLESHOOTING.md)
+## Documentation
+For full documentation, including isntallation, tutorials, and examples, please visit the [splunk-ansible documentation](https://splunk.github.io/splunk-ansible/) page.
 
-# Documentation
+## Contributing
+Please see our [contribution guidelines](docs/CONTRIBUTING.md).
 
-See [Splunk Ansible Documentation](https://splunk.github.io/splunk-ansible/)
+## Changelog
+Please see the [changelog](docs/CHANGELOG.md).
 
-
-# License
-
+## License
 See [LICENSING](docs/LICENSING.md)
 
-
-# Contributing
-
-See [CONTRIBUTING](docs/CONTRIBUTING.md)
-
-
-# History
-
-See [CHANGELOG](docs/CHANGELOG.md)
-
-
-# Authors
-
+## Authors
 Splunk Inc. and the Splunk Community

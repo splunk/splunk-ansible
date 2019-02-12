@@ -4,13 +4,19 @@ SHELL := /bin/bash
 
 test_setup:
 	@echo 'Install test requirements'
+	pip install --upgrade pip
 	pip install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 lint: test_setup
-	ansible-lint -c ./tests/lint.cfg site.yml roles/* --exclude roles/splunk_universal_forwarder/tasks/setup_docker_monitoring.yml
+	ansible-lint -v -c ./tests/lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml --exclude roles/splunk_universal_forwarder/tasks/setup_docker_monitoring.yml
 
-test: test_setup small-tests
+test: lint small-tests large-tests
 
-small-tests: 
-	@echo 'Running the super awesome tests; Debian 9'
-	pytest -sv tests/small/ --junitxml test-results/small-tests.xml
+small-tests: test_setup
+	@echo 'Running the super awesome small tests'
+	pytest -sv tests/small/ --junitxml tests/results/small-tests.xml
+
+large-tests: test_setup
+	@echo 'Running the super awesome large tests'
+	cd roles/splunk_standalone && molecule test
+	cd roles/splunk_universal_forwarder && molecule test

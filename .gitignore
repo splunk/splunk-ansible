@@ -8,3 +8,4 @@ test*.xml
 **/.DS_Store
 .vscode
 **/*.xml
+.pytest_cache
