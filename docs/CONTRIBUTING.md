@@ -33,7 +33,7 @@ If you wish to be a contributing member of our community, please see the agreeme
 
 
 ##### Code of Conduct
-Please make sure to read and observe our [Code of Conduct](#contributing/code-of-conduct.md). Please follow it in all of your interactions involving the project.
+Please make sure to read and observe our [Code of Conduct](contributing/code-of-conduct.md). Please follow it in all of your interactions involving the project.
 
 ##### Setup Development Environment
 TODO
@@ -91,11 +91,14 @@ To make it easier for your PR to receive reviews, consider the reviewers will ne
 * Write good commit messages
 * Break large changes into a logical series of smaller patches which individually make easily understandable changes, and in aggregate solve a broader issue
 
-Reviewers, the people giving the review, are highly encouraged to revisit the [Code of Conduct](#contributing/code-of-conduct.md) and must go above and beyond to promote a collaborative, respectful community.
+Reviewers, the people giving the review, are highly encouraged to revisit the [Code of Conduct](contributing/code-of-conduct.md) and must go above and beyond to promote a collaborative, respectful community.
+
 When reviewing PRs from others [The Gentle Art of Patch Review](http://sage.thesharps.us/2014/09/01/the-gentle-art-of-patch-review/) suggests an iterative series of focuses which is designed to lead new contributors to positive collaboration without inundating them initially with nuances:
 * Is the idea behind the contribution sound?
 * Is the contribution architected correctly?
 * Is the contribution polished?
+
+For this project, we require that at least 2 approvals are given and a build from our continuous integration system is successful off of your branch. Please note that any new changes made with your existing pull request during review will automatically unapprove and retrigger another build/round of tests.
 
 ##### Testing
 Testing is the responsibility of all contributors. In general, we try to adhere to [Google's test sizing philosophy](https://testing.googleblog.com/2010/12/test-sizes.html) when structuring tests. 
