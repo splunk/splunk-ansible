@@ -6,10 +6,12 @@
   when: not splunk.enable_service
 
 - name: "Stop Splunk via systemctl"
-  systemd:
+  service:
+    name: splunk
     state: stopped
-    name: Splunkd
   when: splunk.enable_service and ansible_system is match("Linux")
+  become: yes
+  become_user: root
 
 - name: "Stop Splunk via Windows service"
   win_service:

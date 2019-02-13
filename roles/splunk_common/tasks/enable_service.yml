@@ -1,15 +1,13 @@
 ---
 - name: "Enable service via boot-start - Linux"
-  command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }}  --accept-license --answer-yes --no-prompt"
+  command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} -systemd-unit-file-name splunk --accept-license --answer-yes --no-prompt"
   register: enable_boot_start
   changed_when: enable_boot_start.rc == 0
   failed_when: enable_boot_start.rc != 0
   become: yes
   become_user: root
-  args:
-    creates: "/etc/systemd/system/Splunkd.service"
   when: ansible_system is match("Linux")
 
 - name: "Enable service via boot-start - Windows"
-  command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }}  --accept-license --answer-yes --no-prompt"
+  command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
   when: not ansible_system is match("Linux")

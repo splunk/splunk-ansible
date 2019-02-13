@@ -21,6 +21,21 @@
 - name: Flush restart handlers
   meta: flush_handlers
 
+- name: Wait for SHC to be ready 
+  shc_ready:
+    captain_url="{{ splunk.search_head_cluster_url }}"
+    shc_peers="{{ groups['splunk_search_head'] }}"
+    spl_user="{{ splunk.admin_user }}"
+    spl_pass="{{ splunk.password }}"
+  no_log: "{{ hide_password }}"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: "{{ shc_bootstrap_delay }}"
+  when:
+    - splunk.search_head_cluster
+    - splunk.apps_location
+
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
