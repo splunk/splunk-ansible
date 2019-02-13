@@ -1,21 +1,22 @@
-# splunk-ansible: Open source of our internal playbooks 
-------
+# splunk-ansible: Provisioning Splunk the Easy Way
+
 [![Build Status](https://circleci.com/gh/splunk/splunk-ansible/tree/develop.svg?style=svg)](https://circleci.com/gh/splunk/splunk-ansible/tree/develop)
 
 Welcome to Splunk's official repository containing Ansible playbooks for configuring and managing Splunk Enterprise and Universal Forwarder deployments. This repository contains plays that target all Splunk roles and deployment topologies, and currently work on any Linux-based platform. It is currently being used by the [Splunk's official Docker image](https://github.com/splunk/docker-splunk) project. 
 
 Please refer to [Ansible documentation](http://docs.ansible.com/) for more details about Ansible concepts and how it works. 
 
-------
+----
 
 ## Table of Contents
-1. [Purpose](#purpose)
-2. [Support](#support)
-3. [Documentation](#documentation)
-4. [Contributing](#contributing)
-5. [Changelog](#changelog)
 
-------
+1. [Purpose](#purpose)
+2. [Usage](#usage)
+3. [Support](#support)
+4. [Contributing](#contributing)
+5. [License](#license)
+
+----
 
 ## Purpose
 
@@ -30,6 +31,9 @@ This code in this repository is used for configuring Splunk Enterprise and Splun
 ##### When should I use this repo?
 This repository should be used by people interested in configuring Splunk according to recommended best practices. The playbooks in this codebase are internally-vetted procedures and operations that administer and manage Splunk as done within the company.
 
+## Usage
+For full usage instructions (including installation, tutorials, and examples), please visit the [splunk-ansible documentation](https://splunk.github.io/splunk-ansible/) page.
+
 ## Support
 Please use the [GitHub issue tracker](https://github.com/splunk/splunk-ansible/issues) to submit bugs or request features.
 
@@ -38,17 +42,10 @@ If you have questions or need support, you can:
 * Join the [#docker](https://splunk-usergroups.slack.com/messages/C1RH09ERM/) room in the [Splunk Slack channel](http://splunk-usergroups.slack.com)
 * If you are a Splunk Enterprise customer with a valid support entitlement contract and have a Splunk-related question, you can also open a support case on the https://www.splunk.com/ support portal
 
-## Documentation
-For full documentation, including isntallation, tutorials, and examples, please visit the [splunk-ansible documentation](https://splunk.github.io/splunk-ansible/) page.
-
 ## Contributing
-Please see our [contribution guidelines](docs/CONTRIBUTING.md).
-
-## Changelog
-Please see the [changelog](docs/CHANGELOG.md).
+We welcome feedback and contributions from the community! Please see our [contribution guidelines](docs/CONTRIBUTING.md) for more information on how to get involved. 
 
 ## License
-See [LICENSING](docs/LICENSING.md)
+Copyright 2018-2019 Splunk.
 
-## Authors
-Splunk Inc. and the Splunk Community
+Distributed under the terms of our [license](docs/LICENSE.md), splunk-ansible is free and open source software.
