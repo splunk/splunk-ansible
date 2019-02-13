@@ -1,6 +1,6 @@
 ---
 - name: Run default Splunk provisioning
-  hosts: localhost
+  hosts: all
   gather_facts: true
   vars:
     splunk_search_head_captain: false

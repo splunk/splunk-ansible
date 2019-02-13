@@ -25,10 +25,9 @@ Splunk Enterprise is a platform for operational intelligence. Our software lets 
 
 Please refer to [Splunk products](https://www.splunk.com/en_us/software.html) for more knowledge about the features and capabilities of Splunk, and how you can bring it into your organization.
 
-##### What does this codebase do?
+##### What is splunk-ansible?
 This code in this repository is used for configuring Splunk Enterprise and Splunk Universal Forwarder instances based on a declarative configuration. The role of Ansible here enables managing Splunk in a manner consistent with industry standards such as infrastructure automation and infrastructure-as-code.
 
-##### When should I use this repo?
 This repository should be used by people interested in configuring Splunk according to recommended best practices. The playbooks in this codebase are internally-vetted procedures and operations that administer and manage Splunk as done within the company.
 
 ## Usage
