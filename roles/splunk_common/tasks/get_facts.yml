@@ -1,7 +1,7 @@
 ---
 - name: "Check for existing installation"
   stat: 
-    path: "{{ splunk.exec }}"
+    path: "{{ splunk.home }}/etc/splunk.version"
   register: pre_existing_splunk
 
 - name: "Set first run fact"
@@ -19,9 +19,10 @@
 
 - name: "Set target version fact"
   set_fact:
-    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1\\2\\3') | default('0') }}"
+    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1.\\2.\\3') | default('0') }}"
   vars:
-    regexp: 'splunk(?:forwarder)?-(\d)\.(\d)\.(\d)-'
+    regexp: 'splunk(?:forwarder)?-(\d+)\.(\d+)\.(\d+)-'
+  when: "'build_location' in splunk and splunk.build_location is not none"
 
 - name: "Find manifests"
   find:
@@ -29,13 +30,15 @@
     patterns: ".*-manifest$"
     use_regex: yes
   register: manifests
+  when: "'build_location' in splunk and splunk.build_location is not none"
 
 - name: "Set current version fact"
   set_fact:
-    splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1\\2\\3') if (manifests.matched == 1) else '0' }}"
+    splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1.\\2.\\3') if (manifests.matched == 1) else '0' }}"
   vars:
-    regexp: 'splunk(?:forwarder)?-(\d)\.(\d)\.(\d)-'
+    regexp: 'splunk(?:forwarder)?-(\d+)\.(\d+)\.(\d+)-'
+  when: "'build_location' in splunk and splunk.build_location is not none"
 
 - name: "Setting upgrade fact"
   set_fact:
-    splunk_upgrade: "{{ not first_run and splunk_target_version != splunk_current_version | default(False) }}"
+    splunk_upgrade: "{{ not first_run and 'build_location' in splunk and splunk.build_location is not none and splunk_target_version != splunk_current_version | default(False) }}"

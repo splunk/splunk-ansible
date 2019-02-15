@@ -21,7 +21,7 @@ config:
         verify: True
 
 splunk:
-    build_location: "C:\\splunk.msi"
+    build_location:
     tar_dir: "splunk"
     opt: &opt "C:\\Program Files"
     home: &home !!python/object/apply:string.join [[*opt, "\\splunk"],'']

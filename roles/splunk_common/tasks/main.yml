@@ -6,12 +6,18 @@
   
 - include_tasks: get_facts.yml
 
+- include_tasks: update_etc.yml
+
 - include_tasks: install_splunk.yml
   when:
     - first_run is defined
     - first_run | bool
+    - "'build_location' in splunk and splunk.build_location is not none"
 
 - include_tasks: remove_first_login.yml
+  when:
+    - first_run is defined
+    - first_run | bool
 
 - include_tasks: install_java.yml
   when:
@@ -33,16 +39,20 @@
   
 - include_tasks: enable_s2s_port.yml
   when:
-    - splunk.s2s_enable is defined
+    - "'s2s_enable' in splunk and splunk.s2s_enable is not none"
     - splunk.s2s_enable | bool
+    - first_run is defined
+    - first_run | bool
 
 - include_tasks: enable_service.yml
   when: splunk.enable_service and ansible_system is match("Linux")
 
 - include_tasks: enable_ssl_on_gui.yml
   when:
-    - splunk.http_enableSSL is defined
+    - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
     - splunk.http_enableSSL | bool
+    - first_run is defined
+    - first_run | bool
 
 - include_tasks: set_any_generic_config.yml
   when:
@@ -51,5 +61,11 @@
 - include_tasks: start_splunk.yml
 
 - include_tasks: clean_user_seed.yml
+  when:
+    - first_run is defined
+    - first_run | bool
 
 - include_tasks: add_splunk_license.yml
+  when:
+    - first_run is defined
+    - first_run | bool

@@ -21,7 +21,7 @@ config:
         verify: True
 
 splunk:
-    build_location: "/tmp/splunk.tgz"
+    build_location:
     tar_dir: "splunk"
     opt: &opt "/opt"
     home: &home !!python/object/apply:string.join [[*opt, "/splunk"],'']
