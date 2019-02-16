@@ -11,3 +11,5 @@
   become: yes
   become_method: sudo
   become_user: "{{ splunk.user }}"
+  environment:
+    SPLUNK_HOME: "{{ splunk.home }}"
