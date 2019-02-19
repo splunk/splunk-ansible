@@ -1,6 +1,6 @@
 # Contributing to the Project
 
-This document is the single source of truth for how to contribute to the code base. Feel free to browse the open issues and file new ones, all feedback welcome!
+This document is the single source of truth on contributing towards this codebase. Please feel free to browse the open issues and file new ones - all feedback is welcome!
 
 ----
 
@@ -22,15 +22,14 @@ This document is the single source of truth for how to contribute to the code ba
 ----
 
 ## Prerequisites
-When contributing to this repository, please first discuss the change you wish to make via a Github issue, Slack message, email, or via other channels with the owners of this repository.
+When contributing to this repository, please first discuss the change you wish to make via a GitHub issue, Slack message, email, or via other channels with the owners of this repository.
 
 ##### Contributor License Agreement
-At the moment, we can only accept pull requests submitted from:
+At the moment, we can only accept pull requests submitted from either:
 * Splunk employees or
 * Individuals that have signed our contribution agreement
 
 If you wish to be a contributing member of our community, please see the agreement [for individuals](https://www.splunk.com/goto/individualcontributions) or [for organizations](https://www.splunk.com/goto/contributions).
-
 
 ##### Code of Conduct
 Please make sure to read and observe our [Code of Conduct](contributing/code-of-conduct.md). Please follow it in all of your interactions involving the project.
@@ -39,10 +38,10 @@ Please make sure to read and observe our [Code of Conduct](contributing/code-of-
 TODO
 
 ## Contribution Workflow
-Help is always welcome! For example, documentation (like the text you are reading now) can always use improvement. There's always code that can be clarified and variables or functions that can be renamed or commented. There's always a need for more test coverage. You get the idea - if you ever see something you think should be fixed, you should own it.
+Help is always welcome! For example, documentation can always use improvement. There's always code that can be clarified, functionality that can be extended, and tests to be added to guarantee behavior. If you see something you think should be fixed, don't be afraid to own it.
 
 ##### Feature Requests and Bug Reports
-Have ideas on improvements? See something that needs work? While the community encourages everyone to contribute code, it is also appreciated when someone reports an issue. Please report any issues or bugs you find through [Github's issue tracker](https://github.com/splunk/splunk-ansible/issues). 
+Have ideas on improvements? See something that needs work? While the community encourages everyone to contribute code, it is also appreciated when someone reports an issue. Please report any issues or bugs you find through [GitHub's issue tracker](https://github.com/splunk/splunk-ansible/issues). 
 
 If you are reporting a bug, please include:
 * Your operating system name and version
@@ -57,9 +56,9 @@ We'd also like to hear about your propositions and suggestions. Feel free to sub
 Look through our [issue tracker](https://github.com/splunk/splunk-ansible/issues) to find problems to fix! Feel free to comment and tag corresponding stakeholders or full-time maintainers of this project with any questions or concerns.
 
 ##### Pull Requests
-What is a "pull request"?  It informs the project's core developers about the changes you want to review and merge.  Pull requests are stored on [GitHub servers](https://github.com/splunk/splunk-ansible/pulls).
+What is a "pull request"? It informs the project's core developers about the changes you want to review and merge. Once you submit a pull request, it enters a stage of code review where you and others can discuss its potential modifications and even add more commits to it later on. 
 
-Once you submit a pull request, we can discuss its potential modifications and even add more commits to it later on. There's an excellent tutorial on how Pull Requests work in the [GitHub Help Center](https://help.github.com/articles/using-pull-requests/).
+If you want to learn more, please consult this [tutorial on how pull requests work](https://help.github.com/articles/using-pull-requests/) in the [GitHub Help Center](https://help.github.com/).
 
 Here's an overview of how you can make a pull request against this project:
 1. Fork the [splunk-ansible GitHub repository](https://github.com/splunk/splunk-ansible/issues)
@@ -123,12 +122,12 @@ There are multiple types of tests. The location of the test code varies with typ
 Continuous integration will run all of these tests either as pre-submits on PRs, post-submits against master/release branches, or both.
 
 ##### Documentation
-We could always improve our documentation. If you would like to help contribute to the our docs, we’re happy to have your help! Anyone can contribute, whether you’re new to the project or you’ve been around a long time, and whether you self-identify as a developer, an end user, or someone who just can’t stand seeing typos. What exactly is needed?
+We could always use improvements to our documentation! Anyone can contribute to these docs - whether you’re new to the project, you’ve been around a long time, and whether you self-identify as a developer, an end user, or someone who just can’t stand seeing typos. What exactly is needed?
 1. More complementary documentation. Have you perhaps found something unclear?
 2. More examples or generic templates that others can use.
 3. Blog posts, articles and such – they’re all very appreciated.
 
-You can also edit documentation files directly in the GitHub web interface, without using a local copy. This can be convenient for small typos or grammer fixes.
+You can also edit documentation files directly in the GitHub web interface, without creating a local copy. This can be convenient for small typos or grammer fixes.
 
 ## Maintainers
 

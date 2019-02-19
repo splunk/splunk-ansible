@@ -13,6 +13,7 @@ Please refer to [Splunk products](https://www.splunk.com/en_us/software.html) fo
 This code in this repository is used for configuring Splunk Enterprise and Splunk Universal Forwarder instances based on a declarative configuration. The role of Ansible here enables managing Splunk in a manner consistent with industry standards such as infrastructure automation and infrastructure-as-code.
 
 This repository should be used by people interested in configuring Splunk according to recommended best practices. The playbooks in this codebase are internally-vetted procedures and operations that administer and manage Splunk as done within the company.
+
 ----
 
 ## Table of Contents
@@ -21,6 +22,8 @@ This repository should be used by people interested in configuring Splunk accord
     * [Install](SETUP.md#install)
     * [Configure](SETUP.md#configure)
     * [Run](SETUP.md#run)
-* [Usage](USING_DEFAULTS.md)
+* [Examples](EXAMPLES.md)
+* [Advanced Usage](ADVANCED.md)
+* [Architecture](ARCHITECTURE.md)
 * [Contributing](CONTRIBUTING.md)
-* [Licensing](LICENSING.md)
+* [License](LICENSE.md)
