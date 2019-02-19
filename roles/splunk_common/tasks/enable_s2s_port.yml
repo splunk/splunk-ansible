@@ -1,6 +1,6 @@
 ---
 - name: Enable the Splunk-to-Splunk port
-  command: "{{ splunk.exec }} enable listen 9997 -auth {{ splunk.admin_user }}:{{ splunk.password }} --accept-license --answer-yes --no-prompt"
+  command: "{{ splunk.exec }} enable listen {{ splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
   register: enable_s2s_status
