@@ -1,5 +1,5 @@
 ---
-- name: Enable Web SSL 
+- name: Enable Web SSL
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings

@@ -3,7 +3,7 @@
   when:
     - splunk_home_ownership_enforcement is defined
     - splunk_home_ownership_enforcement | bool
-  
+
 - include_tasks: get_facts.yml
 
 - include_tasks: install_splunk.yml
@@ -30,7 +30,7 @@
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
-  
+
 - include_tasks: enable_s2s_port.yml
   when:
     - splunk.s2s_enable is defined
