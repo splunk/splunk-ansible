@@ -44,6 +44,8 @@
 
 - name: Check app contents
   shell: "set -o pipefail && tar --exclude='*/*/*' --exclude='*.*' -tf /tmp/app.spl | awk -F'/' '{ print$1 }' | uniq"
+  args:
+    executable: /bin/bash
   register: app_contents
   when: "'splunkbase.splunk.com' not in app_url"
 
