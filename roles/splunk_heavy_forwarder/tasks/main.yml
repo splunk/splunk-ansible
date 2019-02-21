@@ -20,11 +20,29 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
+- name: Flush restart handlers
+  meta: flush_handlers
+
 - include_tasks: ../../splunk_common/tasks/add_splunk_object.yml
   when: splunk.add is defined
   
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when: 
     - splunk.apps_location
+
+- name: Execute Splunk commands
+  command: "{{splunk.exec}} {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ splunk.cmd }}"
+  register: task_result
+  until: task_result.rc == 0 or "already exists" in task_result.stderr
+  retries: "{{ retry_num }}"
+  delay: "{{ delay_num }}"
+  when: splunk.cmd is defined
+  no_log: "{{ hide_password }}"
+  ignore_errors: true
+  notify:
+    - Restart the splunkd service
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
