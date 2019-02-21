@@ -1,7 +1,7 @@
 ---
 #- name: "Create section {{ stanza_name }} if not existing"
 #  lineinfile:
-#    path: "{{ splunk.home }}/etc/system/local/{{ conf_file}}"
+#    path: "{{ splunk.home }}/etc/system/local/{{ conf_file }}"
 #    create: True
 #    line: "[{{ stanza_name }}]"
 #    regexp: "^{{ stanza_name }}"
