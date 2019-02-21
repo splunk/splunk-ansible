@@ -1,0 +1,67 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_post_tasks: null
+    ansible_pre_tasks: null
+    config:
+      baked: default.yml
+      defaults_dir: /tmp/defaults
+      env:
+        headers: null
+        var: SPLUNK_DEFAULTS_URL
+        verify: true
+      host:
+        headers: null
+        url: null
+        verify: true
+      max_delay: 60
+      max_retries: 3
+      max_timeout: 1200
+    hide_password: false
+    retry_num: 50
+    splunk:
+      role: splunk_universal_forwarder
+      indexer_cluster: false
+      license_master_included: false
+      license_uri: null
+      build_remote_src: true
+      build_location: /tmp/splunk.tgz
+      apps_location: null
+      admin_user: admin
+      app_paths:
+        default: /opt/splunkforwarder/etc/apps
+        deployment: /opt/splunkforwarder/etc/deployment-apps
+        httpinput: /opt/splunkforwarder/etc/apps/splunk_httpinput
+        idxc: /opt/splunkforwarder/etc/master-apps
+        shc: /opt/splunkforwarder/etc/shcluster/apps
+      enable_service: false
+      exec: /opt/splunkforwarder/bin/splunk
+      group: splunk
+      hec_disabled: 0
+      hec_enableSSL: 1
+      hec_port: 8088
+      hec_token: 1dad6b3f-4e88-447a-bc1d-dbe0fef9d7ae
+      home: /opt/splunkforwarder
+      http_enableSSL: 0
+      http_enableSSL_cert: null
+      http_enableSSL_privKey: null
+      http_enableSSL_privKey_password: null
+      http_port: 8000
+      ignore_license: false
+      license_download_dest: /tmp/splunk.lic
+      nfr_license: /tmp/nfr_enterprise.lic
+      opt: /opt
+      password: dgupDo3CRBUFxnoTrTaMyVBYKMmmi8Z4
+      pid: /opt/splunkforwarder/var/run/splunk/splunkd.pid
+      s2s_enable: true
+      s2s_port: 9997
+      secret: null
+      smartstore: null
+      svc_port: 8089
+      tar_dir: splunkforwarder
+      user: splunk
+      wildcard_license: false
+    splunk_home_ownership_enforcement: true
+  roles:
+    - role: splunk_universal_forwarder

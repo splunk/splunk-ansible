@@ -1,5 +1,5 @@
 ---
-- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ groups['splunk_indexer'][0] }}"
 

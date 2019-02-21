@@ -12,7 +12,7 @@
     shc_replication_factor: 1
   when: num_search_head_hosts <= 3
 
-- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
@@ -21,6 +21,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
+  changed_when: task_result.rc == 0
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
@@ -48,7 +49,7 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_process.yml
 
-- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml 
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
@@ -56,8 +57,7 @@
   command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}https://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
-  when:
-    - splunk_search_head_captain == true
+  when: splunk_search_head_captain | bool
   register: task_result
   until: task_result.rc == 0 or "node seems to have already joined another cluster" in task_result.stderr
   changed_when: task_result.rc == 0
