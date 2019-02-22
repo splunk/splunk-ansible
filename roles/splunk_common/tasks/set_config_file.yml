@@ -1,7 +1,7 @@
 ---
 - name: Create {{ conf_file }} if not existing
   copy:
-    dest: "{{ splunk.home }}/etc/system/local/{{ conf_file}}"
+    dest: "{{ splunk.home }}/etc/system/local/{{ conf_file }}"
     mode: u=rw,g=,o=
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"

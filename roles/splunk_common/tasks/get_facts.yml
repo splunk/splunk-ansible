@@ -1,6 +1,6 @@
 ---
 - name: "Check for existing installation"
-  stat: 
+  stat:
     path: "{{ splunk.exec }}"
   register: pre_existing_splunk
 
