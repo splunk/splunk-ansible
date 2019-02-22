@@ -40,7 +40,7 @@
       hec_disabled: 0
       hec_enableSSL: 1
       hec_port: 8088
-      hec_token: e38a027b-e57a-4c16-a914-7064679d2840
+      hec_token: abcd1234
       home: /opt/splunk
       http_enableSSL: 0
       http_enableSSL_cert: null
@@ -51,12 +51,12 @@
         enable: false
         label: idxc_label
         replication_factor: 3
-        replication_port: 4001
+        replication_port: 9887
         search_factor: 3
         secret: ce5hXskIQRFck4WmBOBOZOC7ZqBN1Q8G
       opt: /opt
       admin_user: admin
-      password: GbEIF6SkZM1KjpGJtLnqen4wDsIYwdi5
+      password: helloworld
       pid: /opt/splunk/var/run/splunk/splunkd.pid
       s2s_enable: true
       s2s_port: 9997
@@ -64,7 +64,7 @@
         enable: false
         label: shc_label
         replication_factor: 3
-        replication_port: 4001
+        replication_port: 9887
         secret: ofzi+x7zTOha7eTAO3qYj7wBPGzyrRos
       smartstore: null
       svc_port: 8089
