@@ -1,7 +1,7 @@
 ---
 # If there is no Splunk executable, we will need to install.
 - name: "Check for existing installation"
-  stat: 
+  stat:
     path: "{{ splunk.exec }}"
   register: pre_existing_splunk_exec
 

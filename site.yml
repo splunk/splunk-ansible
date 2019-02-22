@@ -2,22 +2,21 @@
 - name: Run default Splunk provisioning
   hosts: localhost
   gather_facts: true
+  vars:
+    splunk_search_head_captain: false
   tasks:
 
     # determine if this machine is the SHC captain
     - name: Get actual hostname
       command: hostname
       register: actual_hostname
+      changed_when: actual_hostname.rc == 0
 
-    - set_fact:
+    - name: Determine captaincy
+      set_fact:
         splunk_search_head_captain: true
       when:
         - actual_hostname.stdout == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or splunk.role == "splunk_search_head_captain"
-
-    - set_fact:
-        splunk_search_head_captain: false
-      when:
-        - actual_hostname.stdout != lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') and splunk.role != "splunk_search_head_captain"
 
     # the get_url module is for linux only
     - name: Download pre-setup playbooks
@@ -48,14 +47,14 @@
       register: downloaded_pre_plays
 
     - name: Run pre-setup playbooks
-      include_tasks: "{{lookup('first_found', pre_locations_to_look)}}"
+      include_tasks: "{{ lookup('first_found', pre_locations_to_look) }}"
       when:
         - ansible_pre_tasks is defined
         - ansible_pre_tasks is not none
       vars:
         pre_locations_to_look:
           - "{{ ansible_pre_tasks }}"
-          - "{% if downloaded_pre_plays.dest is defined %}{{downloaded_pre_plays.dest}}{% endif %}"
+          - "{% if downloaded_pre_plays.dest is defined %}{{ downloaded_pre_plays.dest }}{% endif %}"
           - "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
 
@@ -94,13 +93,13 @@
       register: downloaded_post_plays
 
     - name: Run post-setup playbooks
-      include_tasks: "{{lookup('first_found', post_locations_to_look)}}"
+      include_tasks: "{{ lookup('first_found', post_locations_to_look) }}"
       when:
         - ansible_post_tasks is defined
         - ansible_post_tasks is not none
       vars:
         post_locations_to_look:
           - "{{ ansible_post_tasks }}"
-          - "{% if downloaded_post_plays.dest is defined %}{{downloaded_post_plays.dest}}{% endif %}"
+          - "{% if downloaded_post_plays.dest is defined %}{{ downloaded_post_plays.dest }}{% endif %}"
           - "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"

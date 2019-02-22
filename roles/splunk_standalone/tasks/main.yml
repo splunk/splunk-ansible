@@ -1,5 +1,5 @@
 ---
-- include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
+- include_tasks: ../../splunk_common/tasks/set_as_hec_receiver.yml
   when:
     - not splunk.hec_disabled | bool
     - splunk.hec_token is defined and splunk.hec_token != None
@@ -7,8 +7,8 @@
 - include_tasks: ../../splunk_common/tasks/add_splunk_object.yml
   when: splunk.add is defined
 
-- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+- include_tasks: ../../splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
 
-- include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
+- include_tasks: ../../splunk_common/tasks/check_for_required_restarts.yml

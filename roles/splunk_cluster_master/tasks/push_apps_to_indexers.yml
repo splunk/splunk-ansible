@@ -7,10 +7,12 @@
 
 # TODO: Might be better to use synchronize here, but we'll need rsync installed
 - name: Copy installed apps to master-apps
-  shell: "cp -R {{ splunk.app_paths.default }}/{{ item }} {{ splunk.app_paths.idxc }}"
+  command: "cp -R {{ splunk.app_paths.default }}/{{ item }} {{ splunk.app_paths.idxc }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ installed_apps }}"
+  register: copy_app
+  changed_when: copy_app.rc == 0
 
 - include_tasks: apply_cluster_bundle.yml
   when:

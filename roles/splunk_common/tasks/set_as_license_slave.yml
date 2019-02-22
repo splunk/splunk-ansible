@@ -10,6 +10,7 @@
   become_user: "{{ splunk.user }}"
   register: linux_set_lic_slave
   until: linux_set_lic_slave.rc == 0
+  changed_when: linux_set_lic_slave.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
   notify:
