@@ -317,6 +317,8 @@ splunk:
 
 ### Configuration files
 
+**Using this method of configuration file generation may not create a configuration file the way Splunk expects. Verify the generated configuration file to avoid errors. Use at your own discretion**
+
 The `default.yml` file can be used to specify multiple named configuration files.
 
 `conf` accepts a dictionary where keys are names of `.conf` files and values contain the `directory` and `contents`. Files will be created in the directory specified in `directory` or the default directory (`/opt/splunk/etc/system/local`) if none are provided. `content` accepts a dictionary where keys are section names and values are key-value pairs to be listed in the configuration file.
