@@ -34,6 +34,13 @@
         httpinput: /opt/splunk/etc/apps/splunk_httpinput
         idxc: /opt/splunk/etc/master-apps
         shc: /opt/splunk/etc/shcluster/apps
+      conf:
+        user-prefs:
+          directory: /opt/splunk/etc/users/admin/user-prefs/local
+          content:
+            general:
+              default_namespace: appboilerplate
+              search_syntax_highlighting: dark
       enable_service: false
       exec: /opt/splunk/bin/splunk
       group: splunk
