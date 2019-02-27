@@ -35,13 +35,20 @@
         httpinput: /opt/splunkforwarder/etc/apps/splunk_httpinput
         idxc: /opt/splunkforwarder/etc/master-apps
         shc: /opt/splunkforwarder/etc/shcluster/apps
+      conf:
+        user-prefs:
+          directory: /opt/splunkforwarder/etc/users/admin/user-prefs/local
+          content:
+            general:
+              default_namespace: appboilerplate
+              search_syntax_highlighting: dark
       enable_service: false
       exec: /opt/splunkforwarder/bin/splunk
       group: splunk
       hec_disabled: 0
       hec_enableSSL: 1
       hec_port: 8088
-      hec_token: 1dad6b3f-4e88-447a-bc1d-dbe0fef9d7ae
+      hec_token: abcd1234
       home: /opt/splunkforwarder
       http_enableSSL: 0
       http_enableSSL_cert: null
@@ -52,7 +59,7 @@
       license_download_dest: /tmp/splunk.lic
       nfr_license: /tmp/nfr_enterprise.lic
       opt: /opt
-      password: dgupDo3CRBUFxnoTrTaMyVBYKMmmi8Z4
+      password: helloworld
       pid: /opt/splunkforwarder/var/run/splunk/splunkd.pid
       s2s_enable: true
       s2s_port: 9997

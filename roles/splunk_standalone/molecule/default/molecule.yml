@@ -25,5 +25,7 @@ verifier:
   name: testinfra
   lint:
     name: flake8
+    options:
+      ignore: E501
   options:
     junit-xml: ../../../../tests/results/standalone-default-results.xml
