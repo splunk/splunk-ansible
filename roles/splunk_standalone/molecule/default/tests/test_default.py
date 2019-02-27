@@ -40,3 +40,13 @@ def test_splunkd(host):
     output = host.run('curl -k https://localhost:8089/services/server/info \
         -u admin:helloworld')
     assert "Splunk" in output.stdout
+
+
+def test_custom_user_prefs(host):
+    f = host.file('/opt/splunk/etc/users/admin/user-prefs/local/user-prefs.conf')
+    assert f.exists
+    assert f.user == 'splunk'
+    assert f.group == 'splunk'
+    assert f.contains("[general]")
+    assert f.contains("default_namespace = appboilerplate")
+    assert f.contains("search_syntax_highlighting = dark")
