@@ -27,7 +27,7 @@
   become_user: root
 
 - name: Create alternatives for installed JDK Java binary
-  shell: "update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java 100"
+  command: "update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java 100"
   when:
     - ansible_distribution == 'Debian'
   become: yes
@@ -35,23 +35,23 @@
   become_user: root
 
 - name: Create alternatives for installed JDK Javac binary
-  shell: "update-alternatives --install /usr/bin/javac javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac 100"
+  command: "update-alternatives --install /usr/bin/javac javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac 100"
   when:
     - ansible_distribution == 'Debian'
   become: yes
   become_method: sudo
   become_user: root
 
-- name: Set Java 
-  shell: "update-alternatives --set java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java"
+- name: Set Java
+  command: "update-alternatives --set java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java"
   when:
     - ansible_distribution == 'Debian'
   become: yes
   become_method: sudo
   become_user: root
 
-- name: Set Javac 
-  shell: "update-alternatives --set javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac"
+- name: Set Javac
+  command: "update-alternatives --set javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac"
   when:
     - ansible_distribution == 'Debian'
   become: yes
@@ -62,7 +62,7 @@
   become: yes
   become_method: sudo
   become_user: root
-  command: cp {{splunk.home}}/etc/splunk-launch.conf.default {{splunk.home}}/etc/splunk-launch.conf
+  command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
   ignore_errors: true
   when:
     - ansible_distribution == 'Debian'
@@ -82,7 +82,7 @@
   become_method: sudo
   become_user: root
   lineinfile:
-    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
     regexp: '^JAVA_HOME'
     line: "JAVA_HOME={{ java_home.stdout }}"
   ignore_errors: true

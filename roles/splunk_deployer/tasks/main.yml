@@ -21,7 +21,7 @@
 - name: Flush restart handlers
   meta: flush_handlers
 
-- name: Wait for SHC to be ready 
+- name: Wait for SHC to be ready
   shc_ready:
     captain_url="{{ splunk.search_head_cluster_url }}"
     shc_peers="{{ groups['splunk_search_head'] }}"

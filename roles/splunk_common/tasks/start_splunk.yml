@@ -1,11 +1,13 @@
 ---
-- name: Start Splunk via cli
+- name: "Start Splunk via cli"
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
+  register: start_splunk
+  changed_when: start_splunk.rc == 0 and 'already running' not in start_splunk.stdout
   when: not splunk.enable_service
 
-- name: Start Splunk via service
+- name: "Start Splunk via service"
   service:
     name: splunk
     state: restarted
@@ -13,8 +15,12 @@
   become: yes
   become_user: root
 
-- name: Start Splunk via Windows service
+- name: "Start Splunk via Windows service"
   win_service:
     name: splunkd
     state: restarted
   when: splunk.enable_service and not ansible_system is match("Linux")
+
+- name: "Wait for port 8089 to become open"
+  wait_for:
+    port: 8089

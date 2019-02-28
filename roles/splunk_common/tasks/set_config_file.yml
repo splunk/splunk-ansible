@@ -1,7 +1,15 @@
 ---
+- name: Create {{ conf_directory }} directory if not existing
+  file:
+    path: "{{ conf_directory }}"
+    state: directory
+  when: conf_directory is defined
+  become: yes
+  become_user: "{{ splunk.user }}"
+
 - name: Create {{ conf_file }} if not existing
   copy:
-    dest: "{{ splunk.home }}/etc/system/local/{{ conf_file}}"
+    dest: "{{ conf_directory }}/{{ conf_file }}"
     mode: u=rw,g=,o=
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"

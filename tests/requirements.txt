@@ -1,0 +1,5 @@
+pytest
+mock
+docker
+requests
+molecule

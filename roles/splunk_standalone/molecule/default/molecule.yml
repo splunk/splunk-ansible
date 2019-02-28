@@ -1,0 +1,31 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint:
+  name: yamllint
+  options:
+    c: ../../.yamllint
+platforms:
+  - name: instance
+    image: splunk/splunk
+    command: no-provision
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+    enabled: true
+    options:
+      x: ["204", "701"]
+      force-color: true
+scenario:
+  name: default
+verifier:
+  name: testinfra
+  lint:
+    name: flake8
+    options:
+      ignore: E501
+  options:
+    junit-xml: ../../../../tests/results/standalone-default-results.xml
