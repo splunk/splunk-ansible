@@ -30,14 +30,12 @@
     patterns: ".*-manifest$"
     use_regex: yes
   register: manifests
-  when: "'build_location' in splunk and splunk.build_location is not none"
 
 - name: "Set current version fact"
   set_fact:
     splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1.\\2.\\3') if (manifests.matched == 1) else '0' }}"
   vars:
     regexp: 'splunk(?:forwarder)?-(\d+)\.(\d+)\.(\d+)-'
-  when: "'build_location' in splunk and splunk.build_location is not none"
 
 - name: "Setting upgrade fact"
   set_fact:
