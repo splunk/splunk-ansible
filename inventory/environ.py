@@ -344,7 +344,6 @@ def create_parser():
 def prep_for_yaml_out(inventory):
     inventory_to_dump=inventory["all"]["vars"]
 
-
     keys_to_del = [ "docker_version", "ansible_ssh_user", "delay_num", "apps_location", "build_location", "build_remote_src", "deployer_included", "upgrade", "role", "search_head_cluster", "indexer_cluster", "license_master_included", "license_uri"]
     for key in keys_to_del:
         if key in inventory_to_dump:
