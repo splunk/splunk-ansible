@@ -8,7 +8,7 @@ test_setup:
 	pip install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 lint: test_setup
-	ansible-lint -v -c ./tests/lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml --exclude roles/splunk_universal_forwarder/tasks/setup_docker_monitoring.yml
+	ansible-lint -v -c ./tests/lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml
 
 test: lint small-tests large-tests
 
