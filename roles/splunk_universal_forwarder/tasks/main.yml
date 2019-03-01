@@ -22,11 +22,6 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
-- include_tasks: setup_docker_monitoring.yml
-  when:
-    - docker_monitoring
-  ignore_errors: true
-
 - name: Flush restart handlers
   meta: flush_handlers
 

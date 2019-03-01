@@ -211,11 +211,6 @@ def getUFSplunkVariables(vars_scope):
         vars_scope["splunk"]["before_start_cmd"] = os.environ.get('SPLUNK_BEFORE_START_CMD').split(',')
     if os.environ.get('SPLUNK_CMD', False):
         vars_scope["splunk"]["cmd"] = os.environ.get('SPLUNK_CMD').split(',')
-    docker_monitoring_var = os.environ.get('DOCKER_MONITORING', False)
-    if docker_monitoring_var and docker_monitoring_var.lower() == "true":
-        vars_scope["docker_monitoring"] = True
-    else:
-        vars_scope["docker_monitoring"] = False
     vars_scope["docker_version"] = '18.06.0'
 
 def getRandomString():
@@ -349,10 +344,7 @@ def create_parser():
 def prep_for_yaml_out(inventory):
     inventory_to_dump=inventory["all"]["vars"]
 
-
-    keys_to_del = [ "docker_version", "ansible_ssh_user", "delay_num", "docker_monitorying", "apps_location",
-                    "docker_monitoring", "build_location", "build_remote_src", "deployer_included", "upgrade",
-                    "role", "search_head_cluster", "indexer_cluster", "license_master_included", "license_uri"]
+    keys_to_del = [ "docker_version", "ansible_ssh_user", "delay_num", "apps_location", "build_location", "build_remote_src", "deployer_included", "upgrade", "role", "search_head_cluster", "indexer_cluster", "license_master_included", "license_uri"]
     for key in keys_to_del:
         if key in inventory_to_dump:
             del inventory_to_dump[key]
