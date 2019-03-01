@@ -9,3 +9,4 @@ test*.xml
 .vscode
 **/*.xml
 .pytest_cache
+version.txt
