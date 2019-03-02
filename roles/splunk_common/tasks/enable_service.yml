@@ -4,6 +4,9 @@
   register: pid1
   when:  ansible_system is match("Linux")
 
+# Using service file approach for systemd rather than 'boot-start' with
+# 'systemd-unit-file-name' option because cli's versions older than 7.2.2 do
+# not implement systemd in boot-start command.
 - name: "Copy splunk unit file - Linux (systemd)"
   copy:
     src: Splunkd.service
