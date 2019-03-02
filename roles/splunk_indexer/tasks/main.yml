@@ -10,7 +10,7 @@
   when: splunk.indexer_cluster
 
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
-  when: 
+  when:
     - splunk.deployment_server is defined
     - splunk.deployment_server
     - not splunk.indexer_cluster
