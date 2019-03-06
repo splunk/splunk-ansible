@@ -96,7 +96,8 @@ def getDefaultVars():
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
     defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
     defaultVars["splunk"]["search_head_cluster_url"] = os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', None) 
-    defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', None)
+    # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
+    defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', 'splunk.lic')
     if defaultVars["splunk"]["license_uri"] and '*' in defaultVars["splunk"]["license_uri"]:
         defaultVars["splunk"]["wildcard_license"] = True
     else:
