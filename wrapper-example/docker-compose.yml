@@ -17,6 +17,7 @@ services:
       - "8000"
     ports:
       - "22"
+      - "8000"
 
   indexer1:
     image: debian_buster_sshd
