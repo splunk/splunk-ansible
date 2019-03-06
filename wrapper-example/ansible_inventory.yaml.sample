@@ -1,0 +1,20 @@
+all:
+  vars:
+    ansible_user: root
+  children:
+    splunk_cluster_master:
+      hosts:
+        cluster_master:
+          ansible_port: 32793
+          ansible_host: 0.0.0.0
+    splunk_indexer:
+      hosts:
+        indexer1:
+          ansible_port: 32794
+          ansible_host: 0.0.0.0
+        indexer2:
+          ansible_port: 32795
+          ansible_host: 0.0.0.0
+        indexer3:
+          ansible_port: 32796
+          ansible_host: 0.0.0.0
