@@ -25,7 +25,7 @@ Next we'll copy our target key in for passwordless login:
 ```
 ssh-copy-id -i ~/.ssh/mykey root@0.0.0.0 -p <port>
 ```
-Make sure to do the above command for all containers.
+Make sure to do the above command for all containers. (Assuming you haven't changed the password for root in the Dockerfile, it's set to "**screencast**")
 
 Now lets build an ansible inventory to work with our hosts, I personally am using the yaml version, but you can build your inventory
 however you'd like.  See: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html.  I've attached the sample
