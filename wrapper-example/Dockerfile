@@ -1,4 +1,4 @@
-# This script is availible from dockerdocs: https://docs.docker.com/engine/examples/running_ssh_service/
+# This script is based on the one availible from dockerdocs: https://docs.docker.com/engine/examples/running_ssh_service/
 
 FROM debian:buster
 
@@ -13,6 +13,9 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 
 ENV NOTVISIBLE "in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile
+
+#these are required for splunk to start inside a container
+VOLUME [ "/opt/splunk/etc", "/opt/splunk/var" ]
 
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]

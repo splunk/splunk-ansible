@@ -1,29 +1,23 @@
 This folder provides guiendence in how to use splunk-ansible in your own environment.  The examples here setup a very
  basic container, that only exposes port 22 and has NOTHING preinstalled (not even ansible). You can follow this exact workflow with 4 baremetal machines.
  
- In this case, first we'll spin up 4 containers to mimic our base baremetal hosts with ssh installed.
+ In this case, first we'll spin up 4 containers to mimic our base baremetal hosts with ssh installed.  I've included a docker-compose file to easily build the image, and spin up the stack.
 
-First build the container image:
 ```
-cd wrapper-example
-docker build -t debian_buster_sshd .
+docker-compose -f docker-compose.yml up -d
 ```
-Then start up the 4 copies:
-```
-docker run -d -P --name cluster_master debian_buster_sshd
-docker run -d -P --name indexer1 debian_buster_sshd
-docker run -d -P --name indexer2 debian_buster_sshd
-docker run -d -P --name indexer3 debian_buster_sshd
-```
+This should stand up the full deployment and create all the required networking.
+
 Verify they are all running with docker ps:
 ```
 wrapper-example$ docker ps
 
-CONTAINER ID        IMAGE                COMMAND               CREATED             STATUS              PORTS                   NAMES
-83b7ca4b553b        debian_buster_sshd   "/usr/sbin/sshd -D"   5 minutes ago       Up 5 minutes        0.0.0.0:32775->22/tcp   indexer3
-fc6ecad25d9b        debian_buster_sshd   "/usr/sbin/sshd -D"   5 minutes ago       Up 5 minutes        0.0.0.0:32774->22/tcp   indexer2
-146859678bd2        debian_buster_sshd   "/usr/sbin/sshd -D"   5 minutes ago       Up 5 minutes        0.0.0.0:32773->22/tcp   indexer1
-a265a4805600        debian_buster_sshd   "/usr/sbin/sshd -D"   6 minutes ago       Up 6 minutes        0.0.0.0:32772->22/tcp   cluster_master
+CONTAINER ID        IMAGE                       COMMAND               CREATED             STATUS              PORTS                   NAMES
+1337ac381424        debian_buster_sshd          "/usr/sbin/sshd -D"   5 seconds ago       Up 3 seconds        0.0.0.0:32772->22/tcp   wrapper-example_cluster_master_1
+a325a28ba9ea        debian_buster_sshd          "/usr/sbin/sshd -D"   5 seconds ago       Up 4 seconds        0.0.0.0:32771->22/tcp   wrapper-example_indexer3_1
+88d8ab42bc11        debian_buster_sshd          "/usr/sbin/sshd -D"   5 seconds ago       Up 4 seconds        0.0.0.0:32770->22/tcp   wrapper-example_indexer1_1
+29d73413c155        debian_buster_sshd          "/usr/sbin/sshd -D"   5 seconds ago       Up 4 seconds        0.0.0.0:32769->22/tcp   wrapper-example_indexer2_1
+2646ede6484a        debian_buster_sshd          "/usr/sbin/sshd -D"   6 seconds ago       Up 5 seconds        0.0.0.0:32768->22/tcp   wrapper-example_search_head_1
 ```
 
 Next we'll copy our target key in for passwordless login:
@@ -31,9 +25,9 @@ Next we'll copy our target key in for passwordless login:
 ```
 ssh-copy-id -i ~/.ssh/mykey root@0.0.0.0 -p <port>
 ```
-Make sure to do the above command for all 4 servers.
+Make sure to do the above command for all containers.
 
-Now lets build an ansible inventory to work with our 4 hosts, I personally am using the yaml version, but you can build your inventory
+Now lets build an ansible inventory to work with our hosts, I personally am using the yaml version, but you can build your inventory
 however you'd like.  See: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html.  I've attached the sample
 inventory, ansible_inventory.yaml.sample
 
@@ -44,21 +38,26 @@ all:
   vars:
     ansible_user: root
   children:
+    splunk_search_head:
+      hosts:
+        search_head:
+          ansible_port: 32768
+          ansible_host: 0.0.0.0
     splunk_cluster_master:
       hosts:
         cluster_master:
-          ansible_port: 32776
+          ansible_port: 32772
           ansible_host: 0.0.0.0
     splunk_indexer:
       hosts:
         indexer1:
-          ansible_port: 32777
+          ansible_port: 32770
           ansible_host: 0.0.0.0
         indexer2:
-          ansible_port: 32778
+          ansible_port: 32769
           ansible_host: 0.0.0.0
         indexer3:
-          ansible_port: 32779
+          ansible_port: 32771
           ansible_host: 0.0.0.0
 ```
 
@@ -92,5 +91,19 @@ the required prereqs for splunk-ansible, copy the defaults file to /tmp/defaults
 the entire index cluster.
 
 ```
+ansible-playbook -vv -i ansible_inventory.yaml install-splunk-ansible.playbook
+```
+
+This will now setup ansible, python, and all the prereqs for anything to do with splunk-ansible.  Grab some coffee, this might take a bit!
+
+Once the play finishes for splunk-ansible, we're now ready to embed splunk-ansible as a module.  There's a couple of different ways to do this,
+one you could use the "delegate_to" function of an ansible playbook command, or two, we tell ansible to run in an async method.  The install-splunk.playbook, runs
+in the form of the latter. 
+
+You can now create different default.yml for each role of splunk, or override the options in your playbook for each group.  Once your playbook is configured, run:
+```
 ansible-playbook -vv -i ansible_inventory.yaml install-splunk.playbook
 ```
+
+You should now have a setup splunk instance, configured entirely asynchronously and utilizing splunk-ansible without needing to 
+touch splunk-ansible's inventory directly. 
