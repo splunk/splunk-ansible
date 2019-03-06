@@ -1,5 +1,5 @@
 This folder provides guiendence in how to use splunk-ansible in your own environment.  The examples here setup a very
- basic container, that only exposes port 22 and has NOTHING preinstalled (not even ansible). You can follow this exact workflow with 4 baremetal machines.
+ basic container, that only exposes port 22 and has NOTHING preinstalled (not even ansible). You can follow this exact workflow with baremetal machines / vm's.
  
  In this case, first we'll spin up 4 containers to mimic our base baremetal hosts with ssh installed.  I've included a docker-compose file to easily build the image, and spin up the stack.
 
@@ -86,15 +86,13 @@ auto-generated defaults off of the splunk container to get started.
 docker run --rm -it splunk/splunk:latest create-defaults > default.yml
 ```
 
-The supplied play will setup all of 
-the required prereqs for splunk-ansible, copy the defaults file to /tmp/defaults/default.yml, and then will download splunk and configure
-the entire index cluster.
+The supplied play will setup all of  "install-splunk-ansible.playbook" will setup all the required prereqs for splunk-ansible, 
+copy the defaults file to /tmp/defaults/default.yml and prep the install of splunk.  Run it now using:
 
 ```
 ansible-playbook -vv -i ansible_inventory.yaml install-splunk-ansible.playbook
 ```
-
-This will now setup ansible, python, and all the prereqs for anything to do with splunk-ansible.  Grab some coffee, this might take a bit!
+Grab some coffee, this might take a bit!
 
 Once the play finishes for splunk-ansible, we're now ready to embed splunk-ansible as a module.  There's a couple of different ways to do this,
 one you could use the "delegate_to" function of an ansible playbook command, or two, we tell ansible to run in an async method.  The install-splunk.playbook, runs
@@ -104,6 +102,7 @@ You can now create different default.yml for each role of splunk, or override th
 ```
 ansible-playbook -vv -i ansible_inventory.yaml install-splunk.playbook
 ```
+*PLEASE NOTE: If you don't have a machine fast enough to handle 5 instances of splunk in containers starting, you may hit timeouts during the installation!*
 
 You should now have a setup splunk instance, configured entirely asynchronously and utilizing splunk-ansible without needing to 
-touch splunk-ansible's inventory directly. 
+touch splunk-ansible's inventory directly. You're free now to connect to your searchhead / cluster_master port 8000's that are exposed!
