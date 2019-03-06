@@ -40,23 +40,23 @@ all:
   children:
     splunk_search_head:
       hosts:
-        search_head:
+        wrapper-example_search_head_1:
           ansible_port: 32768
           ansible_host: 0.0.0.0
     splunk_cluster_master:
       hosts:
-        cluster_master:
+        wrapper-example_cluster_master_1:
           ansible_port: 32772
           ansible_host: 0.0.0.0
     splunk_indexer:
       hosts:
-        indexer1:
+        wrapper-example_indexer1_1:
           ansible_port: 32770
           ansible_host: 0.0.0.0
-        indexer2:
+        wrapper-example_indexer2_1:
           ansible_port: 32769
           ansible_host: 0.0.0.0
-        indexer3:
+        wrapper-example_indexer3_1:
           ansible_port: 32771
           ansible_host: 0.0.0.0
 ```
