@@ -1,15 +1,30 @@
 ---
+- include_tasks: get_facts.yml
+
 - include_tasks: change_splunk_directory_owner.yml
   when:
     - splunk_home_ownership_enforcement is defined
     - splunk_home_ownership_enforcement | bool
 
-- include_tasks: get_facts.yml
-
-- include_tasks: install_splunk.yml
+- include_tasks: stop_splunk.yml
   when:
-    - first_run is defined
-    - first_run | bool
+    - splunk_upgrade
+    - splunk.allow_upgrade is defined
+    - splunk.allow_upgrade | bool
+
+# Below we will either install or upgrade, which at this moment is the same task.
+- name: "Install Splunk"
+  include_tasks: install_splunk.yml
+  when:
+    - splunk_install
+
+- name: "Upgrade Splunk"
+  include_tasks: install_splunk.yml
+  when:
+    - not splunk_install
+    - splunk_upgrade
+    - splunk.allow_upgrade is defined
+    - splunk.allow_upgrade | bool
 
 - include_tasks: remove_first_login.yml
 
@@ -20,13 +35,11 @@
 # This needs to be done before any encrypted passkeys are generated
 - include_tasks: set_splunk_secret.yml
   when:
-    - first_run is defined
-    - first_run | bool
+    - first_run
 
 - include_tasks: set_user_seed.yml
   when:
-    - first_run is defined
-    - first_run | bool
+    - first_run
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true

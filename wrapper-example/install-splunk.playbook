@@ -1,0 +1,135 @@
+---
+- hosts: splunk_search_head
+  gather_facts: true
+  environment:
+    - LANG: en_US.utf8
+  tasks:
+    - name: Create splunk-anisble defaults directory
+      file:
+        state: directory
+        path: /tmp/defaults
+        owner: ansible
+        group: ansible
+        # when specifying mode using octal numbers, add a leading 0
+        mode: 0755
+
+    - name: Copy default file
+      copy:
+        src: default.yml
+        dest: /tmp/defaults/default.yml
+        owner: ansible
+        group: ansible
+
+    - debug:
+        var: groups["splunk_cluster_master"]
+        verbosity: 2
+
+    - debug:
+        var: groups["splunk_indexer"]
+        verbosity: 2
+
+    - name: Start Splunk-Ansible
+      command: ansible-playbook -i inventory/environ.py site.yml
+      environment:
+        SPLUNK_BUILD_URL: https://download.splunk.com/products/splunk/releases/7.2.4/linux/splunk-7.2.4-8a94541dcfac-Linux-x86_64.tgz
+        SPLUNK_ROLE: splunk_search_head
+        SPLUNK_START_ARGS: --accept-license
+        SPLUNK_SEARCH_HEAD_URL: '{{ groups["splunk_search_head"] }}'
+        SPLUNK_CLUSTER_MASTER_URL: '{{ groups["splunk_cluster_master"][0] }}'
+        SPLUNK_INDEXER_URL: '{{ groups["splunk_indexer"] }}'
+      args:
+        chdir: /opt/ansible
+      register: async_splunk_ansible
+      async: 1000
+      poll: 0
+
+- hosts: splunk_cluster_master
+  gather_facts: true
+  environment:
+    - LANG: en_US.utf8
+  tasks:
+    - name: Create splunk-anisble defaults directory
+      file:
+        state: directory
+        path: /tmp/defaults
+        owner: ansible
+        group: ansible
+        # when specifying mode using octal numbers, add a leading 0
+        mode: 0755
+
+    - name: Copy default file
+      copy:
+        src: default.yml
+        dest: /tmp/defaults/default.yml
+        owner: ansible
+        group: ansible
+
+    - debug:
+        var: groups["splunk_cluster_master"]
+        verbosity: 2
+
+    - debug:
+        var: groups["splunk_indexer"]
+        verbosity: 2
+
+    - name: Start Splunk-Ansible
+      command: ansible-playbook -i inventory/environ.py site.yml
+      environment:
+        SPLUNK_BUILD_URL: https://download.splunk.com/products/splunk/releases/7.2.4/linux/splunk-7.2.4-8a94541dcfac-Linux-x86_64.tgz
+        SPLUNK_ROLE: splunk_cluster_master
+        SPLUNK_START_ARGS: --accept-license
+        SPLUNK_SEARCH_HEAD_URL: '{{ groups["splunk_search_head"] }}'
+        SPLUNK_CLUSTER_MASTER_URL: '{{ groups["splunk_cluster_master"][0] }}'
+        SPLUNK_INDEXER_URL: '{{ groups["splunk_indexer"] }}'
+      args:
+        chdir: /opt/ansible
+      register: async_splunk_ansible
+      async: 1000
+      poll: 0
+
+- hosts: splunk_indexer
+  gather_facts: true
+  environment:
+    - LANG: en_US.utf8
+  tasks:
+    - name: Create splunk-anisble defaults directory
+      file:
+        state: directory
+        path: /tmp/defaults
+        owner: ansible
+        group: ansible
+        # when specifying mode using octal numbers, add a leading 0
+        mode: 0755
+
+    - name: Copy default file
+      copy:
+        src: default.yml
+        dest: /tmp/defaults/default.yml
+        owner: ansible
+        group: ansible
+
+    - name: Start Splunk-Ansible
+      command: ansible-playbook -i inventory/environ.py site.yml
+      environment:
+        SPLUNK_BUILD_URL: https://download.splunk.com/products/splunk/releases/7.2.4/linux/splunk-7.2.4-8a94541dcfac-Linux-x86_64.tgz
+        SPLUNK_ROLE: splunk_indexer
+        SPLUNK_START_ARGS: --accept-license
+        SPLUNK_SEARCH_HEAD_URL: '{{ groups["splunk_search_head"] }}'
+        SPLUNK_CLUSTER_MASTER_URL: '{{ groups["splunk_cluster_master"][0] }}'
+        SPLUNK_INDEXER_URL: '{{ groups["splunk_indexer"] }}'
+      args:
+        chdir: /opt/ansible
+      register: async_splunk_ansible
+      async: 1000
+      poll: 0
+
+- hosts: all
+  gather_facts: true
+  tasks:
+    - name: 'Splunk-Ansible - check on async task'
+      async_status:
+        jid: "{{ async_splunk_ansible.ansible_job_id }}"
+      register: splunk_job_result
+      until: splunk_job_result.finished
+      retries: 1000
+

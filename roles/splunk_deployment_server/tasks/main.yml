@@ -1,0 +1,26 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
+
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when:
+    - splunk.apps_location
+
+- include_tasks: create_deployment_apps.yml
+  when:
+    - splunk.apps_location
+
+- include_tasks: generate_server_classes.yml
+
+- name: Reload deployment server
+  command: "{{ splunk.exec }} reload deploy-server -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: reload_depserver
+  until: reload_depserver.rc == 0
+  changed_when: reload_depserver.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  ignore_errors: yes
+  no_log: "{{ hide_password }}"
+
+- include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

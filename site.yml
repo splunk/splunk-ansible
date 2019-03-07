@@ -27,7 +27,7 @@
       when:
         - splunk.role is defined
 
-    - name: Execute pre-setup playbooks
+    - name: Execute post-setup playbooks
       include_tasks: execute_adhoc_plays.yml
       vars:
         playbook: ansible_post_tasks

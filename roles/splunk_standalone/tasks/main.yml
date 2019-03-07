@@ -7,8 +7,14 @@
 - include_tasks: ../../splunk_common/tasks/add_splunk_object.yml
   when: splunk.add is defined
 
+- include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
+  when:
+    - splunk.deployment_server is defined
+    - splunk.deployment_server
+
 - include_tasks: ../../splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
+    - splunk.deployment_server is not defined or not splunk.deployment_server
 
 - include_tasks: ../../splunk_common/tasks/check_for_required_restarts.yml

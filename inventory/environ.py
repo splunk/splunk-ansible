@@ -46,7 +46,8 @@ roleNames = [
     'splunk_indexer',
     'splunk_license_master', # (if it exists, run adding license with a license master)
     'splunk_search_head_captain', # TODO: remove this as we deprecate this role
-    'splunk_universal_forwarder'
+    'splunk_universal_forwarder',
+    'splunk_deployment_server'
 ]
 
 varPrefix = "SPLUNK_VAR_"
@@ -96,7 +97,8 @@ def getDefaultVars():
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
     defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
     defaultVars["splunk"]["search_head_cluster_url"] = os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', None) 
-    defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', None)
+    # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
+    defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', 'splunk.lic')
     if defaultVars["splunk"]["license_uri"] and '*' in defaultVars["splunk"]["license_uri"]:
         defaultVars["splunk"]["wildcard_license"] = True
     else:
@@ -136,7 +138,6 @@ def getDefaultVars():
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
-    checkUpgrade(defaultVars)
     return defaultVars
 
 def getSplunkBuild(vars_scope):
@@ -183,6 +184,7 @@ def overrideEnvironmentVars(vars_scope):
         vars_scope["splunk"]["idxc"] = {}
     vars_scope["splunk"]["idxc"]["secret"] = os.environ.get('SPLUNK_IDXC_SECRET', vars_scope["splunk"]["idxc"]["secret"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
+    vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
     vars_scope["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', vars_scope["splunk"]["build_location"])
     # add ssl variables
     vars_scope["splunk"]["http_enableSSL"] = os.environ.get('SPLUNK_HTTP_ENABLESSL', vars_scope["splunk"]["http_enableSSL"])
@@ -194,13 +196,6 @@ def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
         filepath = re.sub(r"\\+", "/", filepath.lstrip("C:"))
         return filepath
-
-def checkUpgrade(vars_scope):
-    upgrade_var = os.environ.get('SPLUNK_UPGRADE', False)
-    if upgrade_var and upgrade_var.lower() == 'true':
-        vars_scope["splunk"]["upgrade"] = True
-    else:
-        vars_scope["splunk"]["upgrade"] = False
 
 def getUFSplunkVariables(vars_scope):
     if os.environ.get('SPLUNK_DEPLOYMENT_SERVER', False):
