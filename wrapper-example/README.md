@@ -78,7 +78,9 @@ changed: [cluster_master] => {"changed": true, "cmd": ["echo", "hello_world"], "
 changed: [indexer2] => {"changed": true, "cmd": ["echo", "hello_world"], "delta": "0:00:00.003453", "end": "2019-03-05 20:41:17.484681", "rc": 0, "start": "2019-03-05 20:41:17.481228", "stderr": "", "stderr_lines": [], "stdout": "hello_world", "stdout_lines": ["hello_world"]}
 ```
 
-As long as the hello_world example had no failures, we're now ready to setup this index cluster.  Please setup a defaults.yml file (referenced in the docs)
+As long as the hello_world example had no failures, we're now ready to setup this index cluster. Please note, if you did not manually
+ log into each container ahead of time, you may get a "host key not verified" error for ssh.  Either manually login and approve each
+ container's ssh key, or you can add host_key_checking=False to the ansible-playbook commands.  Please setup a defaults.yml file (referenced in the docs)
 and place it inside of our current working directory, next to the playbooks.  In the example below, I'm just going to use the
 auto-generated defaults off of the splunk container to get started.
 
