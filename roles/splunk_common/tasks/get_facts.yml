@@ -12,7 +12,7 @@
 # We know if this is the first time we are executing Splunk by checking if a splunk.secret file exists.
 # Since running the software will generate this and we assume nobody will delete the splunk.secret.
 - name: "Check for existing splunk secret"
-  stat: 
+  stat:
     path: "{{ splunk.home }}/etc/auth/splunk.secret"
   register: pre_existing_splunk_secret
 
