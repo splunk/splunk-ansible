@@ -9,7 +9,6 @@
     url: "{{ playbook }}"
     dest: "{{ config.defaults_dir + '/playbook.yml' }}"
   ignore_errors: yes
-  no_log: true
   register: downloaded_plays
 
 - name: Execute playbooks
