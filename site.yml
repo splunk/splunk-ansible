@@ -18,6 +18,7 @@
         playbook: ansible_pre_tasks
       when:
         - ansible_pre_tasks is defined
+        - ansible_pre_tasks
         - ansible_pre_tasks is match("^(http|https|file)://.*")
 
     - name: Provision role
@@ -32,4 +33,5 @@
         playbook: ansible_post_tasks
       when:
         - ansible_post_tasks is defined
+        - ansible_post_tasks
         - ansible_post_tasks is match("^(http|https|file)://.*")
