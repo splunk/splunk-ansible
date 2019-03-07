@@ -1,0 +1,15 @@
+---
+- hosts: all
+  gather_facts: False
+  pre_tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      register: output
+      changed_when: output.stdout != ""
+
+- hosts: all
+  gather_facts: True
+  tasks:
+    - name: echo hello_world on each host
+      command: echo "hello_world"
+      register: hello_world
