@@ -1,0 +1,19 @@
+---
+- name: Define all serverClass
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+    section: "serverClass:all"
+    option: whitelist.0
+    value: "*"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+
+- name: Define all:app serverClass
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+    section: "serverClass:all:app:*"
+    option: restartSplunkd
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    allow_no_value: true

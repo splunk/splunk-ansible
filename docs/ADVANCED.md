@@ -1,8 +1,9 @@
 ## Navigation
 
 * [Defaults](#defaults)
-    * [Creating Defaults](#creating-defaults)
-    * [Creating Defaults](#creating-defaults)
+    * [Loading defaults through file](#loading-defaults-through-file)
+    * [Loading defaults through URL](#loading-defaults-through-url)
+    * [Schema](#schema)
 * [Apps](#app)
 * [SmartStore](@smartstore)
 * [Defaults](#defaults)
@@ -55,10 +56,7 @@ To use the URL-based loading of a `default.yml`, it is required that the Ansible
 $ ansible-playbook -i inventory/environ.py ...
 ```
 
-## Loading through a flat file
-The flat file must be mounted into the container at /tmp/defaults/default.yml.  It must be readable.
-
-## Schema
+##### Schema
 For more information on the format and options exposed in a `default.yml`, please see the [full spec](advanced/default.yml.spec.md).
 
 ---

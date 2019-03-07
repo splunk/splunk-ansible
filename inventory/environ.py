@@ -46,7 +46,8 @@ roleNames = [
     'splunk_indexer',
     'splunk_license_master', # (if it exists, run adding license with a license master)
     'splunk_search_head_captain', # TODO: remove this as we deprecate this role
-    'splunk_universal_forwarder'
+    'splunk_universal_forwarder',
+    'splunk_deployment_server'
 ]
 
 varPrefix = "SPLUNK_VAR_"
