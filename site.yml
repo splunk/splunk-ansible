@@ -12,6 +12,13 @@
       when:
         - ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or splunk.role == "splunk_search_head_captain"
 
+    - name: Create defaults dir
+      file:
+        path: "{{config.defaults_dir}}"
+        state: directory
+        owner: ansible
+        group: ansible
+
     # the get_url module is for linux only
     - name: Download pre-setup playbooks
       when:
@@ -52,19 +59,11 @@
           - "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
 
-    - name: Upgrade role
-      include_role:
-        name: "splunk_upgrade"
-      when:
-        - splunk.upgrade is defined
-        - splunk.upgrade
-
     - name: Provision role
       include_role:
         name: "{{ splunk.role }}"
       when:
         - splunk.role is defined
-        - not splunk.upgrade
 
     # the get_url module is for linux only
     - name: Download post-setup playbooks
@@ -78,7 +77,7 @@
         dest: "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
       ignore_errors: yes
       no_log: true
-      register: downloaded_post_plays
+      register: downloaded_post_plays_linux
 
     # the win_get_url module is for windows only
     - name: Download post-setup playbooks
@@ -92,7 +91,7 @@
         dest: "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
       ignore_errors: yes
       no_log: true
-      register: downloaded_post_plays
+      register: downloaded_post_plays_win
 
     - name: Run post-setup playbooks
       include_tasks: "{{ lookup('first_found', post_locations_to_look) }}"
@@ -102,6 +101,7 @@
       vars:
         post_locations_to_look:
           - "{{ ansible_post_tasks }}"
-          - "{% if downloaded_post_plays.dest is defined %}{{ downloaded_post_plays.dest }}{% endif %}"
+          - "{% if downloaded_post_plays_linux.dest is defined %}{{ downloaded_post_plays_linux.dest }}{% endif %}"
+          - "{% if downloaded_post_plays_win.dest is defined %}{{ downloaded_post_plays_win.dest }}{% endif %}"
           - "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
