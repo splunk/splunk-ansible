@@ -85,7 +85,7 @@
         dest: "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
       ignore_errors: yes
       no_log: true
-      register: downloaded_post_plays
+      register: downloaded_post_plays_linux
 
     # the win_get_url module is for windows only
     - name: Download post-setup playbooks
@@ -99,7 +99,7 @@
         dest: "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
       ignore_errors: yes
       no_log: true
-      register: downloaded_post_plays
+      register: downloaded_post_plays_win
 
     - name: Run post-setup playbooks
       include_tasks: "{{ lookup('first_found', post_locations_to_look) }}"
@@ -109,6 +109,7 @@
       vars:
         post_locations_to_look:
           - "{{ ansible_post_tasks }}"
-          - "{% if downloaded_post_plays.dest is defined %}{{ downloaded_post_plays.dest }}{% endif %}"
+          - "{% if downloaded_post_plays_linux.dest is defined %}{{ downloaded_post_plays_linux.dest }}{% endif %}"
+          - "{% if downloaded_post_plays_win.dest is defined %}{{ downloaded_post_plays_win.dest }}{% endif %}"
           - "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
           - "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
