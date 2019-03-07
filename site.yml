@@ -12,96 +12,24 @@
       when:
         - ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or splunk.role == "splunk_search_head_captain"
 
-    # the get_url module is for linux only
-    - name: Download pre-setup playbooks
-      when:
-        - ansible_pre_tasks is defined
-        - ansible_pre_tasks is not none
-        - ansible_pre_tasks is match("^(http|https|file)://.*")
-        - ansible_system is match("Linux")
-      get_url:
-        url: "{{ ansible_pre_tasks }}"
-        dest: "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
-      ignore_errors: yes
-      no_log: true
-      register: downloaded_pre_plays
-
-    # the win_get_url module is for windows only
-    - name: Download pre-setup playbooks
-      when:
-        - ansible_pre_tasks is defined
-        - ansible_pre_tasks is not none
-        - ansible_pre_tasks is match("^(http|https|file)://.*")
-        - ansible_system is not match("Linux")
-      win_get_url:
-        url: "{{ ansible_pre_tasks }}"
-        dest: "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
-      ignore_errors: yes
-      no_log: true
-      register: downloaded_pre_plays
-
-    - name: Run pre-setup playbooks
-      include_tasks: "{{ lookup('first_found', pre_locations_to_look) }}"
-      when:
-        - ansible_pre_tasks is defined
-        - ansible_pre_tasks is not none
+    - name: Execute pre-setup playbooks
+      include_tasks: execute_adhoc_plays.yml
       vars:
-        pre_locations_to_look:
-          - "{{ ansible_pre_tasks }}"
-          - "{% if downloaded_pre_plays.dest is defined %}{{ downloaded_pre_plays.dest }}{% endif %}"
-          - "{{ config.defaults_dir + '/splunk_ansible_pre_tasks.yml' }}"
-          - "{{ config.defaults_dir + '\\splunk_ansible_pre_tasks.yml' }}"
-
-    - name: Upgrade role
-      include_role:
-        name: "splunk_upgrade"
+        playbook: ansible_pre_tasks
       when:
-        - splunk.upgrade is defined
-        - splunk.upgrade
+        - ansible_pre_tasks is defined
+        - ansible_pre_tasks is match("^(http|https|file)://.*")
 
     - name: Provision role
       include_role:
         name: "{{ splunk.role }}"
       when:
         - splunk.role is defined
-        - not splunk.upgrade
 
-    # the get_url module is for linux only
-    - name: Download post-setup playbooks
-      when:
-        - ansible_post_tasks is defined
-        - ansible_post_tasks is not none
-        - ansible_system is match("Linux")
-        - ansible_post_tasks is match("^(http|https|file)://.*")
-      get_url:
-        url: "{{ ansible_post_tasks }}"
-        dest: "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
-      ignore_errors: yes
-      no_log: true
-      register: downloaded_post_plays
-
-    # the win_get_url module is for windows only
-    - name: Download post-setup playbooks
-      when:
-        - ansible_post_tasks is defined
-        - ansible_post_tasks is not none
-        - ansible_system is not match("Linux")
-        - ansible_post_tasks is match("^(http|https|file)://.*")
-      win_get_url:
-        url: "{{ ansible_post_tasks }}"
-        dest: "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
-      ignore_errors: yes
-      no_log: true
-      register: downloaded_post_plays
-
-    - name: Run post-setup playbooks
-      include_tasks: "{{ lookup('first_found', post_locations_to_look) }}"
-      when:
-        - ansible_post_tasks is defined
-        - ansible_post_tasks is not none
+    - name: Execute pre-setup playbooks
+      include_tasks: execute_adhoc_plays.yml
       vars:
-        post_locations_to_look:
-          - "{{ ansible_post_tasks }}"
-          - "{% if downloaded_post_plays.dest is defined %}{{ downloaded_post_plays.dest }}{% endif %}"
-          - "{{ config.defaults_dir + '/splunk_ansible_post_tasks.yml' }}"
-          - "{{ config.defaults_dir + '\\splunk_ansible_post_tasks.yml' }}"
+        playbook: ansible_post_tasks
+      when:
+        - ansible_post_tasks is defined
+        - ansible_post_tasks is match("^(http|https|file)://.*")
