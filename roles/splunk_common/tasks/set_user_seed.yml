@@ -2,6 +2,7 @@
 - name: "Hash the password"
   command: "{{ splunk.exec }} hash-passwd {{ splunk.password }}"
   register: hashed_pwd
+  changed_when: hashed_pwd.rc == 0
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"

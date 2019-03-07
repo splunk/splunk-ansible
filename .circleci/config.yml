@@ -1,0 +1,27 @@
+version: 2
+jobs:
+  splunk-ansible-test:
+    machine:
+      image: circleci/classic:latest
+    steps:
+      - checkout
+      - run:
+          name: Run linting
+          command: make lint
+      - run:
+          name: Run small tests
+          command: make small-tests
+      - run:
+          name: Run large (molecule) tests
+          command: make large-tests
+      - store_artifacts:
+          path: tests/results
+          destination: tests/results
+      - store_test_results:
+          path: tests/results
+
+workflows:
+  version: 2
+  run_tests:
+    jobs:
+      - splunk-ansible-test

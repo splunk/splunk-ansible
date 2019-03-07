@@ -1,0 +1,41 @@
+version: '3'
+services:
+  search_head:
+    build: .
+    image: debian_buster_sshd
+    expose:
+      - "8000"
+    ports:
+      - "22"
+      - "8000"
+
+  cluster_master:
+    image: debian_buster_sshd
+    depends_on:
+      - search_head
+    expose:
+      - "8000"
+    ports:
+      - "22"
+      - "8000"
+
+  indexer1:
+    image: debian_buster_sshd
+    depends_on:
+      - search_head
+    ports:
+      - "22"
+
+  indexer2:
+    image: debian_buster_sshd
+    depends_on:
+      - search_head
+    ports:
+      - "22"
+
+  indexer3:
+    image: debian_buster_sshd
+    depends_on:
+      - search_head
+    ports:
+      - "22"
