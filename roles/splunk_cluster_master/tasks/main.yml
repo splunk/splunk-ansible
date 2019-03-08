@@ -11,4 +11,13 @@
   when:
     - splunk.apps_location
 
+- include_tasks: initialize_multisite_master.yml
+  when:
+    - splunk.site is defined
+    - splunk.all_sites is defined
+    - splunk.multisite_replication_factor_origin is defined
+    - splunk.multisite_replication_factor_total is defined
+    - splunk.multisite_search_factor_origin is defined
+    - splunk.multisite_search_factor_total is defined
+
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

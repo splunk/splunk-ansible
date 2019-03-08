@@ -96,7 +96,7 @@ def getDefaultVars():
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
     defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
-    defaultVars["splunk"]["search_head_cluster_url"] = os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', None) 
+    defaultVars["splunk"]["search_head_cluster_url"] = os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', None)
     # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
     defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', 'splunk.lic')
     if defaultVars["splunk"]["license_uri"] and '*' in defaultVars["splunk"]["license_uri"]:
@@ -109,7 +109,7 @@ def getDefaultVars():
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
-    
+
     # Check required Java installation
     java_version = os.environ.get("JAVA_VERSION", "").lower()
     if java_version in ['oracle:8', 'openjdk:8', 'openjdk:11']:
@@ -134,6 +134,13 @@ def getDefaultVars():
     if inventory.has_key("splunk_indexer") and inventory["splunk_indexer"].has_key("hosts") and len(inventory["splunk_indexer"]["hosts"]) < 3:
         defaultVars["splunk"]["idxc"]["search_factor"] = 1
         defaultVars["splunk"]["idxc"]["replication_factor"] = 1
+
+    #When sites are specified, assume multisite
+    if inventory.has_key("splunk.site"):
+        defaultVars["splunk"]["multisite_replication_factor_origin"] = 1
+        defaultVars["splunk"]["multisite_replication_factor_total"] = 1
+        defaultVars["splunk"]["multisite_search_factor_origin"] = 1
+        defaultVars["splunk"]["multisite_search_factor_total"] = 1
 
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
@@ -191,6 +198,13 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', vars_scope["splunk"]["http_enableSSL_cert"])
     vars_scope["splunk"]["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', vars_scope["splunk"]["http_enableSSL_privKey"])
     vars_scope["splunk"]["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', vars_scope["splunk"]["http_enableSSL_privKey_password"])
+    #Used for multisite
+    vars_scope["splunk"]["site"] = os.environ.get('SPLUNK_SITE', vars_scope["splunk"]["site"])
+    vars_scope["splunk"]["all_sites"] = os.environ.get('SPLUNK_ALL_SITES', vars_scope["splunk"]["all_sites"])
+    vars_scope["splunk"]["multisite_replication_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN', vars_scope["splunk"]["multisite_replication_factor_origin"])
+    vars_scope["splunk"]["multisite_replication_factor_total"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL', vars_scope["splunk"]["multisite_replication_factor_total"])
+    vars_scope["splunk"]["multisite_search_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN', vars_scope["splunk"]["multisite_search_factor_origin"])
+    vars_scope["splunk"]["multisite_search_factor_total"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL', vars_scope["splunk"]["multisite_search_factor_total"])
 
 def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
@@ -238,7 +252,7 @@ def loadDefaultSplunkVariables():
     else:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
             loaded_yaml = yaml.load(yaml_file)
-    
+
     ### Load the defaults for the environment
     if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"] and \
             os.path.exists(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"])):

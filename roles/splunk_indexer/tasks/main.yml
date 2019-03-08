@@ -21,4 +21,10 @@
     - not splunk.indexer_cluster
     - splunk.deployment_server is not defined or not splunk.deployment_server
 
+- include_tasks: setup_multisite_indexer.yml
+  when:
+      - splunk.site is defined
+      - splunk.multisite_master is defined
+      - splunk.multisite_master_port is defined
+
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
