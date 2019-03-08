@@ -1,0 +1,20 @@
+---
+- name: Create defaults dir
+  file:
+    path: "{{ config.defaults_dir }}"
+    state: directory
+
+- name: Fetch adhoc playbooks
+  get_url:
+    url: "{{ playbook }}"
+    dest: "{{ config.defaults_dir + '/playbook.yml' }}"
+  ignore_errors: yes
+  register: downloaded_plays
+
+- name: Execute playbooks
+  include_tasks: "{{ lookup('first_found', play_locations) }}"
+  vars:
+    play_locations:
+      - "{{ playbook }}"
+      - "{% if downloaded_plays.dest is defined %}{{ downloaded_plays.dest }}{% endif %}"
+      - "{{ config.defaults_dir + '/playbook.yml' }}"
