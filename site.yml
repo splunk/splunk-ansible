@@ -19,6 +19,7 @@
         owner: ansible
         group: ansible
       become_user: ansible
+      become: yes
 
     # the get_url module is for linux only
     - name: Download pre-setup playbooks
