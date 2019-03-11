@@ -63,6 +63,8 @@
 
 - include_tasks: start_splunk.yml
 
+- include_tasks: set_certificate_prefix.yml
+
 - include_tasks: clean_user_seed.yml
 
 - include_tasks: add_splunk_license.yml
