@@ -11,7 +11,7 @@
   command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ multisite_master_uri }} -auth admin:{{splunk.admin_pw}} -secret {{splunk.shc.secret}}"
   become: yes
   become_user: "{{ splunk.user }}"
-  register: set_new_master 
+  register: set_new_master
   until: set_new_master.rc == 0
   changed_when: set_new_master.rc == 0
   retries: "{{ retry_num }}"

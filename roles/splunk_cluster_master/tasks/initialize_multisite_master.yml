@@ -11,7 +11,7 @@
   command: "{{ splunk.exec }} edit cluster-config -mode master -multisite true -available_sites {{splunk.all_sites}} -site {{splunk.site}} -site_replication_factor origin:{{splunk.multisite_repilcation_factor_origin}},total:{{splunk.multisite_repilcation_factor_total}} -site_search_factor origin:{{splunk.multisite_search_factor_origin}},total:{{splunk.multisite_search_factor_total}} -auth admin:{{splunk.admin_pw}}"
   become: yes
   become_user: "{{ splunk.user }}"
-  register: set_multisite_master 
+  register: set_multisite_master
   until: set_multisite_master.rc == 0
   changed_when: set_multisite_master.rc == 0
   retries: "{{ retry_num }}"
