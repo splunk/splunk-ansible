@@ -1,13 +1,41 @@
 ---
-- name: "Enable service via boot-start - Linux"
-  command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} -systemd-unit-file-name splunk --accept-license --answer-yes --no-prompt"
-  register: enable_boot_start
-  changed_when: enable_boot_start.rc == 0
-  failed_when: enable_boot_start.rc != 0
+- name: "Retrieve PID 1 process information (Linux)"
+  command: "ps 1"
+  register: pid1
+  when:  ansible_system is match("Linux")
+
+# Using service file approach for systemd rather than 'boot-start' with
+# 'systemd-unit-file-name' option because cli's versions older than 7.2.2 do
+# not implement systemd in boot-start command.
+- name: "Copy splunk unit file - Linux (systemd)"
+  copy:
+    src: Splunkd.service
+    dest: /etc/systemd/system/splunk.service
+    owner: "root"
+    group: "root"
+    mode: 0644
   become: yes
-  become_user: root
-  when: ansible_system is match("Linux")
+  become_user: "root"
+  when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
+
+- name: "Reload daemons via systemctl - Linux (systemd)"
+  become: yes
+  become_user: "root"
+  command: "systemctl daemon-reload"
+  when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
+
+- name: "Start splunkd as systemd service - Linux"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
+  when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
+
+- name: "Enable service via boot-start - Linux (init)"
+  become: yes
+  become_user: "root"
+  command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
+  when: ansible_system is match("Linux") and pid1.stdout.find('init') != -1
 
 - name: "Enable service via boot-start - Windows"
   command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
-  when: not ansible_system is match("Linux")
+  when: ansible_os_family == "Windows"
