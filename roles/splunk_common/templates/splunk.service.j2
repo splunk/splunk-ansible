@@ -4,7 +4,7 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart={{ splunk.exec }}_internal_launch_under_systemd
+ExecStart={{ splunk.exec }} _internal_launch_under_systemd
 LimitNOFILE=65536
 SuccessExitStatus=51 52
 RestartPreventExitStatus=51
