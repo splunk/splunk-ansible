@@ -8,14 +8,14 @@
 # 'systemd-unit-file-name' option because cli's versions older than 7.2.2 do
 # not implement systemd in boot-start command.
 - name: "Copy splunk unit file - Linux (systemd)"
-  copy:
-    src: Splunkd.service
+  template:
+    src: splunk.service.j2
     dest: /etc/systemd/system/splunk.service
-    owner: "root"
-    group: "root"
+    owner: root
+    group: root
     mode: 0644
   become: yes
-  become_user: "root"
+  become_user: root
   when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
 
 - name: "Reload daemons via systemctl - Linux (systemd)"
@@ -34,7 +34,7 @@
   become: yes
   become_user: "root"
   command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
-  when: ansible_system is match("Linux") and pid1.stdout.find('init') != -1
+  when: ansible_system is match("Linux") and pid1.stdout.find('systemd') == -1
 
 - name: "Enable service via boot-start - Windows"
   command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
