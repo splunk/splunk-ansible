@@ -8,7 +8,7 @@
       multisite_master_uri: "https://{{ splunk.multisite_master }}:{{ splunk.multisite_master_port }}"
 
 - name: Set the multisite master
-  command: "{{ splunk.exec }} edit cluster-config -mode master -multisite true -available_sites {{splunk.all_sites}} -site {{splunk.site}} -site_replication_factor origin:{{splunk.multisite_repilcation_factor_origin}},total:{{splunk.multisite_repilcation_factor_total}} -site_search_factor origin:{{splunk.multisite_search_factor_origin}},total:{{splunk.multisite_search_factor_total}} -auth admin:{{splunk.admin_pw}}"
+  command: "{{ splunk.exec }} edit cluster-config -mode master -multisite true -available_sites {{splunk.all_sites}} -site {{splunk.site}} -site_replication_factor origin:{{splunk.multisite_repilcation_factor_origin}},total:{{splunk.multisite_repilcation_factor_total}} -site_search_factor origin:{{splunk.multisite_search_factor_origin}},total:{{splunk.multisite_search_factor_total}} -auth {{splunk.admin_user}}:{{splunk.password}}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_multisite_master
