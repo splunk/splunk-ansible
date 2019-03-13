@@ -200,12 +200,14 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', vars_scope["splunk"]["http_enableSSL_privKey_password"])
     #Used for multisite
     if 'SPLUNK_SITE' in os.environ or 'site' in vars_scope["splunk"]:
-        vars_scope["splunk"]["site"] = os.environ.get('SPLUNK_SITE', vars_scope["splunk"]["site"])
-        vars_scope["splunk"]["all_sites"] = os.environ.get('SPLUNK_ALL_SITES', vars_scope["splunk"]["all_sites"])
-        vars_scope["splunk"]["multisite_replication_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN', vars_scope["splunk"]["multisite_replication_factor_origin"])
-        vars_scope["splunk"]["multisite_replication_factor_total"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL', vars_scope["splunk"]["multisite_replication_factor_total"])
-        vars_scope["splunk"]["multisite_search_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN', vars_scope["splunk"]["multisite_search_factor_origin"])
-        vars_scope["splunk"]["multisite_search_factor_total"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL', vars_scope["splunk"]["multisite_search_factor_total"])
+        vars_scope["splunk"]["site"] = os.environ.get('SPLUNK_SITE', vars_scope["splunk"].get("site"))
+        vars_scope["splunk"]["all_sites"] = os.environ.get('SPLUNK_ALL_SITES', vars_scope["splunk"].get("all_sites"))
+        vars_scope["splunk"]["multisite_master"] = os.environ.get('SPLUNK_MULTISITE_MASTER', vars_scope["splunk"].get("multisite_master"))
+        vars_scope["splunk"]["multisite_master_port"] = os.environ.get('SPLUNK_MULTISITE_MASTER_PORT', vars_scope["splunk"].get("multisite_master_port", 8089))
+        vars_scope["splunk"]["multisite_replication_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_replication_factor_origin", 1))
+        vars_scope["splunk"]["multisite_replication_factor_total"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_replication_factor_total", 1))
+        vars_scope["splunk"]["multisite_search_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_search_factor_origin", 1))
+        vars_scope["splunk"]["multisite_search_factor_total"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_search_factor_total", 1))
 
 def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
