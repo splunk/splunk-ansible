@@ -5,7 +5,7 @@
 
 - name: Convert Extrenal Cluster Master Name into Internal URI
   set_fact:
-      multisite_master_uri: "https://{{ splunk.multisite_master }}:{{ splunk.multisite_master_port }}"
+      multisite_master_uri: "{{ cert_prefix }}://{{ splunk.multisite_master }}:{{ splunk.svc_port }}"
 
 - name: Setup Peers with Associated Site
   command: "{{ splunk.exec }} edit cluster-config -mode slave -site {{ splunk.site }} -master_uri {{multisite_master_uri}} -replication_port {{splunk.idxc.replication_port}} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{splunk.idxc.secret}}"
