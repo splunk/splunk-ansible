@@ -1,7 +1,7 @@
 ---
 - name: Install Splunkbase app
   uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
@@ -65,7 +65,7 @@
 
 - name: Install app via REST
   uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
