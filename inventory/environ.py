@@ -46,7 +46,8 @@ roleNames = [
     'splunk_indexer',
     'splunk_license_master', # (if it exists, run adding license with a license master)
     'splunk_search_head_captain', # TODO: remove this as we deprecate this role
-    'splunk_universal_forwarder'
+    'splunk_universal_forwarder',
+    'splunk_deployment_server'
 ]
 
 varPrefix = "SPLUNK_VAR_"
@@ -95,8 +96,9 @@ def getDefaultVars():
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
     defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
-    defaultVars["splunk"]["search_head_cluster_url"] = os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', None) 
-    defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', None)
+    defaultVars["splunk"]["search_head_cluster_url"] = os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', None)
+    # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
+    defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', 'splunk.lic')
     if defaultVars["splunk"]["license_uri"] and '*' in defaultVars["splunk"]["license_uri"]:
         defaultVars["splunk"]["wildcard_license"] = True
     else:
@@ -107,7 +109,7 @@ def getDefaultVars():
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
-    
+
     # Check required Java installation
     java_version = os.environ.get("JAVA_VERSION", "").lower()
     if java_version in ['oracle:8', 'openjdk:8', 'openjdk:11']:
@@ -133,10 +135,16 @@ def getDefaultVars():
         defaultVars["splunk"]["idxc"]["search_factor"] = 1
         defaultVars["splunk"]["idxc"]["replication_factor"] = 1
 
+    #When sites are specified, assume multisite
+    if inventory.has_key("splunk.site"):
+        defaultVars["splunk"]["multisite_replication_factor_origin"] = 1
+        defaultVars["splunk"]["multisite_replication_factor_total"] = 1
+        defaultVars["splunk"]["multisite_search_factor_origin"] = 1
+        defaultVars["splunk"]["multisite_search_factor_total"] = 1
+
     getSplunkBuild(defaultVars)
     getSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
-    checkUpgrade(defaultVars)
     return defaultVars
 
 def getSplunkBuild(vars_scope):
@@ -183,23 +191,27 @@ def overrideEnvironmentVars(vars_scope):
         vars_scope["splunk"]["idxc"] = {}
     vars_scope["splunk"]["idxc"]["secret"] = os.environ.get('SPLUNK_IDXC_SECRET', vars_scope["splunk"]["idxc"]["secret"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
+    vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
+    vars_scope["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', vars_scope["splunk"]["build_location"])
     # add ssl variables
     vars_scope["splunk"]["http_enableSSL"] = os.environ.get('SPLUNK_HTTP_ENABLESSL', vars_scope["splunk"]["http_enableSSL"])
     vars_scope["splunk"]["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', vars_scope["splunk"]["http_enableSSL_cert"])
     vars_scope["splunk"]["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', vars_scope["splunk"]["http_enableSSL_privKey"])
     vars_scope["splunk"]["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', vars_scope["splunk"]["http_enableSSL_privKey_password"])
+    #Used for multisite
+    if 'SPLUNK_SITE' in os.environ or 'site' in vars_scope["splunk"]:
+        vars_scope["splunk"]["site"] = os.environ.get('SPLUNK_SITE', vars_scope["splunk"].get("site"))
+        vars_scope["splunk"]["all_sites"] = os.environ.get('SPLUNK_ALL_SITES', vars_scope["splunk"].get("all_sites"))
+        vars_scope["splunk"]["multisite_master"] = os.environ.get('SPLUNK_MULTISITE_MASTER', vars_scope["splunk"].get("multisite_master"))
+        vars_scope["splunk"]["multisite_replication_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_replication_factor_origin", 1))
+        vars_scope["splunk"]["multisite_replication_factor_total"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_replication_factor_total", 1))
+        vars_scope["splunk"]["multisite_search_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_search_factor_origin", 1))
+        vars_scope["splunk"]["multisite_search_factor_total"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_search_factor_total", 1))
 
 def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
         filepath = re.sub(r"\\+", "/", filepath.lstrip("C:"))
         return filepath
-
-def checkUpgrade(vars_scope):
-    upgrade_var = os.environ.get('SPLUNK_UPGRADE', False)
-    if upgrade_var and upgrade_var.lower() == 'true':
-        vars_scope["splunk"]["upgrade"] = True
-    else:
-        vars_scope["splunk"]["upgrade"] = False
 
 def getUFSplunkVariables(vars_scope):
     if os.environ.get('SPLUNK_DEPLOYMENT_SERVER', False):
@@ -210,11 +222,6 @@ def getUFSplunkVariables(vars_scope):
         vars_scope["splunk"]["before_start_cmd"] = os.environ.get('SPLUNK_BEFORE_START_CMD').split(',')
     if os.environ.get('SPLUNK_CMD', False):
         vars_scope["splunk"]["cmd"] = os.environ.get('SPLUNK_CMD').split(',')
-    docker_monitoring_var = os.environ.get('DOCKER_MONITORING', False)
-    if docker_monitoring_var and docker_monitoring_var.lower() == "true":
-        vars_scope["docker_monitoring"] = True
-    else:
-        vars_scope["docker_monitoring"] = False
     vars_scope["docker_version"] = '18.06.0'
 
 def getRandomString():
@@ -247,7 +254,7 @@ def loadDefaultSplunkVariables():
     else:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
             loaded_yaml = yaml.load(yaml_file)
-    
+
     ### Load the defaults for the environment
     if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"] and \
             os.path.exists(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"])):
@@ -348,10 +355,7 @@ def create_parser():
 def prep_for_yaml_out(inventory):
     inventory_to_dump=inventory["all"]["vars"]
 
-
-    keys_to_del = [ "docker_version", "ansible_ssh_user", "delay_num", "docker_monitorying", "apps_location",
-                    "docker_monitoring", "build_location", "build_remote_src", "deployer_included", "upgrade",
-                    "role", "search_head_cluster", "indexer_cluster", "license_master_included", "license_uri"]
+    keys_to_del = [ "docker_version", "ansible_ssh_user", "delay_num", "apps_location", "build_location", "build_remote_src", "deployer_included", "upgrade", "role", "search_head_cluster", "indexer_cluster", "license_master_included", "license_uri"]
     for key in keys_to_del:
         if key in inventory_to_dump:
             del inventory_to_dump[key]

@@ -1,0 +1,17 @@
+---
+- name: "Test basic https endpoint"
+  uri:
+    url: "https://127.0.0.1:{{ splunk.svc_port }}/services/properties"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200,404
+    timeout: 10
+  register: ssl_enabled
+  ignore_errors: true
+
+# If the https call failed, we will revert to http and continue REST with normal error handling
+- name: "Set url prefix for future REST calls"
+  set_fact:
+    cert_prefix: "{% if ssl_enabled.status == 200 %}https{% else %}http{% endif %}"

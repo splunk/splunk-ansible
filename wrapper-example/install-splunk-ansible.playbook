@@ -1,0 +1,159 @@
+---
+# this is done in 2 host sets, as we need to disable fact gathering until ansible is installed.
+- hosts: all
+  gather_facts: False
+  pre_tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python)
+      register: output
+      changed_when: output.stdout != ""
+    - name: install ansible
+      raw: test -e /usr/bin/ansible || (apt -y update && apt install -y ansible)
+      register: output
+      changed_when: output.stdout != ""
+
+- hosts: all
+  gather_facts: True
+  tasks:
+    - name: Wait for automatic system updates
+      shell: "while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done;"
+
+    - name: Install splunk-ansible prereqs
+      apt:
+        name: "{{ splunk_ansible_packages }}"
+      vars:
+        splunk_ansible_packages:
+        - rsync
+        - tar
+        - wget
+        - net-tools
+        - curl
+        - sudo
+        - iputils-ping
+        - dnsutils
+        - ansible
+        - python-yaml
+        - python-pip
+
+    - pip:
+        name: requests
+
+    - name: Wait for splunk-ansible updates to finish
+      shell: "while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done;"
+
+    - name: Wait for splunk-ansible updates for frontend
+      shell: "while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 1; done;"
+
+    - name: Install splunk prereqs
+      apt:
+        name: "{{ splunk_packages }}"
+      vars:
+        splunk_packages:
+        - libgssapi-krb5-2
+        - procps
+        - acl
+        - locales
+        - gnupg
+
+    - name: Setup locales for splunk
+      command: echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+
+    - name: Removing any existing locales alias
+      file:
+        path: /usr/share/locale/locale.alias
+        state: absent
+
+    - name: Link the new locales alias
+      file:
+        src: /etc/locale.alias
+        dest: /usr/share/locale/locale.alias
+        state: link
+
+    - name: Generate the new locales
+      command: locale-gen
+
+    - name: Make sure the definition is set for locales
+      command: localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+
+    - name: Check if user exists
+      getent:
+        database: passwd
+        key: ansible
+        fail_key: yes
+      register: user_exist
+      ignore_errors: true
+
+    - name: Setup the ansible user for splunk-ansible
+      user:
+        name: ansible
+        comment: Splunk-Ansible User
+        shell: /bin/bash
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+        groups:
+          - sudo
+        state: present
+      when: user_exist["failed"] == true
+
+    - name: Check if splunk user exists
+      getent:
+        database: passwd
+        key: splunk
+        fail_key: yes
+      register: user_exist
+      ignore_errors: true
+
+    - name: Setup the splunk user
+      user:
+        name: splunk
+        comment: Splunk User
+        shell: /bin/bash
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+        state: present
+      when: user_exist["failed"] == true
+
+    - name: Setup Ansible User Sudoers
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%sudo'
+        line: '%sudo ALL=(ALL:ALL) NOPASSWD: ALL'
+
+    - name: Compress splunk-ansible into /tmp/splunk-ansible.tgz
+      archive:
+        path: ../../splunk-ansible/*
+        dest: /tmp/splunk-ansible.tgz
+        exclude_path:
+        - ../wrapper-example
+      delegate_to: localhost
+
+    - name: Transfer splunk-ansible from localhost to target server
+      copy:
+        src: /tmp/splunk-ansible.tgz
+        dest: /tmp/splunk-ansible.tgz
+
+    - name: Create splunk-anisble directory
+      file:
+        state: directory
+        path: /opt/ansible
+        owner: ansible
+        group: ansible
+        # when specifying mode using octal numbers, add a leading 0
+        mode: 0755
+
+    - name: Create splunk-anisble contianer info directory
+      file:
+        state: directory
+        path: /opt/container_artifact
+        owner: ansible
+        group: ansible
+        # when specifying mode using octal numbers, add a leading 0
+        mode: 0777
+
+    - name: Unarchive splunk-ansible on remote machine
+      unarchive:
+        src: /tmp/splunk-ansible.tgz
+        dest: /opt/ansible

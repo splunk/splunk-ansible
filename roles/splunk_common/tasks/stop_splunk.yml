@@ -17,7 +17,7 @@
   win_service:
     name: splunkd
     state: stopped
-  when: splunk.enable_service and not ansible_system is match("Linux")
+  when: splunk.enable_service and ansible_os_family == "Windows"
 
 - name: Stop Splunk
   command: "{{ splunk.exec }} stop --accept-license --answer-yes --no-prompt"
