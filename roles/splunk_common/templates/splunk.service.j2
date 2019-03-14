@@ -1,0 +1,21 @@
+[Unit]
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart={{ splunk.exec }} _internal_launch_under_systemd
+LimitNOFILE=65536
+SuccessExitStatus=51 52
+RestartPreventExitStatus=51
+RestartForceExitStatus=52
+User={{ splunk.user }}
+Delegate=true
+MemoryLimit=100G
+CPUShares=1024
+PermissionsStartOnly=true
+ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/cpu/system.slice/%n"
+ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/memory/system.slice/%n"
+
+[Install]
+WantedBy=multi-user.target

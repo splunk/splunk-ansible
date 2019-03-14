@@ -16,7 +16,7 @@
 
 - name: Set indexer discovery
   uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
