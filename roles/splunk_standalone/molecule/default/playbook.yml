@@ -26,7 +26,7 @@
       license_uri: null
       wildcard_license: false
       build_remote_src: true
-      build_location: /tmp/splunk.tgz
+      build_location: ${SPLUNK_INSTALLER}
       ignore_license: true
       apps_location: null
       app_paths:
