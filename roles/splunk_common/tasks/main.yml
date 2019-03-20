@@ -27,10 +27,13 @@
     - splunk.allow_upgrade | bool
 
 - include_tasks: remove_first_login.yml
+  when:
+    - splunk_upgrade or splunk_install
 
 - include_tasks: install_java.yml
   when:
     - java_version is defined
+    - splunk_upgrade or splunk_install
 
 # This needs to be done before any encrypted passkeys are generated
 - include_tasks: set_splunk_secret.yml
@@ -43,28 +46,43 @@
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
+  when:
+    - splunk_upgrade or splunk_install
 
 - include_tasks: enable_s2s_port.yml
   when:
     - splunk.s2s_enable is defined
     - splunk.s2s_enable | bool
+    - splunk_upgrade or splunk_install
 
 - include_tasks: enable_service.yml
-  when: splunk.enable_service and ansible_system is match("Linux")
+  when:
+    - splunk.enable_service and ansible_system is match("Linux")
+    - splunk_upgrade or splunk_install
 
 - include_tasks: enable_ssl_on_gui.yml
   when:
     - splunk.http_enableSSL is defined
     - splunk.http_enableSSL | bool
+    - splunk_upgrade or splunk_install
 
 - include_tasks: set_any_generic_config.yml
   when:
     - "'conf' in splunk"
+    - splunk_upgrade or splunk_install
 
 - include_tasks: start_splunk.yml
+  when:
+    - splunk_upgrade or splunk_install
 
 - include_tasks: set_certificate_prefix.yml
+  when:
+    - splunk_upgrade or splunk_install
 
 - include_tasks: clean_user_seed.yml
+  when:
+    - splunk_upgrade or splunk_install
 
 - include_tasks: add_splunk_license.yml
+  when:
+    - splunk_upgrade or splunk_install
