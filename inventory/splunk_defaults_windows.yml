@@ -9,7 +9,7 @@ config:
     max_retries: 3
     max_delay: 60
     max_timeout: 1200
-    defaults_dir: C:\\Windows\\temp
+    defaults_dir: "C:\\Windows\\temp"
     baked: default.yml
     env:
         var: SPLUNK_DEFAULTS_URL
@@ -24,12 +24,12 @@ splunk:
     build_location: "C:\\splunk.msi"
     allow_upgrade: True
     tar_dir: "splunk"
-    opt: &opt "C:\\Program Files"
-    home: &home !!python/object/apply:string.join [[*opt, "\\splunk"],'']
+    opt: "C:\\Users\\Administrator\\opt"
+    home: "C:\\Users\\Administrator\\opt\\splunk"
     user: "splunk"
     group: "Administrators"
-    exec: !!python/object/apply:string.join [[*home, "\\bin\\splunk.exe"], '']
-    pid: !!python/object/apply:string.join [[*home, "\\var\\run\\splunk\\splunkd.pid"], '']
+    exec: "C:\\Users\\Administrator\\opt\\splunk\\bin\\splunk.exe"
+    pid: "C:\\Users\\Administrator\\opt\\splunk\\var\\run\\splunk\\splunkd.pid"
     admin_user: "admin"
     password:
     secret: 
@@ -61,8 +61,8 @@ splunk:
     enable_service: False
     smartstore:
     app_paths:
-        default: !!python/object/apply:string.join [[*home, "\\etc\\apps"], '']
-        shc: !!python/object/apply:string.join [[*home, "\\etc\\shcluster\\apps"], '']
-        idxc: !!python/object/apply:string.join [[*home, "\\etc\\master-apps"], '']
-        deployment: !!python/object/apply:string.join [[*home, "\\etc\\deployment-apps"], '']
-        httpinput: !!python/object/apply:string.join [[*home, "\\etc\\apps\\splunk_httpinput"], '']
+        default: "C:\\Users\\Administrator\\opt\\splunk\\etc\\apps"
+        shc: "C:\\Users\\Administrator\\opt\\splunk\\etc\\shcluster\\apps"
+        idxc: "C:\\Users\\Administrator\\opt\\splunk\\etc\\master-apps"
+        deployment: "C:\\Users\\Administrator\\opt\\splunk\\etc\\deployment-apps"
+        httpinput: "C:\\Users\\Administrator\\opt\\splunk\\etc\\apps\\splunk_httpinput"
