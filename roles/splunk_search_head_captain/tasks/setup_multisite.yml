@@ -1,0 +1,36 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
+  vars:
+    splunk_instance_address: "{{ splunk.multisite_master }}"
+
+- name: Convert Extrenal Cluster Master Name into Internal URI
+  set_fact:
+      multisite_master_uri: "{{ cert_prefix }}://{{ splunk.multisite_master }}:{{ splunk.svc_port }}"
+
+- name: Setup SHC
+  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ multisite_master_uri }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.secret }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: set_new_master
+  until: set_new_master.rc == 0
+  changed_when: set_new_master.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  ignore_errors: yes
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+
+- name: Setup SHC with Associated Site
+  command: "{{ splunk.exec }} edit cluster-master -old_master_uri {{ multisite_master_uri }} -site {{ splunk.site }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.secret }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: set_associated_site
+  until: set_associated_site.rc == 0
+  changed_when: set_associated_site.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 3
+  ignore_errors: yes
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
