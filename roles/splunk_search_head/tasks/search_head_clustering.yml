@@ -43,6 +43,8 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
+  when:
+    - splunk_search_head_captain is defined
 
 - name: Flush restart handlers
   meta: flush_handlers
