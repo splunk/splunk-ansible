@@ -35,6 +35,6 @@
           - ansible_post_tasks is defined
           - ansible_post_tasks is not none
           - ansible_post_tasks is match("^(http|https|file)://.*")
-      become: yes
-      become_method: {% if ansible_system is match("CYGWIN*|Win32NT") %}runas{% else %}sudo{% endif %}
-      become_user: splunk
+    become: yes
+    become_method: "{% if ansible_system is match('CYGWIN*|Win32NT') %}runas{% else %}sudo{% endif %}"
+    become_user: splunk
