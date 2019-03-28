@@ -5,36 +5,36 @@
   vars:
     splunk_search_head_captain: false
   tasks:
-    block:
-      - name: Determine captaincy
-        set_fact:
-          splunk_search_head_captain: true
-        when:
-          - ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or splunk.role == "splunk_search_head_captain"
+    - block:
+        - name: Determine captaincy
+          set_fact:
+            splunk_search_head_captain: true
+          when:
+            - ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or splunk.role == "splunk_search_head_captain"
 
-      - name: Execute pre-setup playbooks
-        include_tasks: execute_adhoc_plays.yml
-        vars:
-          playbook: "{{ ansible_pre_tasks }}"
-        when:
-          - ansible_pre_tasks is defined
-          - ansible_pre_tasks is not none
-          - ansible_pre_tasks is match("^(http|https|file)://.*")
+        - name: Execute pre-setup playbooks
+          include_tasks: execute_adhoc_plays.yml
+          vars:
+            playbook: "{{ ansible_pre_tasks }}"
+          when:
+            - ansible_pre_tasks is defined
+            - ansible_pre_tasks is not none
+            - ansible_pre_tasks is match("^(http|https|file)://.*")
 
-      - name: Provision role
-        include_role:
-          name: "{{ splunk.role }}"
-        when:
-          - splunk.role is defined
+        - name: Provision role
+          include_role:
+            name: "{{ splunk.role }}"
+          when:
+            - splunk.role is defined
 
-      - name: Execute post-setup playbooks
-        include_tasks: execute_adhoc_plays.yml
-        vars:
-          playbook: "{{ ansible_post_tasks }}"
-        when:
-          - ansible_post_tasks is defined
-          - ansible_post_tasks is not none
-          - ansible_post_tasks is match("^(http|https|file)://.*")
-    become: yes
-    become_method: "{% if ansible_system is match('CYGWIN*|Win32NT') %}runas{% else %}sudo{% endif %}"
-    become_user: splunk
+        - name: Execute post-setup playbooks
+          include_tasks: execute_adhoc_plays.yml
+          vars:
+            playbook: "{{ ansible_post_tasks }}"
+          when:
+            - ansible_post_tasks is defined
+            - ansible_post_tasks is not none
+            - ansible_post_tasks is match("^(http|https|file)://.*")
+      become: yes
+      become_method: "{% if ansible_system is match('CYGWIN*|Win32NT') %}runas{% else %}sudo{% endif %}"
+      become_user: splunk
