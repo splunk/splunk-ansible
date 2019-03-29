@@ -5,7 +5,7 @@
   register: updateetc_stat_result
 
 - name: Update /opt/splunk/etc
-  shell: /sbin/updateetc.sh
+  command: /sbin/updateetc.sh
   when:
   - updateetc_stat_result.stat.exists
   become: yes
