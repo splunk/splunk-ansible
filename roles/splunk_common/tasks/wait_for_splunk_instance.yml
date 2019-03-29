@@ -1,7 +1,7 @@
 ---
 - name: Check Splunk instance is running
   uri:
-    url: https://{{ splunk_instance_address }}:{{ splunk.svc_port }}/services/server/info?output_mode=json
+    url: "{{ cert_prefix }}://{{ splunk_instance_address }}:{{ splunk.svc_port }}/services/server/info?output_mode=json"
     method: GET
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"

@@ -23,7 +23,7 @@
     - splunk.apps_location
 
 - name: Execute Splunk commands
-  command: "{{splunk.exec}} {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  command: "{{ splunk.exec }} {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ splunk.cmd }}"

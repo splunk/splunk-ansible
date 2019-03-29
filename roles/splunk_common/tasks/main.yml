@@ -41,6 +41,7 @@
 - include_tasks: install_java.yml
   when:
     - java_version is defined
+    - first_run
 
 # This needs to be done before any encrypted passkeys are generated
 - include_tasks: set_splunk_secret.yml
@@ -53,6 +54,8 @@
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
+  when:
+    - first_run
 
 - include_tasks: enable_s2s_port.yml
   when:
@@ -61,7 +64,9 @@
     - first_run
 
 - include_tasks: enable_service.yml
-  when: splunk.enable_service and ansible_system is match("Linux")
+  when:
+    - splunk.enable_service and ansible_system is match("Linux")
+    - first_run
 
 - include_tasks: enable_ssl_on_gui.yml
   when:
@@ -72,8 +77,11 @@
 - include_tasks: set_any_generic_config.yml
   when:
     - "'conf' in splunk"
+    - first_run
 
 - include_tasks: start_splunk.yml
+
+- include_tasks: set_certificate_prefix.yml
 
 - include_tasks: clean_user_seed.yml
   when:
