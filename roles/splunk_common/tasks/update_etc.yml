@@ -1,0 +1,15 @@
+---
+- name: Check if /sbin/updateetc.sh exists
+  stat:
+    path: /sbin/updateetc.sh
+  register: updateetc_stat_result
+
+- name: Update /opt/splunk/etc
+  command: /sbin/updateetc.sh
+  when:
+  - updateetc_stat_result.stat.exists
+  become: yes
+  become_method: sudo
+  become_user: "{{ splunk.user }}"
+  environment:
+    SPLUNK_HOME: "{{ splunk.home }}"

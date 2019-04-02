@@ -21,7 +21,7 @@ config:
         verify: True
 
 splunk:
-    build_location: "/tmp/splunk.tgz"
+    build_location:
     allow_upgrade: True
     tar_dir: "splunk"
     opt: &opt "/opt"
