@@ -13,7 +13,7 @@
       build_location: "{{ splunk.build_location | combine(new_build_location,recursive=True) }}"
   when: new_build_location is defined
 
-- name: Remove old manifests file
+- name: Remove old manifest files
   file:
     path: "{{ item.path }}"
     state: "absent"
