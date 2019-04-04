@@ -33,9 +33,9 @@
 # Extracting the numbers from the Splunk installer file name allows us to know the version we are targeting.
 - name: "Set target version fact"
   set_fact:
-    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1.\\2.\\3') | default('0') }}"
+    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1') | default('0') }}"
   vars:
-    regexp: 'splunk(?:forwarder)?-(\d+)\.(\d+)\.(\d+)-'
+    regexp: 'splunk(?:forwarder)?-((\d+)\.(\d+)\.(\d+))-'
   when: "'build_location' in splunk and splunk.build_location is not none"
 
 # We can apply the same logic to the current version by checking which manifest file is in Splunk
@@ -48,9 +48,9 @@
 
 - name: "Set current version fact"
   set_fact:
-    splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1.\\2.\\3') if (manifests.matched == 1) else '0' }}"
+    splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1') if (manifests.matched == 1) else '0' }}"
   vars:
-    regexp: 'splunk(?:forwarder)?-(\d+)\.(\d+)\.(\d+)-'
+    regexp: 'splunk(?:forwarder)?-((\d+)\.(\d+)\.(\d+))-'
 
 # We are upgrading if it is not a fresh installation and the current version is different from the target version
 - name: "Setting upgrade fact"

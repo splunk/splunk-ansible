@@ -13,6 +13,20 @@
       build_location: "{{ splunk.build_location | combine(new_build_location,recursive=True) }}"
   when: new_build_location is defined
 
+- name: Remove old manifests file
+  file:
+    path: "{{ item.path }}"
+    state: "absent"
+  ignore_errors: yes
+  become: yes
+  become_method: sudo
+  become_user: root
+  with_items:
+  - "{{ manifests.files }}"
+  when:
+  - splunk.allow_upgrade is defined
+  - splunk.allow_upgrade | bool
+
 - name: Download Splunk package (Windows)
   get_url:
     url: "{{ splunk.build_location }}"
