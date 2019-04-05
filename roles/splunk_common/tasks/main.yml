@@ -11,8 +11,8 @@
 - include_tasks: stop_splunk.yml
   when:
     - splunk_upgrade
-    - splunk.upgrade_command is defined
-    - splunk.upgrade_command | bool
+    - splunk.allow_upgrade is defined
+    - splunk.allow_upgrade | bool
 
 # Below we will either install or upgrade, which at this moment is the same task.
 - name: "Install Splunk"
@@ -25,8 +25,8 @@
   when:
     - not splunk_install
     - splunk_upgrade
-    - splunk.upgrade_command is defined
-    - splunk.upgrade_command | bool
+    - splunk.allow_upgrade is defined
+    - splunk.allow_upgrade | bool
 
 - include_tasks: remove_first_login.yml
   when:

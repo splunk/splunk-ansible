@@ -22,7 +22,7 @@ config:
 
 splunk:
     build_location:
-    upgrade_command: False
+    allow_upgrade: True
     tar_dir: "splunk"
     opt: &opt "/opt"
     home: &home !!python/object/apply:string.join [[*opt, "/splunk"],'']

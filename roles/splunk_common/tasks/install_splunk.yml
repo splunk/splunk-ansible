@@ -24,8 +24,8 @@
   with_items:
   - "{{ manifests.files }}"
   when:
-  - splunk.upgrade_command is defined
-  - splunk.upgrade_command | bool
+  - splunk.allow_upgrade is defined
+  - splunk.allow_upgrade | bool
 
 - name: Download Splunk package (Windows)
   get_url:
