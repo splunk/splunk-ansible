@@ -3,6 +3,7 @@
   when:
     - splunk.search_head_cluster
     - splunk.deployer_included
+    - splunk_search_head_captain is defined
 
 ## Indexer Clustering Scenario
 - include_tasks: peer_cluster_master.yml
