@@ -30,7 +30,7 @@
 - name: Download Splunk package (Windows)
   get_url:
     url: "{{ splunk.build_location }}"
-    dest: "/tmp/splunk.tgz"
+    dest: "/tmp/splunk.msi"
     mode: 0777
     timeout: 600
     force: true
@@ -56,7 +56,7 @@
   delay: 3
 
 - name: Install Splunk (Windows)
-  command: "msiexec /I /tmp/splunk.tgz AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
+  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")
   register: install_result
   until: install_result is succeeded
@@ -69,7 +69,6 @@
     state: "absent"
   ignore_errors: yes
   become: yes
-  become_method: sudo
   become_user: root
   with_items:
   - "/tmp/splunk.tgz"

@@ -96,7 +96,7 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
 def getDefaultVars():
     defaultVars = loadDefaultSplunkVariables()
     overrideEnvironmentVars(defaultVars)
-
+    defaultVars["splunk"]["group"] = os.environ.get('SPLUNK_GROUP', 'splunk')
     defaultVars["splunk"]["license_master_included"] = True if os.environ.get('SPLUNK_LICENSE_MASTER_URL', False) else False
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
@@ -264,17 +264,17 @@ def loadDefaultSplunkVariables():
     ### Load the splunk defaults shipped with splunk-ansible
     if os.environ.get("SPLUNK_ROLE", None) == "splunk_universal_forwarder":
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunkforwarder_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-            loaded_yaml = yaml.load(yaml_file)
+            loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
     else:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-            loaded_yaml = yaml.load(yaml_file)
+            loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
 
     ### Load the defaults for the environment
     if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"] and \
             os.path.exists(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"])):
         try:
             with open(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"]), 'r') as yaml_file:
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(yaml_file))
+                loaded_yaml = merge_dict(loaded_yaml, yaml.load(yaml_file, Loader=yaml.Loader))
         except:
             raise
 
@@ -297,7 +297,7 @@ def loadDefaultSplunkVariables():
             try:
                 response = requests.get(url.format(platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
                 response.raise_for_status()
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content))
+                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content, Loader=yaml.Loader))
                 break
             except Exception as e:
                 if unlimited_retries or current_retry < max_retries:
@@ -330,7 +330,7 @@ def loadHostVars(defaults, hostname=None, platform="linux"):
             try:
                 response = requests.get(url.format(hostname=hostname, platform=platform), headers=headers, timeout=max_timeout, verify=verify)
                 response.raise_for_status()
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content))
+                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content, Loader=yaml.Loader))
                 break
             except Exception as e:
                 if unlimited_retries or current_retry < max_retries:

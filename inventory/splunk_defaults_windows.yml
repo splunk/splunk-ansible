@@ -24,13 +24,13 @@ splunk:
     build_location:
     allow_upgrade: True
     tar_dir: "splunk"
-    opt: "C:\\Users\\Administrator\\opt"
-    home: "C:\\Users\\Administrator\\opt\\splunk"
+    opt: "/opt"
+    home: "/opt/splunk"
     user: "splunk"
     group: "Administrators"
-    exec: "C:\\Users\\Administrator\\opt\\splunk\\bin\\splunk.exe"
-    pid: "C:\\Users\\Administrator\\opt\\splunk\\var\\run\\splunk\\splunkd.pid"
-    admin_user: "admin"
+    exec: "/opt/splunk/bin/splunk"
+    pid: "/opt/splunk/var/run/splunk/splunkd.pid"
+    admin_user: "Administrator"
     password:
     secret: 
     svc_port: 8089
@@ -65,8 +65,8 @@ splunk:
     enable_service: False
     smartstore:
     app_paths:
-        default: "C:\\Users\\Administrator\\opt\\splunk\\etc\\apps"
-        shc: "C:\\Users\\Administrator\\opt\\splunk\\etc\\shcluster\\apps"
-        idxc: "C:\\Users\\Administrator\\opt\\splunk\\etc\\master-apps"
-        deployment: "C:\\Users\\Administrator\\opt\\splunk\\etc\\deployment-apps"
-        httpinput: "C:\\Users\\Administrator\\opt\\splunk\\etc\\apps\\splunk_httpinput"
+        default: "/opt/splunk/etc/apps"
+        shc: "/opt/splunk/etc/shcluster/apps"
+        idxc: "/opt/splunk/etc/master-apps"
+        deployment: "/opt/splunk/etc/deployment-apps"
+        httpinput: "/opt/splunk/etc/apps/splunk_httpinput"
