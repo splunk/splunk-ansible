@@ -19,8 +19,7 @@
     state: "absent"
   ignore_errors: yes
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
   with_items:
   - "{{ manifests.files }}"
   when:
@@ -69,7 +68,7 @@
     state: "absent"
   ignore_errors: yes
   become: yes
-  become_user: root
+  become_user: "{{ privileged_user }}"
   with_items:
   - "/tmp/splunk.tgz"
   - "{{ splunk.build_location }}"
