@@ -56,20 +56,14 @@ reNamePattern = r"${envPrefix}(.*)"
 
 inventory = {
     "_meta": {
-        "children": {
-            "localhost": {
-                "vars": {}
-            }
-        }
+        "hostvars": {}
     },
     "all": {
-        "hosts": {},
-        "children": {
-            "ungrouped": {}
-        }
+        "hosts": [],
+        "children": ["ungrouped"]
     },
     "ungrouped": {
-        "hosts": {}
+        "hosts": []
     }
 }
 
