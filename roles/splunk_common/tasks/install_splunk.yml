@@ -54,6 +54,18 @@
   retries: "{{ retry_num }}"
   delay: 3
 
+- name: Uninstall Splunk (Windows)
+  command: "msiexec /uninstall {{ item }}"
+  retries: 3
+  ignore_errors: yes
+  with_items:
+  - "{{ splunk.build_location }}"
+  - "C:\\\\tmp\\\\splunk.msi"
+  when:
+  - ansible_system is match("CYGWIN*|Win32NT")
+  - splunk.allow_upgrade is defined
+  - splunk.allow_upgrade | bool
+
 - name: Install Splunk (Windows)
   command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")

@@ -84,8 +84,8 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     if(os.path.isfile("/.dockerenv")):
         if("localhost" not in inventory["all"]["children"]):
             inventory["all"]["hosts"].append("localhost")
-        inventory["_meta"]["children"]["localhost"]["vars"] = loadHostVars(inventory["all"]["vars"], os.uname()[1], PLATFORM)
-        inventory["_meta"]["children"]["localhost"]["vars"]["ansible_connection"] = "local"
+        inventory["_meta"]["hostvars"]["localhost"] = loadHostVars(inventory["all"]["vars"], os.uname()[1], PLATFORM)
+        inventory["_meta"]["hostvars"]["localhost"]["ansible_connection"] = "local"
 
 def getDefaultVars():
     defaultVars = loadDefaultSplunkVariables()
