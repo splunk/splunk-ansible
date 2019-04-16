@@ -8,7 +8,7 @@
       multisite_master_uri: "{{ cert_prefix }}://{{ splunk.multisite_master }}:{{ splunk.svc_port }}"
 
 - name: Setup SHC
-  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ multisite_master_uri }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{splunk.shc.secret}}"
+  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ multisite_master_uri }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.secret }}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_new_master
@@ -22,7 +22,7 @@
   no_log: "{{ hide_password }}"
 
 - name: Setup SHC with Associated Site
-  command: "{{ splunk.exec }} edit cluster-master -old_master_uri {{ multisite_master_uri }} -site {{ splunk.site }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{splunk.shc.secret}}"
+  command: "{{ splunk.exec }} edit cluster-master -old_master_uri {{ multisite_master_uri }} -site {{ splunk.site }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.secret }}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_associated_site

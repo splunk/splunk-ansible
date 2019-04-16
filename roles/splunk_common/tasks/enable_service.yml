@@ -21,7 +21,9 @@
 - name: "Reload daemons via systemctl - Linux (systemd)"
   become: yes
   become_user: "root"
-  command: "systemctl daemon-reload"
+  systemd:
+    name: daemon-reload
+    state: restarted
   when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
 
 - name: "Start splunkd as systemd service - Linux"
