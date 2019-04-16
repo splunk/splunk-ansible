@@ -7,7 +7,8 @@
 - name: Fetch adhoc playbooks
   get_url:
     url: "{{ playbook }}"
-    dest: "{{ config.defaults_dir + '/playbook.yml' }}"
+    dest: "{{ config.defaults_dir '/' + playbook|basename }}"
+    force: yes
   ignore_errors: yes
   register: downloaded_plays
 
@@ -17,4 +18,4 @@
     play_locations:
       - "{{ playbook }}"
       - "{% if downloaded_plays.dest is defined %}{{ downloaded_plays.dest }}{% endif %}"
-      - "{{ config.defaults_dir + '/playbook.yml' }}"
+      - "{{ config.defaults_dir + '/' + playbook|basename }}"
