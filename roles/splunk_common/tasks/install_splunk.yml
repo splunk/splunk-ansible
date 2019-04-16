@@ -55,8 +55,7 @@
   delay: 3
 
 - name: Uninstall Splunk (Windows)
-  command: "msiexec /uninstall {{ item }}"
-  retries: 3
+  command: "msiexec /uninstall {{ item }} /passive /qn"
   ignore_errors: yes
   with_items:
   - "{{ splunk.build_location }}"
