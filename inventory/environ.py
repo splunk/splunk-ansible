@@ -90,7 +90,6 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
 def getDefaultVars():
     defaultVars = loadDefaultSplunkVariables()
     overrideEnvironmentVars(defaultVars)
-    defaultVars["splunk"]["group"] = os.environ.get('SPLUNK_GROUP', 'splunk')
     defaultVars["splunk"]["license_master_included"] = True if os.environ.get('SPLUNK_LICENSE_MASTER_URL', False) else False
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
@@ -172,6 +171,7 @@ def getSplunkApps(vars_scope):
         vars_scope["splunk"]["apps_location"] = []
 
 def overrideEnvironmentVars(vars_scope):
+    vars_scope["splunk"]["group"] = os.environ.get("SPLUNK_GROUP", vars_scope["splunk"]["group"])
     vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
     vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope["ansible_post_tasks"])
     vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
