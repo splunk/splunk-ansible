@@ -7,7 +7,7 @@
 - name: Fetch adhoc playbooks
   get_url:
     url: "{{ playbook }}"
-    dest: "{{ config.defaults_dir '/' + playbook|basename }}"
+    dest: "{{ config.defaults_dir + '/' + playbook|basename }}"
     force: yes
   ignore_errors: yes
   register: downloaded_plays
