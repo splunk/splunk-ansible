@@ -23,8 +23,7 @@
   with_items:
   - "{{ manifests.files }}"
   when:
-  - splunk.allow_upgrade is defined
-  - splunk.allow_upgrade | bool
+  - splunk_upgrade | bool
 
 - name: Download Splunk package (Windows)
   get_url:
@@ -62,8 +61,7 @@
   - "C:\\\\tmp\\\\splunk.msi"
   when:
   - ansible_system is match("CYGWIN*|Win32NT")
-  - splunk.allow_upgrade is defined
-  - splunk.allow_upgrade | bool
+  - splunk_upgrade | bool
 
 - name: Install Splunk (Windows)
   command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
