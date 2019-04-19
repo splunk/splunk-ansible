@@ -59,6 +59,8 @@
   with_items:
   - "{{ splunk.build_location }}"
   - "C:\\\\tmp\\\\splunk.msi"
+  register: uninstall_result
+  until: uninstall_result is succeeded
   when:
   - ansible_system is match("CYGWIN*|Win32NT")
   - splunk_upgrade | bool
@@ -78,6 +80,7 @@
   ignore_errors: yes
   become: yes
   become_user: "{{ privileged_user }}"
+  when: ansible_system is match("Linux") or (uninstall_result is defined and uninstall_result | bool)
   with_items:
   - "/tmp/splunk.tgz"
   - "{{ splunk.build_location }}"
