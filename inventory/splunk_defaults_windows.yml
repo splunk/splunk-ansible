@@ -9,7 +9,7 @@ config:
     max_retries: 3
     max_delay: 60
     max_timeout: 1200
-    defaults_dir: C:\\Windows\\temp
+    defaults_dir: C:\\tmp
     baked: default.yml
     env:
         var: SPLUNK_DEFAULTS_URL
