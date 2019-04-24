@@ -1,10 +1,4 @@
 ---
-- name: Adjust current build url
-  set_fact:
-    splunk:
-      build_location: "{{ splunk.build_location | combine(new_build_location,recursive=True) }}"
-  when: new_build_location is defined
-
 - name: Remove old manifest files
   file:
     path: "{{ item.path }}"
@@ -45,20 +39,8 @@
   retries: "{{ retry_num }}"
   delay: 3
 
-- name: Uninstall Splunk (Windows)
-  command: "msiexec /uninstall {{ item }} /passive /qn"
-  ignore_errors: yes
-  with_items:
-  - "{{ splunk.build_location }}"
-  - "C:\\\\tmp\\\\splunk.msi"
-  register: uninstall_result
-  until: uninstall_result is succeeded
-  when:
-  - ansible_system is match("CYGWIN*|Win32NT")
-  - splunk_upgrade | bool
-
 - name: Install Splunk (Windows)
-  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
+  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes SPLUNKUSERNAME={{ splunk.admin_user }} SPLUNKPASSWORD={{ splunk.password }} LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")
   register: install_result
   until: install_result is succeeded

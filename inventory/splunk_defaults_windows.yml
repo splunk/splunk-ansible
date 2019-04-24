@@ -24,13 +24,13 @@ splunk:
     build_location:
     allow_upgrade: True
     tar_dir: "splunk"
-    opt: "/opt"
-    home: "/opt/splunk"
+    opt: &opt "/opt"
+    home: &home !!python/object/apply:string.join [[*opt, "/splunk"],'']
     user: "splunk"
     group: "Administrators"
-    exec: "/opt/splunk/bin/splunk"
-    pid: "/opt/splunk/var/run/splunk/splunkd.pid"
-    admin_user: "Administrator"
+    exec: !!python/object/apply:string.join [[*home, "/bin/splunk.exe"], '']
+    pid: !!python/object/apply:string.join [[*home, "/var/run/splunk/splunkd.pid"], '']
+    admin_user: "admin"
     password:
     secret: 
     svc_port: 8089
@@ -65,8 +65,8 @@ splunk:
     enable_service: False
     smartstore:
     app_paths:
-        default: "/opt/splunk/etc/apps"
-        shc: "/opt/splunk/etc/shcluster/apps"
-        idxc: "/opt/splunk/etc/master-apps"
-        deployment: "/opt/splunk/etc/deployment-apps"
-        httpinput: "/opt/splunk/etc/apps/splunk_httpinput"
+        default: !!python/object/apply:string.join [[*home, "/etc/apps"], '']
+        shc: !!python/object/apply:string.join [[*home, "/etc/shcluster/apps"], '']
+        idxc: !!python/object/apply:string.join [[*home, "/etc/master-apps"], '']
+        deployment: !!python/object/apply:string.join [[*home, "/etc/deployment-apps"], '']
+        httpinput: !!python/object/apply:string.join [[*home, "/etc/apps/splunk_httpinput"], '']
