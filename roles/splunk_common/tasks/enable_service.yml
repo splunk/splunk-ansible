@@ -22,8 +22,9 @@
   become: yes
   become_user: "root"
   systemd:
-      name: daemon-reload
-      state: restarted
+      daemon-reload: yes
+      name: splunk.service
+      enabled: true
   when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
 
 - name: "Start splunkd as systemd service - Linux"
