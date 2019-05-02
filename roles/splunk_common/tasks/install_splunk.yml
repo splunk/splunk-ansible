@@ -14,7 +14,7 @@
 - name: Download Splunk package (Windows)
   get_url:
     url: "{{ splunk.build_location }}"
-    dest: "/tmp/splunk.msi"
+    dest: "/tmp/"
     mode: 0777
     timeout: 600
     force: true
@@ -25,6 +25,14 @@
   when:
   - splunk.build_location | regex_search("^(http).*")
   - ansible_system is match("CYGWIN*|Win32NT")
+
+- name: Find installer file
+  set_fact:
+    installer_file: "{% if splunk.build_location | regex_search('^(http).*') %}{{ download_result.dest }}{% else %}{{ splunk.build_location }}{% endif %}"
+
+- name: Set installer path (Windows)
+  set_fact:
+    installer_path: "C:\\\\tmp\\\\{{ installer_file }}"
 
 - name: Install Splunk (Linux)
   unarchive:
@@ -40,7 +48,7 @@
   delay: 3
 
 - name: Install Splunk (Windows)
-  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes SPLUNKUSERNAME={{ splunk.admin_user }} SPLUNKPASSWORD={{ splunk.password }} LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
+  command: "msiexec /I {{ installer_path }} AGREETOLICENSE=yes SPLUNKUSERNAME={{ splunk.admin_user }} SPLUNKPASSWORD={{ splunk.password }} LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")
   register: install_result
   until: install_result is succeeded
@@ -56,5 +64,5 @@
   become_user: "{{ privileged_user }}"
   when: ansible_system is match("Linux") or (uninstall_result is defined and uninstall_result | bool)
   with_items:
-  - "/tmp/splunk.tgz"
+  - "{{ installer_file }}"
   - "{{ splunk.build_location }}"
