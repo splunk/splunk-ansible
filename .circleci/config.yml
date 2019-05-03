@@ -9,6 +9,9 @@ jobs:
           name: Run linting
           command: make lint
       - run:
+          name: Run py3k linting
+          command: make py3k_lint
+      - run:
           name: Run small tests
           command: make small-tests
       - run:

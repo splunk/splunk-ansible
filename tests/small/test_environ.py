@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 
 import os
 import sys
@@ -18,7 +19,7 @@ def test_getRandomString():
 	word = environ.getRandomString()
 	assert len(word) == 6
 
-@pytest.mark.parametrize(("filepath", "result"), 
+@pytest.mark.parametrize(("filepath", "result"),
 	[
 	    ("C:\\opt\\splunk", "/opt/splunk"),
 	    ("C:\\opt\\", "/opt/"),

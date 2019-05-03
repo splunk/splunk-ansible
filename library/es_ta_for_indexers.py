@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import print_function
 
 from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
 import argparse
@@ -38,7 +40,7 @@ def make_ta_for_indexers(username, password):
         #do this second
         archive = makeIndexTimeProperties(app_info, session_key, include_indexes=include_indexes,
         								  namespace=namespace)
-    print archive
+    print(archive)
     assert archive.startswith(spl_location)
 
 

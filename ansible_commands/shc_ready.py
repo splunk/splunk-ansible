@@ -1,13 +1,14 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+from __future__ import absolute_import
 '''
 Ansible module
 
-This module will be called to wait until SHC is completely setup and 
-initial bundle replication has occurred such that user defined 
+This module will be called to wait until SHC is completely setup and
+initial bundle replication has occurred such that user defined
 bundles are safe to push
 '''
 import time
-import json 
+import json
 import requests
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -21,8 +22,8 @@ class ShcReady(object):
         self.password = module.params["spl_pass"]
 
     def run(self):
-        URL = "https://{0}:8089/services/shcluster/status?output_mode=json".format(self.captain_url) 
-        online_peers = None 
+        URL = "https://{0}:8089/services/shcluster/status?output_mode=json".format(self.captain_url)
+        online_peers = None
         resp = requests.get(URL, auth=(self.user, self.password), verify=False).json()
         shc_peers = resp['entry'][0]['content']['peers']
         # Check #1, see if peers are up
@@ -31,7 +32,7 @@ class ShcReady(object):
             raise Exception("SHC failure, setup not complete. Insufficient number of peers online")
         #correct number of peers online
         # Check #2, see if peers are ready to accept bundle
-        online_peers = [peer for peer in shc_peers if shc_peers[peer].get('last_conf_replication', None) != "Pending"] 
+        online_peers = [peer for peer in shc_peers if shc_peers[peer].get('last_conf_replication', None) != "Pending"]
         if not len(online_peers) >= (len(self.shc_peers) + 1): # SH Captain included in list
             raise Exception("SHC failure, setup not complete. online_peers:{0}".format(online_peers))
         #correct number of peers ready to accept bundle

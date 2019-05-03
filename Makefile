@@ -10,7 +10,12 @@ test_setup:
 lint: test_setup
 	ansible-lint -v -c ./tests/lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml
 
-test: lint small-tests large-tests
+py3k_lint:
+	# We're treating each file separately here, because of their scarsity
+	# This will need to be re-evaluated if a full blown module gets in here
+	pylint --py3k $(shell find . -name "*.py")
+
+test: lint py3k_lint small-tests large-tests
 
 small-tests: test_setup
 	@echo 'Running the super awesome small tests'
