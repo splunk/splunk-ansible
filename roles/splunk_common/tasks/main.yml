@@ -62,6 +62,11 @@
     - splunk.enable_service and ansible_system is match("Linux")
     - first_run
 
+- include_tasks: set_http_port.yml
+  when:
+    - "'http_port' in splunk"
+    - splunk.http_port | int != 8000
+
 - include_tasks: enable_ssl_on_gui.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"

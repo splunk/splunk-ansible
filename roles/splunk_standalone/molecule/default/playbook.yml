@@ -53,7 +53,8 @@
       http_enableSSL_cert: null
       http_enableSSL_privKey: null
       http_enableSSL_privKey_password: null
-      http_port: 8000
+      # http_port changed from 8000 to 8080 to test custom http port functionality
+      http_port: 8080
       idxc:
         enable: false
         label: idxc_label
