@@ -68,6 +68,11 @@
     - splunk.http_enableSSL | bool
     - first_run
 
+- include_tasks: set_root_endpoint.yml
+  when:
+    - splunk.root_endpoint | bool
+    - first_run
+
 - include_tasks: set_any_generic_config.yml
   when:
     - "'conf' in splunk"
