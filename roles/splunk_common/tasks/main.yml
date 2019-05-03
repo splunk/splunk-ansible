@@ -66,7 +66,6 @@
   when:
     - "'http_port' in splunk"
     - splunk.http_port | int != 8000
-    - first_run
 
 - include_tasks: enable_ssl_on_gui.yml
   when:
