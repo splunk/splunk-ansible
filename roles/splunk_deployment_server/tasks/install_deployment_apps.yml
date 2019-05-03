@@ -1,0 +1,52 @@
+---
+# This manner in which we support app installation on deployment server will NOT support ES/ITSI/premium apps 
+- name: Install Splunkbase app
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body: "name={{ app_url | urlencode() }}&update=true&filename=true&auth={{ splunkbase_token }}"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: [ 200, 201 ]
+    timeout: 300
+  when:
+    - "'splunkbase.splunk.com' in app_url"
+    - splunkbase_token is defined
+    - splunkbase_token != None
+  no_log: "{{ hide_password }}"
+
+- name: Check app source
+  stat:
+    path: "{{ app_url }}"
+  register: app_source
+
+- name: Move generic app
+  command: "cp {{ app_url }} /tmp/app.spl"
+  when: app_source.stat.exists
+
+- name: Download generic app
+  get_url:
+    url: "{{ app_url }}"
+    dest: /tmp/app.spl
+    mode: 0777
+    timeout: 120
+    validate_certs: no
+    force: yes
+  when:
+    - "'splunkbase.splunk.com' not in app_url"
+    - app_url is match("^(https?|file)://.*")
+  ignore_errors: true
+
+- name: Install app via extraction
+  unarchive:
+    src: "{% if 'http' in app_url %}/tmp/app.spl{% else %}{{ app_url }}{% endif %}"
+    dest: "{{ splunk.app_paths.deployment }}"
+    remote_src: true
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
+  when:
+    - "'splunkbase.splunk.com' not in app_url"
