@@ -68,11 +68,6 @@
     - splunk.http_enableSSL | bool
     - first_run
 
-- include_tasks: set_root_endpoint.yml
-  when:
-    - splunk.root_endpoint | bool
-    - first_run
-
 - include_tasks: set_any_generic_config.yml
   when:
     - "'conf' in splunk"
@@ -81,6 +76,12 @@
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
+
+- include_tasks: set_root_endpoint.yml
+  when:
+    - splunk.root_endpoint is defined
+    - splunk.root_endpoint != None
+    - first_run
 
 - include_tasks: clean_user_seed.yml
   when:
