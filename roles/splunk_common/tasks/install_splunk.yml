@@ -38,4 +38,6 @@
   ignore_errors: yes
   become: yes
   become_user: "{{ privileged_user }}"
-  when: not splunk.build_location | regex_search("^(http).*")
+  when:
+    - "{{ splunk.build_location }}"
+    - "/tmp/splunk.msi"
