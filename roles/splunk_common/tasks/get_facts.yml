@@ -60,4 +60,4 @@
 # We are upgrading if it is not a fresh installation and the current version is different from the target version
 - name: "Setting upgrade fact"
   set_fact:
-    splunk_upgrade: "{{ not splunk_install and splunk_target_version != '' and splunk_target_version != splunk_current_version | default(False) }}"
+    splunk_upgrade: "{{ not splunk_install and splunk_target_version and splunk_target_version != splunk_current_version | default(False) }}"
