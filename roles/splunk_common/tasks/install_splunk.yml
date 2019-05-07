@@ -33,11 +33,11 @@
 
 - name: Remove installers
   file:
-    dest: "{{ splunk.build_location }}"
+    dest: "{{ item }}"
     state: "absent"
   ignore_errors: yes
   become: yes
   become_user: "{{ privileged_user }}"
-  when:
+  with_items:
     - "{{ splunk.build_location }}"
     - "/tmp/splunk.msi"
