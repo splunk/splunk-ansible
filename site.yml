@@ -5,7 +5,7 @@
   vars:
     splunk_search_head_captain: false
   tasks:
-    
+
     - block:
         - name: Determine captaincy
           set_fact:
