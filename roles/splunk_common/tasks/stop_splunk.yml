@@ -3,6 +3,8 @@
   command: "{{ splunk.exec }} stop --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
+  register: stop_splunk
+  changed_when: stop_splunk.rc == 0
   when: not splunk.enable_service
 
 - name: "Stop Splunk via systemctl"
@@ -11,17 +13,10 @@
     state: stopped
   when: splunk.enable_service and ansible_system is match("Linux")
   become: yes
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: "Stop Splunk via Windows service"
   win_service:
     name: splunkd
     state: stopped
   when: splunk.enable_service and ansible_os_family == "Windows"
-
-- name: Stop Splunk
-  command: "{{ splunk.exec }} stop --accept-license --answer-yes --no-prompt"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: stop_splunk
-  changed_when: stop_splunk.rc == 0

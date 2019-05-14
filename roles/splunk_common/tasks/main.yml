@@ -3,6 +3,7 @@
 
 - include_tasks: change_splunk_directory_owner.yml
   when:
+    - ansible_system is match("Linux")
     - splunk_home_ownership_enforcement is defined
     - splunk_home_ownership_enforcement | bool
 
@@ -11,8 +12,6 @@
 - include_tasks: stop_splunk.yml
   when:
     - splunk_upgrade
-    - splunk.allow_upgrade is defined
-    - splunk.allow_upgrade | bool
 
 # Below we will either install or upgrade, which at this moment is the same task.
 - name: "Install Splunk"

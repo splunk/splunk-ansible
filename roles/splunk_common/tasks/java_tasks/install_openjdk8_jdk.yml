@@ -6,8 +6,7 @@
   when:
     - ansible_distribution == 'Debian'
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: Install the JDK
   apt:
@@ -17,13 +16,11 @@
   when:
     - ansible_distribution == 'Debian'
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: Create splunk-launch.conf
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
   command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
   ignore_errors: true
   when:
@@ -33,16 +30,14 @@
   shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
   register: java_home
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
   ignore_errors: true
   when:
     - ansible_distribution == 'Debian'
 
 - name: Set JAVA_HOME in splunk-launch.conf
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
   lineinfile:
     path: "{{ splunk.home }}/etc/splunk-launch.conf"
     regexp: '^JAVA_HOME'

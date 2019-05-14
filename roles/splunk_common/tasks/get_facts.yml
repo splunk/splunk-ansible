@@ -1,4 +1,9 @@
 ---
+# Choose privileged username for current OS
+- name: "Set privilege escalation user"
+  set_fact:
+    privileged_user: "{% if ansible_system is match('CYGWIN*|Win32NT') %}Administrator{% else %}root{% endif %}"
+
 # If there is no Splunk executable, we will need to install.
 - name: "Check for existing installation"
   stat:
@@ -55,4 +60,4 @@
 # We are upgrading if it is not a fresh installation and the current version is different from the target version
 - name: "Setting upgrade fact"
   set_fact:
-    splunk_upgrade: "{{ 'build_location' in splunk and splunk.build_location is not none and not splunk_install and splunk_target_version != splunk_current_version | default(False) }}"
+    splunk_upgrade: "{{ 'build_location' in splunk and splunk.build_location and not splunk_install and splunk_target_version and splunk_target_version != splunk_current_version | default(False) }}"
