@@ -40,7 +40,7 @@
   set_fact:
     splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1') | default('0') }}"
   vars:
-    regexp: 'splunk(?:forwarder)?-((\d+)\.(\d+)\.(\d+))-'
+    regexp: 'splunk(?:forwarder|light|cloud)?-((\d+)\.(\d+)\.(\d+))-'
   when: "'build_location' in splunk and splunk.build_location is not none"
 
 # We can apply the same logic to the current version by checking which manifest file is in Splunk
