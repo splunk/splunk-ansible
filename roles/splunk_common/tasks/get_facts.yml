@@ -55,7 +55,7 @@
   set_fact:
     splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1') if (manifests.matched == 1) else '0' }}"
   vars:
-    regexp: 'splunk(?:forwarder)?-((\d+)\.(\d+)\.(\d+))-'
+    regexp: 'splunk(?:forwarder|light|cloud)?-((\d+)\.(\d+)\.(\d+))-'
 
 # We are upgrading if it is not a fresh installation and the current version is different from the target version
 - name: "Setting upgrade fact"
