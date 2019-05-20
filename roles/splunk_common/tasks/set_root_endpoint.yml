@@ -1,0 +1,19 @@
+---
+- name: Set root endpoint
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-web/settings"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body: "root_endpoint={{ splunk.root_endpoint }}"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    status_code: 200
+    timeout: 10
+  when: splunk.root_endpoint
+  register: set_root_endpoint
+  changed_when: set_root_endpoint.status == 200
+  no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service

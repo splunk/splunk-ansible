@@ -81,6 +81,12 @@
 
 - include_tasks: set_certificate_prefix.yml
 
+- include_tasks: set_root_endpoint.yml
+  when:
+    - splunk.root_endpoint is defined
+    - splunk.root_endpoint != None
+    - first_run
+
 - include_tasks: clean_user_seed.yml
   when:
     - first_run

@@ -31,6 +31,7 @@ splunk:
     exec: !!python/object/apply:string.join [[*home, "/bin/splunk.exe"], '']
     pid: !!python/object/apply:string.join [[*home, "/var/run/splunk/splunkd.pid"], '']
     admin_user: "admin"
+    root_endpoint:
     password:
     secret: 
     svc_port: 8089

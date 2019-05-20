@@ -20,6 +20,7 @@
     max_timeout: 1200
     hide_password: false
     retry_num: 5
+    delay_num: 3
     splunk:
       role: splunk_standalone
       license_master_included: false
@@ -65,6 +66,7 @@
       opt: /opt
       admin_user: admin
       password: helloworld
+      root_endpoint: /splunkui
       pid: /opt/splunk/var/run/splunk/splunkd.pid
       s2s_enable: true
       s2s_port: 9997
