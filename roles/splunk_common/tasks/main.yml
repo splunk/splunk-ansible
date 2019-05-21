@@ -11,55 +11,55 @@
 
 - include_tasks: stop_splunk.yml
   when:
-    - splunk_upgrade
+    - splunk_upgrade | bool
 
 # Below we will either install or upgrade, which at this moment is the same task.
 - name: "Install Splunk"
   include_tasks: install_splunk.yml
   when:
-    - splunk_install
+    - splunk_install | bool
 
 - name: "Upgrade Splunk"
   include_tasks: install_splunk.yml
   when:
     - not splunk_install
-    - splunk_upgrade
+    - splunk_upgrade | bool
     - splunk.allow_upgrade is defined
     - splunk.allow_upgrade | bool
 
 - include_tasks: remove_first_login.yml
   when:
-    - first_run
+    - first_run | bool
 
 - include_tasks: install_java.yml
   when:
     - java_version is defined
-    - first_run
+    - first_run | bool
 
 # This needs to be done before any encrypted passkeys are generated
 - include_tasks: set_splunk_secret.yml
   when:
-    - first_run
+    - first_run | bool
 
 - include_tasks: set_user_seed.yml
   when:
-    - first_run
+    - first_run | bool
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
   when:
-    - first_run
+    - first_run | bool
 
 - include_tasks: enable_s2s_port.yml
   when:
     - "'s2s_enable' in splunk and splunk.s2s_enable is not none"
     - splunk.s2s_enable | bool
-    - first_run
+    - first_run | bool
 
 - include_tasks: enable_service.yml
   when:
     - splunk.enable_service and ansible_system is match("Linux")
-    - first_run
+    - first_run | bool
 
 - include_tasks: set_http_port.yml
   when:
@@ -70,12 +70,12 @@
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
     - splunk.http_enableSSL | bool
-    - first_run
+    - first_run | bool
 
 - include_tasks: set_any_generic_config.yml
   when:
     - "'conf' in splunk"
-    - first_run
+    - first_run | bool
 
 - include_tasks: start_splunk.yml
 
@@ -85,12 +85,12 @@
   when:
     - splunk.root_endpoint is defined
     - splunk.root_endpoint != None
-    - first_run
+    - first_run | bool
 
 - include_tasks: clean_user_seed.yml
   when:
-    - first_run
+    - first_run | bool
 
 - include_tasks: add_splunk_license.yml
   when:
-    - first_run
+    - first_run | bool
