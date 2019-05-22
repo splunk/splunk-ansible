@@ -1,32 +1,14 @@
 ---
-- name: Construct new build url if ssl is disabled
-  set_fact:
-    new_build_location: "{{ splunk.build_location | replace('https', 'http') }}"
-  when:
-  - splunk.build_location | regex_search("^(http).*")
-  - cert_prefix is defined
-  - cert_prefix == "http"
-
-- name: Adjust current build url
-  set_fact:
-    splunk:
-      build_location: "{{ splunk.build_location | combine(new_build_location,recursive=True) }}"
-  when: new_build_location is defined
-
-- name: Download Splunk package (Windows)
-  get_url:
-    url: "{{ splunk.build_location }}"
-    dest: "/tmp/splunk.tgz"
-    mode: 0777
-    timeout: 600
-    force: true
-  register: download_result
-  until: download_result is succeeded
-  retries: 5
-  delay: 10
-  when:
-  - splunk.build_location | regex_search("^(http).*")
-  - ansible_system is match("CYGWIN*|Win32NT")
+- name: Remove old manifest files
+  file:
+    path: "{{ item.path }}"
+    state: "absent"
+  ignore_errors: yes
+  become: yes
+  become_user: "{{ privileged_user }}"
+  with_items:
+  - "{{ manifests.files }}"
+  when: splunk_upgrade | bool
 
 - name: Install Splunk (Linux)
   unarchive:
@@ -42,7 +24,7 @@
   delay: 3
 
 - name: Install Splunk (Windows)
-  command: "msiexec /I /tmp/splunk.tgz AGREETOLICENSE=yes LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
+  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes SPLUNKUSERNAME={{ splunk.admin_user }} SPLUNKPASSWORD={{ splunk.password }} LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
   when: ansible_system is match("CYGWIN*|Win32NT")
   register: install_result
   until: install_result is succeeded
@@ -55,8 +37,7 @@
     state: "absent"
   ignore_errors: yes
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
   with_items:
-  - "/tmp/splunk.tgz"
-  - "{{ splunk.build_location }}"
+    - "{{ splunk.build_location }}"
+    - "/tmp/splunk.msi"

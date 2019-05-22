@@ -11,7 +11,7 @@
   when:
     - splunk.apps_location
 
-- include_tasks: initialize_multisite_master.yml
+- include_tasks: setup_multisite.yml
   when:
     - splunk.site is defined
     - splunk.all_sites is defined

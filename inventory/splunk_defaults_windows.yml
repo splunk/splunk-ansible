@@ -9,7 +9,7 @@ config:
     max_retries: 3
     max_delay: 60
     max_timeout: 1200
-    defaults_dir: C:\\Windows\\temp
+    defaults_dir: C:\\tmp\\defaults
     baked: default.yml
     env:
         var: SPLUNK_DEFAULTS_URL
@@ -21,16 +21,17 @@ config:
         verify: True
 
 splunk:
-    build_location: "C:\\splunk.msi"
+    build_location:
     allow_upgrade: True
     tar_dir: "splunk"
-    opt: &opt "C:\\Program Files"
-    home: &home !!python/object/apply:string.join [[*opt, "\\splunk"],'']
+    opt: &opt "/opt"
+    home: &home !!python/object/apply:string.join [[*opt, "/splunk"],'']
     user: "splunk"
     group: "Administrators"
-    exec: !!python/object/apply:string.join [[*home, "\\bin\\splunk.exe"], '']
-    pid: !!python/object/apply:string.join [[*home, "\\var\\run\\splunk\\splunkd.pid"], '']
+    exec: !!python/object/apply:string.join [[*home, "/bin/splunk.exe"], '']
+    pid: !!python/object/apply:string.join [[*home, "/var/run/splunk/splunkd.pid"], '']
     admin_user: "admin"
+    root_endpoint:
     password:
     secret: 
     svc_port: 8089
@@ -58,11 +59,15 @@ splunk:
         search_factor: 3
         replication_factor: 3
         replication_port: 9887
+    multisite_replication_factor_origin: 3
+    multisite_replication_factor_total: 3
+    multisite_search_factor_origin: 3
+    multisite_search_factor_total: 3
     enable_service: False
     smartstore:
     app_paths:
-        default: !!python/object/apply:string.join [[*home, "\\etc\\apps"], '']
-        shc: !!python/object/apply:string.join [[*home, "\\etc\\shcluster\\apps"], '']
-        idxc: !!python/object/apply:string.join [[*home, "\\etc\\master-apps"], '']
-        deployment: !!python/object/apply:string.join [[*home, "\\etc\\deployment-apps"], '']
-        httpinput: !!python/object/apply:string.join [[*home, "\\etc\\apps\\splunk_httpinput"], '']
+        default: !!python/object/apply:string.join [[*home, "/etc/apps"], '']
+        shc: !!python/object/apply:string.join [[*home, "/etc/shcluster/apps"], '']
+        idxc: !!python/object/apply:string.join [[*home, "/etc/master-apps"], '']
+        deployment: !!python/object/apply:string.join [[*home, "/etc/deployment-apps"], '']
+        httpinput: !!python/object/apply:string.join [[*home, "/etc/apps/splunk_httpinput"], '']

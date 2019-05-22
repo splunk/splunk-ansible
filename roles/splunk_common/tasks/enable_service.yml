@@ -11,19 +11,20 @@
   template:
     src: splunk.service.j2
     dest: /etc/systemd/system/splunk.service
-    owner: root
-    group: root
+    owner: "{{ privileged_user }}"
+    group: "{{ privileged_user }}"
     mode: 0644
   become: yes
-  become_user: root
+  become_user: "{{ privileged_user }}"
   when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
 
 - name: "Reload daemons via systemctl - Linux (systemd)"
   become: yes
-  become_user: "root"
+  become_user: "{{ privileged_user }}"
   systemd:
-    name: daemon-reload
-    state: restarted
+      daemon-reload: yes
+      name: splunk.service
+      enabled: true
   when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
 
 - name: "Start splunkd as systemd service - Linux"
@@ -34,7 +35,7 @@
 
 - name: "Enable service via boot-start - Linux (init)"
   become: yes
-  become_user: "root"
+  become_user: "{{ privileged_user }}"
   command: "{{ splunk.exec }} enable boot-start -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
   when: ansible_system is match("Linux") and pid1.stdout.find('systemd') == -1
 

@@ -3,6 +3,7 @@
   when:
     - splunk.search_head_cluster
     - splunk.deployer_included
+    - splunk_search_head_captain is defined
 
 ## Indexer Clustering Scenario
 - include_tasks: peer_cluster_master.yml
@@ -28,10 +29,9 @@
     - not splunk.search_head_cluster
     - splunk.deployment_server is not defined or not splunk.deployment_server
 
-- include_tasks: setup_multisite_search_head.yml
+- include_tasks: setup_multisite.yml
   when:
       - splunk.site is defined
       - splunk.multisite_master is defined
-      - splunk.multisite_master_port is defined
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

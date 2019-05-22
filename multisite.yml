@@ -1,0 +1,17 @@
+---
+- name: Run multisite provisioning
+  hosts: localhost
+  gather_facts: true
+  tasks:
+      # These should only be run for the three roles that currently
+      # have multisite defined; cluster master, search head, and indexer
+      - name: Run role specific multisite configuration
+        include_role:
+          name: "{{ splunk.role }}"
+          tasks_from: setup_multisite.yml 
+        when:
+          - splunk.role is defined
+        vars:
+          - splunk_install: false
+          - splunk_upgrade: false
+          - first_run: false

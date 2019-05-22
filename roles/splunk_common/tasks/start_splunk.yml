@@ -13,7 +13,7 @@
     state: restarted
   when: splunk.enable_service and ansible_system is match("Linux")
   become: yes
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: "Start Splunk via Windows service"
   win_service:

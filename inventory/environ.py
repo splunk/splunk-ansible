@@ -25,7 +25,6 @@ import sys
 import urllib2, urllib3
 import yaml
 from time import sleep
-import ssl
 
 urllib3.disable_warnings()
 
@@ -91,7 +90,6 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
 def getDefaultVars():
     defaultVars = loadDefaultSplunkVariables()
     overrideEnvironmentVars(defaultVars)
-
     defaultVars["splunk"]["license_master_included"] = True if os.environ.get('SPLUNK_LICENSE_MASTER_URL', False) else False
     defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
     defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
@@ -173,13 +171,16 @@ def getSplunkApps(vars_scope):
         vars_scope["splunk"]["apps_location"] = []
 
 def overrideEnvironmentVars(vars_scope):
+    vars_scope["splunk"]["group"] = os.environ.get("SPLUNK_GROUP", vars_scope["splunk"]["group"])
     vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
     vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope["ansible_post_tasks"])
+    vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
     vars_scope["splunk"]["opt"] = os.environ.get('SPLUNK_OPT', vars_scope["splunk"]["opt"])
     vars_scope["splunk"]["home"] = os.environ.get('SPLUNK_HOME', vars_scope["splunk"]["home"])
     splunk_home = vars_scope["splunk"]["home"]
     vars_scope["splunk"]["exec"] = os.environ.get('SPLUNK_EXEC', vars_scope["splunk"]["exec"])
     vars_scope["splunk"]["pid"] = os.environ.get('SPLUNK_PID', vars_scope["splunk"]["pid"])
+    vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["s2s_port"] = os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s_port"])
@@ -198,11 +199,20 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', vars_scope["splunk"]["http_enableSSL_cert"])
     vars_scope["splunk"]["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', vars_scope["splunk"]["http_enableSSL_privKey"])
     vars_scope["splunk"]["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', vars_scope["splunk"]["http_enableSSL_privKey_password"])
+    vars_scope["splunk"]["http_port"] = os.environ.get('SPLUNK_HTTP_PORT', vars_scope["splunk"]["http_port"])
     #Used for multisite
     if 'SPLUNK_SITE' in os.environ or 'site' in vars_scope["splunk"]:
         vars_scope["splunk"]["site"] = os.environ.get('SPLUNK_SITE', vars_scope["splunk"].get("site"))
-        vars_scope["splunk"]["all_sites"] = os.environ.get('SPLUNK_ALL_SITES', vars_scope["splunk"].get("all_sites"))
-        vars_scope["splunk"]["multisite_master"] = os.environ.get('SPLUNK_MULTISITE_MASTER', vars_scope["splunk"].get("multisite_master"))
+
+        all_sites = os.environ.get('SPLUNK_ALL_SITES', vars_scope["splunk"].get("all_sites"))
+        if all_sites:
+            vars_scope["splunk"]["all_sites"] = all_sites
+
+        multisite_master = os.environ.get('SPLUNK_MULTISITE_MASTER', vars_scope["splunk"].get("multisite_master"))
+        if multisite_master:
+            vars_scope["splunk"]["multisite_master"] = multisite_master
+
+        vars_scope["splunk"]["multisite_master_port"] = os.environ.get('SPLUNK_MULTISITE_MASTER_PORT', vars_scope["splunk"].get("multisite_master_port", 8089))
         vars_scope["splunk"]["multisite_replication_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_replication_factor_origin", 1))
         vars_scope["splunk"]["multisite_replication_factor_total"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_replication_factor_total", 1))
         vars_scope["splunk"]["multisite_search_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_search_factor_origin", 1))
@@ -250,17 +260,17 @@ def loadDefaultSplunkVariables():
     ### Load the splunk defaults shipped with splunk-ansible
     if os.environ.get("SPLUNK_ROLE", None) == "splunk_universal_forwarder":
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunkforwarder_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-            loaded_yaml = yaml.load(yaml_file)
+            loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
     else:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-            loaded_yaml = yaml.load(yaml_file)
+            loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
 
     ### Load the defaults for the environment
     if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"] and \
             os.path.exists(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"])):
         try:
             with open(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"]), 'r') as yaml_file:
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(yaml_file))
+                loaded_yaml = merge_dict(loaded_yaml, yaml.load(yaml_file, Loader=yaml.Loader))
         except:
             raise
 
@@ -283,7 +293,7 @@ def loadDefaultSplunkVariables():
             try:
                 response = requests.get(url.format(platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
                 response.raise_for_status()
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content))
+                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content, Loader=yaml.Loader))
                 break
             except Exception as e:
                 if unlimited_retries or current_retry < max_retries:
@@ -316,7 +326,7 @@ def loadHostVars(defaults, hostname=None, platform="linux"):
             try:
                 response = requests.get(url.format(hostname=hostname, platform=platform), headers=headers, timeout=max_timeout, verify=verify)
                 response.raise_for_status()
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content))
+                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content, Loader=yaml.Loader))
                 break
             except Exception as e:
                 if unlimited_retries or current_retry < max_retries:

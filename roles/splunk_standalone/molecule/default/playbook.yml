@@ -20,6 +20,7 @@
     max_timeout: 1200
     hide_password: false
     retry_num: 5
+    delay_num: 3
     splunk:
       role: splunk_standalone
       license_master_included: false
@@ -53,7 +54,8 @@
       http_enableSSL_cert: null
       http_enableSSL_privKey: null
       http_enableSSL_privKey_password: null
-      http_port: 8000
+      # http_port changed from 8000 to 8080 to test custom http port functionality
+      http_port: 8080
       idxc:
         enable: false
         label: idxc_label
@@ -64,6 +66,7 @@
       opt: /opt
       admin_user: admin
       password: helloworld
+      root_endpoint: /splunkui
       pid: /opt/splunk/var/run/splunk/splunkd.pid
       s2s_enable: true
       s2s_port: 9997
