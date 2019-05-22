@@ -30,6 +30,8 @@
       and (splunk_cluster_bundle_result.stdout is not search("[Ee]rror")))
     and ("already" not in splunk_cluster_bundle_result.stderr)
   no_log: "{{ hide_password }}"
+  retries: "{{ retry_num }}" # We will sometimes see this if the number of peers dictacted by the replication factor aren't up
+  delay: 5
 
 - name: Wait for bundle push
   command: "{{ splunk.exec }} show cluster-bundle-status -auth {{ splunk.admin_user }}:{{ splunk.password }}"
