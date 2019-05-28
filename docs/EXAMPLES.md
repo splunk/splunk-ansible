@@ -10,6 +10,7 @@ From a design perspective, the plays within `splunk-ansible` are meant to be run
 
 * [Provision localhost as a standalone Splunk](#provision-local-standalone)
 * [Enable a user-defined HEC token](#provision-hec)
+* [Access SplunkWeb behind a reverse proxy](#enable-reverse-proxy)
 * [Use a dynamic inventory](#provision-with-dynamic-inventory)
 * [Provision Docker containers with splunk-ansible](#provision-docker-containers)
 
@@ -17,12 +18,14 @@ From a design perspective, the plays within `splunk-ansible` are meant to be run
 
 ## Provision local standalone
 <details><summary>"hosts" file inventory</summary><p>
+
 ```
 localhost ansible_connection=local
 ```
 </p></details>
 
 <details><summary>"default.yml" contents</summary><p>
+
 ```
 ---
 ansible_post_tasks: null
@@ -107,12 +110,14 @@ ansible-playbook --inventory hosts --connection local site.yml --extra-vars "@de
 ## Provision HEC
 The HTTP Event Collector (HEC) enables sending data directly to Splunk via a HTTP endpoint and a token. Here's how you can enable it with a user-defined token (`abcd-1234-efgh-5678`).
 <details><summary>"hosts" file inventory</summary><p>
+
 ```
 localhost ansible_connection=local
 ```
 </p></details>
 
 <details><summary>"default.yml" contents</summary><p>
+
 ```
 ---
 ansible_post_tasks: null
@@ -193,6 +198,95 @@ ansible-playbook --inventory hosts --connection local site.yml --extra-vars "@de
 ```
 
 For this case, please take note that the `hec_enableSSL` parameter will govern whether or not the HEC endpoint will be reachable over HTTP or HTTPS.
+
+---
+
+## Enable Reverse Proxy
+A reverse proxy can be used to access Splunk through some ingress controller resource or behind a load-balancer within your corporate firewall policy. Here's how you can enable SplunkWeb to run behind a prefix route such as `/splunkweb`.
+
+<details><summary>"default.yml" contents</summary><p>
+
+```
+---
+ansible_post_tasks: null
+ansible_pre_tasks: null
+config:
+baked: default.yml
+defaults_dir: /tmp/defaults
+env:
+    headers: null
+    var: SPLUNK_DEFAULTS_URL
+    verify: true
+host:
+    headers: null
+    url: null
+    verify: true
+max_delay: 60
+max_retries: 3
+max_timeout: 1200
+hide_password: false
+retry_num: 50
+shc_bootstrap_delay: 30
+splunk:
+    root_endpoint: /splunkweb
+    admin_user: admin
+    app_paths:
+        default: /opt/splunk/etc/apps
+        deployment: /opt/splunk/etc/deployment-apps
+        httpinput: /opt/splunk/etc/apps/splunk_httpinput
+        idxc: /opt/splunk/etc/master-apps
+        shc: /opt/splunk/etc/shcluster/apps
+    enable_service: false
+    exec: /opt/splunk/bin/splunk
+    group: splunk
+    hec_disabled: 0
+    hec_enableSSL: 1
+    hec_port: 8088
+    hec_token: abcd-1234-efgh-5678
+    home: /opt/splunk
+    http_enableSSL: 0
+    http_enableSSL_cert: null
+    http_enableSSL_privKey: null
+    http_enableSSL_privKey_password: null
+    http_port: 8000
+    idxc:
+        enable: false
+        label: idxc_label
+        replication_factor: 3
+        replication_port: 9887
+        search_factor: 3
+        secret: null
+    ignore_license: false
+    license_download_dest: /tmp/splunk.lic
+    nfr_license: /tmp/nfr_enterprise.lic
+    opt: /opt
+    password: helloworld
+    pid: /opt/splunk/var/run/splunk/splunkd.pid
+    s2s_enable: true
+    s2s_port: 9997
+    search_head_cluster_url: null
+    secret: null
+    shc:
+        enable: false
+        label: shc_label
+        replication_factor: 3
+        replication_port: 9887
+        secret: null
+    smartstore: null
+    svc_port: 8089
+    tar_dir: splunk
+    user: splunk
+    wildcard_license: false
+splunk_home_ownership_enforcement: true
+```
+</p></details>
+
+Execution command:
+```
+ansible-playbook --inventory hosts --connection local site.yml --extra-vars "@default.yml" 
+```
+
+After this runs, you should be able to access SplunkWeb at `http://localhost:8000/splunkweb`.
 
 ---
 
