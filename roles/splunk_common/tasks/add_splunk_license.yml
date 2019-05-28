@@ -28,7 +28,7 @@
       - "{{ splunk.license_download_dest }}"
       - "{{ splunk.nfr_license }}"
       - "{{ splunk.license_uri }}"
-      skip: true
+      errors: "ignore"
   loop_control:
     loop_var: license_file
   notify:
