@@ -41,7 +41,8 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_BEFORE_START_CMD | List of commands to run before Splunk starts separated by comma. Ansible will run “{{splunk.exec}} {{item}}”. | no | no | no |
 | SPLUNK_S2S_PORT | Default Forwarding Port | no | no | no |
 | SPLUNK_SVC_PORT | Default Admin Port | no | no | no |
-| SPLUNK_PASSWORD* | Default password of the admin user| yes | yes | yes |
+| SPLUNK_ROOT_ENDPOINT | Allow SplunkWeb to be accessed behind a given route (ex. reverse proxy usage) | no | no | no |
+| SPLUNK_PASSWORD* | Default password of the admin user | yes | yes | yes |
 | SPLUNK_HEC_TOKEN | HEC (HTTP Event Collector) Token when enabled | no | no | no |
 | SPLUNK_SHC_SECRET | Search Head Clustering Shared secret | no | yes | no |
 | SPLUNK_IDXC_SECRET | Indexer Clustering Shared Secret | no | no | yes |
