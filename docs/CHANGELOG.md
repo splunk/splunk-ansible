@@ -2,6 +2,8 @@
 
 ## Navigation
 
+* [7.3.0](#730)
+* [7.2.7](#727)
 * [7.2.6](#726)
 * [7.2.5.1](#7251)
 * [7.2.5](#725)
@@ -10,6 +12,40 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 7.3.0
+
+#### What's New?
+* Reorganizing multi-site playbooks
+* Initial support for Cygwin-based Windows environments
+* Minor bugfixes
+
+#### Changes
+* Adding ability to dynamically change `SPLUNK_ROOT_ENDPOINT` at start-up time
+* Adding ability to dynamically change SplunkWeb HTTP port at start-up time
+* Modified manner in which deployment server installs + distributes app bundles
+* More multi-site functionality
+* Support for Cygwin-based Windows environments
+* Minor documentation changes
+
+---
+
+## 7.2.7 
+
+#### What's New?
+* Reorganizing multi-site playbooks
+* Initial support for Cygwin-based Windows environments
+* Minor bugfixes
+
+#### Changes
+* Adding ability to dynamically change `SPLUNK_ROOT_ENDPOINT` at start-up time
+* Adding ability to dynamically change SplunkWeb HTTP port at start-up time
+* Modified manner in which deployment server installs + distributes app bundles
+* More multi-site functionality
+* Support for Cygwin-based Windows environments
+* Minor documentation changes
 
 ---
 
