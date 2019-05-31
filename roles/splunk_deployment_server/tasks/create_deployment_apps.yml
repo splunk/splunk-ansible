@@ -1,4 +1,10 @@
 ---
+
+- include_tasks: install_deployment_apps.yml
+  vars:
+    app_url: "{{ item }}"
+  loop: "{{ splunk.apps_location }}"
+
 - include_tasks: ../../../roles/splunk_common/tasks/find_installed_apps.yml
 
 # TODO: Might be better to use synchronize here, but we'll need rsync installed
@@ -10,3 +16,19 @@
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ installed_apps }}"
+
+# In order to support SplunkBase app installations, they must go through the services/apps/local REST API.
+# This puts them in ${SPLUNK_HOME}/etc/apps/ by default, and for the deployment server they should go in
+# ${SPLUNK_HOME}/etc/deployment-apps. This task simply removes the apps we "accidentally" installed
+- name: Remove installed apps
+  file:
+    path: "{{ splunk.app_paths.default }}/{{ item }}"
+    state: absent
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ installed_apps }}"
+  notify:
+    - Restart the splunkd service
+
+- name: Flush restart handlers
+  meta: flush_handlers

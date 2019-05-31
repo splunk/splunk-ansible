@@ -32,3 +32,4 @@ Although this project can be used independently as ordinary Ansible scripts, the
 * [Architecture](ARCHITECTURE.md)
 * [Contributing](CONTRIBUTING.md)
 * [License](LICENSE.md)
+* [Changelog](CHANGELOG.md)

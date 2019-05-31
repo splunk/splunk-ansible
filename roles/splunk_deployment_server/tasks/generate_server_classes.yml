@@ -1,4 +1,9 @@
 ---
+- name: Check for existing serverclass.conf
+  stat:
+    path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
+  register: serverclass_conf
+
 - name: Define all serverClass
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
@@ -7,6 +12,7 @@
     value: "*"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+  when: not serverclass_conf.stat.exists
 
 - name: Define all:app serverClass
   ini_file:
@@ -17,3 +23,4 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     allow_no_value: true
+  when: not serverclass_conf.stat.exists

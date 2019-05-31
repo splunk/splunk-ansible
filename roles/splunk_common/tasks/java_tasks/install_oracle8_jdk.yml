@@ -13,8 +13,7 @@
   when:
     - ansible_distribution == 'Debian'
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: Untar the Java distribution
   unarchive:
@@ -23,45 +22,39 @@
   when:
     - ansible_distribution == 'Debian'
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: Create alternatives for installed JDK Java binary
   command: "update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java 100"
   when:
     - ansible_distribution == 'Debian'
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: Create alternatives for installed JDK Javac binary
   command: "update-alternatives --install /usr/bin/javac javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac 100"
   when:
     - ansible_distribution == 'Debian'
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: Set Java
   command: "update-alternatives --set java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java"
   when:
     - ansible_distribution == 'Debian'
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: Set Javac
   command: "update-alternatives --set javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac"
   when:
     - ansible_distribution == 'Debian'
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
 
 - name: Create splunk-launch.conf
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
   command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
   ignore_errors: true
   when:
@@ -71,16 +64,14 @@
   shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
   register: java_home
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
   ignore_errors: true
   when:
     - ansible_distribution == 'Debian'
 
 - name: Set JAVA_HOME in splunk-launch.conf
   become: yes
-  become_method: sudo
-  become_user: root
+  become_user: "{{ privileged_user }}"
   lineinfile:
     path: "{{ splunk.home }}/etc/splunk-launch.conf"
     regexp: '^JAVA_HOME'

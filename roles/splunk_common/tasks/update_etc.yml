@@ -9,7 +9,6 @@
   when:
   - updateetc_stat_result.stat.exists
   become: yes
-  become_method: sudo
   become_user: "{{ splunk.user }}"
   environment:
     SPLUNK_HOME: "{{ splunk.home }}"

@@ -1,0 +1,7 @@
+---
+- name: Set HTTP Port
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "httpport"
+    value: "{{ splunk.http_port }}"

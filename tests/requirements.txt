@@ -4,3 +4,4 @@ mock
 docker
 requests
 molecule
+ansible<2.8

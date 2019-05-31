@@ -52,3 +52,9 @@ def test_custom_user_prefs(host):
     assert f.contains("[general]")
     assert f.contains("default_namespace = appboilerplate")
     assert f.contains("search_syntax_highlighting = dark")
+
+
+def test_splunkweb_root_endpoint(host):
+    output = host.run('curl http://localhost:8080/splunkui/en-US/')
+    assert "This resource can be found at" in output.stdout
+    assert "/account/login?return_to" in output.stdout
