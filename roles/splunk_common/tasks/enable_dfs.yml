@@ -1,0 +1,49 @@
+---
+- name: Create server.conf
+  become: yes
+  become_user: "{{ splunk.user }}"
+  file:
+    path: "{{splunk.home}}/etc/system/local/server.conf"
+    state: touch
+
+- name: Enable DFS in server.conf
+  become: yes
+  become_user: "{{ splunk.user }}"
+  blockinfile:
+    path: "{{splunk.home}}/etc/system/local/server.conf"
+    block: |
+      [dfs]
+      disabled = false
+      port = {{ splunk.dfs.port }}
+      spark_master_host = {{ splunk.dfs.spark_master_host }}
+      spark_master_webui_port = {{ splunk.dfs.spark_master_webui_port }}
+  notify:
+    - Restart the splunkd service
+
+- name: Create limits.conf
+  become: yes
+  become_user: "{{ splunk.user }}"
+  file:
+    path: "{{splunk.home}}/etc/system/local/limits.conf"
+    state: touch
+
+- name: Updates limits.conf for DFS
+  become: yes
+  become_user: "{{ splunk.user }}"
+  blockinfile:
+    path: "{{splunk.home}}/etc/system/local/limits.conf"
+    block: |
+      [dfs]
+      dfc_num_slots = {{ splunk.dfs.dfc_num_slots }}
+      dfw_num_slots = {{ splunk.dfs.dfw_num_slots }}
+      dfw_num_slots_enabled = {{ splunk.dfs.dfw_num_slots_enabled }}
+
+      [search]
+      phased_execution=true
+      max_searches_per_process=1
+      
+      [search_optimization::dfs_job_extractor]
+      enabled=true
+      commands=stats,join,sort,head,tail,reverse,dedup,rename,fields,union,from,eval
+  notify:
+    - Restart the splunkd service

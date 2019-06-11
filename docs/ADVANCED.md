@@ -52,6 +52,10 @@ Below is the list of all environment variables that the inventory script can wor
 | HIDE_PASSWORD | Set to true to hide all Ansible task logs with Splunk password in them in order to secure our output to stdout. | no | no | no |
 | JAVA_VERSION | Supply "oracle:8", "openjdk:8", or "openjdk:11" to install a respective Java distribution. | no | no | no |
 | SPLUNK_TAIL_FILE | Determine which file gets written to the container's stdout (default: splunkd_stderr.log) | no | no | no |
+| SPLUNK_ENABLE_DFS | Enable Data Fabric Search (DFS) | no | no | no |
+| SPLUNK_DFW_NUM_SLOTS_ENABLED | Enables you to set the value of the field dfw_num_slots. | no | no | no |
+| SPARK_MASTER_HOST | This setting identifies the Spark master. | no | no | no |
+| SPARK_MASTER_WEBUI_PORT | Identifies the port for the Spark master web UI. | no | no | no |
 
 * Password must be set either in default.yml or as the environment variable `SPLUNK_PASSWORD`
 
