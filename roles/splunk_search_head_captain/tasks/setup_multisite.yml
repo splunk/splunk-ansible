@@ -21,6 +21,13 @@
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
+- name: Flush restart handlers
+  meta: flush_handlers
+
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_process.yml
+
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
+
 - name: Setup SHC with Associated Site - Captain
   command: "{{ splunk.exec }} edit cluster-master -old_master_uri {{ multisite_master_uri }} -site {{ splunk.site }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.secret }} -multisite True"
   become: yes
