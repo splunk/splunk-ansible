@@ -261,15 +261,16 @@ splunk:
   * Determine the port used for Splunk management/remote API calls
   * Default: 8089
 
-  launch: null
-  * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
-  
   appserver_port: <int>
   * Determine the port used for Splunk Application Server
   * Default: 8065
 
-  search_head_cluster_url: null
-  * URL of the Splunk search head cluster
+  kvstore_port: <int>
+  * Determine the port used for Splunk Key-Value store
+  * Default: 8191
+
+  launch: null
+  * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null
 
   secret: <str>
