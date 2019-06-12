@@ -67,6 +67,7 @@
       smartstore: null
       svc_port: 8089
       appserver_port: 8065
+      kvstore_port: 8191
       tar_dir: splunkforwarder
       user: splunk
       wildcard_license: false

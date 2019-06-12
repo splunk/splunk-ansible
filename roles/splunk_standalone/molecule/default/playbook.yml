@@ -77,6 +77,7 @@
       smartstore: null
       svc_port: 8089
       appserver_port: 8065
+      kvstore_port: 8191
       user: splunk
     splunk_home_ownership_enforcement: true
   roles:

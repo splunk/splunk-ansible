@@ -408,6 +408,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', vars_scope["splunk"]["http_enableSSL_privKey_password"])
     vars_scope["splunk"]["http_port"] = os.environ.get('SPLUNK_HTTP_PORT', vars_scope["splunk"]["http_port"])
     vars_scope["splunk"]["appserver_port"] = os.environ.get('SPLUNK_APPSERVER_PORT', vars_scope["splunk"]["appserver_port"])
+    vars_scope["splunk"]["kvstore_port"] = os.environ.get('SPLUNK_KVSTORE_PORT', vars_scope["splunk"]["kvstore_port"])
     #Used for multisite
     if 'SPLUNK_SITE' in os.environ or 'site' in vars_scope["splunk"]:
         vars_scope["splunk"]["site"] = os.environ.get('SPLUNK_SITE', vars_scope["splunk"].get("site"))

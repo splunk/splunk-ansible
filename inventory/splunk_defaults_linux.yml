@@ -55,6 +55,7 @@ splunk:
         password:
         ca:
     appserver_port: 8065
+    kvstore_port: 8191
     http_port: 8000
     http_enableSSL: 0
     http_enableSSL_cert:
