@@ -400,6 +400,21 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
+    vars_scope["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', vars_scope["splunk"]["build_location"])
+    # add ssl variables
+    vars_scope["splunk"]["http_enableSSL"] = os.environ.get('SPLUNK_HTTP_ENABLESSL', vars_scope["splunk"]["http_enableSSL"])
+    vars_scope["splunk"]["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', vars_scope["splunk"]["http_enableSSL_cert"])
+    vars_scope["splunk"]["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', vars_scope["splunk"]["http_enableSSL_privKey"])
+    vars_scope["splunk"]["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', vars_scope["splunk"]["http_enableSSL_privKey_password"])
+    vars_scope["splunk"]["http_port"] = os.environ.get('SPLUNK_HTTP_PORT', vars_scope["splunk"]["http_port"])
+    vars_scope["splunk"]["appserver_port"] = os.environ.get('SPLUNK_APPSERVER_PORT', vars_scope["splunk"]["appserver_port"])
+    #Used for multisite
+    if 'SPLUNK_SITE' in os.environ or 'site' in vars_scope["splunk"]:
+        vars_scope["splunk"]["site"] = os.environ.get('SPLUNK_SITE', vars_scope["splunk"].get("site"))
+
+        all_sites = os.environ.get('SPLUNK_ALL_SITES', vars_scope["splunk"].get("all_sites"))
+        if all_sites:
+            vars_scope["splunk"]["all_sites"] = all_sites
 
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":

@@ -76,6 +76,7 @@
         secret: ofzi+x7zTOha7eTAO3qYj7wBPGzyrRos
       smartstore: null
       svc_port: 8089
+      appserver_port: 8065
       user: splunk
     splunk_home_ownership_enforcement: true
   roles:
