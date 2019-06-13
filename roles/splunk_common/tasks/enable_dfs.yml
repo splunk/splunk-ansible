@@ -47,3 +47,23 @@
       commands=stats,join,sort,head,tail,reverse,dedup,rename,fields,union,from,eval
   notify:
     - Restart the splunkd service
+
+- name: Set JAVA_HOME in splunk-launch.conf
+  become: yes
+  become_user: "{{ splunk.user }}"
+  lineinfile:
+    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    regexp: '^JAVA_HOME'
+    line: "JAVA_HOME={{ lookup('env', 'JAVA_HOME') }}"
+  notify:
+    - Restart the splunkd service
+
+- name: Set SPARK_HOME in splunk-launch.conf
+  become: yes
+  become_user: "{{ splunk.user }}"
+  lineinfile:
+    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    regexp: '^SPARK_HOME'
+    line: "SPARK_HOME={{ lookup('env', 'SPARK_HOME')  }}"
+  notify:
+    - Restart the splunkd service
