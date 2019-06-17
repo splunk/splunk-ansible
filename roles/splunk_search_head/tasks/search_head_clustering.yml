@@ -69,21 +69,3 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
-
-- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
-  vars:
-    splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
-
-- name: Destructive sync search head
-  command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  when: not splunk_search_head_captain | bool
-  register: task_result
-  changed_when: task_result.rc == 0
-  until: task_result.rc == 0
-  retries: "{{ retry_num }}"
-  delay: 10
-  no_log: "{{ hide_password }}"
-
-  
