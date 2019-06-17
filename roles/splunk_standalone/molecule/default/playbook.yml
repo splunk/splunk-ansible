@@ -79,6 +79,6 @@
       smartstore: null
       svc_port: 8089
       user: splunk
-      splunk_home_ownership_enforcement: true
+    splunk_home_ownership_enforcement: true
   roles:
     - role: splunk_standalone
