@@ -27,7 +27,6 @@
     state: restarted
   when: splunk.enable_service and not ansible_system is match("Linux")
 
-- name: "Wait for port {{ splunk.svc_port }} to become open"
-  listen: "Restart the splunkd service"
+- name: "Wait for splunkd management port"
   wait_for:
     port: "{{ splunk.svc_port }}"
