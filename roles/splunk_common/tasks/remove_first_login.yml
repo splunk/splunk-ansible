@@ -6,3 +6,5 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     mode: "u=rw,g=,o="
+  become: yes
+  become_user: "{{ privileged_user }}"
