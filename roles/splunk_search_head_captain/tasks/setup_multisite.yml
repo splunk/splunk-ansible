@@ -12,7 +12,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_new_master
-  until: set_new_master.rc == 0
+  until: set_new_master.rc == 0 or (set_new_master.rc == 22 and  "Use 'splunk edit cluster-master' to edit information for this" in set_new_master.stderr)
   changed_when: set_new_master.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
@@ -20,6 +20,7 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
+  failed_when: set_new_master.rc != 0 and "Use 'splunk edit cluster-master' to edit information for this" not in set_new_master.stderr
 
 - name: Flush restart handlers
   meta: flush_handlers
@@ -31,7 +32,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_associated_site
-  until: set_associated_site.rc == 0
+  until: set_associated_site.rc == 0 or (set_associated_site.rc == 22 and 'No change in master or secret or site' in set_associated_site.stderr)
   changed_when: set_associated_site.rc == 0
   retries: "{{ retry_num }}"
   delay: 3
@@ -39,3 +40,4 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
+  failed_when: set_associated_site.rc != 0 and 'No change in master or secret or site' not in set_associated_site.stderr
