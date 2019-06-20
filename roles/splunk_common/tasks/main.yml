@@ -66,6 +66,11 @@
     - "'http_port' in splunk"
     - splunk.http_port | int != 8000
 
+- include_tasks: set_mgmt_port.yml
+  when:
+    - "'svc_port' in splunk"
+    - splunk.svc_port | int != 8089
+
 - include_tasks: enable_ssl_on_gui.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
