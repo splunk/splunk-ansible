@@ -17,3 +17,8 @@
     - java_version == "openjdk:11"
     - ansible_system is match("Linux")
 
+- name: Install Openjdk9 JDK for Windows
+  include_tasks: java_tasks/install_openjdk9_jdk_windows.yml
+  when:
+    - java_version == "openjdk:9" 
+    - ansible_os_family == "Windows"
