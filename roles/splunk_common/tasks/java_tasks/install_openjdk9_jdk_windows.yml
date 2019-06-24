@@ -11,5 +11,9 @@
 - name: Set Path
   command: echo "PATH=$PATH:$JAVA_HOME/bin" >> ~/.bash_profile
 
+- name: Source Command
+  command: source ~/.bash_profile
+  
+
 - name: Verify Java
   command: java -version
