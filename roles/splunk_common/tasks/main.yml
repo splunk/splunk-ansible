@@ -10,7 +10,7 @@
 - include_tasks: update_etc.yml
   when:
     - ansible_system is match("Linux")
-    - splunk.build_location is not match("^(https?|file):\/\/.*")
+    - splunk.build_location is defined and splunk.build_location is not match("^(https?|file):\/\/.*")
 
 - include_tasks: stop_splunk.yml
   when:
