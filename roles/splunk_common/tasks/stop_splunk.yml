@@ -13,7 +13,7 @@
   become_user: "{{ splunk.user }}"
   register: stop_splunk
   changed_when: stop_splunk.rc == 0
-  when: 
+  when:
     - not splunk.enable_service
     - splunk_status.rc == 0
 
