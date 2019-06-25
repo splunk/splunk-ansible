@@ -20,5 +20,5 @@
 - name: Install Openjdk9 JDK for Windows
   include_tasks: java_tasks/install_openjdk9_jdk_windows.yml
   when:
-    - java_version == "openjdk:9" 
+    - java_version == "openjdk:9"
     - ansible_system is match("CYGWIN*|Win32NT")

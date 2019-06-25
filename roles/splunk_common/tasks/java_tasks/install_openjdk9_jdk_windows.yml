@@ -1,19 +1,27 @@
 ---
-- name: Install Java
-  command: wget https://download.java.net/openjdk/jdk9/ri/jdk-9+181_windows-x64_ri.zip
+- name: Download the Java distribution
+  get_url:
+    url: "https://download.java.net/openjdk/jdk9/ri/jdk-9+181_windows-x64_ri.zip"
+    dest: /home/splunk/
+    timeout: 30
+  register: download_result
+  until: download_result.status_code == 200
+  retries: 5
+  delay: 10
 
-- name: Unzip Java
-  command: unzip jdk*
+- name: Unzip the Java distribution
+  unarchive:
+    src: "/home/splunk/jdk-9+181_windows-x64_ri.zip"
+    dest: /home/splunk/
 
-- name: Set Java_home
-  command: echo "JAVA_HOME=/home/splunk/java-se-9-ri/jdk-9/" >> ~/.bash_profile
+- name: Write vars into .bash_profile
+  lineinfile:
+    path: /home/splunk/.bash_profile
+    line: "JAVA_HOME=/home/splunk/java-se-9-ri/jdk-9/"
+    create: yes
 
-- name: Set Path
-  command: echo "PATH=$PATH:$JAVA_HOME/bin" >> ~/.bash_profile
-
-- name: Source Command
-  command: source ~/.bash_profile
-  
-
-- name: Verify Java
-  command: java -version
+- name: Write path into .bash_profile
+  lineinfile:
+    path: /home/splunk/.bash_profile
+    line: "PATH=$PATH:$JAVA_HOME/bin"
+    create: yes
