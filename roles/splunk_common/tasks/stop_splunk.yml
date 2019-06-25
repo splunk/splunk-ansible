@@ -1,11 +1,21 @@
 ---
+- name: "Get Splunk status"
+  command: "{{ splunk.exec }} status"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  ignore_errors: yes
+  when: not splunk.enable_service
+
 - name: "Stop Splunk via cli"
   command: "{{ splunk.exec }} stop --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
   register: stop_splunk
   changed_when: stop_splunk.rc == 0
-  when: not splunk.enable_service
+  when:
+    - not splunk.enable_service
+    - splunk_status.rc == 0
 
 - name: "Stop Splunk via systemctl"
   service:

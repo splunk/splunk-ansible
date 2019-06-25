@@ -15,8 +15,7 @@
 
 - include_tasks: stop_splunk.yml
   when:
-    - splunk_upgrade | bool
-    - etc_updated is not skipped
+    - splunk_upgrade | bool or etc_updated is changed
 
 # Below we will either install or upgrade, which at this moment is the same task.
 - name: "Install Splunk"
