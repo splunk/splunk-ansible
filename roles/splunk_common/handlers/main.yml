@@ -1,5 +1,4 @@
 ---
 # handlers file for splunk_common
 - name: "Restart the splunkd service"
-  include_tasks: restart_splunk.yml
-  
+  include_tasks: ../handlers/restart_splunk.yml
