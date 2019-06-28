@@ -23,7 +23,7 @@
   become_user: "{{ privileged_user }}"
   systemd:
       daemon-reload: yes
-      name: splunk.service
+      name: Splunkd.service
       enabled: true
   when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
 
