@@ -1,7 +1,6 @@
 ---
 # handlers file for splunk_common
 - name: "Restart the splunkd service"
-  listen: "Restart the splunkd service"
   block: 
     - name: "Restart the splunkd service - Via CLI"
       command: "{{ splunk.exec }} restart -f --answer-yes --accept-license"
