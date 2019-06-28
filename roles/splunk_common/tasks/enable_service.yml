@@ -27,12 +27,6 @@
       enabled: true
   when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
 
-- name: "Start splunkd as systemd service - Linux"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
-  when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
-
 - name: "Enable service via boot-start - Linux (init)"
   become: yes
   become_user: "{{ privileged_user }}"
