@@ -19,3 +19,4 @@ ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/f
 
 [Install]
 WantedBy=multi-user.target
+Alias=splunk.service

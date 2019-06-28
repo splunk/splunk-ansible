@@ -9,8 +9,8 @@
 # not implement systemd in boot-start command.
 - name: "Copy splunk unit file - Linux (systemd)"
   template:
-    src: splunk.service.j2
-    dest: /etc/systemd/system/splunk.service
+    src: Splunkd.service.j2
+    dest: /etc/systemd/system/Splunkd.service
     owner: "{{ privileged_user }}"
     group: "{{ privileged_user }}"
     mode: 0644
