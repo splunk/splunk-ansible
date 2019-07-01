@@ -9,7 +9,7 @@
   stat:
     path: "{{ splunk.exec }}"
   become: yes
-  become_user: "{{ splunk.user }}"
+  become_user: "{{ privileged_user }}"
   register: pre_existing_splunk_exec
 
 - name: "Set splunk install fact"
@@ -22,7 +22,7 @@
   stat:
     path: "{{ splunk.home }}/etc/auth/splunk.secret"
   become: yes
-  become_user: "{{ splunk.user }}"
+  become_user: "{{ privileged_user }}"
   register: pre_existing_splunk_secret
 
 - name: "Set first run fact"
@@ -54,7 +54,7 @@
     patterns: ".*-manifest$"
     use_regex: yes
   become: yes
-  become_user: "{{ splunk.user }}"
+  become_user: "{{ privileged_user }}"
   register: manifests
 
 - name: "Set current version fact"
