@@ -1,6 +1,6 @@
 ---
 - name: "Get Splunk status"
-  command: "{{ splunk.exec }} status"
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
   register: splunk_status
