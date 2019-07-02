@@ -1,17 +1,30 @@
 ---
+- name: "Get Splunk status"
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  changed_when: False
+  ignore_errors: yes
+
 - name: "Start Splunk via cli"
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
   register: start_splunk
   changed_when: start_splunk.rc == 0 and 'already running' not in start_splunk.stdout
-  when: not splunk.enable_service
+  when:
+    - not splunk.enable_service
+    - splunk_status.rc != 0
 
 - name: "Start Splunk via service"
   service:
     name: splunk
     state: restarted
-  when: splunk.enable_service and ansible_system is match("Linux")
+  when:
+    - splunk.enable_service
+    - splunk_status.rc != 0
+    - ansible_system is match("Linux")
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -19,7 +32,10 @@
   win_service:
     name: splunkd
     state: restarted
-  when: splunk.enable_service and ansible_os_family == "Windows"
+  when:
+    - splunk.enable_service
+    - splunk_status.rc != 0
+    - ansible_os_family == "Windows"
 
 - name: "Wait for splunkd management port"
   wait_for:
