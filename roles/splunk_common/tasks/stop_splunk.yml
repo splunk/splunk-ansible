@@ -4,6 +4,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: splunk_status
+  changed_when: False
   ignore_errors: yes
 
 - name: "Stop Splunk via cli"
@@ -20,8 +21,8 @@
   service:
     name: splunk
     state: stopped
-  when: 
-    - splunk.enable_service 
+  when:
+    - splunk.enable_service
     - splunk_status.rc == 0
     - ansible_system is match("Linux")
   become: yes
@@ -31,7 +32,7 @@
   win_service:
     name: splunkd
     state: stopped
-  when: 
-    - splunk.enable_service 
+  when:
+    - splunk.enable_service
     - splunk_status.rc == 0
     - ansible_os_family == "Windows"
