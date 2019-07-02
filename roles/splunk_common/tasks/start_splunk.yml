@@ -21,7 +21,7 @@
     name: splunk
     state: restarted
   when:
-    - not splunk.enable_service
+    - splunk.enable_service
     - splunk_status.rc != 0
     - ansible_system is match("Linux")
   become: yes
@@ -32,7 +32,7 @@
     name: splunkd
     state: restarted
   when:
-    - not splunk.enable_service
+    - splunk.enable_service
     - splunk_status.rc != 0
     - ansible_os_family == "Windows"
 
