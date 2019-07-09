@@ -219,6 +219,8 @@ def overrideEnvironmentVars(vars_scope):
         vars_scope["splunk"]["multisite_search_factor_total"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_search_factor_total", 1))
     #Used for DFS
     vars_scope["splunk"]["dfs"]["enable"] = os.environ.get('SPLUNK_ENABLE_DFS', vars_scope["splunk"]["dfs"]["enable"])
+    vars_scope["splunk"]["dfs"]["dfw_num_slots"] = os.environ.get('SPLUNK_DFW_NUM_SLOTS', vars_scope["splunk"]["dfs"]["dfw_num_slots"])
+    vars_scope["splunk"]["dfs"]["dfc_num_slots"] = os.environ.get('SPLUNK_DFC_NUM_SLOTS', vars_scope["splunk"]["dfs"]["dfc_num_slots"])
     vars_scope["splunk"]["dfs"]["dfw_num_slots_enabled"] = os.environ.get('SPLUNK_DFW_NUM_SLOTS_ENABLED', vars_scope["splunk"]["dfs"]["dfw_num_slots_enabled"])
     vars_scope["splunk"]["dfs"]["spark_master_host"] = os.environ.get('SPARK_MASTER_HOST', vars_scope["splunk"]["dfs"]["spark_master_host"])
     vars_scope["splunk"]["dfs"]["spark_master_webui_port"] = os.environ.get('SPARK_MASTER_WEBUI_PORT', vars_scope["splunk"]["dfs"]["spark_master_webui_port"])
