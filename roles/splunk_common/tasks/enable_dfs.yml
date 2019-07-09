@@ -6,7 +6,7 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "disabled=false&port={{splunk.dfs.port}}&spark_master_host={{splunk.dfs.spark_master_host}}&spark_master_webui_port={{splunk.dfs.spark_master_webui_port}}"
+    body: "disabled=false&port={{ splunk.dfs.port }}&spark_master_host={{ splunk.dfs.spark_master_host }}&spark_master_webui_port={{ splunk.dfs.spark_master_webui_port }}"
     headers:
       Content-Type: "application/x-www-form-urlencoded"
     status_code: 200
@@ -21,7 +21,7 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "dfc_num_slots={{splunk.dfs.dfc_num_slots}}&dfw_num_slots={{splunk.dfs.dfw_num_slots}}&dfw_num_slots_enabled={{splunk.dfs.dfw_num_slots_enabled}}"
+    body: "dfc_num_slots={{ splunk.dfs.dfc_num_slots }}&dfw_num_slots={{ splunk.dfs.dfw_num_slots }}&dfw_num_slots_enabled={{ splunk.dfs.dfw_num_slots_enabled }}"
     headers:
       Content-Type: "application/x-www-form-urlencoded"
     status_code: 200
@@ -91,7 +91,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   lineinfile:
-    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
     regexp: '^JAVA_HOME'
     line: "JAVA_HOME={{ lookup('env', 'JAVA_HOME') }}"
   notify:
@@ -101,7 +101,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   lineinfile:
-    path: "{{splunk.home}}/etc/splunk-launch.conf"
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
     regexp: '^SPARK_HOME'
     line: "SPARK_HOME={{ lookup('env', 'SPARK_HOME')  }}"
   notify:
