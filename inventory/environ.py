@@ -110,7 +110,7 @@ def getDefaultVars():
 
     # Check required Java installation
     java_version = os.environ.get("JAVA_VERSION", "").lower()
-    if java_version in ['oracle:8', 'openjdk:8', 'openjdk:11']:
+    if java_version in ['oracle:8', 'openjdk:8', 'openjdk:9','openjdk:11']:
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
         if java_version == "oracle:8":
             defaultVars["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz")

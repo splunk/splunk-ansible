@@ -5,7 +5,7 @@
     headers:
       Cookie: oraclelicense=accept-securebackup-cookie
     dest: /opt/container_artifact
-    timeout: 30
+    timeout: 90
   register: download_result
   until: download_result.status_code == 200
   retries: 5
