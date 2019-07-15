@@ -1,7 +1,7 @@
 - name: Set splunk_build_type from variable
   set_fact:
-    splunk_build_type: "{{splunk.build_type}}"
-  when: 
+    splunk_build_type: "{{ splunk.build_type }}"
+  when:
     - "'build_type' in splunk"
     - "splunk.build_type is not none"
 
@@ -26,6 +26,6 @@
       set_fact:
         splunk_build_type: "deb"
       when: splunk.build_location is match(".*\.deb$")
-  when: 
+  when:
     - splunk_build_type is not defined
     - splunk_build_type is not none

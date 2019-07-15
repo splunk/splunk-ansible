@@ -3,7 +3,7 @@
   yum:
     list: splunkforwarder
   register: result
-  
+
 # loop through all of the available versions and find the largest
 - name: "Set target version fact (yum)"
   set_fact:

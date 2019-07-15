@@ -25,7 +25,7 @@
   when: splunk_upgrade | bool
 
 - name: Install Splunk
-  include_tasks: install_splunk_{{splunk_build_type}}.yml
+  include_tasks: install_splunk_{{ splunk_build_type }}.yml
 
 - name: Remove installers
   file:
