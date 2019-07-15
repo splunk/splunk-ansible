@@ -9,7 +9,7 @@ import sys
 
 app_info = '{"app": "Splunk_TA_ForIndexers", "label": "Splunk App For Indexers", "version": "1.0.0", "build": "0"}'
 include_indexes = True
-imported_apps_only = True
+include_properties = True
 namespace = 'SplunkEnterpriseSecuritySuite'
 spl_location = make_splunkhome_path(['etc', 'apps', 'SA-Utils', 'local', 'data', 'appmaker'])
 
@@ -30,8 +30,12 @@ def make_ta_for_indexers(username, password):
     session_key = auth.getSessionKey(username, password)
     from app_maker.make_index_time_properties import makeIndexTimeProperties
     try:
-        archive = makeIndexTimeProperties(app_info, session_key, include_indexes=include_indexes,
-        								  imported_apps_only=imported_apps_only, namespace=namespace)
+        spec = {}
+        spec["_app"] = app_info
+        spec["include_indexes"] = include_indexes
+        spec["include_properties"] = include_properties
+        spec.update()
+        archive = makeIndexTimeProperties(spec, session_key)
     except TypeError:
         #Some versions have a change that removed the kwarg imported_apps_only
         #For older versions, we'll still need to use the imported_apps_only arg, so that's why we
