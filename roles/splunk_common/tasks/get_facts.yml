@@ -21,8 +21,6 @@
 - name: "Check for existing splunk secret"
   stat:
     path: "{{ splunk.home }}/etc/auth/splunk.secret"
-  become: yes
-  become_user: "{{ privileged_user }}"
   register: pre_existing_splunk_secret
   become: yes
   become_user: "{{ privileged_user }}"
