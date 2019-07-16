@@ -24,6 +24,8 @@ def create_parser():
 def make_ta_for_indexers(username, password):
     '''
     Splunk_TA_ForIndexers spl generation for ES 4.2.0 and up
+    There are now three versions of ES we're now supporting (changes to makeIndexTimeProperties have been made over different versions).
+    The try/except blocks below are meant to handle the differences in function signature.
     '''
     if not username or not password:
     	raise Exception("Splunk username and password must be defined.")
@@ -49,6 +51,7 @@ def make_ta_for_indexers(username, password):
         assert archive.startswith(spl_location)
         return
     try: 
+        #second-newest version compatible code
         archive = makeIndexTimeProperties(app_info, session_key, include_indexes=include_indexes,
         								  imported_apps_only=imported_apps_only, namespace=namespace)
     except TypeError:
