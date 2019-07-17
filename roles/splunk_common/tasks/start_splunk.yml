@@ -19,7 +19,7 @@
 
 - name: "Start Splunk via service"
   service:
-    name: splunk
+    name: Splunkd
     state: restarted
   when:
     - splunk.enable_service
