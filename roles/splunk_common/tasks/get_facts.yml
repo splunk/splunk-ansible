@@ -59,7 +59,7 @@
 
 - name: "Find python files"
   find:
-    paths: 
+    paths:
         - "{{ splunk.home }}/share"
         - "{{ splunk.home }}/bin"
         - "{{ splunk.home }}/lib"
