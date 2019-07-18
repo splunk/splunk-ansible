@@ -57,6 +57,19 @@
   become_user: "{{ privileged_user }}"
   register: manifests
 
+- name: "Find python files"
+  find:
+    paths: 
+        - "{{ splunk.home }}/share"
+        - "{{ splunk.home }}/bin"
+        - "{{ splunk.home }}/lib"
+    patterns: '.*?\.py$'
+    use_regex: yes
+    recurse: yes
+  become: yes
+  become_user: "{{ privileged_user }}"
+  register: py_files
+
 - name: "Set current version fact"
   set_fact:
     splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1') if (manifests.matched == 1) else '0' }}"
