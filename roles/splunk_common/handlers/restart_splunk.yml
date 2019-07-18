@@ -11,7 +11,7 @@
 
 - name: "Restart the splunkd service - Via systemd"
   service:
-    name: splunk
+    name: Splunkd
     state: restarted
   when: splunk.enable_service and ansible_system is match("Linux")
   become: yes
