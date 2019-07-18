@@ -19,7 +19,7 @@
 
 - name: "Stop Splunk via systemctl"
   service:
-    name: splunk
+    name: Splunkd
     state: stopped
   when:
     - splunk.enable_service
