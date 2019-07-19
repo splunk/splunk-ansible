@@ -21,7 +21,7 @@
 - name: "Install Splunk"
   include_tasks: install_splunk.yml
   when:
-    - splunk_install | bool or first_run | bool
+    - splunk_install | bool or (splunk.build_location and splunk.build_location is match("^(https?|file)://.*"))
 
 - name: "Upgrade Splunk"
   include_tasks: install_splunk.yml
