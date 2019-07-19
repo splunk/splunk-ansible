@@ -21,7 +21,7 @@
 - name: "Install Splunk"
   include_tasks: install_splunk.yml
   when:
-    - splunk_install | bool
+    - splunk_install | bool or first_run | bool
 
 - name: "Upgrade Splunk"
   include_tasks: install_splunk.yml
