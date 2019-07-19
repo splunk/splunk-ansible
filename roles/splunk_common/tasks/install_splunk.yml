@@ -12,7 +12,7 @@
 
 - name: Remove old directories
   file:
-    path: "{{ item.path }}"
+    path: "{{ item }}"
     state: "absent"
   ignore_errors: yes
   become: yes
