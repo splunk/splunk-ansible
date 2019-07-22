@@ -7,6 +7,7 @@ import requests
 import splunk.auth as auth
 import sys
 
+app_info = '{"app": "Splunk_TA_ForIndexers", "label": "Splunk App For Indexers", "version": "1.0.0", "build": "0"}'
 include_indexes = True
 include_properties = True
 imported_apps_only = True
