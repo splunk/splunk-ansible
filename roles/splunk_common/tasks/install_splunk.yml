@@ -21,6 +21,7 @@
     - "{{ splunk.home }}/bin"
     - "{{ splunk.home }}/lib"
     - "{{ splunk.home }}/share"
+    - "{{ splunk.home }}/Python-2.7"
   when: splunk_upgrade | bool
 
 - name: Install Splunk (Linux)
