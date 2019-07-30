@@ -35,7 +35,7 @@
             - ansible_post_tasks is defined
             - ansible_post_tasks is not none
             - ansible_post_tasks is match("^(http|https|file)://.*")
-             
+
         - name: Check all instances for required restarts
           include_tasks: ./roles/splunk_common/tasks/check_for_required_restarts.yml
 
