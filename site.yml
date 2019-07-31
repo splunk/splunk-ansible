@@ -20,7 +20,6 @@
           when:
             - ansible_pre_tasks is defined
             - ansible_pre_tasks is not none
-            - ansible_pre_tasks is match("^(http|https|file)://.*")
 
         - name: Provision role
           include_role:
@@ -35,6 +34,5 @@
           when:
             - ansible_post_tasks is defined
             - ansible_post_tasks is not none
-            - ansible_post_tasks is match("^(http|https|file)://.*")
       become: yes
       become_user: "{{ splunk.user }}"

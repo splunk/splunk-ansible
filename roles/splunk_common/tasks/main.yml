@@ -8,16 +8,20 @@
     - splunk_home_ownership_enforcement | bool
 
 - include_tasks: update_etc.yml
+  register: etc_updated
+  when:
+    - ansible_system is match("Linux")
+    - splunk.build_location is none or splunk.build_location is not match("^(https?|file)://.*")
 
 - include_tasks: stop_splunk.yml
   when:
-    - splunk_upgrade | bool
+    - splunk_upgrade | bool or etc_updated is changed
 
 # Below we will either install or upgrade, which at this moment is the same task.
 - name: "Install Splunk"
   include_tasks: install_splunk.yml
   when:
-    - splunk_install | bool
+    - splunk_install | bool or (first_run | bool and splunk.build_location and splunk.build_location is match("^(https?|file)://.*"))
 
 - name: "Upgrade Splunk"
   include_tasks: install_splunk.yml
@@ -65,6 +69,11 @@
   when:
     - "'http_port' in splunk"
     - splunk.http_port | int != 8000
+
+- include_tasks: set_mgmt_port.yml
+  when:
+    - "'svc_port' in splunk"
+    - splunk.svc_port | int != 8089
 
 - include_tasks: enable_ssl_on_gui.yml
   when:
