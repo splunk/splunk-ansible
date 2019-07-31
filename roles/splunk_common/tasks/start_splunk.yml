@@ -5,6 +5,7 @@
   become_user: "{{ splunk.user }}"
   register: splunk_status
   changed_when: False
+  failed_when: False
   ignore_errors: yes
 
 - name: "Start Splunk via cli"
@@ -19,7 +20,7 @@
 
 - name: "Start Splunk via service"
   service:
-    name: splunk
+    name: "{% if pid1.stdout.find('systemd') != -1 %}Splunkd{% else %}splunk{% endif %}"
     state: restarted
   when:
     - splunk.enable_service

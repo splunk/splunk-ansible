@@ -5,6 +5,7 @@
   become_user: "{{ splunk.user }}"
   register: splunk_status
   changed_when: False
+  failed_when: False
   ignore_errors: yes
 
 - name: "Stop Splunk via cli"
@@ -19,7 +20,7 @@
 
 - name: "Stop Splunk via systemctl"
   service:
-    name: splunk
+    name: Splunkd
     state: stopped
   when:
     - splunk.enable_service

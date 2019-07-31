@@ -26,7 +26,7 @@
       license_master_included: false
       license_uri: null
       build_remote_src: true
-      build_location: ${SPLUNK_INSTALLER}
+      build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.0/linux/splunkforwarder-7.3.0-657388c7a488-Linux-x86_64.tgz
       apps_location: null
       admin_user: admin
       app_paths:

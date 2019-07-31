@@ -9,6 +9,7 @@ import sys
 
 app_info = '{"app": "Splunk_TA_ForIndexers", "label": "Splunk App For Indexers", "version": "1.0.0", "build": "0"}'
 include_indexes = True
+include_properties = True
 imported_apps_only = True
 namespace = 'SplunkEnterpriseSecuritySuite'
 spl_location = make_splunkhome_path(['etc', 'apps', 'SA-Utils', 'local', 'data', 'appmaker'])
@@ -23,13 +24,33 @@ def create_parser():
 def make_ta_for_indexers(username, password):
     '''
     Splunk_TA_ForIndexers spl generation for ES 4.2.0 and up
+    There are now three versions of ES we're now supporting (changes to makeIndexTimeProperties have been made over different versions).
+    The try/except blocks below are meant to handle the differences in function signature.
     '''
     if not username or not password:
     	raise Exception("Splunk username and password must be defined.")
     sys.path.append(make_splunkhome_path(['etc', 'apps', 'SA-Utils', 'bin']))
     session_key = auth.getSessionKey(username, password)
     from app_maker.make_index_time_properties import makeIndexTimeProperties
+    success = False
     try:
+        spec = {}
+        spec["include_indexes"] = include_indexes
+        spec["include_properties"] = include_properties
+        spec.update()
+        archive = makeIndexTimeProperties(spec, session_key)
+        success = True
+    except TypeError:
+        #Some versions have a change that consolidated app_info, namespace, and include_indexes, 
+        #and added include_properties.
+        #Below code is written to handle older versions.
+        pass
+    if success:
+        print archive
+        assert archive.startswith(spl_location)
+        return
+    try: 
+        #second-newest version compatible code
         archive = makeIndexTimeProperties(app_info, session_key, include_indexes=include_indexes,
         								  imported_apps_only=imported_apps_only, namespace=namespace)
     except TypeError:

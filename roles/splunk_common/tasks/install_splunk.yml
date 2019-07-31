@@ -10,6 +10,20 @@
   - "{{ manifests.files }}"
   when: splunk_upgrade | bool
 
+- name: Remove old directories
+  file:
+    path: "{{ item }}"
+    state: "absent"
+  ignore_errors: yes
+  become: yes
+  become_user: "{{ privileged_user }}"
+  with_items:
+    - "{{ splunk.home }}/bin"
+    - "{{ splunk.home }}/lib"
+    - "{{ splunk.home }}/share"
+    - "{{ splunk.home }}/Python-2.7"
+  when: splunk_upgrade | bool
+
 - name: Install Splunk (Linux)
   unarchive:
     src: "{{ splunk.build_location }}"
