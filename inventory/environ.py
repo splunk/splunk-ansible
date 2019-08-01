@@ -306,7 +306,7 @@ def loadDefaultSplunkVariables():
         for f in loaded_yaml["config"]["baked"].split(','):
             full_path = os.path.join(loaded_yaml["config"]["defaults_dir"], f.strip())
             if os.path.exists(full_path):
-                with open(url, 'r') as file:
+                with open(full_path, 'r') as file:
                     file_content = file.read()
                     loaded_yaml = merge_dict(loaded_yaml, yaml.load(file_content, Loader=yaml.Loader))    
 
