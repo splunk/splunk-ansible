@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [7.3.1](#731)
 * [7.3.0](#730)
 * [7.2.7](#727)
 * [7.2.6](#726)
@@ -12,6 +13,20 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+--- 
+
+## 7.3.1
+
+#### What's New?
+* Enterprise Security application fix
+* Bugfixes and environment cleanup
+
+#### Changes
+* Refactored Systemd
+* Fixed application installation issues
+* Fixed Ansible formatting issue
+* Cleaned up Python files before install
 
 ---
 
