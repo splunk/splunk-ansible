@@ -10,7 +10,7 @@ jobs:
           command: make lint
       - run:
           name: Run py3k linting
-          command: make py3k_lint
+          command: make py3k-lint
       - run:
           name: Run small tests
           command: make small-tests
@@ -22,9 +22,29 @@ jobs:
           destination: tests/results
       - store_test_results:
           path: tests/results
+  py3k-splunk-ansible-test:
+    machine:
+      image: circleci/classic:latest
+    steps:
+      - checkout
+      - run:
+          name: Run py3k linting
+          command: make py3k-lint
+      - run:
+          name: Run small tests
+          command: make py3k-small-tests
+      - run:
+          name: Run large (molecule) tests
+          command: make py3k-large-tests
+      - store_artifacts:
+          path: tests/results
+          destination: tests/results
+      - store_test_results:
+          path: tests/results
 
 workflows:
   version: 2
   run_tests:
     jobs:
       - splunk-ansible-test
+      - py3k-splunk-ansible-test
