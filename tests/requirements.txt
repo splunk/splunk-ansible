@@ -4,4 +4,6 @@ mock
 docker
 requests
 molecule
+coverage
+caniusepython3
 ansible<2.8

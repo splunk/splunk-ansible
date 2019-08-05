@@ -132,12 +132,12 @@ def getDefaultVars():
 
 
     # Lower indexer search/replication factor when indexer hosts less than 3
-    if inventory.has_key("splunk_indexer") and inventory["splunk_indexer"].has_key("hosts") and len(inventory["splunk_indexer"]["hosts"]) < 3:
+    if "splunk_indexer" in inventory and "hosts" in inventory["splunk_indexer"] and len(inventory["splunk_indexer"]["hosts"]) < 3:
         defaultVars["splunk"]["idxc"]["search_factor"] = 1
         defaultVars["splunk"]["idxc"]["replication_factor"] = 1
 
     #When sites are specified, assume multisite
-    if inventory.has_key("splunk.site"):
+    if "splunk.site" in inventory:
         defaultVars["splunk"]["multisite_replication_factor_origin"] = 1
         defaultVars["splunk"]["multisite_replication_factor_total"] = 1
         defaultVars["splunk"]["multisite_search_factor_origin"] = 1
@@ -294,7 +294,7 @@ def mergeDefaultSplunkVariables(vars_scope, url):
         url = url[7:]
     with open(url, 'r') as file:
         file_content = file.read()
-        vars_scope = merge_dict(vars_scope, yaml.load(file_content, Loader=yaml.Loader))    
+        vars_scope = merge_dict(vars_scope, yaml.load(file_content, Loader=yaml.Loader))
     return vars_scope
 
 def loadDefaultSplunkVariables():
@@ -319,7 +319,7 @@ def loadDefaultSplunkVariables():
             if os.path.exists(full_path):
                 with open(full_path, 'r') as file:
                     file_content = file.read()
-                    loaded_yaml = merge_dict(loaded_yaml, yaml.load(file_content, Loader=yaml.Loader))    
+                    loaded_yaml = merge_dict(loaded_yaml, yaml.load(file_content, Loader=yaml.Loader))
 
     if "config" in loaded_yaml and loaded_yaml["config"] is not None and "env" in loaded_yaml["config"] and loaded_yaml["config"]["env"] is not None and "var" in loaded_yaml["config"]["env"] and loaded_yaml["config"]["env"]["var"] is not None and len(loaded_yaml["config"]["env"]["var"]) > 0:
         urls = os.environ.get(loaded_yaml["config"]["env"]["var"], None)

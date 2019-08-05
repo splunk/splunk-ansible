@@ -2,26 +2,42 @@ SHELL := /bin/bash
 
 .PHONY: tests 
 
-test_setup:
+test-setup:
 	@echo 'Install test requirements'
 	pip install --upgrade pip
 	pip install -r $(shell pwd)/tests/requirements.txt --upgrade
 
-lint: test_setup
+py3k-test-setup:
+	pip3 install --upgrade pip
+	pip3 install -r $(shell pwd)/tests/requirements.txt --upgrade
+
+lint: test-setup
 	ansible-lint -v -c ./tests/lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml
 
-py3k_lint:
+py3k-lint:
 	# We're treating each file separately here, because of their scarsity
 	# This will need to be re-evaluated if a full blown module gets in here
 	pylint --py3k $(shell find . -name "*.py")
+	caniusepython3 -r tests/requirements.txt
 
-test: lint py3k_lint small-tests large-tests
+test: lint small-tests large-tests
 
-small-tests: test_setup
-	@echo 'Running the super awesome small tests'
+py3k-test: py3k-test-setup py3k-lint py3k-small-tests py3k-large-tests
+
+small-tests: test-setup
+	@echo 'Running the super awesome python2 small tests'
 	pytest -sv tests/small/ --junitxml tests/results/small-tests.xml
-
-large-tests: test_setup
+	
+py3k-small-tests: py3k-test-setup
+	@echo 'Running the super awesome python3 small tests'
+	python3 -m pytest -sv tests/small/ --junitxml tests/results/small-tests.xml
+	
+large-tests: test-setup
 	@echo 'Running the super awesome large tests'
 	cd roles/splunk_standalone && molecule test
 	cd roles/splunk_universal_forwarder && molecule test
+
+py3k-large-tests: py3k-test-setup
+	@echo 'Running the super awesome large tests'
+	cd roles/splunk_standalone && python3 -m molecule test
+	cd roles/splunk_universal_forwarder && python3 -m molecule test
