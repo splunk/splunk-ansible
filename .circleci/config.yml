@@ -24,12 +24,9 @@ jobs:
           path: tests/results
   py3k-splunk-ansible-test:
     machine:
-      image: circleci/classic:latest
+      image: circleci/python:3.7
     steps:
       - checkout
-      - run:
-          name: Run py3k linting
-          command: make py3k-lint
       - run:
           name: Run small tests
           command: make py3k-small-tests
