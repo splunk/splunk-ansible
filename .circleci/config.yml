@@ -23,8 +23,8 @@ jobs:
       - store_test_results:
           path: tests/results
   py3k-splunk-ansible-test:
-    machine:
-      image: circleci/python:3.5.2
+    docker:
+      image: circleci/python:3.7.4-stretch
     steps:
       - checkout
       - run:
