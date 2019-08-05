@@ -74,7 +74,7 @@
     headers:
       Content-Type: "application/x-www-form-urlencoded"
     status_code: [ 200, 201 ]
-    timeout: 30
+    timeout: 90
   when:
     - "'splunkbase.splunk.com' not in app_url"
     - "'itsi' not in app_contents.stdout_lines"

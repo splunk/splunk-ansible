@@ -5,7 +5,8 @@
                     "alert_webhook", "splunk_httpinput", "introspection_generator_addon", "user-prefs",
                     "appsbrowser", "framework", "learned", "launcher", "alert_logevent", "sample_app",
                     "splunk_instrumentation", "search", "splunk_archiver", "splunk_monitoring_console",
-                    "_splunk_config", "splunk_enterprise_on_docker", "splunk_forwarder_on_docker", "splunk_metrics_workspace" ]
+                    "_splunk_config", "splunk_enterprise_on_docker", "splunk_forwarder_on_docker",
+                    "splunk_metrics_workspace", "splunk_internal_metrics" ]
 
 - name: Find all apps
   find:

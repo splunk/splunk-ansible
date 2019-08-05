@@ -59,6 +59,14 @@ splunk:
         search_factor: 3
         replication_factor: 3
         replication_port: 9887
+    dfs:
+        enable: False
+        port: 9000
+        dfc_num_slots: 4
+        dfw_num_slots: 10
+        dfw_num_slots_enabled: False
+        spark_master_host: "127.0.0.1"
+        spark_master_webui_port: 8080
     multisite_replication_factor_origin: 3
     multisite_replication_factor_total: 3
     multisite_search_factor_origin: 3

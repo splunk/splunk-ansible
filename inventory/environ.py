@@ -113,7 +113,7 @@ def getDefaultVars():
 
     # Check required Java installation
     java_version = os.environ.get("JAVA_VERSION", "").lower()
-    if java_version in ['oracle:8', 'openjdk:8', 'openjdk:11']:
+    if java_version in ['oracle:8', 'openjdk:8', 'openjdk:9','openjdk:11']:
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
         if java_version == "oracle:8":
             defaultVars["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz")
@@ -219,6 +219,15 @@ def overrideEnvironmentVars(vars_scope):
         vars_scope["splunk"]["multisite_replication_factor_total"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_replication_factor_total", 1))
         vars_scope["splunk"]["multisite_search_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_search_factor_origin", 1))
         vars_scope["splunk"]["multisite_search_factor_total"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_search_factor_total", 1))
+    #Used for DFS
+    if "dfs" not in vars_scope["splunk"]:
+        vars_scope["splunk"]["dfs"] = {}
+    vars_scope["splunk"]["dfs"]["enable"] = os.environ.get('SPLUNK_ENABLE_DFS', vars_scope["splunk"]["dfs"].get("enable", "false"))
+    vars_scope["splunk"]["dfs"]["dfw_num_slots"] = os.environ.get('SPLUNK_DFW_NUM_SLOTS', vars_scope["splunk"]["dfs"].get("dfw_num_slots", 10))
+    vars_scope["splunk"]["dfs"]["dfc_num_slots"] = os.environ.get('SPLUNK_DFC_NUM_SLOTS', vars_scope["splunk"]["dfs"].get("dfc_num_slots", 4))
+    vars_scope["splunk"]["dfs"]["dfw_num_slots_enabled"] = os.environ.get('SPLUNK_DFW_NUM_SLOTS_ENABLED', vars_scope["splunk"]["dfs"].get("dfw_num_slots_enabled", "false"))
+    vars_scope["splunk"]["dfs"]["spark_master_host"] = os.environ.get('SPARK_MASTER_HOST', vars_scope["splunk"]["dfs"].get("spark_master_host", "127.0.0.1"))
+    vars_scope["splunk"]["dfs"]["spark_master_webui_port"] = os.environ.get('SPARK_MASTER_WEBUI_PORT', vars_scope["splunk"]["dfs"].get("spark_master_webui_port", 8080))
 
 def convert_path_windows_to_nix(filepath):
     if filepath.startswith("C:"):
@@ -252,6 +261,42 @@ def merge_dict(dict1, dict2, path=None):
             dict1[key] = dict2[key]
     return dict1
 
+def mergeDefaultSplunkVariables(vars_scope, url):
+    url = url.strip()
+    if not url or len(url) == 0:
+        return vars_scope
+    if url.lower().startswith(('http://', 'https://')):
+        headers = None
+        if "headers" in vars_scope['config']['env'] and vars_scope['config']['env']['headers'] != None and len(vars_scope['config']['env']['headers']) > 0:
+            headers = vars_scope['config']['env']['headers']
+
+        max_retries = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_RETRIES', vars_scope["config"]["max_retries"]))
+        max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', vars_scope["config"]["max_delay"]))
+        max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', vars_scope["config"]["max_timeout"]))
+        verify = bool(os.environ.get('SPLUNK_DEFAULTS_HTTPS_VERIFY', vars_scope["config"]["env"]["verify"]))
+        unlimited_retries = (max_retries == -1)
+        current_retry = 0
+        while True:
+            try:
+                response = requests.get(url.format(platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
+                response.raise_for_status()
+                vars_scope = merge_dict(vars_scope, yaml.load(response.content, Loader=yaml.Loader))
+                break
+            except Exception as e:
+                if unlimited_retries or current_retry < max_retries:
+                    current_retry += 1
+                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay))
+                    sleep(max_delay)
+                else:
+                    raise e
+        return vars_scope
+    if url.lower().startswith('file://'):
+        url = url[7:]
+    with open(url, 'r') as file:
+        file_content = file.read()
+        vars_scope = merge_dict(vars_scope, yaml.load(file_content, Loader=yaml.Loader))    
+    return vars_scope
+
 def loadDefaultSplunkVariables():
     '''
     This method accepts a url argument, but that argument can be None. If it is None, then we load from a file
@@ -268,42 +313,18 @@ def loadDefaultSplunkVariables():
             loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
 
     ### Load the defaults for the environment
-    if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"] and \
-            os.path.exists(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"])):
-        try:
-            with open(os.path.join(loaded_yaml["config"]["defaults_dir"], loaded_yaml["config"]["baked"]), 'r') as yaml_file:
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(yaml_file, Loader=yaml.Loader))
-        except:
-            raise
+    if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"]:
+        for f in loaded_yaml["config"]["baked"].split(','):
+            full_path = os.path.join(loaded_yaml["config"]["defaults_dir"], f.strip())
+            if os.path.exists(full_path):
+                with open(full_path, 'r') as file:
+                    file_content = file.read()
+                    loaded_yaml = merge_dict(loaded_yaml, yaml.load(file_content, Loader=yaml.Loader))    
 
-    url = None
     if "config" in loaded_yaml and loaded_yaml["config"] is not None and "env" in loaded_yaml["config"] and loaded_yaml["config"]["env"] is not None and "var" in loaded_yaml["config"]["env"] and loaded_yaml["config"]["env"]["var"] is not None and len(loaded_yaml["config"]["env"]["var"]) > 0:
-        url = os.environ.get(loaded_yaml["config"]["env"]["var"], None)
-
-    if url:
-        headers = None
-        if "headers" in loaded_yaml['config']['env'] and loaded_yaml['config']['env']['headers'] != None and len(loaded_yaml['config']['env']['headers']) > 0:
-            headers = loaded_yaml['config']['env']['headers']
-
-        max_retries = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_RETRIES', loaded_yaml["config"]["max_retries"]))
-        max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', loaded_yaml["config"]["max_delay"]))
-        max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', loaded_yaml["config"]["max_timeout"]))
-        verify = bool(os.environ.get('SPLUNK_DEFAULTS_HTTPS_VERIFY', loaded_yaml["config"]["env"]["verify"]))
-        unlimited_retries = (max_retries == -1)
-        current_retry = 0
-        while True:
-            try:
-                response = requests.get(url.format(platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
-                response.raise_for_status()
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content, Loader=yaml.Loader))
-                break
-            except Exception as e:
-                if unlimited_retries or current_retry < max_retries:
-                    current_retry += 1
-                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay))
-                    sleep(max_delay)
-                else:
-                    raise e
+        urls = os.environ.get(loaded_yaml["config"]["env"]["var"], None)
+        for url in urls.split(','):
+            loaded_yaml = mergeDefaultSplunkVariables(loaded_yaml, url)
     return loaded_yaml
 
 def loadHostVars(defaults, hostname=None, platform="linux"):

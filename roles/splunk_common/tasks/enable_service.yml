@@ -4,34 +4,54 @@
   register: pid1
   when:  ansible_system is match("Linux")
 
+- name: "Retrieve Splunk version"
+  command: "{{ splunk.exec }} version --accept-license --answer-yes --no-prompt"
+  register: installed_splunk_version
+  when: ansible_system is match("Linux")
+
+- name: "Set installed version fact"
+  set_fact:
+    installed_splunk_version: "{{ installed_splunk_version.stdout | regex_search(regexp, '\\1') }}"
+  vars:
+    regexp: 'Splunk\s((\d+)\.(\d+)\.(\d+)).*'
+  when: ansible_system is match("Linux")
+
+- name: "Enable service via boot-start - Linux (systemd)"
+  become: yes
+  become_user: "{{ privileged_user }}"
+  command: "{{ splunk.exec }} enable boot-start -systemd-managed 1 -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
+  when:
+    - ansible_system is match("Linux")
+    - pid1.stdout.find("systemd") != -1
+    - installed_splunk_version[0] is version("7.2.2", ">=")
+
 # Using service file approach for systemd rather than 'boot-start' with
 # 'systemd-unit-file-name' option because cli's versions older than 7.2.2 do
 # not implement systemd in boot-start command.
-- name: "Copy splunk unit file - Linux (systemd)"
+- name: "Copy Splunkd unit file - Linux (systemd)"
   template:
-    src: splunk.service.j2
-    dest: /etc/systemd/system/splunk.service
+    src: Splunkd.service.j2
+    dest: /etc/systemd/system/Splunkd.service
     owner: "{{ privileged_user }}"
     group: "{{ privileged_user }}"
     mode: 0644
   become: yes
   become_user: "{{ privileged_user }}"
-  when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
+  when:
+    - ansible_system is match("Linux")
+    - pid1.stdout.find("systemd") != -1
+    - installed_splunk_version[0] is version("7.2.2", "<")
 
 - name: "Reload daemons via systemctl - Linux (systemd)"
   become: yes
   become_user: "{{ privileged_user }}"
   systemd:
       daemon-reload: yes
-      name: splunk.service
+      name: Splunkd.service
       enabled: true
-  when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
-
-- name: "Start splunkd as systemd service - Linux"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
-  when: ansible_system is match("Linux") and pid1.stdout.find('systemd') != -1
+  when:
+    - ansible_system is match("Linux")
+    - pid1.stdout.find('systemd') != -1
 
 - name: "Enable service via boot-start - Linux (init)"
   become: yes
