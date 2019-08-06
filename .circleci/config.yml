@@ -25,7 +25,7 @@ jobs:
   py3k-splunk-ansible-test:
     build:
       docker:
-        image: circleci/python:3.7.4-stretch
+         - image: circleci/python:3.7.4-stretch
       steps:
         - checkout
         - run:
