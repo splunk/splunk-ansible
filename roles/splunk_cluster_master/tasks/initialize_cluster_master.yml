@@ -21,10 +21,10 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: False
-    body: "name=indexer_discovery&pass4SymmKey={{ splunk.shc.secret }}"
-    body_format: json
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      name: "indexer_discovery"
+      pass4SymmKey: "{{ splunk.shc.secret }}"
+    body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
   register: set_indexer_discovery

@@ -36,9 +36,9 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "preferred_captain={{ splunk_search_head_captain | bool | lower }}"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      preferred_captain: "{{ splunk_search_head_captain | bool | lower }}"
+    body_format: "form-urlencoded"
     timeout: 10
   notify:
     - Restart the splunkd service

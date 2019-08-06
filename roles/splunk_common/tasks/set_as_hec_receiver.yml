@@ -19,9 +19,10 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name=splunk_hec_token&token={{ splunk.hec_token }}"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      name: "splunk_hec_token"
+      token: "{{ splunk.hec_token }}"
+    body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
   ignore_errors: true
