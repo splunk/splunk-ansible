@@ -23,22 +23,24 @@ jobs:
       - store_test_results:
           path: tests/results
   py3k-splunk-ansible-test:
-    build:
-      docker:
-         - image: circleci/python:3.7.4-stretch
-      steps:
-        - checkout
-        - run:
-            name: Run small tests
-            command: make py3k-small-tests
-        - run:
-            name: Run large (molecule) tests
-            command: make py3k-large-tests
-        - store_artifacts:
-            path: tests/results
-            destination: tests/results
-        - store_test_results:
-            path: tests/results
+    machine:
+      image: circleci/classic:latest
+    steps:
+      - checkout
+      - run:
+          name: Setup Python3
+          command: pyenv global 2.7.12 3.5.2
+      - run:
+          name: Run small tests
+          command: make py3k-small-tests
+      - run:
+          name: Run large (molecule) tests
+          command: make py3k-large-tests
+      - store_artifacts:
+          path: tests/results
+          destination: tests/results
+      - store_test_results:
+          path: tests/results
 
 workflows:
   version: 2
