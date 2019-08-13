@@ -17,7 +17,7 @@
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
 - name: Initialize SHC cluster config
-  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ ansible_fqdn }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
+  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ ansible_hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
