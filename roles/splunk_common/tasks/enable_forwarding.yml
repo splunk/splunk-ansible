@@ -8,9 +8,11 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name=indexer_discovery:splunk-indexer&pass4SymmKey={{ splunk.shc.secret }}&master_uri={{ cert_prefix }}://{{ groups['splunk_cluster_master'][0] }}:{{ splunk.svc_port }}"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      name: "indexer_discovery:splunk-indexer"
+      pass4SymmKey: "{{ splunk.shc.secret }}"
+      master_uri: "{{ cert_prefix }}://{{ groups['splunk_cluster_master'][0] }}:{{ splunk.svc_port }}"
+    body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
   when: splunk.indexer_cluster
@@ -27,9 +29,10 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name=tcpout:group1&indexerDiscovery=splunk-indexer"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      name: "tcpout:group1"
+      indexerDiscovery: "splunk-indexer"
+    body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
   when: splunk.indexer_cluster
@@ -44,9 +47,10 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "indexAndForward=false&defaultGroup=group1"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      indexAndForward: "false"
+      defaultGroup: "group1"
+    body_format: "form-urlencoded"
     status_code: 200
     timeout: 10
   when: splunk.indexer_cluster
@@ -75,9 +79,10 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name=indexAndForward&index=false"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      name: "indexAndForward"
+      index: "false"
+    body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
   register: disable_indexing_stanza
