@@ -322,7 +322,7 @@ def loadDefaultSplunkVariables():
                     loaded_yaml = merge_dict(loaded_yaml, yaml.load(file_content, Loader=yaml.Loader))
 
     if "config" in loaded_yaml and loaded_yaml["config"] is not None and "env" in loaded_yaml["config"] and loaded_yaml["config"]["env"] is not None and "var" in loaded_yaml["config"]["env"] and loaded_yaml["config"]["env"]["var"] is not None and len(loaded_yaml["config"]["env"]["var"]) > 0:
-        urls = os.environ.get(loaded_yaml["config"]["env"]["var"], None)
+        urls = os.environ.get(loaded_yaml["config"]["env"]["var"], "")
         for url in urls.split(','):
             loaded_yaml = mergeDefaultSplunkVariables(loaded_yaml, url)
     return loaded_yaml
