@@ -116,7 +116,7 @@ def getDefaultVars():
     if java_version in ['oracle:8', 'openjdk:8', 'openjdk:9','openjdk:11']:
         defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
         if java_version == "oracle:8":
-            defaultVars["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz")
+            defaultVars["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn/java/jdk/8u221-b11/230deb18db3e4014bb8e3e8324f81b43/jdk-8u221-linux-x64.tar.gz")
             try:
                 defaultVars["java_update_version"] = re.search("jdk-8u(\d+)-linux-x64.tar.gz", defaultVars["java_download_url"]).group(1)
             except:
