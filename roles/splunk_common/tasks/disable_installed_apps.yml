@@ -1,0 +1,9 @@
+---
+- include_tasks: find_installed_apps.yml
+  when: not installed_apps
+
+- name: Disable installed_apps
+  debug:
+    msg: "Going to disable: {{ item }}"
+  with_items: "{{ installed_apps }}"
+
