@@ -7,9 +7,10 @@
   when:
     - splunk.apps_location
 
-- include_tasks: push_apps_to_indexers.yml
-  when:
-    - splunk.apps_location
+- include_tasks:
+    - push_apps_to_indexers.yml
+    - ../../../roles/splunk_common/tasks/disable_installed_apps.yml
+  when: splunk.apps_location
 
 - include_tasks: setup_multisite.yml
   when:
