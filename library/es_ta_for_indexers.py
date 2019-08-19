@@ -48,7 +48,7 @@ def make_ta_for_indexers(username, password):
         #Below code is written to handle older versions.
         pass
     if success:
-        print archive
+        print(archive)
         assert archive.startswith(spl_location)
         return
     try: 
