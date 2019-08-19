@@ -2,7 +2,7 @@
 # Choose privileged username for current OS
 - name: "Set privilege escalation user"
   set_fact:
-    privileged_user: "{% if ansible_system is match('CYGWIN*|Win32NT') %}Administrator{% else %}root{% endif %}"
+    privileged_user: "{% if lookup('env','ANSIBLE_BECOME_USER') %}{{ lookup('env','ANSIBLE_BECOME_USER') }}{% elif ansible_system is match('CYGWIN*|Win32NT') %}Administrator{% else %}root{% endif %}"
 
 # If there is no Splunk executable, we will need to install.
 - name: "Check for existing installation"
