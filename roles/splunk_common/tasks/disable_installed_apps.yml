@@ -7,3 +7,4 @@
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ installed_apps }}"
+  when: installed_apps
