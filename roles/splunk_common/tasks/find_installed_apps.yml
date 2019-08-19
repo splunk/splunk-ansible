@@ -21,4 +21,3 @@
   with_items: "{{ new_apps.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
-

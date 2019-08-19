@@ -6,4 +6,3 @@
   debug:
     msg: "Going to disable: {{ item }}"
   with_items: "{{ installed_apps }}"
-
