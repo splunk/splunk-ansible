@@ -6,3 +6,9 @@
   debug:
     msg: "Going to disable: {{ item }}"
   with_items: "{{ installed_apps }}"
+
+- name: Actually disable
+  command: "{{ splunk.exec }} disable app {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ installed_apps }}"
