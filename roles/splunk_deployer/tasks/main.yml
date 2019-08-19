@@ -37,12 +37,15 @@
     - splunk.apps_location
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
-  when: splunk.apps_location
+  when:
+    - splunk.apps_location
 
 - include_tasks: push_apps_to_search_heads.yml
-  when: splunk.apps_location
+  when:
+    - splunk.apps_location
 
 - include_tasks: ../../../disable_installed_apps.yml
-  when: splunk.apps_location
+  when:
+    - splunk.apps_location
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
