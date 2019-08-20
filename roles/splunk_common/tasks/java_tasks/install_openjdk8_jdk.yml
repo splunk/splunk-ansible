@@ -15,6 +15,7 @@
     update_cache: yes
   when:
     - ansible_distribution == 'Debian'
+    - "'10' not in ansible_distribution_version"
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -25,6 +26,7 @@
   ignore_errors: true
   when:
     - ansible_distribution == 'Debian'
+    - "'10' not in ansible_distribution_version"
 
 - name: Get JAVA_HOME
   shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
@@ -34,6 +36,7 @@
   ignore_errors: true
   when:
     - ansible_distribution == 'Debian'
+    - "'10' not in ansible_distribution_version"
 
 - name: Set JAVA_HOME in splunk-launch.conf
   become: yes
@@ -45,3 +48,40 @@
   ignore_errors: true
   when:
     - ansible_distribution == 'Debian'
+    - "'10' not in ansible_distribution_version"
+
+- name: Install JDK dependencies
+  apt:
+    name: ['apt-transport-https', 'ca-certificates', 'wget', 'dirmngr', 'gnupg', 'software-properties-common']
+    update_cache: yes
+  when:
+    - ansible_distribution == 'Debian'
+    - "'10' in ansible_distribution_version"
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Get the openjdk apt key
+  shell: wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
+  when:
+    - ansible_distribution == 'Debian'
+    - "'10' in ansible_distribution_version"
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Get the key
+  command: "add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/"
+  when:
+    - ansible_distribution == 'Debian'
+    - "'10' in ansible_distribution_version"
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Install openjdk
+  apt: 
+    name: "adoptopenjdk-8-hotspot"
+    update_cache: yes
+  when:
+    - ansible_distribution == 'Debian'
+    - "'10' in ansible_distribution_version"
+  become: yes
+  become_user: "{{ privileged_user }}"
