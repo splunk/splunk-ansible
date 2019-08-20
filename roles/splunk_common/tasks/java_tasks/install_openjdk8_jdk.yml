@@ -19,37 +19,6 @@
   become: yes
   become_user: "{{ privileged_user }}"
 
-- name: Create splunk-launch.conf
-  become: yes
-  become_user: "{{ privileged_user }}"
-  command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
-  ignore_errors: true
-  when:
-    - ansible_distribution == 'Debian'
-    - "'10' not in ansible_distribution_version"
-
-- name: Get JAVA_HOME
-  shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
-  register: java_home
-  become: yes
-  become_user: "{{ privileged_user }}"
-  ignore_errors: true
-  when:
-    - ansible_distribution == 'Debian'
-    - "'10' not in ansible_distribution_version"
-
-- name: Set JAVA_HOME in splunk-launch.conf
-  become: yes
-  become_user: "{{ privileged_user }}"
-  lineinfile:
-    path: "{{ splunk.home }}/etc/splunk-launch.conf"
-    regexp: '^JAVA_HOME'
-    line: "JAVA_HOME={{ java_home.stdout }}"
-  ignore_errors: true
-  when:
-    - ansible_distribution == 'Debian'
-    - "'10' not in ansible_distribution_version"
-
 - name: Install JDK dependencies
   apt:
     name: ['apt-transport-https', 'ca-certificates', 'wget', 'dirmngr', 'gnupg', 'software-properties-common']
@@ -61,7 +30,12 @@
   become_user: "{{ privileged_user }}"
 
 - name: Get the openjdk apt key
-  shell: wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
+  shell: |
+    set -o pipefail
+    wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
+  args:
+    executable: /bin/bash
+    warn: false
   when:
     - ansible_distribution == 'Debian'
     - "'10' in ansible_distribution_version"
@@ -77,7 +51,7 @@
   become_user: "{{ privileged_user }}"
 
 - name: Install openjdk
-  apt: 
+  apt:
     name: "adoptopenjdk-8-hotspot"
     update_cache: yes
   when:
@@ -85,3 +59,31 @@
     - "'10' in ansible_distribution_version"
   become: yes
   become_user: "{{ privileged_user }}"
+
+- name: Create splunk-launch.conf
+  become: yes
+  become_user: "{{ privileged_user }}"
+  command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Get JAVA_HOME
+  shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
+  register: java_home
+  become: yes
+  become_user: "{{ privileged_user }}"
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
+
+- name: Set JAVA_HOME in splunk-launch.conf
+  become: yes
+  become_user: "{{ privileged_user }}"
+  lineinfile:
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
+    regexp: '^JAVA_HOME'
+    line: "JAVA_HOME={{ java_home.stdout }}"
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian'
