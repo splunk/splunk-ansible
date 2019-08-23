@@ -11,6 +11,10 @@
   when:
     - splunk.apps_location
 
+- include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
+  when:
+    - splunk.apps_location
+
 - include_tasks: setup_multisite.yml
   when:
     - splunk.site is defined
