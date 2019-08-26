@@ -7,5 +7,8 @@
   register: essinstall
   changed_when: essinstall.rc == 0
   failed_when: essinstall.rc != 0
+  retries: 3
+  async: 900
+  poll: 20
   notify:
     - Restart the splunkd service
