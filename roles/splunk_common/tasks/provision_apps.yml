@@ -21,5 +21,3 @@
 
 - name: Flush restart handlers
   meta: flush_handlers
-  when:
-    - '"SplunkEnterpriseSecuritySuite" not in installed_apps'
