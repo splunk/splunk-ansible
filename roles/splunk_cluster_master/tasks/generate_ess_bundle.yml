@@ -33,7 +33,7 @@
   ignore_errors: yes
 
 - name: Direct untar (Windows)
-  command: "tar -zxvf {{ ta_location.stdout_lines[0] }} -C {{ splunk.app_paths.idxc }}"
+  command: "tar -zxvf {{ ta_location.stdout_lines[0] }} -C {{ splunk.app_paths.idxc }} --force-local"
   args:
     warn: false
   become: yes
