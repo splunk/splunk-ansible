@@ -111,7 +111,7 @@ def getDefaultVars():
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
     #If the value is set, we would use that, otherwise, return True
-    defaultVars["splunk"]["preferred_captaincy"] = True if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', True) else False
+    defaultVars["splunk"]["preferred_captaincy"] = False if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', "").lower() == "false" else True
 
     # Check required Java installation
     java_version = os.environ.get("JAVA_VERSION", "").lower()
