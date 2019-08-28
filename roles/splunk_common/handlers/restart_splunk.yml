@@ -8,9 +8,6 @@
   retries: 3
   delay: "{{ delay_num }}"
   when: not splunk.enable_service
-  async: 300
-  poll: 10
-  ignore_errors: yes
 
 - name: "Restart the splunkd service - Via systemd"
   service:
