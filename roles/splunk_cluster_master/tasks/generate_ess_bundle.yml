@@ -28,6 +28,19 @@
     remote_src: yes
   when:
     - ta_location is success
+  register: unarchive_result
+  changed_when: unarchive_result.rc == 0
+  ignore_errors: yes
+
+- name: Direct untar (Windows)
+  command: "tar -zxvf {{ ta_location.stdout_lines[0] }} -C {{ splunk.app_paths.idxc }}"
+  args:
+    warn: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when:
+    - ta_location is success
+    - unarchive_result is not success
 
 - name: Determine ESS default apps
   set_fact:
