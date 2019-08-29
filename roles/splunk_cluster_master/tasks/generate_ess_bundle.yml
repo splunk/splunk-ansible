@@ -19,7 +19,7 @@
   register: ta_location
   changed_when: ta_location.rc == 0
 
-- name: Unarchive bundle
+- name: Unarchive bundle (Linux)
   unarchive:
     src: "{{ ta_location.stdout_lines[0] }}"
     dest: "{{ splunk.app_paths.idxc }}"
@@ -28,11 +28,9 @@
     remote_src: yes
   when:
     - ta_location is success
-  register: unarchive_result
-  changed_when: unarchive_result.rc == 0
-  ignore_errors: yes
+    - ansible_system is match("Linux")
 
-- name: Direct untar (Windows)
+- name: Unarchive bundle (Windows)
   command: "tar -zxvf {{ ta_location.stdout_lines[0] | replace(backslash, '/') | replace('C:', '') }} -C {{ splunk.app_paths.idxc }} --force-local"
   args:
     warn: false
@@ -40,7 +38,7 @@
     backslash: "\\"
   when:
     - ta_location is success
-    - unarchive_result is not success
+    - ansible_system is match("CYGWIN*|Win32NT")
 
 - name: Determine ESS default apps
   set_fact:
