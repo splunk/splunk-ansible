@@ -44,7 +44,7 @@
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
   when:
-    - splunk_search_head_captain is defined
+    - splunk_search_head_captain is defined and splunk.preferred_captaincy | bool
 
 - name: Flush restart handlers
   meta: flush_handlers
