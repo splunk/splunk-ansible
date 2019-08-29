@@ -32,16 +32,12 @@
   changed_when: unarchive_result.rc == 0
   ignore_errors: yes
 
-- name: Print path
-  debug:
-    msg: "stdout: {{ ta_location.stdout }} , stdout_line: {{ ta_location.stdout_lines[0] }}"
-
 - name: Direct untar (Windows)
-  command: "tar -zxvf {{ ta_location.stdout }} -C {{ splunk.app_paths.idxc }} --force-local"
+  command: "tar -zxvf {{ ta_location.stdout_lines[0] | replace(backslash, '/') | replace('C:', '') }} -C {{ splunk.app_paths.idxc }} --force-local"
   args:
     warn: false
-  become: yes
-  become_user: "{{ splunk.user }}"
+  vars:
+    backslash: "\\"
   when:
     - ta_location is success
     - unarchive_result is not success
