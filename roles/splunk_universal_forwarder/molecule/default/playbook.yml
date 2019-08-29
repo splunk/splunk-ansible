@@ -25,6 +25,7 @@
       indexer_cluster: false
       license_master_included: false
       license_uri: null
+      preferred_captaincy: true
       build_remote_src: true
       build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.0/linux/splunkforwarder-7.3.0-657388c7a488-Linux-x86_64.tgz
       apps_location: null
