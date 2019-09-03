@@ -27,6 +27,7 @@ import requests
 import six.moves.urllib.parse as urllib2_parse
 import urllib3
 import yaml
+import socket
 
 urllib3.disable_warnings()
 
@@ -112,6 +113,7 @@ def getDefaultVars():
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
     #If the value is set, we would use that, otherwise, return True
     defaultVars["splunk"]["preferred_captaincy"] = False if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', "").lower() == "false" else True
+    defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
 
     # Check required Java installation
     java_version = os.environ.get("JAVA_VERSION", "").lower()
