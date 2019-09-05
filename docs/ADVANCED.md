@@ -26,6 +26,7 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_DEFAULTS_URL | default.yml URL | no | no | no |
 | SPLUNK_ALLOW_UPGRADE | If this is True (default), we compare the target build version against the current installed one, and perform an upgrade if they're different. | no | no | no |
 | SPLUNK_ROLE | Specify the container’s current Splunk Enterprise role. Supported Roles: splunk_standalone, splunk_indexer, splunk_deployer, splunk_search_head, etc. | no | yes | yes |
+| SPLUNK_HOSTNAME | Specify the instance's hostname. | no | no | no |
 | DEBUG | Print Ansible vars to stdout (supports Docker logging) | no | no | no |
 | SPLUNK_START_ARGS | Accept the license with “—accept-license”. Please note, we will not start a container without the existence of --accept-license in this variable. | yes | yes | yes |
 | SPLUNK_LICENSE_URI | URI we can fetch a Splunk Enterprise license. This can be a local path or a remote URL. | no | no | no |
@@ -70,6 +71,10 @@ The `splunk/universalforwarder` image accepts the majority* environment variable
 | Environment Variable Name | Description | Required for Standalone | Required for Search Head Clustering | Required for Index Clustering |
 | --- | --- | --- | --- | --- |
 | SPLUNK_CMD | List of commands to run after Splunk starts separated by comma. Ansible will run “{{splunk.exec}} {{item}}”. | no | no | no |
+
+#### Suggestions for environment variables for splunk search heasd cluster
+
+Based on splunk official guide for splunk search cluster configuration we suggest to pass in environment variable `SPLUNK_HOSTNAME` with a fully qualified domain name. The dynamic inventory script will assign the value of environment `SPLUNK_HOSTNAME` if passed in or `socket.getfqdn()` to "{{ splunk.hostname }}" ansible variable finally which will be used to init search head cluster member. As environment variable `SPLUNK_SEARCH_HEAD_URL` will be used as the `--server_list` argument of search cluster captain bootstrap command and it requires that each member in `--server_list` must be exactly the same as the "{{ splunk.hostname }}" that you specified earlier when init each search head cluster member, so the member of `SPLUNK_SEARCH_HEAD_URL` must be fully qualified domain name too. To be consistent, we suggest to pass in the environment variables: `SPLUNK_SEARCH_HEAD_CAPTAIN_URL`, `SPLUNK_INDEXER_URL` and `SPLUNK_DEPLOYER_URL` with the fully qualified domain name too.
 
 ## Defaults
 For security purposes, we do not ship with a standard `default.yml`. However, it is a required component when running these Ansible playbooks in this codebase. This file can be created manually, but for a quick shortcut you can run:
