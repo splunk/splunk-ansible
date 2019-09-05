@@ -74,7 +74,7 @@
   command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: not splunk_search_head_captain | bool
+  when: not splunk_search_head_captain | bool and splunk.preferred_captaincy | bool
   register: task_result
   changed_when: task_result.rc == 0
   until: task_result.rc == 0
