@@ -10,7 +10,7 @@
     splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1') | default('0') }}"
   vars:
     regexp: 'splunk\D*?-((\d+)\.(\d+)\.(\d+))'
-  when: "splunk_build_type is not defined or splunk_build_type is match('(tgz|rpm|deb)')"
+  when: "splunk_build_type is defined and splunk_build_type is match('(tgz|rpm|deb)')"
 
 # if using yum to install a package, we can use the list option to see what versions are available
 - name: "Set target version fact (yum)"
