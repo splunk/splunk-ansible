@@ -110,6 +110,10 @@ splunk:
   license_master_included: <bool>
   * Boolean to determine whether there exists a separate license master 
   * Default: false
+  
+  preferred_captaincy: <bool>
+  * Boolean to determine whether splunk should set a preferred captain.  This can have an effect on day 2 operations if the search heads need to be restarted 
+  * Default: true
 
   apps_location: <list>
   * List of apps to install - elements can be in the form of a URL or a location in the filessytem
@@ -294,6 +298,35 @@ splunk:
     secret: <str>
     * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering
     * Default: null
+
+  dfs:
+    enable: <bool>
+    * Enable Data Fabric Search (DFS)
+    * Default: false
+
+    port: <int>
+    * Identifies the port on which the DFSMaster Java process runs.
+    * Default: 9000
+
+    dfc_num_slots: <int>
+    * Maximum number of concurrent DFS searches that run on each search head
+    * Default: 4
+    
+    dfw_num_slots: <int>
+    * Maximum number of concurrent DFS searches that run on a search head cluster
+    * Default: 10
+    
+    dfw_num_slots_enabled: <bool>
+    * Enables you to set the value of the field dfw_num_slots.
+    * Default: false
+
+    spark_master_host: <str>
+    * This setting identifies the Spark master.
+    * Default: 127.0.0.1
+
+    spark_master_webui_port: <int>
+    * Identifies the port for the Spark master web UI.
+    * Default: 8080
 
   smartstore: <dict>
   * Nested dict obj to enable automatic SmartStore provisioning

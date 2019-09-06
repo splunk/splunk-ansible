@@ -5,6 +5,10 @@
   when:
     - '"SplunkEnterpriseSecuritySuite" in installed_apps'
 
+- include_tasks: generate_itsi_bundle.yml
+  when:
+    - '"itsi" in installed_apps'
+
 # TODO: Might be better to use synchronize here, but we'll need rsync installed
 - name: Copy installed apps to master-apps
   command: "cp -R {{ splunk.app_paths.default }}/{{ item }} {{ splunk.app_paths.idxc }}"

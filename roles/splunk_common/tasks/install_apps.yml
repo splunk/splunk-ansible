@@ -6,9 +6,12 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name={{ app_url | urlencode() }}&update=true&filename=true&auth={{ splunkbase_token }}"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      name: "{{ app_url }}"
+      update: "true"
+      filename: "true"
+      auth: "{{ splunkbase_token }}"
+    body_format: "form-urlencoded"
     status_code: [ 200, 201 ]
     timeout: 300
   when:
@@ -70,9 +73,11 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name=/tmp/app.spl&update=true&filename=true"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      name: "/tmp/app.spl"
+      update: "true"
+      filename: "true"
+    body_format: "form-urlencoded"
     status_code: [ 200, 201 ]
     timeout: 90
   when:

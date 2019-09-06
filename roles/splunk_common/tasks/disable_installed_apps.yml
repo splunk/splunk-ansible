@@ -1,0 +1,10 @@
+---
+- include_tasks: find_installed_apps.yml
+  when: not installed_apps
+
+- name: Disable installed_apps
+  command: "{{ splunk.exec }} disable app {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ installed_apps }}"
+  when: installed_apps
