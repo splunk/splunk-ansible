@@ -24,7 +24,6 @@
   register: pre_existing_splunk_secret
   become: yes
   become_user: "{{ splunk.user }}"
-  register: pre_existing_splunk_secret
 
 - name: "Set first run fact"
   set_fact:
