@@ -12,7 +12,7 @@
       set_fact:
         splunk_build_type: "tgz"
       when: splunk.build_location is match(".*(\.tar\.gz|\.tgz)$")
-    - name: "Set build_type (tgz)"
+    - name: "Set build_type (msi)"
       set_fact:
         splunk_build_type: "msi"
       when: splunk.build_location is match(".*\.msi$")
@@ -29,3 +29,4 @@
   when:
     - splunk_build_type is not defined
     - splunk_build_type is not none
+    - splunk.build_location is not none
