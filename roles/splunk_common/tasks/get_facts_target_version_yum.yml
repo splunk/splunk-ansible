@@ -1,0 +1,12 @@
+# get the versions from yum
+- name: "Get versions from yum"
+  yum:
+    list: splunkforwarder
+  register: result
+
+# loop through all of the available versions and find the largest
+- name: "Set target version fact (yum)"
+  set_fact:
+    splunk_target_version: "{{ item.version }}"
+  when: item.version is version_compare( splunk_target_version|default('0.0.0'), '>')
+  loop: "{{ result.results }}"

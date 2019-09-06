@@ -24,26 +24,8 @@
     - "{{ splunk.home }}/Python-2.7"
   when: splunk_upgrade | bool
 
-- name: Install Splunk (Linux)
-  unarchive:
-    src: "{{ splunk.build_location }}"
-    dest: "{{ splunk.opt }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-    remote_src: "{{ splunk.build_remote_src }}"
-  when: ansible_system is match("Linux")
-  register: install_result
-  until: install_result is succeeded
-  retries: "{{ retry_num }}"
-  delay: 3
-
-- name: Install Splunk (Windows)
-  command: "msiexec /I {{ splunk.build_location }} AGREETOLICENSE=yes SPLUNKUSERNAME={{ splunk.admin_user }} SPLUNKPASSWORD={{ splunk.password }} LAUNCHSPLUNK=0 INSTALLDIR=C:\\\\opt\\\\{{ splunk.tar_dir }} /passive /qn"
-  when: ansible_system is match("CYGWIN*|Win32NT")
-  register: install_result
-  until: install_result is succeeded
-  retries: "{{ retry_num }}"
-  delay: 3
+- name: Install Splunk
+  include_tasks: install_splunk_{{ splunk_build_type }}.yml
 
 - name: Remove installers
   file:
