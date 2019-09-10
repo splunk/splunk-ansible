@@ -17,7 +17,7 @@
     splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
 
 - name: Initialize SHC cluster config
-  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ ansible_hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
+  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ shc_replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.secret }}' -shcluster_label '{{ splunk.shc.label }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
@@ -36,15 +36,15 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "preferred_captain={{ splunk_search_head_captain | bool | lower }}"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      preferred_captain: "{{ splunk_search_head_captain | bool | lower }}"
+    body_format: "form-urlencoded"
     timeout: 10
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
   when:
-    - splunk_search_head_captain is defined
+    - splunk_search_head_captain is defined and splunk.preferred_captaincy | bool
 
 - name: Flush restart handlers
   meta: flush_handlers
@@ -74,7 +74,7 @@
   command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: not splunk_search_head_captain | bool
+  when: not splunk_search_head_captain | bool and splunk.preferred_captaincy | bool
   register: task_result
   changed_when: task_result.rc == 0
   until: task_result.rc == 0

@@ -31,7 +31,12 @@
 
 - include_tasks: setup_multisite.yml
   when:
-      - splunk.site is defined
-      - splunk.multisite_master is defined
+    - splunk.site is defined
+    - splunk.multisite_master is defined
+
+- include_tasks: ../../../roles/splunk_common/tasks/enable_dfs.yml
+  when:
+    - "'dfs' in splunk and 'enable' in splunk.dfs and splunk.dfs.enable is not none"
+    - splunk.dfs.enable | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

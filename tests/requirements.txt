@@ -1,6 +1,9 @@
 pytest
+pylint
 mock
 docker
 requests
 molecule
-ansible<2.8
+coverage
+caniusepython3
+ansible>=2.8.2
