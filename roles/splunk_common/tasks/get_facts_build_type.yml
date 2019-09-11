@@ -1,0 +1,32 @@
+- name: Set splunk_build_type from variable
+  set_fact:
+    splunk_build_type: "{{ splunk.build_type }}"
+  when:
+    - "'build_type' in splunk"
+    - "splunk.build_type is not none"
+
+- name: Set splunk_build_type from build_location
+  block:
+    #check if the build_location is a tgz
+    - name: "Set build_type (tgz)"
+      set_fact:
+        splunk_build_type: "tgz"
+      when: splunk.build_location is match(".*(\.tar\.gz|\.tgz)$")
+    - name: "Set build_type (msi)"
+      set_fact:
+        splunk_build_type: "msi"
+      when: splunk.build_location is match(".*\.msi$")
+    #check if the build_location is a rpm
+    - name: "Set build_type (rpm)"
+      set_fact:
+        splunk_build_type: "rpm"
+      when: splunk.build_location is match(".*\.rpm$")
+    #check if the build_location is a deb
+    - name: "Set build_type (deb)"
+      set_fact:
+        splunk_build_type: "deb"
+      when: splunk.build_location is match(".*\.deb$")
+  when:
+    - splunk_build_type is not defined
+    - splunk_build_type is not none
+    - splunk.build_location is not none
