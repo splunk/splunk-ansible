@@ -10,8 +10,10 @@
         - name: Determine captaincy
           set_fact:
             splunk_search_head_captain: true
-          when:
-            - ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or ansible_fqdn == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or splunk.role == "splunk_search_head_captain"
+          when: ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+                ansible_fqdn == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+                splunk.hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+                splunk.role == "splunk_search_head_captain"
 
         - name: Execute pre-setup playbooks
           include_tasks: execute_adhoc_plays.yml
@@ -34,5 +36,13 @@
           when:
             - ansible_post_tasks is defined
             - ansible_post_tasks is not none
+            - ansible_post_tasks is match("^(http|https|file)://.*")
+
+        - name: Check all instances for required restarts
+          include_tasks: ./roles/splunk_common/tasks/check_for_required_restarts.yml
+
+        - name: Flush restart handlers
+          meta: flush_handlers
+
       become: yes
       become_user: "{{ splunk.user }}"

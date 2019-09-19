@@ -27,6 +27,7 @@ import requests
 import six.moves.urllib.parse as urllib2_parse
 import urllib3
 import yaml
+import socket
 
 urllib3.disable_warnings()
 
@@ -110,6 +111,9 @@ def getDefaultVars():
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
+    #If the value is set, we would use that, otherwise, return True
+    defaultVars["splunk"]["preferred_captaincy"] = False if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', "").lower() == "false" else True
+    defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
 
     # Check required Java installation
     java_version = os.environ.get("JAVA_VERSION", "").lower()
@@ -401,6 +405,7 @@ def prep_for_yaml_out(inventory):
                    "search_head_cluster",
                    "indexer_cluster",
                    "license_master_included",
+                   "preferred_captaincy",
                    "license_uri"]
     for key in keys_to_del:
         if key in inventory_to_dump:
