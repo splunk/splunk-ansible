@@ -7,7 +7,7 @@
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
 
-- name: "Generate user-seed.conf"
+- name: "Generate user-seed.conf (Linux)"
   ini_file:
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
@@ -20,4 +20,19 @@
     - { opt: 'HASHED_PASSWORD', val: '{{ hashed_pwd.stdout }}' }
   loop_control:
     label: "{{ item.opt }}"
+  when: ansible_system is match("Linux")
+  no_log: "{{ hide_password }}"
+
+- name: "Generate user-seed.conf (Windows)"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
+    section: user_info
+    option: "{{ item.opt }}"
+    value: "{{ item.val }}"
+  with_items:
+    - { opt: 'USERNAME', val: '{{ splunk.admin_user }}' }
+    - { opt: 'HASHED_PASSWORD', val: '{{ hashed_pwd.stdout }}' }
+  loop_control:
+    label: "{{ item.opt }}"
+  when: ansible_system is match("CYGWIN*|Win32NT")
   no_log: "{{ hide_password }}"

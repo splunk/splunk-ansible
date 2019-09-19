@@ -110,6 +110,10 @@ splunk:
   license_master_included: <bool>
   * Boolean to determine whether there exists a separate license master 
   * Default: false
+  
+  preferred_captaincy: <bool>
+  * Boolean to determine whether splunk should set a preferred captain.  This can have an effect on day 2 operations if the search heads need to be restarted 
+  * Default: true
 
   apps_location: <list>
   * List of apps to install - elements can be in the form of a URL or a location in the filessytem
