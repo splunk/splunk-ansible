@@ -48,7 +48,8 @@
                "Splunk_SA_ExtremeSearch", "Splunk_TA_bluecoat-proxysg", "Splunk_TA_bro", "Splunk_TA_flowfix", "Splunk_TA_juniper",
                "Splunk_TA_mcafee", "Splunk_TA_nessus", "Splunk_TA_nix", "Splunk_TA_oracle", "Splunk_TA_ossec", "Splunk_TA_rsa-securid",
                "Splunk_TA_sophos", "Splunk_TA_sourcefire", "Splunk_TA_symantec-ep", "Splunk_TA_ueba", "Splunk_TA_websense-cg", "Splunk_TA_windows",
-               "TA-airdefense", "TA-alcatel", "TA-cef", "TA-fortinet", "TA-ftp", "TA-nmap", "TA-tippingpoint", "TA-trendmicro"]
+               "TA-airdefense", "TA-alcatel", "TA-cef", "TA-fortinet", "TA-ftp", "TA-nmap", "TA-tippingpoint", "TA-trendmicro", 
+               "Splunk_ML_Toolkit"]
 
 - name: Remove ESS apps from installed apps list
   set_fact:
