@@ -104,3 +104,13 @@ def test_getSplunkApps(vars_scope, trigger_splunkbase, os_env, apps_count):
             assert not vars_scope.get("splunkbase_token")
     # Check that the SPLUNK_APPS_URL gets assigned
     assert len(vars_scope["splunk"].get("apps_location")) == apps_count
+
+def test_getSplunkApps_exception():
+    with patch("environ.requests.post") as mock_post:
+        mock_post.return_value = MagicMock(status_code=400, content="error")
+        try:
+            environ.getSplunkApps({"splunkbase_username": "ocho", "splunkbase_password": "cinco"})
+            assert False
+        except Exception as e:
+            assert True
+            assert "Invalid Splunkbase credentials" in str(e)
