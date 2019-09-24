@@ -24,7 +24,6 @@ import random
 import string
 from time import sleep
 import requests
-import six.moves.urllib.parse as urllib2_parse
 import urllib3
 import yaml
 import socket
@@ -163,12 +162,11 @@ def getSplunkApps(vars_scope):
     splunkbase_username = (vars_scope["splunkbase_username"] if "splunkbase_username" in vars_scope else None) or os.environ.get("SPLUNKBASE_USERNAME") or None
     splunkbase_password = (vars_scope["splunkbase_password"] if "splunkbase_password" in vars_scope else None) or os.environ.get("SPLUNKBASE_PASSWORD") or None
     if splunkbase_username and splunkbase_password:
-        splunkbase_username = urllib2_parse.quote(splunkbase_username)
-        splunkbase_password = urllib2_parse.quote(splunkbase_password)
-        response = urllib2_parse.urlopen("https://splunkbase.splunk.com/api/account:login/", "username={}&password={}".format(splunkbase_username, splunkbase_password))
-        if response.getcode() != 200:
+        resp = requests.post("https://splunkbase.splunk.com/api/account:login/", 
+                             data={"username": splunkbase_username, "password": splunkbase_password})
+        if resp.status_code != 200:
             raise Exception("Invalid Splunkbase credentials - will not download apps from Splunkbase")
-        output = response.read()
+        output = resp.content
         splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
         vars_scope["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
     apps = os.environ.get("SPLUNK_APPS_URL", None)
