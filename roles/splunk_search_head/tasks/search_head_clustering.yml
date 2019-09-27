@@ -70,7 +70,7 @@
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
-- name: Destructive sync search head
+- name: Destructive sync search head (Linux)
   command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
@@ -80,4 +80,18 @@
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: 10
+  when: ansible_system is match("Linux")
+  no_log: "{{ hide_password }}"
+
+- name: Destructive sync search head (Windows)
+  command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: not splunk_search_head_captain | bool and splunk.preferred_captaincy | bool
+  register: task_result
+  changed_when: task_result.rc == 0
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: 60
+  when: ansible_system is match("CYGWIN*|Win32NT")
   no_log: "{{ hide_password }}"

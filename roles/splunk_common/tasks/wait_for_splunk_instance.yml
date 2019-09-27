@@ -1,5 +1,5 @@
 ---
-- name: Check Splunk instance is running
+- name: Check Splunk instance is running (Linux)
   uri:
     url: "{{ cert_prefix }}://{{ splunk_instance_address }}:{{ splunk.svc_port }}/services/server/info?output_mode=json"
     method: GET
@@ -13,4 +13,22 @@
   retries: "{{ retry_num }}"
   delay: 3
   ignore_errors: true
+  when: ansible_system is match("Linux")
+  no_log: "{{ hide_password }}"
+
+- name: Check Splunk instance is running (Windows)
+  uri:
+    url: "{{ cert_prefix }}://{{ splunk_instance_address }}:{{ splunk.svc_port }}/services/server/info?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+  register: task_response
+  until:
+    - task_response.status == 200
+    - lookup('pipe', 'date +"%s"')|int - task_response.json.entry[0].content.startup_time > 10
+  retries: "{{ retry_num }}"
+  delay: 30
+  ignore_errors: true
+  when: ansible_system is match("CYGWIN*|Win32NT")
   no_log: "{{ hide_password }}"
