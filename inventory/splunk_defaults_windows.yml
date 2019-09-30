@@ -25,11 +25,11 @@ splunk:
     allow_upgrade: True
     tar_dir: "splunk"
     opt: &opt "/opt"
-    home: &home !!python/object/apply:os.path.join [[*opt, "/splunk"],'']
+    home: &home !!python/object/apply:os.path.join [*opt, "/splunk"]
     user: "splunk"
     group: "Administrators"
-    exec: !!python/object/apply:os.path.join [[*home, "/bin/splunk.exe"], '']
-    pid: !!python/object/apply:os.path.join [[*home, "/var/run/splunk/splunkd.pid"], '']
+    exec: !!python/object/apply:os.path.join [*home, "/bin/splunk.exe"]
+    pid: !!python/object/apply:os.path.join [*home, "/var/run/splunk/splunkd.pid"]
     admin_user: "admin"
     root_endpoint:
     password:
