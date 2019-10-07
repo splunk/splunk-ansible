@@ -27,6 +27,7 @@
   include_tasks: install_splunk.yml
   when:
     - not splunk_install
+    - not first_run
     - splunk_upgrade | bool
     - splunk.allow_upgrade is defined
     - splunk.allow_upgrade | bool

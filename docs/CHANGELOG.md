@@ -16,6 +16,18 @@
 
 --- 
 
+## 7.3.2
+
+#### What's New?
+* Python 2 and Python 3 compatibility
+* Bugfixes
+
+#### Changes
+* Support and compatibility across Python 2 and Python 3
+* Various bugfixes
+
+--- 
+
 ## 7.3.1
 
 #### What's New?
@@ -44,6 +56,16 @@
 * More multi-site functionality
 * Support for Cygwin-based Windows environments
 * Minor documentation changes
+
+---
+
+## 7.2.8
+
+#### What's New?
+* Syncing with latest codebase - currently up to sync with 7.3.0.
+
+#### Changes
+* See [7.3.0](#730) changes
 
 ---
 
