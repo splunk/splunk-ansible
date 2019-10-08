@@ -1,10 +1,9 @@
 ---
-- name: "Enable forwarding to {{ role }}"
+- name: "Enable forwarding to {{ item }}"
   command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  with_items: "{{ groups[role] }}"
-  when: "role in groups"
+  with_items: "{{ forward_servers }}"
   register: forward_status
   until: forward_status.rc == 0 or 'forwarded-server already present' in forward_status.stderr
   failed_when:

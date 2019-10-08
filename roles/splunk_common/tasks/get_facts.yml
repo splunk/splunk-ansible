@@ -66,3 +66,32 @@
 - name: "Setting upgrade fact"
   set_fact:
     splunk_upgrade: "{{ 'build_location' in splunk and splunk.build_location and not splunk_install and splunk_target_version and splunk_target_version != splunk_current_version | default(False) }}"
+
+# determine if we need to set up forward servers
+# First, if they are manually specified in the config, use them
+- name: "Setting forward servers fact from config"
+  set_fact:
+    splunk_forward_servers: "{{ splunk.forward_servers }}"
+  when:
+    - "'forward_servers' in splunk"
+
+# If not in the config, is there an index cluster to use?
+# Configure forwarding to indexers directly
+# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
+- name: "Setting forward servers fact from index cluster group"
+  set_fact:
+    splunk_forward_servers: "{{ groups['splunk_indexer'] }}"
+  when:
+    - "splunk_forward_server is not defined"
+    - "'splunk_indexer' in groups"
+
+# if not specified in config *and* 
+# no index clusters, then look for standalone
+# Configure forwarding to standalones directly
+# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
+- name: "Setting forward servers fact from standalone group"
+  set_fact:
+    splunk_forward_servers: "{{ groups['splunk_standalone'] }}"
+  when:
+    - "splunk_forward_server is not defined"
+    - "'splunk_standalone' in groups"
