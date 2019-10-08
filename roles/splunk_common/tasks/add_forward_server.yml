@@ -1,9 +1,10 @@
 ---
-- name: "Enable forwarding to {{ item }}"
+- name: "Enable forwarding to {{ forward_servers }}"
   command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ forward_servers }}"
+  when: forward_servers | bool
   register: forward_status
   until: forward_status.rc == 0 or 'forwarded-server already present' in forward_status.stderr
   failed_when:
