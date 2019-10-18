@@ -1,3 +1,4 @@
 ---
+galaxy_info:
 dependencies:
   - role: splunk_search_head
