@@ -10,7 +10,7 @@
 - name: Lower SHC replication factor
   set_fact:
     shc_replication_factor: 1
-  when: num_search_head_hosts <= 3
+  when: num_search_head_hosts|int <= 3
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
@@ -79,5 +79,5 @@
   changed_when: task_result.rc == 0
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
-  delay: 10
+  delay: 60
   no_log: "{{ hide_password }}"
