@@ -85,7 +85,7 @@
     - "splunk_forward_server is not defined"
     - "'splunk_indexer' in groups"
 
-# if not specified in config *and* 
+# if not specified in config *and*
 # no index clusters, then look for standalone
 # Configure forwarding to standalones directly
 # See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers

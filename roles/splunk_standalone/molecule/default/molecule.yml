@@ -11,6 +11,10 @@ platforms:
   - name: instance
     image: splunk/splunk
     command: no-provision
+    env:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      no_proxy: "${no_proxy}"
 provisioner:
   name: ansible
   lint:
@@ -19,6 +23,7 @@ provisioner:
     options:
       x: ["204", "701"]
       force-color: true
+  log: true
 scenario:
   name: default
 verifier:
