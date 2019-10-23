@@ -22,7 +22,7 @@
     retry_num: 5
     delay_num: 3
     splunk:
-      role: splunk_standalone
+      role: splunk_heavy_forwarder
       license_master_included: false
       license_uri: null
       preferred_captaincy: true
@@ -82,4 +82,4 @@
       user: splunk
     splunk_home_ownership_enforcement: true
   roles:
-    - role: splunk_standalone
+    - role: splunk_heavy_forwarder
