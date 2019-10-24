@@ -21,7 +21,7 @@
     - "{{ licenses }}"
   loop_control:
     loop_var: license
-  when: 
+  when:
     - licenses and licenses | length > 0
     - not splunk.license_master_included | bool or splunk.role == "splunk_license_master"
 

@@ -11,5 +11,5 @@
   vars:
     lic: "{{ license }}"
   when:
-    - license | lower != "free" 
+    - license | lower != "free"
     - '"*" not in license'
