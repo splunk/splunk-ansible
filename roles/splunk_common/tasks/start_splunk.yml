@@ -8,6 +8,16 @@
   failed_when: False
   ignore_errors: yes
 
+- name: "Cleanup Splunk runtime files"
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - "{{ splunk.home }}/var/run/splunk/splunkd.pid"
+    - "{{ splunk.home }}/var/lib/splunk/kvstore/mongo/mongod.lock"
+  when:
+    - splunk_status.rc != 0
+
 - name: "Start Splunk via cli"
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
   become: yes
