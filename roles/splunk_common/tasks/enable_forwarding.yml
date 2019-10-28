@@ -15,7 +15,7 @@
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
-  when: splunk.indexer_cluster
+  when: splunk_indexer_cluster
   register: setup_indexer_discovery_stanza
   changed_when: setup_indexer_discovery_stanza.status == 201
   no_log: "{{ hide_password }}"
@@ -35,7 +35,7 @@
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
-  when: splunk.indexer_cluster
+  when: splunk_indexer_cluster
   register: setup_tcpoutgroup_stanza
   changed_when: setup_tcpoutgroup_stanza.status == 201
   no_log: "{{ hide_password }}"
@@ -53,23 +53,16 @@
     body_format: "form-urlencoded"
     status_code: 200
     timeout: 10
-  when: splunk.indexer_cluster
+  when: splunk_indexer_cluster
   register: setup_tcpout_stanza
   changed_when: setup_tcpout_stanza.status == 200
   no_log: "{{ hide_password }}"
 
-# Configure forwarding to indexers directly
-# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
+# set up forward servers set by get_facts
 - include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
   vars:
-    role: splunk_indexer
-  when: not splunk.indexer_cluster
-
-# Configure forwarding to standalones directly
-# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
-- include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
-  vars:
-    role: splunk_standalone
+    forward_servers: "{{ splunk_forward_servers }}"
+  when: splunk_forward_servers is defined
 
 # NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node
