@@ -193,9 +193,11 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
     if "shc" not in vars_scope["splunk"]:
         vars_scope["splunk"]["shc"] = {}
+    vars_scope["splunk"]["shc"]["label"] = os.environ.get('SPLUNK_SHC_LABEL', vars_scope["splunk"]["shc"]["label"])
     vars_scope["splunk"]["shc"]["secret"] = os.environ.get('SPLUNK_SHC_SECRET', vars_scope["splunk"]["shc"]["secret"])
     if "idxc" not in vars_scope["splunk"]:
         vars_scope["splunk"]["idxc"] = {}
+    vars_scope["splunk"]["idxc"]["label"] = os.environ.get('SPLUNK_IDXC_LABEL', vars_scope["splunk"]["idxc"]["label"])
     vars_scope["splunk"]["idxc"]["secret"] = os.environ.get('SPLUNK_IDXC_SECRET', vars_scope["splunk"]["idxc"]["secret"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
