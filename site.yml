@@ -22,6 +22,7 @@
           when:
             - ansible_pre_tasks is defined
             - ansible_pre_tasks is not none
+            - ansible_pre_tasks is match("^(http|https|file)://.*")
 
         - name: Provision role
           include_role:
