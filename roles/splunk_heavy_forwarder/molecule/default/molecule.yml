@@ -33,4 +33,4 @@ verifier:
     options:
       ignore: E501
   options:
-    junit-xml: ../../../../tests/results/standalone-default-results.xml
+    junit-xml: ../../../../tests/results/heavy-default-results.xml

@@ -25,7 +25,7 @@ provisioner:
       force-color: true
   log: true
 scenario:
-  name: default
+  name: manual-forwards
 verifier:
   name: testinfra
   lint:
@@ -33,4 +33,4 @@ verifier:
     options:
       ignore: E501
   options:
-    junit-xml: ../../../../tests/results/standalone-default-results.xml
+    junit-xml: ../../../../tests/results/heavy-manual-forwards-results.xml

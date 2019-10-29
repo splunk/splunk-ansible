@@ -1,0 +1,85 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_post_tasks: null
+    ansible_pre_tasks: null
+    config:
+    baked: default.yml
+    defaults_dir: /tmp/defaults
+    env:
+      headers: null
+      var: SPLUNK_DEFAULTS_URL
+      verify: true
+    host:
+      headers: null
+      url: null
+      verify: true
+    max_delay: 60
+    max_retries: 3
+    max_timeout: 1200
+    hide_password: false
+    retry_num: 5
+    delay_num: 3
+    splunk:
+      role: splunk_heavy_forwarder
+      license_master_included: false
+      license_uri: null
+      preferred_captaincy: true
+      wildcard_license: false
+      build_remote_src: true
+      build_location: https://download.splunk.com/products/splunk/releases/7.3.1.1/linux/splunk-7.3.1.1-7651b7244cf2-Linux-x86_64.tgz
+      ignore_license: true
+      apps_location: null
+      app_paths:
+        default: /opt/splunk/etc/apps
+        httpinput: /opt/splunk/etc/apps/splunk_httpinput
+        idxc: /opt/splunk/etc/master-apps
+        shc: /opt/splunk/etc/shcluster/apps
+      conf:
+        user-prefs:
+          directory: /opt/splunk/etc/users/admin/user-prefs/local
+          content:
+            general:
+              default_namespace: appboilerplate
+              search_syntax_highlighting: dark
+      enable_service: false
+      exec: /opt/splunk/bin/splunk
+      group: splunk
+      hec_disabled: 0
+      hec_enableSSL: 1
+      hec_port: 8088
+      hec_token: abcd1234
+      home: /opt/splunk
+      http_enableSSL: 0
+      http_enableSSL_cert: null
+      http_enableSSL_privKey: null
+      http_enableSSL_privKey_password: null
+      # http_port changed from 8000 to 8080 to test custom http port functionality
+      http_port: 8080
+      idxc:
+        enable: false
+        label: idxc_label
+        replication_factor: 3
+        replication_port: 9887
+        search_factor: 3
+        secret: ce5hXskIQRFck4WmBOBOZOC7ZqBN1Q8G
+      opt: /opt
+      admin_user: admin
+      password: helloworld
+      root_endpoint: /splunkui
+      pid: /opt/splunk/var/run/splunk/splunkd.pid
+      s2s_enable: true
+      s2s_port: 9997
+      shc:
+        enable: false
+        label: shc_label
+        replication_factor: 3
+        replication_port: 9887
+        secret: ofzi+x7zTOha7eTAO3qYj7wBPGzyrRos
+      smartstore: null
+      svc_port: 8089
+      user: splunk
+    splunk_home_ownership_enforcement: true
+  roles:
+    - role: splunk_heavy_forwarder
