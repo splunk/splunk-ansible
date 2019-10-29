@@ -15,7 +15,7 @@
 
 - name: Install Splunk (Linux) from local build
   unarchive:
-    src: "{{ '/opt/container_artifact/' + splunk.build_location|basename }}"
+    src: "{{ splunk.build_location|regex_replace('^file://(.*)$', '\\1') }}"
     dest: "{{ splunk.opt }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
