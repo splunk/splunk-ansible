@@ -106,16 +106,20 @@
   set_fact:
     splunk_forward_servers: "{{ groups['splunk_indexer'] }}"
   when:
-    - "splunk_forward_server is not defined"
+    - "splunk_forward_servers is not defined"
     - "'splunk_indexer' in groups"
 
 # if not specified in config *and*
 # no index clusters, then look for standalone
-# Configure forwarding to standalones directly
 # See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
 - name: "Setting forward servers fact from standalone group"
   set_fact:
     splunk_forward_servers: "{{ groups['splunk_standalone'] }}"
   when:
-    - "splunk_forward_server is not defined"
+    - "splunk_forward_servers is not defined"
     - "'splunk_standalone' in groups"
+    # This part takes a little explaining.  If we have a mixed cluster with no indexers
+    # (Only standalone and search heads) we should not automatically forward the data to
+    # standalone instances UNLESS they are specified by forward-servers
+    - "'splunk_search_head' not in groups"
+
