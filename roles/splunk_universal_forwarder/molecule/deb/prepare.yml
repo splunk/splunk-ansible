@@ -14,7 +14,7 @@
         regexp: '^Acquire::http::Proxy '
         line: "Acquire::http::Proxy \"{{ lookup('env','http_proxy') }}\";"
         create: true
-      when: 
+      when:
         - "lookup('env','http_proxy') is defined"
         - "lookup('env','http_proxy')  | length > 0"
     - name: setup apt https proxy
@@ -23,7 +23,7 @@
         regexp: '^Acquire::https::Proxy '
         line: "Acquire::https::Proxy \"{{ lookup('env','https_proxy') }}\";"
         create: true
-      when: 
+      when:
         - "lookup('env','http_proxy') is defined"
         - "lookup('env','http_proxy')  | length > 0"
     - name: install packages
