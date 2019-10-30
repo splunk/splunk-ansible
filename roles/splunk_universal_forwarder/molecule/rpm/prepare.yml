@@ -15,4 +15,4 @@
         line: "proxy={{ lookup('env','http_proxy') }}"
       when:
         - "lookup('env','http_proxy') is defined"
-        - "lookup('env','http_proxy') != ''"
+        - "lookup('env','http_proxy')  | length > 0"
