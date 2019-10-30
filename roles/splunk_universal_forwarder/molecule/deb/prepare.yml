@@ -1,0 +1,36 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: check splunk user
+      user:
+        name: splunk
+        password: "*"
+        state: present
+      become: true
+    - name: setup apt http proxy
+      lineinfile:
+        path: /etc/apt/apt.conf.d/proxy.conf
+        regexp: '^Acquire::http::Proxy '
+        line: "Acquire::http::Proxy \"{{ lookup('env','http_proxy') }}\";"
+        create: true
+      when: "lookup('env','http_proxy') is defined"
+    - name: setup apt https proxy
+      lineinfile:
+        path: /etc/apt/apt.conf.d/proxy.conf
+        regexp: '^Acquire::https::Proxy '
+        line: "Acquire::https::Proxy \"{{ lookup('env','https_proxy') }}\";"
+        create: true
+      when: "lookup('env','https_proxy') is defined"
+    - name: install packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: true
+      vars:
+        packages:
+          # ps is needed by the splunk start script to determine if splunk is
+          # already running and ps is provided by the packages procps
+          - procps
+          # curl is needed by some of the tests we perform
+          - curl

@@ -1,0 +1,16 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: check splunk user
+      user:
+        name: splunk
+        password: "*"
+        state: present
+      become: true
+    - name: setup yum proxy
+      lineinfile:
+        path: /etc/yum.conf
+        regexp: '^proxy='
+        line: "proxy={{ lookup('env','http_proxy') }}"
+      when: "lookup('env','http_proxy') is defined"
