@@ -13,6 +13,6 @@
         path: /etc/yum.conf
         regexp: '^proxy='
         line: "proxy={{ lookup('env','http_proxy') }}"
-      when: 
+      when:
         - "lookup('env','http_proxy') is defined"
         - "lookup('env','http_proxy') != ''"
