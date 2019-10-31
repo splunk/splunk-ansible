@@ -162,7 +162,7 @@ def getSplunkApps(vars_scope):
     splunkbase_username = (vars_scope["splunkbase_username"] if "splunkbase_username" in vars_scope else None) or os.environ.get("SPLUNKBASE_USERNAME") or None
     splunkbase_password = (vars_scope["splunkbase_password"] if "splunkbase_password" in vars_scope else None) or os.environ.get("SPLUNKBASE_PASSWORD") or None
     if splunkbase_username and splunkbase_password:
-        resp = requests.post("https://splunkbase.splunk.com/api/account:login/", 
+        resp = requests.post("https://splunkbase.splunk.com/api/account:login/",
                              data={"username": splunkbase_username, "password": splunkbase_password})
         if resp.status_code != 200:
             raise Exception("Invalid Splunkbase credentials - will not download apps from Splunkbase")
@@ -200,6 +200,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["idxc"]["label"] = os.environ.get('SPLUNK_IDXC_LABEL', vars_scope["splunk"]["idxc"]["label"])
     vars_scope["splunk"]["idxc"]["secret"] = os.environ.get('SPLUNK_IDXC_SECRET', vars_scope["splunk"]["idxc"]["secret"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
+    vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
     vars_scope["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', vars_scope["splunk"]["build_location"])
     # add ssl variables
