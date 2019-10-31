@@ -17,6 +17,8 @@
     - "{{ splunk.home }}/var/lib/splunk/kvstore/mongo/mongod.lock"
   when:
     - splunk_status.rc != 0
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: "Start Splunk via cli"
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
