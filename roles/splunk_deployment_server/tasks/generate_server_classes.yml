@@ -14,13 +14,23 @@
     group: "{{ splunk.group }}"
   when: not serverclass_conf.stat.exists
 
+- name: Gather all deployment server apps
+  find:
+    path: "{{ splunk.home }}/etc/deployment_apps"
+    recurse: no
+    file_type: directory
+  register: deployment_apps
+  when: not serverclass_conf.stat.exists
+
 - name: Define all:app serverClass
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/serverclass.conf"
-    section: "serverClass:all:app:*"
+    section: "serverClass:all:app:{{ item.path | basename }}"
     option: restartSplunkd
     value: "true"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     allow_no_value: true
   when: not serverclass_conf.stat.exists
+  with_items: "{{ deployment_apps.files }}"
+
