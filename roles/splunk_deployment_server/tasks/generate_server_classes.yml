@@ -20,6 +20,7 @@
     recurse: no
     file_type: directory
   register: deployment_apps
+  when: not serverclass_conf.stat.exists
 
 - name: Define all:app serverClass
   ini_file:
@@ -32,3 +33,4 @@
     allow_no_value: true
   when: not serverclass_conf.stat.exists
   with_items: "{{ deployment_apps.files }}"
+
