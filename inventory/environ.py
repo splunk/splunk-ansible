@@ -24,7 +24,6 @@ import random
 import string
 from time import sleep
 import requests
-import six.moves.urllib.parse as urllib2_parse
 import urllib3
 import yaml
 import socket
@@ -163,12 +162,11 @@ def getSplunkApps(vars_scope):
     splunkbase_username = (vars_scope["splunkbase_username"] if "splunkbase_username" in vars_scope else None) or os.environ.get("SPLUNKBASE_USERNAME") or None
     splunkbase_password = (vars_scope["splunkbase_password"] if "splunkbase_password" in vars_scope else None) or os.environ.get("SPLUNKBASE_PASSWORD") or None
     if splunkbase_username and splunkbase_password:
-        splunkbase_username = urllib2_parse.quote(splunkbase_username)
-        splunkbase_password = urllib2_parse.quote(splunkbase_password)
-        response = urllib2_parse.urlopen("https://splunkbase.splunk.com/api/account:login/", "username={}&password={}".format(splunkbase_username, splunkbase_password))
-        if response.getcode() != 200:
+        resp = requests.post("https://splunkbase.splunk.com/api/account:login/",
+                             data={"username": splunkbase_username, "password": splunkbase_password})
+        if resp.status_code != 200:
             raise Exception("Invalid Splunkbase credentials - will not download apps from Splunkbase")
-        output = response.read()
+        output = resp.content
         splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
         vars_scope["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
     apps = os.environ.get("SPLUNK_APPS_URL", None)
@@ -191,14 +189,18 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["s2s_port"] = os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s_port"])
+    vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"]["secret"])
     vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
     if "shc" not in vars_scope["splunk"]:
         vars_scope["splunk"]["shc"] = {}
+    vars_scope["splunk"]["shc"]["label"] = os.environ.get('SPLUNK_SHC_LABEL', vars_scope["splunk"]["shc"]["label"])
     vars_scope["splunk"]["shc"]["secret"] = os.environ.get('SPLUNK_SHC_SECRET', vars_scope["splunk"]["shc"]["secret"])
     if "idxc" not in vars_scope["splunk"]:
         vars_scope["splunk"]["idxc"] = {}
+    vars_scope["splunk"]["idxc"]["label"] = os.environ.get('SPLUNK_IDXC_LABEL', vars_scope["splunk"]["idxc"]["label"])
     vars_scope["splunk"]["idxc"]["secret"] = os.environ.get('SPLUNK_IDXC_SECRET', vars_scope["splunk"]["idxc"]["secret"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
+    vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
     vars_scope["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', vars_scope["splunk"]["build_location"])
     # add ssl variables

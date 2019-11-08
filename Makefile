@@ -35,9 +35,11 @@ py3k-small-tests: py3k-test-setup
 large-tests: test-setup
 	@echo 'Running the super awesome large tests'
 	cd roles/splunk_standalone && molecule test
-	cd roles/splunk_universal_forwarder && molecule test
+	cd roles/splunk_universal_forwarder && molecule test --all
+	cd roles/splunk_heavy_forwarder && molecule test --all
 
 py3k-large-tests: py3k-test-setup
 	@echo 'Running the super awesome large tests'
-	cd roles/splunk_standalone && python3 -m molecule test
-	cd roles/splunk_universal_forwarder && python3 -m molecule test
+	cd roles/splunk_standalone && python3 -m molecule test --all
+	cd roles/splunk_universal_forwarder && python3 -m molecule test --all
+	cd roles/splunk_heavy_forwarder && molecule test --all
