@@ -55,7 +55,7 @@
   when:
     - first_run | bool
 
-- include_tasks: enable_s2s_port.yml
+- include_tasks: enable_s2s.yml
   when:
     - "'s2s_enable' in splunk and splunk.s2s_enable is not none"
     - splunk.s2s_enable | bool

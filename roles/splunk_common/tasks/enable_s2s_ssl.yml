@@ -1,0 +1,65 @@
+---
+- name: Enable SSL Splunk-to-Splunk port
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-inputs"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body:
+      name: "splunktcp-ssl:{{ splunk.s2s_port }}"
+      disabled: 0
+    body_format: "form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  when: splunk_indexer_cluster
+  register: enable_s2s_ssl_input
+  changed_when: enable_s2s_ssl_input.status == 201
+  no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service
+
+- name: Configure SSL Splunk-to-Splunk SSL paths
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-inputs"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body:
+      name: "SSL"
+      serverCert: "{{ splunk.s2s_enableSSL_cert }}"
+      sslPassword: "{{ splunk.s2s_enableSSL_cert_password }}"
+      requireClientCert: "false"
+    body_format: "form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  when: 
+    - '"s2s_enableSSL_cert" in splunk and splunk.s2s_enableSSL_cert'
+    - '"s2s_enableSSL_cert_password" in splunk and splunk.s2s_enableSSL_cert_password'
+  register: enable_s2s_ssl_input
+  changed_when: enable_s2s_ssl_input.status == 201
+  no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service
+
+- name: Modify SSL root CA
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body:
+      name: "sslConfig"
+      sslRootCAPath: "{{ splunk.s2s_enableSSL_ca }}"
+    body_format: "form-urlencoded"
+    status_code: 201,409
+    timeout: 10
+  when: 
+    - '"s2s_enableSSL_ca" in splunk and splunk.s2s_enableSSL_ca'
+  register: enable_s2s_ssl_input
+  changed_when: enable_s2s_ssl_input.status == 201
+  no_log: "{{ hide_password }}"
+  notify:
+    - Restart the splunkd service
