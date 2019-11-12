@@ -11,6 +11,14 @@
   when:
     - splunk.apps_location
 
+- include_tasks: ../../splunk_common/tasks/set_as_hec_receiver.yml
+  vars:
+    splunk_hec_inputs_app_path: "apps/splunk_httpinput/local"
+  when:
+    - first_run | bool
+    - not splunk.hec_disabled | bool
+    - splunk.hec_token is defined and splunk.hec_token != None
+
 - include_tasks: setup_multisite.yml
   when:
     - splunk.site is defined
@@ -19,5 +27,6 @@
     - splunk.multisite_replication_factor_total is defined
     - splunk.multisite_search_factor_origin is defined
     - splunk.multisite_search_factor_total is defined
+
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

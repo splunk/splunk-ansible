@@ -1,5 +1,8 @@
 ---
+
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
+  vars:
+    splunk_hec_inputs_app_path: "apps/splunk_httpinput/local"
   when:
     - first_run | bool
     - not splunk.hec_disabled | bool
