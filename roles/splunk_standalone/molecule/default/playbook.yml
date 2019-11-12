@@ -25,9 +25,10 @@
       role: splunk_standalone
       license_master_included: false
       license_uri: null
+      preferred_captaincy: true
       wildcard_license: false
       build_remote_src: true
-      build_location: https://download.splunk.com/products/splunk/releases/7.3.0/linux/splunk-7.3.0-657388c7a488-Linux-x86_64.tgz
+      build_location: https://download.splunk.com/products/splunk/releases/7.3.1.1/linux/splunk-7.3.1.1-7651b7244cf2-Linux-x86_64.tgz
       ignore_license: true
       apps_location: null
       app_paths:

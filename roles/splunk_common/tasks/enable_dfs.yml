@@ -6,9 +6,12 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "disabled=false&port={{ splunk.dfs.port }}&spark_master_host={{ splunk.dfs.spark_master_host }}&spark_master_webui_port={{ splunk.dfs.spark_master_webui_port }}"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      disabled: "false"
+      port: "{{ splunk.dfs.port }}"
+      spark_master_host: "{{ splunk.dfs.spark_master_host }}"
+      spark_master_webui_port: "{{ splunk.dfs.spark_master_webui_port }}"
+    body_format: "form-urlencoded"
     status_code: 200
     timeout: 10
   register: dfs_enable_result
@@ -21,9 +24,11 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "dfc_num_slots={{ splunk.dfs.dfc_num_slots }}&dfw_num_slots={{ splunk.dfs.dfw_num_slots }}&dfw_num_slots_enabled={{ splunk.dfs.dfw_num_slots_enabled }}"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      dfc_num_slots: "{{ splunk.dfs.dfc_num_slots }}"
+      dfw_num_slots: "{{ splunk.dfs.dfw_num_slots }}"
+      dfw_num_slots_enabled: "{{ splunk.dfs.dfw_num_slots_enabled }}"
+    body_format: "form-urlencoded"
     status_code: 200
     timeout: 10
   register: dfs_limits_result
@@ -36,9 +41,10 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "phased_execution=true&max_searches_per_process=1"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      phased_execution: "true"
+      max_searches_per_process: "1"
+    body_format: "form-urlencoded"
     status_code: 200
     timeout: 10
   register: search_limits_result
@@ -62,9 +68,11 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "name=search_optimization%3a%3adfs_job_extractor&enabled=true&commands=stats,join,sort,head,tail,reverse,dedup,rename,fields,union,from,eval"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      name: "search_optimization::dfs_job_extractor"
+      enabled: "true"
+      commands: "stats,join,sort,head,tail,reverse,dedup,rename,fields,union,from,eval"
+    body_format: "form-urlencoded"
     status_code: 201
     timeout: 10
   register: create_dfs_job_extractor_result
@@ -78,9 +86,10 @@
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    body: "enabled=true&commands=stats,join,sort,head,tail,reverse,dedup,rename,fields,union,from,eval"
-    headers:
-      Content-Type: "application/x-www-form-urlencoded"
+    body:
+      enabled: "true"
+      commands: "stats,join,sort,head,tail,reverse,dedup,rename,fields,union,from,eval"
+    body_format: "form-urlencoded"
     status_code: 200
     timeout: 10
   register: update_dfs_job_extractor_result

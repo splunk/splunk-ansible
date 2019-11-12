@@ -9,7 +9,7 @@
   stat:
     path: "{{ splunk.exec }}"
   become: yes
-  become_user: "{{ privileged_user }}"
+  become_user: "{{ splunk.user }}"
   register: pre_existing_splunk_exec
 
 - name: "Set splunk install fact"
@@ -21,9 +21,9 @@
 - name: "Check for existing splunk secret"
   stat:
     path: "{{ splunk.home }}/etc/auth/splunk.secret"
-  become: yes
-  become_user: "{{ privileged_user }}"
   register: pre_existing_splunk_secret
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: "Set first run fact"
   set_fact:
@@ -39,13 +39,12 @@
   set_fact:
     is_docker: "{{ docker_env.stat.exists | default(False) }}"
 
-# Extracting the numbers from the Splunk installer file name allows us to know the version we are targeting.
+- name: "Set splunk_build_type fact"
+  include_tasks: get_facts_build_type.yml
+
 - name: "Set target version fact"
-  set_fact:
-    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1') | default('0') }}"
-  vars:
-    regexp: 'splunk\D*?-((\d+)\.(\d+)\.(\d+))'
-  when: "'build_location' in splunk and splunk.build_location is not none"
+  include_tasks: get_facts_target_version.yml
+  when: splunk_target_version is not defined or splunk_target_version == none
 
 # We can apply the same logic to the current version by checking which manifest file is in Splunk
 - name: "Find manifests"
@@ -54,7 +53,7 @@
     patterns: ".*-manifest$"
     use_regex: yes
   become: yes
-  become_user: "{{ privileged_user }}"
+  become_user: "{{ splunk.user }}"
   register: manifests
 
 - name: "Set current version fact"
@@ -67,3 +66,60 @@
 - name: "Setting upgrade fact"
   set_fact:
     splunk_upgrade: "{{ 'build_location' in splunk and splunk.build_location and not splunk_install and splunk_target_version and splunk_target_version != splunk_current_version | default(False) }}"
+
+# determine if we need to set up indexer clusters
+# First, if it is manually specified in the config, use that
+- name: "Setting indexer cluster fact from config"
+  set_fact:
+    splunk_indexer_cluster: "{{ splunk.indexer_cluster }}"
+  when:
+    - "'indexer_cluster' in splunk"
+
+# Second, if there is a cluster master, set to true
+- name: "Setting indexer cluster fact because master found"
+  set_fact:
+    splunk_indexer_cluster: true
+  when:
+    - "splunk_indexer_cluster is not defined"
+    - "'splunk_cluster_master' in groups"
+    - "groups['splunk_cluster_master']|length > 0"
+
+# Last, if it wasn't set yet, set it to false
+- name: "Setting indexer cluster fact to false"
+  set_fact:
+    splunk_indexer_cluster: false
+  when:
+    - "splunk_indexer_cluster is not defined"
+
+# determine if we need to set up forward servers
+# First, if they are manually specified in the config, use them
+- name: "Setting forward servers fact from config"
+  set_fact:
+    splunk_forward_servers: "{{ splunk.forward_servers }}"
+  when:
+    - "'forward_servers' in splunk"
+
+# If not in the config, is there an index cluster to use?
+# Configure forwarding to indexers directly
+# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
+- name: "Setting forward servers fact from index cluster group"
+  set_fact:
+    splunk_forward_servers: "{{ groups['splunk_indexer'] }}"
+  when:
+    - "splunk_forward_servers is not defined"
+    - "'splunk_indexer' in groups"
+
+# if not specified in config *and*
+# no index clusters, then look for standalone
+# See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
+- name: "Setting forward servers fact from standalone group"
+  set_fact:
+    splunk_forward_servers: "{{ groups['splunk_standalone'] }}"
+  when:
+    - "splunk_forward_servers is not defined"
+    - "'splunk_standalone' in groups"
+    # This part takes a little explaining.  If we have a mixed cluster with no indexers
+    # (Only standalone and search heads) we should not automatically forward the data to
+    # standalone instances UNLESS they are specified by forward-servers
+    - "'splunk_search_head' not in groups"
+

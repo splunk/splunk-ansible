@@ -19,7 +19,7 @@
   register: ta_location
   changed_when: ta_location.rc == 0
 
-- name: Unarchive bundle
+- name: Unarchive bundle (Linux)
   unarchive:
     src: "{{ ta_location.stdout_lines[0] }}"
     dest: "{{ splunk.app_paths.idxc }}"
@@ -28,6 +28,17 @@
     remote_src: yes
   when:
     - ta_location is success
+    - ansible_system is match("Linux")
+
+- name: Unarchive bundle (Windows)
+  command: "tar -zxvf {{ ta_location.stdout_lines[0] | replace(backslash, '/') | replace('C:', '') }} -C {{ splunk.app_paths.idxc }} --force-local"
+  args:
+    warn: false
+  vars:
+    backslash: "\\"
+  when:
+    - ta_location is success
+    - ansible_system is match("CYGWIN*|Win32NT")
 
 - name: Determine ESS default apps
   set_fact:
@@ -37,7 +48,8 @@
                "Splunk_SA_ExtremeSearch", "Splunk_TA_bluecoat-proxysg", "Splunk_TA_bro", "Splunk_TA_flowfix", "Splunk_TA_juniper",
                "Splunk_TA_mcafee", "Splunk_TA_nessus", "Splunk_TA_nix", "Splunk_TA_oracle", "Splunk_TA_ossec", "Splunk_TA_rsa-securid",
                "Splunk_TA_sophos", "Splunk_TA_sourcefire", "Splunk_TA_symantec-ep", "Splunk_TA_ueba", "Splunk_TA_websense-cg", "Splunk_TA_windows",
-               "TA-airdefense", "TA-alcatel", "TA-cef", "TA-fortinet", "TA-ftp", "TA-nmap", "TA-tippingpoint", "TA-trendmicro"]
+               "TA-airdefense", "TA-alcatel", "TA-cef", "TA-fortinet", "TA-ftp", "TA-nmap", "TA-tippingpoint", "TA-trendmicro",
+               "Splunk_ML_Toolkit"]
 
 - name: Remove ESS apps from installed apps list
   set_fact:

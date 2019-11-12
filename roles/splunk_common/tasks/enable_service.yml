@@ -13,7 +13,7 @@
   set_fact:
     installed_splunk_version: "{{ installed_splunk_version.stdout | regex_search(regexp, '\\1') }}"
   vars:
-    regexp: 'Splunk\s((\d+)\.(\d+)\.(\d+)).*'
+    regexp: 'Splunk(?:\sUniversal\sForwarder)?\s((\d+)\.(\d+)\.(\d+)).*'
   when: ansible_system is match("Linux")
 
 - name: "Enable service via boot-start - Linux (systemd)"
@@ -47,7 +47,7 @@
   become_user: "{{ privileged_user }}"
   systemd:
       daemon-reload: yes
-      name: Splunkd.service
+      name: "{{ splunk.service_name | default('Splunkd.service') }}"
       enabled: true
   when:
     - ansible_system is match("Linux")

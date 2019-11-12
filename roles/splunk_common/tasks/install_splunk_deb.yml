@@ -1,0 +1,11 @@
+#the apt module has a separate option for installing a file vs a filename
+- name: Install Splunk (deb)
+  apt:
+    deb: "{{ splunk.build_location }}"
+    state: "{{ 'latest' if splunk_upgrade else 'present' }}"
+  register: install_result
+  until: install_result is succeeded
+  retries: "{{ retry_num }}"
+  delay: 3
+  become: yes
+  become_user: "{{ privileged_user }}"

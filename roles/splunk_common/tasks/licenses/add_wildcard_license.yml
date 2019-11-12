@@ -1,0 +1,6 @@
+---
+- include_tasks: add_license.yml
+  with_fileglob:
+    - "{{ licenses }}"
+  loop_control:
+    loop_var: lic

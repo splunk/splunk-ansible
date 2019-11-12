@@ -1,0 +1,74 @@
+ansible_ssh_user: "splunk"
+ansible_pre_tasks:
+ansible_post_tasks:
+delay_num: 3
+shc_bootstrap_delay: 30
+retry_num: 50
+
+config:
+    max_retries: 3
+    max_delay: 60
+    max_timeout: 1200
+    defaults_dir: C:\\tmp\\defaults
+    baked: default.yml
+    env:
+        var: SPLUNK_DEFAULTS_URL
+        headers:
+        verify: True
+    host:
+        url:
+        headers:
+        verify: True
+
+splunk:
+    build_location:
+    allow_upgrade: True
+    tar_dir: "splunkforwarder"
+    opt: &opt "/opt"
+    home: &home !!python/object/apply:os.path.join [*opt, "splunkforwarder"]
+    user: "splunk"
+    group: "Administrators"
+    exec: !!python/object/apply:os.path.join [*home, "bin/splunk.exe"]
+    pid: !!python/object/apply:os.path.join [*home, "var/run/splunk/splunkd.pid"]
+    admin_user: "admin"
+    root_endpoint:
+    password:
+    secret: 
+    svc_port: 8089
+    s2s_port: 9997
+    s2s_enable: True
+    http_port: 8000
+    http_enableSSL: 0
+    http_enableSSL_cert:
+    http_enableSSL_privKey:
+    http_enableSSL_privKey_password:
+    hec_port: 8088
+    hec_disabled: 0
+    hec_enableSSL: 1
+    hec_token:
+    shc:
+        enable: False
+        secret:
+        label: "shc_label"
+        replication_factor: 3
+        replication_port: 9887
+    idxc:
+        enable: False
+        secret:
+        label: "idxc_label"
+        search_factor: 3
+        replication_factor: 3
+        replication_port: 9887
+    multisite_replication_factor_origin: 3
+    multisite_replication_factor_total: 3
+    multisite_search_factor_origin: 3
+    multisite_search_factor_total: 3
+    enable_service: False
+    service_name: "splunk"
+    smartstore:
+    app_paths:
+        default: !!python/object/apply:os.path.join [*home, "etc/apps"]
+        shc: !!python/object/apply:os.path.join [*home, "etc/shcluster/apps"]
+        idxc: !!python/object/apply:os.path.join [*home, "etc/master-apps"]
+        deployment: !!python/object/apply:os.path.join [*home, "etc/deployment-apps"]
+        httpinput: !!python/object/apply:os.path.join [*home, "etc/apps/splunk_httpinput"]

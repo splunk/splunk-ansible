@@ -1,0 +1,18 @@
+# Use a manually set version, if a it is set
+- name: "Set target version fact"
+  set_fact:
+    splunk_target_version: "{{ splunk.target_version }}"
+  when: "'target_version' in splunk and splunk.target_version is not none"
+
+# Extracting the numbers from the Splunk installer file name allows us to know the version we are targeting.
+- name: "Set target version fact (file)"
+  set_fact:
+    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1') | default('0') }}"
+  vars:
+    regexp: 'splunk\D*?-((\d+)\.(\d+)\.(\d+))'
+  when: "splunk_build_type is defined and splunk_build_type is match('(tgz|msi|rpm|deb)')"
+
+# if using yum to install a package, we can use the list option to see what versions are available
+- name: "Set target version fact (yum)"
+  include_tasks: get_facts_target_version_yum.yml
+  when: "splunk_build_type is defined and splunk_build_type == 'yum'"

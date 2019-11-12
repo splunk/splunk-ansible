@@ -1,0 +1,10 @@
+---
+- name: Determine ITSI default apps
+  set_fact:
+    itsi_apps: ["DA-ITSI-APPSERVER", "DA-ITSI-DATABASE", "DA-ITSI-EUEM", "DA-ITSI-LB", "DA-ITSI-OS",
+                "DA-ITSI-STORAGE", "DA-ITSI-VIRTUALIZATION", "DA-ITSI-WEBSERVER", "SA-ITOA", "SA-ITSI-ATAD", "SA-UserAccess",
+                "SA-ITSI-CustomModuleViz", "SA-ITSI-MetricAD", "SA-ITSI-Licensechecker", "itsi", "splunk_app_infrastructure"]
+
+- name: Remove ITSI apps from installed apps list
+  set_fact:
+    installed_apps: "{{ installed_apps | difference(itsi_apps) | unique }}"
