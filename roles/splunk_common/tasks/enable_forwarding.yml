@@ -55,6 +55,8 @@
       clientCert: "{{ splunk.s2s_enableSSL_cert }}"
       sslPassword: "{{ splunk.s2s_enableSSL_password }}"
       sslRootCAPath: "{% if splunk.s2s_enableSSL_ca %}{{ splunk.s2s_enableSSL_ca }}{% endif %}"
+      sslVerifyServerCert: "{% if splunk.s2s_enableSSL %}false{% endif %}"
+      useClientSSLCompression: "{% if splunk.s2s_enableSSL %}true{% endif %}"
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
