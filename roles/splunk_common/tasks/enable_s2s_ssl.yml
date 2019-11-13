@@ -1,65 +1,44 @@
 ---
-- name: Enable SSL Splunk-to-Splunk port
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-inputs"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      name: "splunktcp-ssl:{{ splunk.s2s_port }}"
-      disabled: 0
-    body_format: "form-urlencoded"
-    status_code: 201,409
-    timeout: 10
-  when: splunk_indexer_cluster
-  register: enable_s2s_ssl_input
-  changed_when: enable_s2s_ssl_input.status == 201
-  no_log: "{{ hide_password }}"
+# splunk.s2s_enableSSL, splunk.s2s_enableSSL_cert, and splunk.s2s_enableSSL_password
+# should be defined already given the check in enable_s2s.yml
+
+- name: Enable S2S SSL
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: "splunktcp-ssl:{{ splunk.s2s_port }}"
+    option: "disabled"
+    value: "0"
   notify:
     - Restart the splunkd service
 
-- name: Configure SSL Splunk-to-Splunk SSL paths
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-inputs"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      name: "SSL"
-      serverCert: "{{ splunk.s2s_enableSSL_cert }}"
-      sslPassword: "{{ splunk.s2s_enableSSL_cert_password }}"
-      requireClientCert: "false"
-    body_format: "form-urlencoded"
-    status_code: 201,409
-    timeout: 10
-  when: 
-    - '"s2s_enableSSL_cert" in splunk and splunk.s2s_enableSSL_cert'
-    - '"s2s_enableSSL_cert_password" in splunk and splunk.s2s_enableSSL_cert_password'
-  register: enable_s2s_ssl_input
-  changed_when: enable_s2s_ssl_input.status == 201
-  no_log: "{{ hide_password }}"
+- name: Set S2S SSL certificate path
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    option: serverCert
+    value: "{{ splunk.s2s_enableSSL_cert }}"
   notify:
     - Restart the splunkd service
 
-- name: Modify SSL root CA
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      name: "sslConfig"
-      sslRootCAPath: "{{ splunk.s2s_enableSSL_ca }}"
-    body_format: "form-urlencoded"
-    status_code: 201,409
-    timeout: 10
-  when: 
-    - '"s2s_enableSSL_ca" in splunk and splunk.s2s_enableSSL_ca'
-  register: enable_s2s_ssl_input
-  changed_when: enable_s2s_ssl_input.status == 201
-  no_log: "{{ hide_password }}"
+- name: Set S2S SSL certificate password
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    option: sslPassword
+    value: "{{ splunk.s2s_enableSSL_password }}"
+  notify:
+    - Restart the splunkd service
+
+# If splunk.s2s_enableSSL_ca is not defined, it will default to
+# $SPLUNK_HOME/etc/auth/ca.pem
+- name: Set S2S SSL root ca
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: sslRootCAPath
+    value: "{{ splunk.s2s_enableSSL_ca }}"
+  when:
+    - '"s2s_enableSSL_ca" in splunk'
+    - splunk.s2s_enableSSL_ca
   notify:
     - Restart the splunkd service

@@ -3,6 +3,10 @@
   when:
     - "'s2s_enableSSL' in splunk"
     - splunk.s2s_enableSSL | bool
+    - '"s2s_enableSSL_cert" in splunk'
+    - splunk.s2s_enableSSL_cert
+    - '"s2s_enableSSL_password" in splunk'
+    - splunk.s2s_enableSSL_password
 
 - name: Enable Splunk-to-Splunk port
   command: "{{ splunk.exec }} enable listen {{ splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --accept-license --answer-yes --no-prompt"

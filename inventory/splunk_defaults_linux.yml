@@ -38,8 +38,8 @@ splunk:
     s2s_port: 9997
     s2s_enable: True
     s2s_enableSSL: False
-    s2s_enableSSL_cert:
-    s2s_enableSSL_cert_password:
+    s2s_enableSSL_cert: 
+    s2s_enableSSL_password:
     s2s_enableSSL_ca:
     http_port: 8000
     http_enableSSL: 0
