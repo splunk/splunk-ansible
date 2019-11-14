@@ -59,6 +59,13 @@
     - "'10' in ansible_distribution_version"
   become: yes
   become_user: "{{ privileged_user }}"
+  
+- name: Install openjdk for Redhat
+  command: "microdnf install java-1.8.0-openjdk"
+  when:
+    - ansible_distribution == 'RedHat'
+  become: yes
+  become_user: "{{ privileged_user }}"
 
 - name: Create splunk-launch.conf
   become: yes
