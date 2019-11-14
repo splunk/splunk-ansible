@@ -63,7 +63,7 @@
   vars:
     forward_servers: "{{ splunk_forward_servers }}"
   when:
-    - not splunk.indexer_cluster
+    - not splunk_indexer_cluster
     - splunk_forward_servers is defined
 
 # NOTE: If this task is called or used, it will disable all local indexing!
