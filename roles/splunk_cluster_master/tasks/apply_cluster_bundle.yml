@@ -1,0 +1,51 @@
+---
+# Fails if a cluster bundle did not already exist and yet we did not apply a new bundle.
+# The failed condition is basically eventHasError && bundleNotAlreadyExists.
+# The changed condition is basically !eventHasError && bundleNotAlreadyExists.
+#
+# Stderr/Stdout cases are:
+# 1) The cluster bundle already exists on the indexers. Then stderr will contain the message
+# "...bundle already exists" and we should *not* mark the play as either failed or changed.
+#
+# 2) The cluster bundle does not exist on the indexers but an error occurred during bundle
+# application. Then stderr will NOT contain the word "already" and stdout will contain an error
+# message such as "Error occurred when applying cluster bundle", "sh: invalid operation, exit code 1"
+# or no message at all.
+#
+# 3) The cluster bundle does not exist and we successfully applied the cluster bundle. Then stdout
+# will contain something to the effect of "Applying new bundle. Restarting indexers..". Thus, we
+- name: Apply cluster bundle
+  command: "{{ splunk.exec }} apply cluster-bundle -auth {{ splunk.admin_user }}:{{ splunk.password }} --skip-validation --answer-yes"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_cluster_bundle_result
+  failed_when: >
+    ((splunk_cluster_bundle_result.stdout is not search("[Aa]pply"))
+      or ("bundle" not in splunk_cluster_bundle_result.stdout)
+      or (splunk_cluster_bundle_result.stdout is search("[Ee]rror")))
+    and ("already" not in splunk_cluster_bundle_result.stderr)
+  changed_when: >
+    ((splunk_cluster_bundle_result.stdout is search("[Aa]pply"))
+      and ("bundle" in splunk_cluster_bundle_result.stdout)
+      and (splunk_cluster_bundle_result.stdout is not search("[Ee]rror")))
+    and ("already" not in splunk_cluster_bundle_result.stderr)
+  no_log: "{{ hide_password }}"
+  retries: "{{ retry_num }}" # We will sometimes see this if the number of peers dictacted by the replication factor aren't up
+  delay: 5
+
+- name: Wait for bundle push
+  command: "{{ splunk.exec }} show cluster-bundle-status -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  register: cluster_bundle_status
+  until: cluster_bundle_status.stdout.find("cluster_status=None") != -1
+  retries: "{{ retry_num }}"
+  changed_when: cluster_bundle_status.rc == 0
+  delay: 5
+  ignore_errors: true
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
+
+- debug:
+    msg: "WARNING: Indexer bundle push still in progress - proceeding anyways..."
+  when:
+    - cluster_bundle_status.stdout.find("cluster_status=Rolling restart of the peers is in progress")!=-1
