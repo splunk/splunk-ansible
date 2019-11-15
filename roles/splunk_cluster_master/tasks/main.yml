@@ -11,6 +11,8 @@
 
 - include_tasks: initialize_cluster_master.yml
 
+- include_tasks: apply_cluster_bundle.yml
+
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
   when:
     - splunk.apps_location
