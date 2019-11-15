@@ -1,0 +1,17 @@
+---
+- name: "Check if {{ file_path }} exists"
+  stat:
+    path: "{{ file_path }}"
+  register: file_stat
+  become: yes
+  become_user: "{{ splunk.user }}"
+  changed_when: False
+  failed_when: False
+
+- name: "Restrict permissions on {{ file_path }}"
+  file:
+    mode: "go-rwx"
+    path: "{{ file_path }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: file_stat.stat.exists

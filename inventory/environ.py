@@ -169,11 +169,14 @@ def getSplunkApps(vars_scope):
         output = resp.content
         splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
         vars_scope["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
+    # calculate apps to install as union of defaults and environment variable
+    if not "apps_location" in vars_scope["splunk"]:
+        vars_scope["splunk"]["apps_location"] = []
+    elif type(vars_scope["splunk"]["apps_location"]) == str:
+        vars_scope["splunk"]["apps_location"] = vars_scope["splunk"]["apps_location"].split(",")
     apps = os.environ.get("SPLUNK_APPS_URL", None)
     if apps:
-        vars_scope["splunk"]["apps_location"] = apps.split(",")
-    else:
-        vars_scope["splunk"]["apps_location"] = []
+        vars_scope["splunk"]["apps_location"].extend(apps.split(","))
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
