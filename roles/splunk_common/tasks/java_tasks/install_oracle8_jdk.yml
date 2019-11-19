@@ -11,7 +11,7 @@
   retries: 5
   delay: 10
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -20,35 +20,35 @@
     src: "/opt/container_artifact/jdk-8u{{ java_update_version }}-linux-x64.tar.gz"
     dest: /opt/container_artifact
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
   become_user: "{{ privileged_user }}"
 
 - name: Create alternatives for installed JDK Java binary
   command: "update-alternatives --install /usr/bin/java java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java 100"
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
   become_user: "{{ privileged_user }}"
 
 - name: Create alternatives for installed JDK Javac binary
   command: "update-alternatives --install /usr/bin/javac javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac 100"
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
   become_user: "{{ privileged_user }}"
 
 - name: Set Java
   command: "update-alternatives --set java /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/java"
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
   become_user: "{{ privileged_user }}"
 
 - name: Set Javac
   command: "update-alternatives --set javac /opt/container_artifact/jdk1.8.0_{{ java_update_version }}/bin/javac"
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -58,7 +58,7 @@
   command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
 
 - name: Get JAVA_HOME
   shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
@@ -67,7 +67,7 @@
   become_user: "{{ privileged_user }}"
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
 
 - name: Set JAVA_HOME in splunk-launch.conf
   become: yes
@@ -78,4 +78,4 @@
     line: "JAVA_HOME={{ java_home.stdout }}"
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'

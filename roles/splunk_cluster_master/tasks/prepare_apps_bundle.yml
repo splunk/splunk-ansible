@@ -1,4 +1,3 @@
----
 - include_tasks: ../../../roles/splunk_common/tasks/find_installed_apps.yml
 
 - include_tasks: generate_ess_bundle.yml
@@ -17,7 +16,3 @@
   with_items: "{{ installed_apps }}"
   register: copy_app
   changed_when: copy_app.rc == 0
-
-- include_tasks: apply_cluster_bundle.yml
-  when:
-    - splunk.apps_location
