@@ -8,24 +8,31 @@ lint:
   options:
     c: ../../.yamllint
 platforms:
-  - name: instance
-    image: splunk/splunk
-    command: no-provision
+  - name: debian10
+    image: geerlingguy/docker-debian10-ansible:latest
+    pre_build_image: true
+    env:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      no_proxy: "${no_proxy}"
+  - name: ubuntu1804
+    image: geerlingguy/docker-ubuntu1804-ansible:latest
+    pre_build_image: true
     env:
       http_proxy: "${http_proxy}"
       https_proxy: "${https_proxy}"
       no_proxy: "${no_proxy}"
 provisioner:
   name: ansible
+  log: true
   lint:
     name: ansible-lint
     enabled: true
     options:
       x: ["204", "701"]
       force-color: true
-  log: true
 scenario:
-  name: default
+  name: deb
 verifier:
   name: testinfra
   lint:
@@ -33,4 +40,4 @@ verifier:
     options:
       ignore: E501
   options:
-    junit-xml: ../../../../tests/results/standalone-default-results.xml
+    junit-xml: ../../../../tests/results/uf-deb-test-results.xml

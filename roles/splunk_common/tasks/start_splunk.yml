@@ -8,6 +8,27 @@
   failed_when: False
   ignore_errors: yes
 
+- name: "Cleanup Splunk runtime files"
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - "{{ splunk.home }}/var/run/splunk/splunkd.pid"
+    - "{{ splunk.home }}/var/lib/splunk/kvstore/mongo/mongod.lock"
+  when:
+    - splunk_status.rc != 0
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- include_tasks:
+    file: restrict_permissions.yml
+  vars:
+    file_path: "{{ item }}"
+  with_items:
+    - "{{ splunk.home }}/var/lib/splunk/kvstore/mongo/splunk.key"
+  when:
+    - splunk_status.rc != 0
+
 - name: "Start Splunk via cli"
   command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
   become: yes
@@ -20,7 +41,7 @@
 
 - name: "Start Splunk via service"
   service:
-    name: "{% if pid1.stdout.find('systemd') != -1 %}Splunkd{% else %}splunk{% endif %}"
+    name: "{{ splunk.service_name }}"
     state: restarted
   when:
     - splunk.enable_service

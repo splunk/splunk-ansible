@@ -7,6 +7,13 @@ FROM {{ item.image }}
 {% endif %}
 
 USER root
+{% if item.env is defined %}
+{% for var, value in item.env.items() %}
+{% if value %}
+ENV {{ var }} {{ value }}
+{% endif %}
+{% endfor %}
+{% endif %}
 
 RUN if [ $(command -v apt-get) ]; then apt-get update && apt-get install -y python sudo bash ca-certificates && apt-get clean; \
     elif [ $(command -v dnf) ]; then dnf makecache && dnf --assumeyes install python sudo python-devel python2-dnf bash && dnf clean all; \
