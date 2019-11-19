@@ -29,7 +29,7 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_HOSTNAME | Specify the instance's hostname. | no | no | no |
 | DEBUG | Print Ansible vars to stdout (supports Docker logging) | no | no | no |
 | SPLUNK_START_ARGS | Accept the license with “—accept-license”. Please note, we will not start a container without the existence of --accept-license in this variable. | yes | yes | yes |
-| SPLUNK_LICENSE_URI | URI we can fetch a Splunk Enterprise license. This can be a local path or a remote URL. | no | no | no |
+| SPLUNK_LICENSE_URI | URI we can fetch a Splunk Enterprise license. This can be a local path, a remote URL, or ["Free"](https://docs.splunk.com/Documentation/Splunk/latest/Admin/MoreaboutSplunkFree). | no | no | no |
 | SPLUNK_STANDALONE_URL | List of all Splunk Enterprise standalone hosts (network alias) separated by comma | no | no | no |
 | SPLUNK_SEARCH_HEAD_URL | List of all Splunk Enterprise search head hosts (network alias) separated by comma | no | yes | yes |
 | SPLUNK_INDEXER_URL| List of all Splunk Enterprise indexer hosts (network alias) separated by comma | no | yes | yes |
@@ -46,7 +46,9 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_PASSWORD* | Default password of the admin user | yes | yes | yes |
 | SPLUNK_HEC_TOKEN | HEC (HTTP Event Collector) Token when enabled | no | no | no |
 | SPLUNK_SHC_SECRET | Search Head Clustering Shared secret | no | yes | no |
+| SPLUNK_SHC_LABEL | Search head clustering label | no | yes | no |
 | SPLUNK_IDXC_SECRET | Indexer Clustering Shared Secret | no | no | yes |
+| SPLUNK_IDXC_LABEL | Indexer clustering label | no | no | yes |
 | NO_HEALTHCHECK | Disable the Splunk healthcheck script | no | no | yes |
 | STEPDOWN_ANSIBLE_USER | Removes Ansible user from the sudo group when set to true. This means that no other users than root will have root access. | no | no | no |
 | SPLUNK_HOME_OWNERSHIP_ENFORCEMENT | Recursively enforces ${SPLUNK_HOME} to be owned by the user "splunk". Default value is true. | no | no | no |
