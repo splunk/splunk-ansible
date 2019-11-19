@@ -1,15 +1,17 @@
 ---
-- include_tasks: initialize_cluster_master.yml
-
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
 
-- include_tasks: push_apps_to_indexers.yml
+- include_tasks: prepare_apps_bundle.yml
   when:
     - splunk.apps_location
+
+- include_tasks: initialize_cluster_master.yml
+
+- include_tasks: apply_cluster_bundle.yml
 
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
   when:
