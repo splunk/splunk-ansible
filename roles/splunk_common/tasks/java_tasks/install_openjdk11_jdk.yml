@@ -4,7 +4,7 @@
     path: /usr/share/man/man1
     state: directory
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -16,7 +16,7 @@
   retries: 5
   delay: 10
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -26,7 +26,7 @@
   command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
 
 - name: Create symlinks for java/javac
   file:
@@ -40,7 +40,7 @@
   become_user: "{{ privileged_user }}"
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
 
 - name: Set JAVA_HOME in splunk-launch.conf
   become: yes
@@ -50,4 +50,4 @@
     regexp: '^JAVA_HOME'
     line: "JAVA_HOME=/opt/container_artifact/jdk-{{ java_update_version }}"
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
