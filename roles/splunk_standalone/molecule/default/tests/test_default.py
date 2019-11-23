@@ -12,6 +12,7 @@ splunk = "%s/bin/splunk" % splunk_home
 splunk_user = 'splunk'
 splunk_group = 'splunk'
 
+
 def test_splunk_user_group(host):
     user = host.user(splunk_user)
     assert user.name == splunk_user
