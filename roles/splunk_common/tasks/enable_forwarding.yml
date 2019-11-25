@@ -89,7 +89,9 @@
 - include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
   vars:
     forward_servers: "{{ splunk_forward_servers }}"
-  when: splunk_forward_servers is defined
+  when:
+    - not splunk_indexer_cluster
+    - splunk_forward_servers is defined
 
 # NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node

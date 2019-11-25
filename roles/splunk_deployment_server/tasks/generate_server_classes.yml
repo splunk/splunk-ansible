@@ -16,7 +16,7 @@
 
 - name: Gather all deployment server apps
   find:
-    path: "{{ splunk.home }}/etc/deployment_apps"
+    path: "{{ splunk.app_paths.deployment }}"
     recurse: no
     file_type: directory
   register: deployment_apps
