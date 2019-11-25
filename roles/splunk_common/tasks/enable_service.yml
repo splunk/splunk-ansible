@@ -47,7 +47,7 @@
   become_user: "{{ privileged_user }}"
   systemd:
       daemon-reload: yes
-      name: "{{ splunk.service_name | default('Splunkd.service') }}"
+      name: Splunkd.service
       enabled: true
   when:
     - ansible_system is match("Linux")

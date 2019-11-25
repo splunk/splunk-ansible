@@ -11,7 +11,7 @@
 
 - name: "Restart the splunkd service - Via systemd"
   service:
-    name: "{{ splunk.service_name }}"
+    name: "{% if pid1.stdout.find('systemd') != -1 %}Splunkd{% else %}{{ splunk.service_name }}{% endif %}"
     state: restarted
   when: splunk.enable_service and ansible_system is match("Linux")
   become: yes
