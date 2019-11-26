@@ -41,5 +41,6 @@
     section: sslConfig
     option: sslRootCAPath
     value: "{{ splunk.s2s.ca if splunk.s2s.ca else '$SPLUNK_HOME/etc/auth/ca.pem' }}"
+  when: ansible_system is not match("CYGWIN*|Win32NT")
   notify:
     - Restart the splunkd service
