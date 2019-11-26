@@ -1,0 +1,35 @@
+---
+
+- name: Enable splunktcp-ssl input
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: "splunktcp-ssl:{{ splunk.s2s_port if s2s_port in splunk else splunk.s2s.port }}"
+    option: "disabled"
+    value: "0"
+
+- name: Remove splunktcp input
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: "splunktcp:{{ splunk.s2s_port if s2s_port in splunk else splunk.s2s.port }}"
+    state: absent
+
+- name: Configure SSL certificate path
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    option: serverCert
+    value: "{{ splunk.s2s.cert }}"
+
+- name: Configure SSL password
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    option: sslPassword
+    value: "{{ splunk.s2s.password }}"
+
+- name: Configure SSL root CA
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: sslRootCAPath
+    value: "{{ splunk.s2s.ca if splunk.s2s.ca else '$SPLUNK_HOME/etc/auth/ca.pem' }}"

@@ -1,23 +1,8 @@
 ---
-- include_tasks: enable_s2s_ssl.yml
+- include_tasks: s2s/configure_splunktcp_ssl.yml
   when:
-    - "'s2s_enableSSL' in splunk"
-    - splunk.s2s_enableSSL | bool
-    - '"s2s_enableSSL_cert" in splunk'
-    - splunk.s2s_enableSSL_cert
-    - '"s2s_enableSSL_password" in splunk'
-    - splunk.s2s_enableSSL_password
+    - "'s2s' in splunk and 'ssl' in splunk.s2s and splunk.s2s.ssl | bool"
 
-- name: Enable Splunk-to-Splunk port
-  command: "{{ splunk.exec }} enable listen {{ splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --accept-license --answer-yes --no-prompt"
-  become: yes
-  become_user: "{{ splunk.user }}"
+- include_tasks: s2s/configure_splunktcp.yml
   when:
-    - "'s2s_enableSSL' in splunk"
-    - not splunk.s2s_enableSSL | bool
-  register: enable_s2s_status
-  changed_when: enable_s2s_status.rc == 0 and 'already exists' not in enable_s2s_status.stdout
-  failed_when:
-    - enable_s2s_status.rc !=0
-    - "'already exists' not in enable_s2s_status.stderr"
-  no_log: "{{ hide_password }}"
+    - "'s2s' not in splunk or (not splunk.s2s.ssl | bool)"
