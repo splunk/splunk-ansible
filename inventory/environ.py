@@ -191,7 +191,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
-    vars_scope["splunk"]["s2s_port"] = os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s_port"])
+    vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
     vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"]["secret"])
     vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
     if "shc" not in vars_scope["splunk"]:
