@@ -83,11 +83,3 @@
   register: disable_indexing_stanza
   changed_when: disable_indexing_stanza.status == 201
   no_log: "{{ hide_password }}"
-
-- name: Enable forwarder monitoring
-  ini_file:
-    path: "{{ splunk.home }}/etc/apps/splunk_monitoring_console/local/savedsearches.conf"
-    section: "DMC Forwarder - Build Asset Table"
-    option: "{{ item.key }}"
-    value: "{{ item.value }}"
-  with_dict: {"cron_schedule": "{{ build_asset_schedule }}", "alert.track": 0, "disabled": 0, "display.virtualizations.custom.splunk_monitoring_console.heatmap.showLegend": 1, "display.visualizations.custom.splunk_monitoring_console.heatmap.showTooltip": 1, "display.visualizations.custom.splunk_monitoring_console.heatmap.showXAxis": 1, "display.visualizations.custom.splunk_monitoring_console.heatmap.showYAxis": 1, "run_on_startup": 0}

@@ -1,0 +1,15 @@
+- name: Enable forwarder monitoring
+  ini_file:
+    path: "{{ splunk.home }}/etc/apps/splunk_monitoring_console/local/savedsearches.conf"
+    section: "DMC Forwarder - Build Asset Table"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_dict: {"cron_schedule": "{{ build_asset_schedule }}", "alert.track": 0, "disabled": 0, "display.virtualizations.custom.splunk_monitoring_console.heatmap.showLegend": 1, "display.visualizations.custom.splunk_monitoring_console.heatmap.showTooltip": 1, "display.visualizations.custom.splunk_monitoring_console.heatmap.showXAxis": 1, "display.visualizations.custom.splunk_monitoring_console.heatmap.showYAxis": 1, "run_on_startup": 0}
+
+- name: Build forwarder assets
+  uri:
+    url: "{{ cert_prefix }}:127.0.0.1:{{ splunk.svc_port }}/servicesNS/{{ splunk.admin_user }}/splunk_monitoring_console/saved/searches/DMC Forwarder - Build Asset Table/dispatch"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+  no_log: "{{ hide_password }}"
