@@ -1,6 +1,6 @@
 ---
 - name: "Retrieve PID 1 process information (Linux)"
-  command: "ps 1"
+  command: "ps --no-headers -o comm 1"
   register: pid1
   when:  ansible_system is match("Linux")
 
