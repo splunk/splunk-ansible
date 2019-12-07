@@ -110,8 +110,8 @@ def getDefaultVars():
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
-    defaultVars["enable_forwarder_monitoring"] = os.environ.get('ENABLE_FORWARDER_MONITORING', False)
-    defaultVars["build_asset_schedule"] = os.environ.get('BUILD_ASSET_SCHEDULE', '18 * * * *')
+    defaultVars["dmc_forwarder_monitoring"] = os.environ.get('DMC_FORWARDER_MONITORING', True)
+    defaultVars["dmc_asset_interval"] = os.environ.get('DMC_ASSET_INTERVAL', '18 * * * *')
     #If the value is set, we would use that, otherwise, return True
     defaultVars["splunk"]["preferred_captaincy"] = False if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', "").lower() == "false" else True
     defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())

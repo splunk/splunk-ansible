@@ -15,7 +15,7 @@
 
 - include_tasks: ../../splunk_common/tasks/enable_forwarder_monitoring.yml
   when:
-    - enable_forwarder_monitoring | bool
+    - dmc_forwarder_monitoring | bool
 
 - include_tasks: ../../splunk_common/tasks/provision_apps.yml
   when:
