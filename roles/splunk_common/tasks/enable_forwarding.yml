@@ -34,12 +34,11 @@
       indexerDiscovery: "splunk-indexer"
       clientCert: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"
       sslPassword: "{{ splunk.s2s.password if splunk.s2s is defined and splunk.s2s.password is defined }}"
-      useClientSSLCompression: "{% if splunk.s2s.ssl %}true{% endif %}"
+      useClientSSLCompression: "{{ 'true' if splunk.s2s is defined and splunk.s2s.ssl is defined and splunk.s2s.ssl else '' }}"
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
-  when: 
-    - splunk_indexer_cluster
+  when: splunk_indexer_cluster
   register: setup_tcpoutgroup_stanza
   changed_when: setup_tcpoutgroup_stanza.status == 201
   no_log: "{{ hide_password }}"

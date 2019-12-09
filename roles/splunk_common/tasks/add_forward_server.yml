@@ -1,13 +1,13 @@
 ---
 - name: "Enable forwarding to {{ forward_servers }}"
-  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s.port if splunk.s2s.port is defined else splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ forward_servers }}"
   register: forward_status
   when: '"s2s" in splunk and "ssl" in splunk.s2s and not splunk.s2s.ssl | bool'
   changed_when:
-    - "'Added forwarding to: ' + item + ':' + (splunk.s2s_port|string) in forward_status.stdout"
+    - "'Added forwarding to: ' in forward_status.stdout"
     - "'forwarded-server already present' not in forward_status.stderr"
   failed_when:
     - forward_status.rc != 0
@@ -16,7 +16,7 @@
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
-- name: Setup tcpout group for index-clustering
+- name: "Enable ssl-forwarding to {{ forward_servers }}"
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
     method: POST
@@ -25,14 +25,16 @@
     validate_certs: false
     body:
       name: "tcpout:group1"
-      server: "{% for fwd in forward_servers %}{{ fwd }}:{{ splunk.s2s.port }}{{ ',' if not loop.last }}{% endfor %}"
-      clientCert: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"
-      sslPassword: "{{ splunk.s2s.password if splunk.s2s is defined and splunk.s2s.password is defined }}"
-      useClientSSLCompression: "{% if splunk.s2s.ssl %}true{% endif %}"
+      server: "{% for fwd in forward_servers %}{{ fwd }}:{{ splunk.s2s.port }}{{ ',' if not loop.last else '' }}{% endfor %}"
+      clientCert: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined else '' }}"
+      sslPassword: "{{ splunk.s2s.password if splunk.s2s is defined and splunk.s2s.password is defined else '' }}"
+      useClientSSLCompression: "{{ 'true' if splunk.s2s is defined and splunk.s2s.ssl is defined and splunk.s2s.ssl else '' }}"
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
   when: splunk.s2s.ssl | bool
   register: forward_status
   changed_when: forward_status.status == 201
+  notify:
+    - Restart the splunkd service
   no_log: "{{ hide_password }}"
