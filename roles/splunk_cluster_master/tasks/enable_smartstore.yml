@@ -1,4 +1,6 @@
 ---
+- name: Configure all indexers behavior
+  include_tasks: configure_server.yml
 - name: Configure each index
   include_tasks: configure_indexes.yml
   loop: "{{ splunk.smartstore }}"
