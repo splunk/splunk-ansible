@@ -36,6 +36,7 @@
 
 - include_tasks: ../../splunk_common/tasks/enable_forwarder_monitoring.yml
   when:
+    - dmc_forwarder_monitoring is defined
     - dmc_forwarder_monitoring | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_dfs.yml
