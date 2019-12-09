@@ -69,7 +69,7 @@ splunk:
     multisite_search_factor_origin: 3
     multisite_search_factor_total: 3
     enable_service: False
-    service_name: "splunk"
+    service_name: "splunkd"
     smartstore:
     app_paths:
         default: !!python/object/apply:os.path.join [*home, "etc", "apps"]
