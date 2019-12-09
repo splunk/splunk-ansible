@@ -34,8 +34,6 @@
       indexerDiscovery: "splunk-indexer"
       clientCert: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"
       sslPassword: "{{ splunk.s2s.password if splunk.s2s is defined and splunk.s2s.password is defined }}"
-      sslRootCAPath: "{{ splunk.s2s.ca if splunk.s2s is defined and splunk.s2s.ca is defined }}"
-      sslVerifyServerCert: "{% if splunk.s2s.ssl %}false{% endif %}"
       useClientSSLCompression: "{% if splunk.s2s.ssl %}true{% endif %}"
     body_format: "form-urlencoded"
     status_code: 201,409
