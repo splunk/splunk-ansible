@@ -4,6 +4,6 @@
     section: "cachemanager"
   with_items:
     - { key: "max_cache_size", value: "{{ splunk.smartstore.max_cache_size }}" }
-    - { key: "eviction_padding", value: "{{ splunk.smartstore.index.eviction_padding }}" }
-    - { key: "eviction_padding", value: "{{ splunk.smartstore.index.hotlist_recency_secs }}" }
-    - { key: "eviction_padding", value: "{{ splunk.smartstore.index.hotlist_bloom_filter_recency_hours }}" }
+    - { key: "eviction_padding", value: "{{ splunk.smartstore.eviction_padding }}" }
+    - { key: "eviction_padding", value: "{{ splunk.smartstore.hotlist_recency_secs }}" }
+    - { key: "eviction_padding", value: "{{ splunk.smartstore.hotlist_bloom_filter_recency_hours }}" }
