@@ -41,7 +41,7 @@
 
 - name: "Start Splunk via service"
   service:
-    name: "{% if pid1.stdout.find('systemd') != -1 %}Splunkd{% else %}{{ splunk.service_name }}{% endif %}"
+    name: "{{ splunk_service_name }}"
     state: restarted
   when:
     - splunk.enable_service

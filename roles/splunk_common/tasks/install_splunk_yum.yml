@@ -1,7 +1,12 @@
+# added the environment section due to bug:
+# https://github.com/ansible/ansible/issues/18979
 - name: Install Splunk (yum)
   yum:
     name: "{{ splunk.build_location }}"
     state: "{{ 'latest' if splunk_upgrade else 'present' }}"
+  environment:
+    http_proxy: "{{ lookup('env','http_proxy') | default('') }}"
+    https_proxy: "{{ lookup('env','https_proxy') | default('') }}"
   register: install_result
   until: install_result is succeeded
   retries: "{{ retry_num }}"

@@ -123,3 +123,26 @@
     # standalone instances UNLESS they are specified by forward-servers
     - "'splunk_search_head' not in groups"
 
+- name: "Retrieve PID 1 process information (Linux)"
+  command: "ps 1"
+  register: pid1
+  changed_when: false
+  when:  ansible_system is match("Linux")
+
+- name: "Set systemd boolean"
+  set_fact:
+    splunk_systemd: "{{ pid1.stdout.find('systemd') != -1 }}"
+  when:
+    - ansible_system is match("Linux")
+
+# usually we can auto detect what the service name should be, but sometimes
+# we want to manually specify it. This is where we detect it was manually set.
+- name: "Setting service_name fact from config"
+  set_fact:
+    splunk_service_name: "{{ splunk.service_name }}"
+  when:
+    - "'service_name' in splunk"
+
+- name: "Auto Detect service_name"
+  include_tasks: get_facts_service_name.yml
+  when: splunk_service_name is not defined

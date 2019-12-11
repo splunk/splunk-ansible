@@ -1,0 +1,32 @@
+---
+- name: "Setting service_name to SplunkForwarder.service"
+  set_fact:
+    splunk_service_name: "SplunkForwarder.service"
+  when:
+    - splunk_service_name is not defined
+    - splunk.enable_service and ansible_system is match("Linux")
+    - splunk_systemd
+    - splunk.build_location is search('forwarder')
+
+- name: "Setting service_name to Splunkd.service"
+  set_fact:
+    splunk_service_name: "Splunkd.service"
+  when:
+    - splunk_service_name is not defined
+    - splunk.enable_service and ansible_system is match("Linux")
+    - splunk_systemd
+
+- name: "Setting service_name to splunkd"
+  set_fact:
+    splunk_service_name: "splunkd"
+  when:
+    - splunk_service_name is not defined
+    - splunk.enable_service and ansible_system is match("Linux")
+    - splunk_systemd is False
+
+- name: "Setting service_name to splunkd"
+  set_fact:
+    splunk_service_name: "splunkd"
+  when:
+    - splunk_service_name is not defined
+    - splunk.enable_service and not ansible_system is match("Linux")

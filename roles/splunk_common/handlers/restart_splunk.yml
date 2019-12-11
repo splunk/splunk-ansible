@@ -9,9 +9,9 @@
   delay: "{{ delay_num }}"
   when: not splunk.enable_service
 
-- name: "Restart the splunkd service - Via systemd"
+- name: "Restart the splunkd service - Via Linux systemd or init"
   service:
-    name: "{% if pid1.stdout.find('systemd') != -1 %}Splunkd{% else %}{{ splunk.service_name }}{% endif %}"
+    name: "{{ splunk_service_name }}"
     state: restarted
   when: splunk.enable_service and ansible_system is match("Linux")
   become: yes
@@ -19,7 +19,7 @@
 
 - name: "Restart the splunkd service - Via windows system"
   win_service:
-    name: splunkd
+    name: splunk_service_name
     state: restarted
   when: splunk.enable_service and not ansible_system is match("Linux")
 
