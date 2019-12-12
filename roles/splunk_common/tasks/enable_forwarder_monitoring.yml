@@ -4,12 +4,7 @@
     section: "DMC Forwarder - Build Asset Table"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
-  with_dict: {"cron_schedule": "{{ dmc_asset_interval }}", "alert.track": 0, "disabled": 0,
-              "display.visualizations.custom.splunk_monitoring_console.heatmap.showLegend": 1,
-              "display.visualizations.custom.splunk_monitoring_console.heatmap.showTooltip": 1,
-              "display.visualizations.custom.splunk_monitoring_console.heatmap.showXAxis": 1,
-              "display.visualizations.custom.splunk_monitoring_console.heatmap.showYAxis": 1,
-              "run_on_startup": 0}
+  with_dict: {"cron_schedule": "{{ dmc_asset_interval }}", "alert.track": 0, "disabled": 0}
   notify:
     - Restart the splunkd service
 
