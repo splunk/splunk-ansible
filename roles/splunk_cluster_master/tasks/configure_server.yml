@@ -4,5 +4,5 @@
     section: "cachemanager"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
-  with_dict: "{{splunk.smartstore.cachemanager}}"
+  with_dict: "{{ splunk.smartstore.cachemanager }}"
   when: splunk.smartstore.cachemanager is defined

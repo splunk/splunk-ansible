@@ -44,7 +44,7 @@
     - { key: "coldPath", value: "{{ index.coldPath | default('', true) }}" }
   when:
     - index.indexName != "default"
-    - item.value != ''
+    - item.value | length > 0
 
 - name: Configure retention policy
   ini_file:
@@ -55,7 +55,7 @@
   with_items:
     - { key: "maxGlobalDataSizeMB", value: "{{ index.maxGlobalDataSizeMB | default('', true) }}" }
     - { key: "maxGlobalRawDataSizeMB", value: "{{ index.maxGlobalRawDataSizeMB | default('', true) }}" }
-  when: item.value != ''
+  when: item.value | length > 0
 
 - name: Configure per index cache manager
   ini_file:
@@ -68,4 +68,4 @@
     - { key: "hotlist_bloom_filter_recency_hours", value: "{{ index.hotlist_bloom_filter_recency_hours | default('', true) }}" }
   when:
     - index.indexName != "default"
-    - item.value != ''
+    - item.value | length > 0
