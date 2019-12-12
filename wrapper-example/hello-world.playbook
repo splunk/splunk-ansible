@@ -7,6 +7,28 @@
       register: output
       changed_when: output.stdout != ""
 
+    - name: Setup ansible group
+      group:
+        name: ansible
+        state: present
+
+    - name: Setup ansible user
+      user:
+        name: ansible
+        state: present
+        group: ansible
+
+    - name: Setup splunk group
+      group:
+        name: splunk
+        state: present
+
+    - name: Setup splunk user
+      user:
+        name: splunk
+        state: present
+        group: splunk
+
 - hosts: all
   gather_facts: True
   tasks:
