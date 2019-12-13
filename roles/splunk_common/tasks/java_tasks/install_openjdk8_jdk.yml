@@ -15,6 +15,7 @@
   when:
     - ansible_distribution == 'Debian'
     - "'10' in ansible_distribution_version"
+  become: yes
   become_user: "{{ privileged_user }}"
 
 - name: Install JDK for Debian
