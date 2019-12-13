@@ -8,8 +8,7 @@
     * [Loading defaults through URL](#loading-defaults-through-url)
     * [Schema](#schema)
 * [Apps](#app)
-* [SmartStore](@smartstore)
-* [Defaults](#defaults)
+* [SmartStore](#smartstore)
 
 ---
 
@@ -159,4 +158,20 @@ If SplunkBase apps are not specified or needed, the `splunkbase_username` and `s
 ---
 
 ## SmartStore
-TODO
+SmartStore utilizes S3-compliant object storage in order to store indexed data. This is a capability only available if you're using an indexer cluster (cluster_master + indexers). For more information, please see the [blog post](https://www.splunk.com/blog/2018/10/11/splunk-smartstore-cut-the-cord-by-decoupling-compute-and-storage.html) as well as [technical overview](https://docs.splunk.com/Documentation/Splunk/latest/Indexer/AboutSmartStore).
+
+Here's an overview of what this looks like if you want to persist *all* your indexes (default) with a SmartStore backend using the `default.yml`:
+```
+---
+splunk:
+  smartstore:
+    index:
+      - indexName: default
+        remoteName: remote_store
+        scheme: s3
+        remoteLocation: <bucket-name>
+        s3:
+          access_key: <access_key>
+          secret_key: <secret_key>
+          endpoint: http://s3-us-west-2.amazonaws.com
+```
