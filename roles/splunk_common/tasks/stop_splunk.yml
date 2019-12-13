@@ -20,7 +20,7 @@
 
 - name: "Stop Splunk via systemctl"
   service:
-    name: Splunkd
+    name: "{% if pid1.stdout.find('systemd') != -1 %}Splunkd{% else %}{{ splunk.service_name }}{% endif %}"
     state: stopped
   when:
     - splunk.enable_service
