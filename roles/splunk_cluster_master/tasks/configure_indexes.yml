@@ -39,8 +39,33 @@
     option: "{{ item.key }}"
     value: "{{ item.value }}"
   with_items:
-    - { key: "homePath", value: "{{ index.homePath }}" }
-    - { key: "thawedPath", value: "{{ index.thawedPath }}" }
-    - { key: "coldPath", value: "{{ index.coldPath }}" }
-  when: index.indexName != "default"
+    - { key: "homePath", value: "{{ index.homePath | default('', true) }}" }
+    - { key: "thawedPath", value: "{{ index.thawedPath | default('', true) }}" }
+    - { key: "coldPath", value: "{{ index.coldPath | default('', true) }}" }
+  when:
+    - index.indexName != "default"
+    - item.value | length > 0
 
+- name: Configure retention policy
+  ini_file:
+    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
+    section: "{{ index.indexName }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { key: "maxGlobalDataSizeMB", value: "{{ index.maxGlobalDataSizeMB | default('', true) }}" }
+    - { key: "maxGlobalRawDataSizeMB", value: "{{ index.maxGlobalRawDataSizeMB | default('', true) }}" }
+  when: item.value | length > 0
+
+- name: Configure per index cache manager
+  ini_file:
+    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
+    section: "{{ index.indexName }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { key: "hotlist_recency_secs", value: "{{ index.hotlist_recency_secs | default('', true) }}" }
+    - { key: "hotlist_bloom_filter_recency_hours", value: "{{ index.hotlist_bloom_filter_recency_hours | default('', true) }}" }
+  when:
+    - index.indexName != "default"
+    - item.value | length > 0
