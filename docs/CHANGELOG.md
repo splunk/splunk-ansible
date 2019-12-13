@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [8.0.1](#801)
 * [8.0.0](#800)
 * [7.3.3](#733)
 * [7.3.2](#732)
@@ -18,6 +19,16 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.0.1
+
+#### What's New?
+* Syncing with latest codebase - currently up to sync with 8.0.1.
+
+#### Changes
+* See [8.0.0](#800) changes
 
 ---
 
