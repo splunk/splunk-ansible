@@ -8,55 +8,22 @@
   become: yes
   become_user: "{{ privileged_user }}"
 
-- name: Install the JDK
+- name: Adding source for Debian Buster
+  lineinfile:
+    path: /etc/apt/sources.list
+    line: deb http://ftp.us.debian.org/debian sid main
+  when:
+    - ansible_distribution == 'Debian'
+    - "'10' in ansible_distribution_version"
+  become_user: "{{ privileged_user }}"
+
+- name: Install JDK for Debian
   apt:
     name: openjdk-8-jdk-headless
     state: present
     update_cache: yes
   when:
     - ansible_distribution == 'Debian'
-    - "'10' not in ansible_distribution_version"
-  become: yes
-  become_user: "{{ privileged_user }}"
-
-- name: Install JDK dependencies
-  apt:
-    name: ['apt-transport-https', 'ca-certificates', 'wget', 'dirmngr', 'gnupg', 'software-properties-common']
-    update_cache: yes
-  when:
-    - ansible_distribution == 'Debian'
-    - "'10' in ansible_distribution_version"
-  become: yes
-  become_user: "{{ privileged_user }}"
-
-- name: Get the openjdk apt key
-  shell: |
-    set -o pipefail
-    wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
-  args:
-    executable: /bin/bash
-    warn: false
-  when:
-    - ansible_distribution == 'Debian'
-    - "'10' in ansible_distribution_version"
-  become: yes
-  become_user: "{{ privileged_user }}"
-
-- name: Get the key
-  command: "add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/"
-  when:
-    - ansible_distribution == 'Debian'
-    - "'10' in ansible_distribution_version"
-  become: yes
-  become_user: "{{ privileged_user }}"
-
-- name: Install openjdk
-  apt:
-    name: "adoptopenjdk-8-hotspot"
-    update_cache: yes
-  when:
-    - ansible_distribution == 'Debian'
-    - "'10' in ansible_distribution_version"
   become: yes
   become_user: "{{ privileged_user }}"
 
