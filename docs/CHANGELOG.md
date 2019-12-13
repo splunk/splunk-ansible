@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [8.0.1](#801)
 * [8.0.0](#800)
 * [7.3.3](#733)
 * [7.3.2](#732)
@@ -18,6 +19,21 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.0.1
+
+#### What's New?
+* Additional options to control SmartStore configuration
+* Service name fixes for AWS
+* Bugfixes around forwarding and SHC-readiness
+
+#### Changes
+* Small adjustment in forwarding settings to send data to specific tiers
+* Bugfix in SHC readiness probe to properly handle membership list updates
+* Adding more advanced options for SmartStore, including cachemanager, per-index retention sizes, and hotlist recency settings
+**NOTE** If you are currently using SmartStore, this change does break backwards-compatibility with former versions of the `default.yml` schema. This was necessary to expose the additional features asked for by the community. Please regenerate the `default.yml` if you plan on upgrading to this version.
 
 ---
 

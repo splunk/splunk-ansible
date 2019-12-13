@@ -275,7 +275,7 @@ splunk:
     * Default: 3
 
     secret: <str>
-    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering
+    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in server.conf.
     * Default: null
 
   shc:
@@ -296,7 +296,7 @@ splunk:
     * Default: 9887
 
     secret: <str>
-    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering
+    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in server.conf.
     * Default: null
 
   dfs:
@@ -331,6 +331,30 @@ splunk:
   smartstore: <dict>
   * Nested dict obj to enable automatic SmartStore provisioning
   * Default: null
+
+    cachemanager: <dict>
+    * cachemanager server.conf settings related to SmartStore
+    * Default: null
+    * Example:
+      max_cache_size: 500
+      max_concurrent_uploads: 7
+
+    index: <list>
+    * Per-index SmartStore configuration
+    * Default: null
+    * Example:
+      - indexName: custom_index
+        remoteName: my_storage
+        scheme: http
+        remoteLocation: my_storage.net
+        s3:
+          access_key: <access_key>
+          secret_key: <secret_key>
+          endpoint: http://s3-us-west-1.amazonaws.com
+        maxGlobalDataSizeMB: 500
+        maxGlobalRawDataSizeMB: 200
+        hotlist_recency_secs: 30
+        hotlist_bloom_filter_recency_hours: 1
 
   tar_dir: <str>
   * Name of directory for the Splunk tar
