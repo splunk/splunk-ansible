@@ -275,7 +275,7 @@ splunk:
     * Default: 3
 
     secret: <str>
-    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering
+    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in server.conf.
     * Default: null
 
   shc:
@@ -296,7 +296,7 @@ splunk:
     * Default: 9887
 
     secret: <str>
-    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering
+    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in server.conf.
     * Default: null
 
   dfs:
