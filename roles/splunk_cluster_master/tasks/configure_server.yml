@@ -1,0 +1,8 @@
+- name: Configure all indexers cache manager
+  ini_file:
+    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/server.conf"
+    section: "cachemanager"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_dict: "{{ splunk.smartstore.cachemanager }}"
+  when: splunk.smartstore.cachemanager is defined
