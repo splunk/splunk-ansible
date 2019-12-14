@@ -1,0 +1,22 @@
+- name: Enable forwarder monitoring
+  ini_file:
+    path: "{{ splunk.home }}/etc/apps/splunk_monitoring_console/local/savedsearches.conf"
+    section: "DMC Forwarder - Build Asset Table"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_dict: {"cron_schedule": "{{ dmc_asset_interval }}", "alert.track": 0, "disabled": 0}
+  notify:
+    - Restart the splunkd service
+
+- name: Flush restart handlers
+  meta: flush_handlers
+
+- name: Build forwarder assets
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/{{ splunk.admin_user }}/splunk_monitoring_console/saved/searches/DMC+Forwarder+-+Build+Asset+Table/dispatch"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200,201
+  no_log: "{{ hide_password }}"

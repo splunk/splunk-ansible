@@ -157,3 +157,4 @@
       unarchive:
         src: /tmp/splunk-ansible.tgz
         dest: /opt/ansible
+        remote_src: yes
