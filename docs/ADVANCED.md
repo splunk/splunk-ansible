@@ -60,6 +60,8 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_DFW_NUM_SLOTS_ENABLED | Enables you to set the value of the field dfw_num_slots. | no | no | no |
 | SPARK_MASTER_HOST | This setting identifies the Spark master. | no | no | no |
 | SPARK_MASTER_WEBUI_PORT | Identifies the port for the Spark master web UI. | no | no | no |
+| DMC_FORWARDER_MONITORING | Enables forwarder monitoring on all standalone and search head instances (default: False) | no | no | no |
+| DMC_ASSET_INTERVAL | Cron schedule that determines how often forwarder assets are re-built (default "3,18,33,48 * * * *" - every 15 minutes) | no | no | no |
 
 * Password must be set either in default.yml or as the environment variable `SPLUNK_PASSWORD`
 
