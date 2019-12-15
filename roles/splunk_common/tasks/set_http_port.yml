@@ -5,4 +5,5 @@
     section: settings
     option: "httpport"
     value: "{{ splunk.http_port }}"
-
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
