@@ -1,0 +1,8 @@
+---
+- include_tasks: s2s/configure_splunktcp_ssl.yml
+  when:
+    - "'s2s' in splunk and 'ssl' in splunk.s2s and splunk.s2s.ssl | bool"
+
+- include_tasks: s2s/configure_splunktcp.yml
+  when:
+    - "'s2s' not in splunk or (not splunk.s2s.ssl | bool)"

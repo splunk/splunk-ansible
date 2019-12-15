@@ -13,6 +13,11 @@
     - splunk.deployment_server is defined
     - splunk.deployment_server
 
+- include_tasks: ../../splunk_common/tasks/enable_forwarder_monitoring.yml
+  when:
+    - dmc_forwarder_monitoring is defined
+    - dmc_forwarder_monitoring | bool
+
 - include_tasks: ../../splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
