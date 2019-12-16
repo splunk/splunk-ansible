@@ -32,6 +32,9 @@
     body:
       name: "tcpout:group1"
       indexerDiscovery: "splunk-indexer"
+      clientCert: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"
+      sslPassword: "{{ splunk.s2s.password if splunk.s2s is defined and splunk.s2s.password is defined }}"
+      useClientSSLCompression: "{{ 'true' if splunk.s2s is defined and splunk.s2s.ssl is defined and splunk.s2s.ssl else '' }}"
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10

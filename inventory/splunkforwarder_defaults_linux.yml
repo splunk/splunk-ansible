@@ -28,15 +28,20 @@ splunk:
     home: &home !!python/object/apply:os.path.join [*opt, "splunkforwarder"]
     user: "splunk"
     group: "splunk"
-    exec: !!python/object/apply:os.path.join [*home, "bin/splunk"]
-    pid: !!python/object/apply:os.path.join [*home, "var/run/splunk/splunkd.pid"]
+    exec: !!python/object/apply:os.path.join [*home, "bin", "splunk"]
+    pid: !!python/object/apply:os.path.join [*home, "var", "run", "splunk", "splunkd.pid"]
     admin_user: "admin"
     root_endpoint:
     password:
     secret: 
     svc_port: 8089
-    s2s_port: 9997
-    s2s_enable: True
+    s2s:
+        enable: True
+        port: 9997
+        ssl: False
+        cert:
+        password:
+        ca: 
     http_port: 8000
     http_enableSSL: 0
     http_enableSSL_cert:
@@ -63,8 +68,8 @@ splunk:
     service_name: "splunk"
     smartstore:
     app_paths:
-        default: !!python/object/apply:os.path.join [*home, "etc/apps"]
-        shc: !!python/object/apply:os.path.join [*home, "etc/shcluster/apps"]
-        idxc: !!python/object/apply:os.path.join [*home, "etc/master-apps"]
-        deployment: !!python/object/apply:os.path.join [*home, "etc/deployment-apps"]
-        httpinput: !!python/object/apply:os.path.join [*home, "etc/apps/splunk_httpinput"]
+        default: !!python/object/apply:os.path.join [*home, "etc", "apps"]
+        shc: !!python/object/apply:os.path.join [*home, "etc", "shcluster", "apps"]
+        idxc: !!python/object/apply:os.path.join [*home, "etc", "master-apps"]
+        deployment: !!python/object/apply:os.path.join [*home, "etc", "deployment-apps"]
+        httpinput: !!python/object/apply:os.path.join [*home, "etc", "apps", "splunk_httpinput"]

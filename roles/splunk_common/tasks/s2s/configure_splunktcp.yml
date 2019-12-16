@@ -1,0 +1,42 @@
+---
+- name: Enable splunktcp input
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: "splunktcp://{{ splunk.s2s_port if splunk.s2s_port is defined else splunk.s2s.port }}"
+    option: "disabled"
+    value: "0"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  notify:
+    - Restart the splunkd service
+
+- name: Remove splunktcp-ssl input
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: "splunktcp-ssl:{{ splunk.s2s_port if splunk.s2s_port is defined else splunk.s2s.port }}"
+    state: absent
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  notify:
+    - Restart the splunkd service
+
+- name: Remove input SSL settings
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    state: absent
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  notify:
+    - Restart the splunkd service
+
+- name: Reset root CA
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: sslRootCAPath
+    state: absent
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  notify:
+    - Restart the splunkd service

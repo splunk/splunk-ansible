@@ -110,6 +110,8 @@ def getDefaultVars():
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
+    defaultVars["dmc_forwarder_monitoring"] = os.environ.get('DMC_FORWARDER_MONITORING', False)
+    defaultVars["dmc_asset_interval"] = os.environ.get('DMC_ASSET_INTERVAL', '3,18,33,48 * * * *')
     #If the value is set, we would use that, otherwise, return True
     defaultVars["splunk"]["preferred_captaincy"] = False if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', "").lower() == "false" else True
     defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
@@ -191,7 +193,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
-    vars_scope["splunk"]["s2s_port"] = os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s_port"])
+    vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
     vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"]["secret"])
     vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
     if "shc" not in vars_scope["splunk"]:
@@ -379,12 +381,12 @@ def obfuscate_vars(inventory):
     if inventory["all"]["vars"]["splunk"].get("idxc") and inventory["all"]["vars"]["splunk"]["idxc"].get("secret"):
         inventory["all"]["vars"]["splunk"]["idxc"]["secret"] = stars
     if inventory["all"]["vars"]["splunk"].get("smartstore", False):
-        for index in range(0, len(inventory["all"]["vars"]["splunk"]["smartstore"])):
-            if inventory["all"]["vars"]["splunk"]["smartstore"][index].get("s3", False):
-                if inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"].get("access_key", False):
-                    inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"]["access_key"] = stars
-                if inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"].get("secret_key", False):
-                    inventory["all"]["vars"]["splunk"]["smartstore"][index]["s3"]["secret_key"] = stars
+        for idx in range(0, len(inventory["all"]["vars"]["splunk"]["smartstore"]["index"])):
+            if inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx].get("s3", False):
+                if inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx]["s3"].get("access_key", False):
+                    inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx]["s3"]["access_key"] = stars
+                if inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx]["s3"].get("secret_key", False):
+                    inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx]["s3"]["secret_key"] = stars
     return inventory
 
 def create_parser():
