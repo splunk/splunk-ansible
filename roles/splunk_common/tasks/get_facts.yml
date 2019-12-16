@@ -4,6 +4,12 @@
   set_fact:
     privileged_user: "{% if ansible_system is match('CYGWIN*|Win32NT') %}Administrator{% else %}root{% endif %}"
 
+# Check if systemd is running
+- name: "Identify service system (Linux)"
+  command: "ps --no-headers -o comm 1"
+  register: pid1
+  when: splunk.enable_service and ansible_system is match("Linux")
+
 # If there is no Splunk executable, we will need to install.
 - name: "Check for existing installation"
   stat:
