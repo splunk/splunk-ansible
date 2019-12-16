@@ -20,6 +20,7 @@
       max_timeout: 1200
     hide_password: false
     retry_num: 50
+    delay_num: 3
     splunk:
       role: splunk_universal_forwarder
       indexer_cluster: false
