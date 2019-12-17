@@ -8,8 +8,10 @@ from __future__ import print_function
 
 import sys
 import argparse
+import json
 
 import splunk.auth as auth
+import splunk.rest as rest
 try:
     # In newer versions of splunk we should be importing from
     # this location
@@ -79,8 +81,56 @@ def make_ta_for_indexers(username, password):
     print(archive)
     assert archive.startswith(spl_location)
 
+def make_ta_for_indexers_6xx(username, password):
+    '''
+    Splunk_TA_ForIndexers spl generation for ES 6.0.0 and up
+    For this we'll use the rest endpoints
+    '''
+
+    uri = '/services/data/appmaker/makeapp'
+    APP_INFO_DICT = {
+        "app": "Splunk_TA_ForIndexers",
+        "label": "Splunk App For Indexers",
+        "version": "1.0.0",
+        "build": "0"
+    }
+    INCLUDE_INDEXES = True
+    INCLUDE_PROPERTIES = True
+
+    SESSION_KEY = auth.getSessionKey(username, password)
+    spec = {
+        '_app': APP_INFO_DICT,
+        'include_indexes': INCLUDE_INDEXES,
+        'include_properties': INCLUDE_PROPERTIES
+    }
+    postargs = {
+        'spec': json.dumps(spec),
+        'routine': 'make_index_time_properties:makeIndexTimeProperties'
+    }
+
+    unused_r, c = rest.simpleRequest(
+        uri,
+        sessionKey=SESSION_KEY,
+        postargs=postargs,
+    )
+
+    archive = make_splunkhome_path([
+        'etc',
+        'apps',
+        json.loads(c)['namespace'],
+        'local',
+        'data',
+        'appmaker',
+        json.loads(c)['filename']
+    ])
+    print(archive)
+
 
 if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
-    make_ta_for_indexers(args.username, args.password)
+    try:
+        make_ta_for_indexers_6xx(args.username, args.password)
+    except:
+        #If the new one fails, try the older one
+        make_ta_for_indexers(args.username, args.password)
