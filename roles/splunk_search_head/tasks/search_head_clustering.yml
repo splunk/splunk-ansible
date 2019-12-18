@@ -1,16 +1,7 @@
 ---
-- name: Get search head count
+- name: Rectify SHC replication factor
   set_fact:
-    num_search_head_hosts: "{{ groups['splunk_search_head'] | length }}"
-
-- name: Get default replication factor
-  set_fact:
-    shc_replication_factor: "{{ splunk.shc.replication_factor }}"
-
-- name: Lower SHC replication factor
-  set_fact:
-    shc_replication_factor: 1
-  when: num_search_head_hosts|int <= 3
+    shc_replication_factor: "{% if splunk.shc.replication_factor|int > groups['splunk_search_head']|length %} {{ groups['splunk_search_head'] | length }} {% else %} {{ splunk.shc.replication_factor | int }} {% endif %}"
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
