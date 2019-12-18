@@ -28,7 +28,7 @@
   when: splunk.smartstore
 
 - name: Set the current node as a Splunk indexer cluster master
-  command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ splunk.idxc.replication_factor }} -search_factor {{ splunk.idxc.search_factor }} -secret '{{ splunk.idxc.secret }}' -cluster_label '{{ splunk.idxc.label }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ idxc_replication_factor }} -search_factor {{ idxc_search_factor }} -secret '{{ splunk.idxc.secret }}' -cluster_label '{{ splunk.idxc.label }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   register: task_result
   until: task_result.rc == 0
   changed_when: task_result.rc == 0
