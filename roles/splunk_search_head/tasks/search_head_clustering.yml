@@ -70,14 +70,28 @@
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
+- name: Add new member to SHC
+  command: "{{ splunk.exec }} add shcluster-member -current_member_uri {{ cert_prefix }}://{{ groups['splunk_search_head_captain'][0] }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: not splunk_search_head_captain | bool
+  register: task_result
+  changed_when: task_result.rc == 0
+  failed_when: task_result.rc !=0 and "is already part of cluster" not in task_result.stderr
+  until: task_result.rc == 0 or "is already part of cluster" in task_result.stderr
+  retries: "{{ retry_num }}"
+  delay: 10
+  no_log: "{{ hide_password }}"
+
 - name: Destructive sync search head
   command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: not splunk_search_head_captain | bool and splunk.preferred_captaincy | bool
+  when: not splunk_search_head_captain | bool
   register: task_result
   changed_when: task_result.rc == 0
-  until: task_result.rc == 0
+  failed_when: task_result.rc !=0 and "this instance is the captain" not in task_result.stderr
+  until: task_result.rc == 0 or "this instance is the captain" in task_result.stderr
   retries: "{{ retry_num }}"
-  delay: 60
+  delay: 10
   no_log: "{{ hide_password }}"
