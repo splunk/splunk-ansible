@@ -1,18 +1,11 @@
 ---
-- name: Get indexer count
+- name: Rectify cluster replication factor
   set_fact:
-    num_indexer_hosts: "{{ groups['splunk_indexer'] | length }}"
+    idxc_replication_factor: "{% if splunk.idxc.replication_factor|int > groups['splunk_indexer']|length %} {{ groups['splunk_indexer'] | length }} {% else %} {{ splunk.idxc.replication_factor | int }} {% endif %}"
 
-- name: Get default replication factor
+- name: Rectify cluster search factor
   set_fact:
-    idxc_search_factor: "{{ splunk.idxc.search_factor }}"
-    idxc_replication_factor: "{{ splunk.idxc.replication_factor }}"
-
-- name: Lower indexer search/replication factor
-  set_fact:
-    idxc_search_factor: 1
-    idxc_replication_factor: 1
-  when: num_indexer_hosts|int < 3
+    idxc_search_factor: "{% if splunk.idxc.search_factor|int > idxc_replication_factor|int %} {{ idxc_replication_factor | int }} {% else %} {{ splunk.idxc.search_factor | int }} {% endif %}"
 
 - name: Set indexer discovery
   uri:
