@@ -12,8 +12,8 @@
     status_code: [201, 409]
     timeout: 10
   register: setup_itsi_role
-  retries: 3
-  delay: 5
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
   until: setup_itsi_role.status in [201, 409]
   changed_when: setup_itsi_role.status == 201
   no_log: "{{ hide_password }}"
@@ -33,8 +33,8 @@
     status_code: [200, 409]
     timeout: 10
   register: setup_itsi_user
-  retries: 3
-  delay: 5
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
   until: setup_itsi_user.status in [200, 409]
   changed_when: setup_itsi_user.status == 200
   no_log: "{{ hide_password }}"

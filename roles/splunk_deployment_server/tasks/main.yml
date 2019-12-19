@@ -19,7 +19,7 @@
   until: reload_depserver.rc == 0
   changed_when: reload_depserver.rc == 0
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   ignore_errors: yes
   no_log: "{{ hide_password }}"
 

@@ -17,8 +17,8 @@
   register: downloaded_license_path
   ignore_errors: yes
   until: downloaded_license_path is success
-  retries: 5
-  delay: 3
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
 
 - name: Ensure license exists
   stat:
