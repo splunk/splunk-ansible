@@ -72,10 +72,10 @@ splunk:
         dfw_num_slots_enabled: False
         spark_master_host: "127.0.0.1"
         spark_master_webui_port: 8080
-    multisite_replication_factor_origin: 3
+    multisite_replication_factor_origin: 2
     multisite_replication_factor_total: 3
-    multisite_search_factor_origin: 3
-    multisite_search_factor_total: 3
+    multisite_search_factor_origin: 1
+    multisite_search_factor_total: 2
 
     enable_service: False
     service_name: "splunk"
