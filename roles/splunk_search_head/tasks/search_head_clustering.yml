@@ -84,5 +84,5 @@
   failed_when: task_result.rc !=0 and "this instance is the captain" not in task_result.stderr
   until: task_result.rc == 0 or "this instance is the captain" in task_result.stderr
   retries: "{{ retry_num }}"
-  delay: 10
+  delay: 60
   no_log: "{{ hide_password }}"
