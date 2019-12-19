@@ -15,7 +15,7 @@
   changed_when: task_result.rc == 0
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   notify:
       - Restart the splunkd service
   no_log: "{{ hide_password }}"

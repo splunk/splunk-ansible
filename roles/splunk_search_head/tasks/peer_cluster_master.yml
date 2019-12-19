@@ -12,7 +12,7 @@
   until: set_cluster_master_as_peer.rc == 0
   changed_when: set_cluster_master_as_peer.rc == 0
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   ignore_errors: yes
   notify:
     - Restart the splunkd service

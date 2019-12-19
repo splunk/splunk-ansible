@@ -15,7 +15,7 @@
     - task_result.rc != 0
     - "'already exists' not in task_result.stderr"
   retries: "{{ retry_num }}"
-  delay: "{{ delay_num }}"
+  delay: "{{ retry_delay }}"
   ignore_errors: true
   no_log: "{{ hide_password }}"
   notify:
