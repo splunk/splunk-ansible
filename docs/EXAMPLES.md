@@ -45,57 +45,59 @@ max_delay: 60
 max_retries: 3
 max_timeout: 1200
 hide_password: false
-retry_num: 50
-shc_bootstrap_delay: 30
+retry_delay: 3
+retry_num: 60
+wait_for_splunk_retry_num: 60
+shc_sync_retry_num: 60
 splunk:
-admin_user: admin
-app_paths:
-    default: /opt/splunk/etc/apps
-    deployment: /opt/splunk/etc/deployment-apps
-    httpinput: /opt/splunk/etc/apps/splunk_httpinput
-    idxc: /opt/splunk/etc/master-apps
-    shc: /opt/splunk/etc/shcluster/apps
-enable_service: false
-exec: /opt/splunk/bin/splunk
-group: splunk
-hec_disabled: 1
-hec_enableSSL: 1
-hec_port: 8088
-hec_token: null
-home: /opt/splunk
-http_enableSSL: 0
-http_enableSSL_cert: null
-http_enableSSL_privKey: null
-http_enableSSL_privKey_password: null
-http_port: 8000
-idxc:
-    enable: false
-    label: idxc_label
-    replication_factor: 3
-    replication_port: 9887
-    search_factor: 3
+    admin_user: admin
+    app_paths:
+        default: /opt/splunk/etc/apps
+        deployment: /opt/splunk/etc/deployment-apps
+        httpinput: /opt/splunk/etc/apps/splunk_httpinput
+        idxc: /opt/splunk/etc/master-apps
+        shc: /opt/splunk/etc/shcluster/apps
+    enable_service: false
+    exec: /opt/splunk/bin/splunk
+    group: splunk
+    hec_disabled: 1
+    hec_enableSSL: 1
+    hec_port: 8088
+    hec_token: null
+    home: /opt/splunk
+    http_enableSSL: 0
+    http_enableSSL_cert: null
+    http_enableSSL_privKey: null
+    http_enableSSL_privKey_password: null
+    http_port: 8000
+    idxc:
+        enable: false
+        label: idxc_label
+        replication_factor: 3
+        replication_port: 9887
+        search_factor: 3
+        secret: null
+    ignore_license: false
+    license_download_dest: /tmp/splunk.lic
+    nfr_license: /tmp/nfr_enterprise.lic
+    opt: /opt
+    password: helloworld
+    pid: /opt/splunk/var/run/splunk/splunkd.pid
+    s2s_enable: true
+    s2s_port: 9997
+    search_head_cluster_url: null
     secret: null
-ignore_license: false
-license_download_dest: /tmp/splunk.lic
-nfr_license: /tmp/nfr_enterprise.lic
-opt: /opt
-password: helloworld
-pid: /opt/splunk/var/run/splunk/splunkd.pid
-s2s_enable: true
-s2s_port: 9997
-search_head_cluster_url: null
-secret: null
-shc:
-    enable: false
-    label: shc_label
-    replication_factor: 3
-    replication_port: 9887
-    secret: null
-smartstore: null
-svc_port: 8089
-tar_dir: splunk
-user: splunk
-wildcard_license: false
+    shc:
+        enable: false
+        label: shc_label
+        replication_factor: 3
+        replication_port: 9887
+        secret: null
+    smartstore: null
+    svc_port: 8089
+    tar_dir: splunk
+    user: splunk
+    wildcard_license: false
 splunk_home_ownership_enforcement: true
 ```
 </p></details>
@@ -137,57 +139,59 @@ max_delay: 60
 max_retries: 3
 max_timeout: 1200
 hide_password: false
-retry_num: 50
-shc_bootstrap_delay: 30
+retry_delay: 3
+retry_num: 60
+wait_for_splunk_retry_num: 60
+shc_sync_retry_num: 60
 splunk:
-admin_user: admin
-app_paths:
-    default: /opt/splunk/etc/apps
-    deployment: /opt/splunk/etc/deployment-apps
-    httpinput: /opt/splunk/etc/apps/splunk_httpinput
-    idxc: /opt/splunk/etc/master-apps
-    shc: /opt/splunk/etc/shcluster/apps
-enable_service: false
-exec: /opt/splunk/bin/splunk
-group: splunk
-hec_disabled: 0
-hec_enableSSL: 1
-hec_port: 8088
-hec_token: abcd-1234-efgh-5678
-home: /opt/splunk
-http_enableSSL: 0
-http_enableSSL_cert: null
-http_enableSSL_privKey: null
-http_enableSSL_privKey_password: null
-http_port: 8000
-idxc:
-    enable: false
-    label: idxc_label
-    replication_factor: 3
-    replication_port: 9887
-    search_factor: 3
+    admin_user: admin
+    app_paths:
+        default: /opt/splunk/etc/apps
+        deployment: /opt/splunk/etc/deployment-apps
+        httpinput: /opt/splunk/etc/apps/splunk_httpinput
+        idxc: /opt/splunk/etc/master-apps
+        shc: /opt/splunk/etc/shcluster/apps
+    enable_service: false
+    exec: /opt/splunk/bin/splunk
+    group: splunk
+    hec_disabled: 0
+    hec_enableSSL: 1
+    hec_port: 8088
+    hec_token: abcd-1234-efgh-5678
+    home: /opt/splunk
+    http_enableSSL: 0
+    http_enableSSL_cert: null
+    http_enableSSL_privKey: null
+    http_enableSSL_privKey_password: null
+    http_port: 8000
+    idxc:
+        enable: false
+        label: idxc_label
+        replication_factor: 3
+        replication_port: 9887
+        search_factor: 3
+        secret: null
+    ignore_license: false
+    license_download_dest: /tmp/splunk.lic
+    nfr_license: /tmp/nfr_enterprise.lic
+    opt: /opt
+    password: helloworld
+    pid: /opt/splunk/var/run/splunk/splunkd.pid
+    s2s_enable: true
+    s2s_port: 9997
+    search_head_cluster_url: null
     secret: null
-ignore_license: false
-license_download_dest: /tmp/splunk.lic
-nfr_license: /tmp/nfr_enterprise.lic
-opt: /opt
-password: helloworld
-pid: /opt/splunk/var/run/splunk/splunkd.pid
-s2s_enable: true
-s2s_port: 9997
-search_head_cluster_url: null
-secret: null
-shc:
-    enable: false
-    label: shc_label
-    replication_factor: 3
-    replication_port: 9887
-    secret: null
-smartstore: null
-svc_port: 8089
-tar_dir: splunk
-user: splunk
-wildcard_license: false
+    shc:
+        enable: false
+        label: shc_label
+        replication_factor: 3
+        replication_port: 9887
+        secret: null
+    smartstore: null
+    svc_port: 8089
+    tar_dir: splunk
+    user: splunk
+    wildcard_license: false
 splunk_home_ownership_enforcement: true
 ```
 </p></details>
@@ -225,8 +229,10 @@ max_delay: 60
 max_retries: 3
 max_timeout: 1200
 hide_password: false
-retry_num: 50
-shc_bootstrap_delay: 30
+retry_delay: 3
+retry_num: 60
+wait_for_splunk_retry_num: 60
+shc_sync_retry_num: 60
 splunk:
     root_endpoint: /splunkweb
     admin_user: admin

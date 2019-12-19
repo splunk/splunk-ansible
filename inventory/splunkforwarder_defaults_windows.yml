@@ -1,9 +1,10 @@
 ansible_ssh_user: "splunk"
 ansible_pre_tasks:
 ansible_post_tasks:
-delay_num: 3
-shc_bootstrap_delay: 30
-retry_num: 50
+retry_delay: 10
+retry_num: 60
+wait_for_splunk_retry_num: 150
+shc_sync_retry_num: 300
 
 config:
     max_retries: 3
