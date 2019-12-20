@@ -10,7 +10,7 @@
   until:
     - task_response.status == 200
     - lookup('pipe', 'date +"%s"')|int - task_response.json.entry[0].content.startup_time > 10
-  retries: "{{ retry_num }}"
-  delay: 30
+  retries: "{{ wait_for_splunk_retry_num }}"
+  delay: "{{ retry_delay }}"
   ignore_errors: true
   no_log: "{{ hide_password }}"

@@ -34,7 +34,7 @@ While developing new playbooks that require remote Splunk-to-Splunk connectivity
   register: set_indexer_as_peer
   until: set_indexer_as_peer.rc == 0 or set_indexer_as_peer.rc == 24
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   changed_when: set_indexer_as_peer.rc == 0
   failed_when: set_indexer_as_peer.rc != 0 and 'already exists' not in set_indexer_as_peer.stderr
   notify:
@@ -57,7 +57,7 @@ Another utility you can add when creating new plays is an implicit wait. For mor
     - task_response.status == 200
     - lookup('pipe', 'date +"%s"')|int - task_response.json.entry[0].content.startup_time > 10
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   ignore_errors: true
   no_log: "{{ hide_password }}"
 ```

@@ -24,11 +24,15 @@ hide_password: <bool>
 
 retry_num: <int>
 * Number of retries to make for potentially flakey/error-prone tasks
-* Default: 50
+* Default: 60
 
-shc_bootstrap_delay: <int>
-* Number of seconds of delay when verifying SHC success on the deployer
-* Default: 30
+wait_for_splunk_retry_num: <int>
+* Number of retries to make when waiting for a Splunk instance to be available
+* Default: 60
+
+shc_sync_retry_num: <int>
+* Number of retries to make when waiting for sync up with a search head cluster
+* Default: 60
 
 splunk_home_ownership_enforcement: true
 * Boolean that to control and enable UAC on $SPLUNK_HOME (recommended to be enabled)
@@ -416,8 +420,10 @@ The following is used in the quickstart section to start Splunk in a standalone 
 ansible_post_tasks: null
 ansible_pre_tasks: null
 hide_password: false
-retry_num: 50
-shc_bootstrap_delay: 30
+retry_delay: 3
+retry_num: 60
+wait_for_splunk_retry_num: 60
+shc_sync_retry_num: 60
 splunk_home_ownership_enforcement: true
 
 config:

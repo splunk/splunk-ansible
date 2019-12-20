@@ -1,9 +1,20 @@
 ---
+- name: Set default captaincy
+  set_fact:
+    splunk_search_head_captain: false
+
+- name: Determine captaincy
+  set_fact:
+    splunk_search_head_captain: true
+  when: ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+        ansible_fqdn == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+        splunk.hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+        splunk.role == "splunk_search_head_captain"
+
 - include_tasks: search_head_clustering.yml
   when:
     - splunk.search_head_cluster
     - splunk.deployer_included
-    - splunk_search_head_captain is defined
 
 ## Indexer Clustering Scenario
 - include_tasks: peer_cluster_master.yml

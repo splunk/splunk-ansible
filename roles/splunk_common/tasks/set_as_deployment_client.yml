@@ -14,7 +14,7 @@
   until: set_deployment_client.rc == 0
   changed_when: set_deployment_client.rc == 0
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
   ignore_errors: yes
