@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2018 Splunk
+# Copyright 2018-2020 Splunk
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -36,6 +37,7 @@ if "windows" in PLATFORM or "cygwin" in PLATFORM:
     PLATFORM = "windows"
 else:
     PLATFORM = "linux"
+JAVA_VERSION_WHITELIST = frozenset(("oracle:8", "openjdk:8", "openjdk:9", "openjdk:11"))
 
 roleNames = [
     'splunk_cluster_master', # (if it exists, set up indexer clustering)
@@ -116,26 +118,6 @@ def getDefaultVars():
     defaultVars["splunk"]["preferred_captaincy"] = False if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', "").lower() == "false" else True
     defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
 
-    # Check required Java installation
-    java_version = os.environ.get("JAVA_VERSION", "").lower()
-    if java_version in ['oracle:8', 'openjdk:8', 'openjdk:9','openjdk:11']:
-        defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
-        if java_version == "oracle:8":
-            defaultVars["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz")
-            try:
-                defaultVars["java_update_version"] = re.search("jdk-8u(\d+)-linux-x64.tar.gz", defaultVars["java_download_url"]).group(1)
-            except:
-                raise Exception("Invalid Java download URL format")
-        elif java_version == "openjdk:11":
-            defaultVars["java_download_url"] = os.environ.get(
-                "JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz")
-            try:
-                defaultVars["java_update_version"] = re.search(
-                    "openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", defaultVars["java_download_url"]).group(1)
-            except:
-                raise Exception("Invalid Java download URL format")
-
-
     # Lower indexer search/replication factor when indexer hosts less than 3
     if "splunk_indexer" in inventory and "hosts" in inventory["splunk_indexer"] and len(inventory["splunk_indexer"]["hosts"]) < 3:
         defaultVars["splunk"]["idxc"]["search_factor"] = 1
@@ -148,21 +130,50 @@ def getDefaultVars():
         defaultVars["splunk"]["multisite_search_factor_origin"] = 1
         defaultVars["splunk"]["multisite_search_factor_total"] = 1
 
+    getJava(defaultVars)
     getSplunkBuild(defaultVars)
+    getSplunkbaseToken(defaultVars)
     getSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
     return defaultVars
 
+def getJava(vars_scope):
+    # Parse and set Java installation parameters
+    vars_scope["java_version"] = None
+    vars_scope["java_download_url"] = None
+    vars_scope["java_update_version"] = None
+    java_version = os.environ.get("JAVA_VERSION")
+    if not java_version:
+        return
+    java_version = java_version.lower()
+    if java_version not in JAVA_VERSION_WHITELIST:
+        raise Exception("Invalid Java version supplied, supported versions are: {}".format(JAVA_VERSION_WHITELIST))
+    vars_scope["java_version"] = java_version
+    # TODO: We can probably DRY this up
+    if java_version == "oracle:8":
+        vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz")
+        try:
+            vars_scope["java_update_version"] = re.search("jdk-8u(\d+)-linux-x64.tar.gz", vars_scope["java_download_url"]).group(1)
+        except:
+            raise Exception("Invalid Java download URL format")
+    elif java_version == "openjdk:11":
+        vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz")
+        try:
+            vars_scope["java_update_version"] = re.search("openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", vars_scope["java_download_url"]).group(1)
+        except:
+            raise Exception("Invalid Java download URL format")
+
 def getSplunkBuild(vars_scope):
-    vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"]["build_location"])
+    # Determine the location of the Splunk build
+    vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"].get("build_location"))
+    vars_scope["splunk"]["build_remote_src"] = False
     if vars_scope["splunk"]["build_location"] and vars_scope["splunk"]["build_location"].startswith("http"):
         vars_scope["splunk"]["build_remote_src"] = True
-    else:
-        vars_scope["splunk"]["build_remote_src"] = False
 
-def getSplunkApps(vars_scope):
-    splunkbase_username = (vars_scope["splunkbase_username"] if "splunkbase_username" in vars_scope else None) or os.environ.get("SPLUNKBASE_USERNAME") or None
-    splunkbase_password = (vars_scope["splunkbase_password"] if "splunkbase_password" in vars_scope else None) or os.environ.get("SPLUNKBASE_PASSWORD") or None
+def getSplunkbaseToken(vars_scope):
+    # Authenticate to SplunkBase and modify the variable scope in-place to utilize temporary session token  
+    splunkbase_username = os.environ.get("SPLUNKBASE_USERNAME", vars_scope.get("splunkbase_username"))
+    splunkbase_password = os.environ.get("SPLUNKBASE_PASSWORD", vars_scope.get("splunkbase_password"))
     if splunkbase_username and splunkbase_password:
         resp = requests.post("https://splunkbase.splunk.com/api/account:login/",
                              data={"username": splunkbase_username, "password": splunkbase_password})
@@ -171,14 +182,22 @@ def getSplunkApps(vars_scope):
         output = resp.content
         splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
         vars_scope["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
-    # calculate apps to install as union of defaults and environment variable
+
+def getSplunkApps(vars_scope):
+    # Determine the set of Splunk apps to install as union of defaults.yml and environment variables
+    appSet = set()
     if not "apps_location" in vars_scope["splunk"]:
         vars_scope["splunk"]["apps_location"] = []
+    # From default.yml
     elif type(vars_scope["splunk"]["apps_location"]) == str:
-        vars_scope["splunk"]["apps_location"] = vars_scope["splunk"]["apps_location"].split(",")
-    apps = os.environ.get("SPLUNK_APPS_URL", None)
+        appSet.update(vars_scope["splunk"]["apps_location"].split(","))
+    elif type(vars_scope["splunk"]["apps_location"]) == list:
+        appSet.update(vars_scope["splunk"]["apps_location"])
+    # From environment variables
+    apps = os.environ.get("SPLUNK_APPS_URL")
     if apps:
-        vars_scope["splunk"]["apps_location"].extend(apps.split(","))
+        appSet.update(apps.split(","))
+    vars_scope["splunk"]["apps_location"] = list(appSet)
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])

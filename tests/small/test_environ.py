@@ -33,6 +33,10 @@ def test_getVars(regex, result):
         r = environ.getVars(regex)
         assert r == result
 
+@pytest.mark.skip(reason="TODO")
+def test_getSplunkInventory():
+    pass
+
 @patch('environ.loadDefaultSplunkVariables', return_value={"splunk": {"build_location": None}})
 @patch('environ.overrideEnvironmentVars')
 def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVariables):
@@ -42,12 +46,162 @@ def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVari
     retval = environ.getDefaultVars()
     assert "splunk" in retval
 
-def test_getRandomString():
-    '''
-    Test coverage for getting random string
-    '''
-    word = environ.getRandomString()
-    assert len(word) == 6
+@pytest.mark.parametrize(("os_env", "java_version", "java_download_url", "java_update_version"),
+                         [
+                            ({}, None, None, None),
+                            # Check environment variable parameters
+                            ({"JAVA": "oracle:8"}, None, None, None),
+                            ({"JAVA_VERSION": "openjdk:8"}, "openjdk:8", None, None),
+                            ({"JAVA_VERSION": "openjdk:9"}, "openjdk:9", None, None),
+                            ({"JAVA_VERSION": "oracle:8"}, "oracle:8", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz", "141"),
+                            ({"JAVA_VERSION": "ORACLE:8"}, "oracle:8", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz", "141"),
+                            ({"JAVA_VERSION": "openjdk:11"}, "openjdk:11", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz", "11.0.2"),
+                            ({"JAVA_VERSION": "oPenJdK:11"}, "openjdk:11", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz", "11.0.2"),
+                            ({"JAVA_VERSION": "oracle:8", "JAVA_DOWNLOAD_URL": "https://java/jdk-8u9000-linux-x64.tar.gz"}, "oracle:8", "https://java/jdk-8u9000-linux-x64.tar.gz", "9000"),
+                            ({"JAVA_VERSION": "openjdk:11", "JAVA_DOWNLOAD_URL": "https://java/openjdk-11.11.11_linux-x64_bin.tar.gz"}, "openjdk:11", "https://java/openjdk-11.11.11_linux-x64_bin.tar.gz", "11.11.11"),
+                         ]
+                        )
+def test_getJava(os_env, java_version, java_download_url, java_update_version):
+    vars_scope = {"splunk": {}}
+    with patch("os.environ", new=os_env):
+        environ.getJava(vars_scope)
+    assert vars_scope["java_version"] == java_version
+    assert vars_scope["java_download_url"] == java_download_url
+    assert vars_scope["java_update_version"] == java_update_version
+
+@pytest.mark.parametrize(("os_env", "java_version", "java_download_url", "err_msg"),
+                         [
+                            ({"JAVA_VERSION": "oracle:3"}, None, None, "Invalid Java version supplied"),
+                            ({"JAVA_VERSION": "openjdk:20"}, None, None, "Invalid Java version supplied"),
+                            ({"JAVA_VERSION": "oracle:8", "JAVA_DOWNLOAD_URL": "https://java/jdk-8u9000.tar.gz"}, "oracle:8", "https://java/jdk-8u9000.tar.gz", "Invalid Java download URL format"),
+                            ({"JAVA_VERSION": "openjdk:11", "JAVA_DOWNLOAD_URL": "https://java/openjdk-11.tar.gz"}, "openjdk:11", "https://java/openjdk-11.tar.gz", "Invalid Java download URL format"),
+                         ]
+                        )
+def test_getJava_exception(os_env, java_version, java_download_url, err_msg):
+    vars_scope = {"splunk": {}}
+    with patch("os.environ", new=os_env):
+        try:
+            environ.getJava(vars_scope)
+            assert False
+        except Exception as e:
+            assert True
+            assert err_msg in str(e)
+    assert vars_scope["java_version"] == java_version
+    assert vars_scope["java_download_url"] == java_download_url
+    assert vars_scope["java_update_version"] == None
+
+@pytest.mark.parametrize(("default_yml", "os_env", "remote_src", "build"),
+                         [
+                            ({}, {}, False, None),
+                            # Check default.yml parameters
+                            ({"buildlocation": "http://server/file.tgz"}, {}, False, None),
+                            ({"build_location": None}, {}, False, None),
+                            ({"build_location": ""}, {}, False, ""),
+                            ({"build_location": "/path/to/file.tgz"}, {}, False, "/path/to/file.tgz"),
+                            ({"build_location": "http://server/file.tgz"}, {}, True, "http://server/file.tgz"),
+                            ({"build_location": "https://server/file.tgz"}, {}, True, "https://server/file.tgz"),
+                            # Check environment variable parameters
+                            ({}, {"SPLUNK_BUILD": "http://server/file.tgz"}, False, None),
+                            ({}, {"SPLUNK_BUILD_URL": None}, False, None),
+                            ({}, {"SPLUNK_BUILD_URL": ""}, False, ""),
+                            ({}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz"}, False, "/path/to/file.tgz"),
+                            ({}, {"SPLUNK_BUILD_URL": "http://server/file.tgz"}, True, "http://server/file.tgz"),
+                            ({}, {"SPLUNK_BUILD_URL": "https://server/file.tgz"}, True, "https://server/file.tgz"),
+                            # Check order of precedence
+                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "https://server/file2.tgz"}, True, "https://server/file2.tgz"),
+                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz"}, False, "/path/to/file.tgz"),
+                         ]
+                        )
+def test_getSplunkBuild(default_yml, os_env, remote_src, build):
+    vars_scope = dict()
+    vars_scope["splunk"] = default_yml
+    with patch("os.environ", new=os_env):
+        environ.getSplunkBuild(vars_scope)
+    assert type(vars_scope["splunk"]["build_remote_src"]) == bool
+    assert vars_scope["splunk"]["build_remote_src"] == remote_src
+    assert vars_scope["splunk"]["build_location"] == build
+
+@pytest.mark.parametrize(("default_yml", "trigger_splunkbase"),
+                         [
+                            ({}, False),
+                            ({"splunkbase_username": "ocho"}, False),
+                            ({"splunkbase_password": "cinco"}, False),
+                            ({"splunkbase_username": "ocho", "splunkbase_password": "cinco"}, True),
+                            ({"splunkbase_username": "", "splunkbase_password": ""}, False),
+                         ]
+                        )
+def test_getSplunkbaseToken(default_yml, trigger_splunkbase):
+    vars_scope = default_yml
+    with patch("environ.requests.post") as mock_post:
+        mock_post.return_value = MagicMock(status_code=200, content="<id>123abc</id>")
+        with patch("os.environ", new=dict()):
+            environ.getSplunkbaseToken(vars_scope)
+        # Make sure Splunkbase token is populated when appropriate
+        if trigger_splunkbase:
+            mock_post.assert_called_with("https://splunkbase.splunk.com/api/account:login/", data={"username": "ocho", "password": "cinco"})
+            assert vars_scope.get("splunkbase_token") == "123abc"
+        else:
+            mock_post.assert_not_called()
+            assert not vars_scope.get("splunkbase_token")
+
+def test_getSplunkbaseToken_exception():
+    with patch("environ.requests.post") as mock_post:
+        mock_post.return_value = MagicMock(status_code=400, content="error")
+        try:
+            environ.getSplunkbaseToken({"splunkbase_username": "ocho", "splunkbase_password": "cinco"})
+            assert False
+        except Exception as e:
+            assert True
+            assert "Invalid Splunkbase credentials" in str(e)
+
+@pytest.mark.parametrize(("default_yml", "os_env", "apps_count"),
+                         [
+                            # Check null parameters
+                            ({}, {}, 0),
+                            # Check default.yml parameters
+                            ({"app_location": []}, {}, 0),
+                            ({"app_location": ["a"]}, {}, 0),
+                            ({"app_location": ["a", "b", "c"]}, {}, 0),
+                            ({"apps_location": []}, {}, 0),
+                            ({"apps_location": ["a"]}, {}, 1),
+                            ({"apps_location": ["a", "b", "c"]}, {}, 3),
+                            ({"apps_location": "a"}, {}, 1),
+                            ({"apps_location": "a,b,c,d"}, {}, 4),
+                            # Check environment variable parameters
+                            ({}, {"SPLUNK_APPS": None}, 0),
+                            ({}, {"SPLUNK_APPS": "hi"}, 0),
+                            ({}, {"SPLUNK_APPS_URL": "hi"}, 1),
+                            ({}, {"SPLUNK_APPS_URL": "a,b,ccccc,dd"}, 4),
+                            # Check the union combination of default.yml + environment variables
+                            ### Invalid 'app_location' variable name in default.yml
+                            ({"app_location": []}, {"SPLUNK_APPS_URL": None}, 0),
+                            ({"app_location": ["a"]}, {"SPLUNK_APPS_URL": "a"}, 1),
+                            ({"app_location": ["a", "b", "c"]}, {"SPLUNK_APPS_URL": "a,bb"}, 2),
+                            ### Invalid 'SPLUNK_APP_URL' variable name in env vars
+                            ({"apps_location": ["x"]}, {"SPLUNK_APP_URL": "a"}, 1),
+                            ({"apps_location": ["x", "y"]}, {"SPLUNK_APP_URL": "a,bb"}, 2),
+                            ({"apps_location": "x,y,z"}, {"SPLUNK_APP_URL": "a,bb"}, 3),
+                            ### Correct variable names
+                            ({"apps_location": ["x"]}, {"SPLUNK_APPS_URL": "a"}, 2),
+                            ({"apps_location": ["x", "y"]}, {"SPLUNK_APPS_URL": "a,bb"}, 4),
+                            ({"apps_location": "x,y,z"}, {"SPLUNK_APPS_URL": "a,bb"}, 5),
+                            ### Only return unique set of apps
+                            ({"apps_location": ["x"]}, {"SPLUNK_APPS_URL": "x"}, 1),
+                            ({"apps_location": ["x", "y"]}, {"SPLUNK_APPS_URL": "a,bb,y"}, 4),
+                            ({"apps_location": "x,y,z"}, {"SPLUNK_APPS_URL": "x,yy,a,z"}, 5),
+                         ]
+                        )
+def test_getSplunkApps(default_yml, os_env, apps_count):
+    vars_scope = dict()
+    vars_scope["splunk"] = default_yml
+    with patch("os.environ", new=os_env):
+        environ.getSplunkApps(vars_scope)
+    assert type(vars_scope["splunk"]["apps_location"]) == list
+    assert len(vars_scope["splunk"]["apps_location"]) == apps_count
+
+@pytest.mark.skip(reason="TODO")
+def test_overrideEnvironmentVars():
+    pass
 
 @pytest.mark.parametrize(("filepath", "result"),
                          [
@@ -59,58 +213,45 @@ def test_getRandomString():
                          ]
                         )
 def test_convert_path_windows_to_nix(filepath, result):
-    '''
-    Unit tests
-    '''
     outcome = environ.convert_path_windows_to_nix(filepath)
     assert outcome == result
 
-@pytest.mark.parametrize(("vars_scope", "trigger_splunkbase", "os_env", "apps_count"),
-                         [
-                            # Check variety of splunkbase parameters
-                            ({}, False, {}, 0),
-                            ({"splunkbase_username": "ocho"}, False, {}, 0),
-                            ({"splunkbase_password": "cinco"}, False, {}, 0),
-                            ({"splunkbase_username": "ocho", "splunkbase_password": "cinco"}, True, {}, 0),
-                            # Check variety of environment variable parameters
-                            ({}, False, {"SPLUNK_APPS": "hi"}, 0),
-                            ({}, False, {"SPLUNK_APPS_URL": "hi"}, 1),
-                            ({}, False, {"SPLUNK_APPS_URL": "a,b,ccccc,dd"}, 4),
-                            # Sanity check the combination of splunkbase params + env vars work
-                            ({"splunkbase_username": "ocho"}, False, {"SPLUNKBASE_USERNAME": "qwerty"}, 0),
-                            ({"splunkbase_password": "cinco"}, False, {"SPLUNKBASE_PASSWORD": "qwerty"}, 0),
-                            ({"splunkbase_username": "ocho"}, True, {"SPLUNKBASE_PASSWORD": "cinco"}, 0),
-                            ({"splunkbase_password": "cinco"}, True, {"SPLUNKBASE_USERNAME": "ocho"}, 0),
-                            ({}, True, {"SPLUNKBASE_USERNAME": "ocho", "SPLUNKBASE_PASSWORD": "cinco"}, 0),
-                            ({"splunkbase_username": "ocho"}, False, {"SPLUNKBASE_USERNAME": "qwerty", "SPLUNK_APPS_URL": "a,b,dd"}, 3),
-                            ({"splunkbase_password": "cinco"}, False, {"SPLUNKBASE_PASSWORD": "qwerty", "SPLUNK_APPS_URL": "a,b,dd"}, 3),
-                            ({"splunkbase_username": "ocho"}, True, {"SPLUNKBASE_PASSWORD": "cinco", "SPLUNK_APPS_URL": "a,b,dd"}, 3),
-                            ({"splunkbase_password": "cinco"}, True, {"SPLUNKBASE_USERNAME": "ocho", "SPLUNK_APPS_URL": "a,b,dd"}, 3),
-                            ({}, True, {"SPLUNKBASE_USERNAME": "ocho", "SPLUNKBASE_PASSWORD": "cinco", "SPLUNK_APPS_URL": "a,b,dd"}, 3),
-                         ]
-                        )
-def test_getSplunkApps(vars_scope, trigger_splunkbase, os_env, apps_count):
-    vars_scope["splunk"] = {}
-    with patch("environ.requests.post") as mock_post:
-        mock_post.return_value = MagicMock(status_code=200, content="<id>123abc</id>")
-        with patch("os.environ", new=os_env):
-            environ.getSplunkApps(vars_scope)
-        # Make sure Splunkbase token is populated when appropriate
-        if trigger_splunkbase:
-            mock_post.assert_called_with("https://splunkbase.splunk.com/api/account:login/", data={"username": "ocho", "password": "cinco"})
-            assert vars_scope.get("splunkbase_token") == "123abc"
-        else:
-            mock_post.assert_not_called()
-            assert not vars_scope.get("splunkbase_token")
-    # Check that the SPLUNK_APPS_URL gets assigned
-    assert len(vars_scope["splunk"].get("apps_location")) == apps_count
+@pytest.mark.skip(reason="TODO")
+def test_getUFSplunkVariables():
+    pass
 
-def test_getSplunkApps_exception():
-    with patch("environ.requests.post") as mock_post:
-        mock_post.return_value = MagicMock(status_code=400, content="error")
-        try:
-            environ.getSplunkApps({"splunkbase_username": "ocho", "splunkbase_password": "cinco"})
-            assert False
-        except Exception as e:
-            assert True
-            assert "Invalid Splunkbase credentials" in str(e)
+def test_getRandomString():
+    word = environ.getRandomString()
+    assert len(word) == 6
+
+@pytest.mark.skip(reason="TODO")
+def test_merge_dict():
+    pass
+
+@pytest.mark.skip(reason="TODO")
+def test_mergeDefaultSplunkVariables():
+    pass
+
+@pytest.mark.skip(reason="TODO")
+def test_loadDefaultSplunkVariables():
+    pass
+
+@pytest.mark.skip(reason="TODO")
+def test_loadHostVars():
+    pass
+
+@pytest.mark.skip(reason="TODO")
+def test_obfuscate_vars():
+    pass
+
+@pytest.mark.skip(reason="TODO")
+def test_create_parser():
+    pass
+
+@pytest.mark.skip(reason="TODO")
+def test_prep_for_yaml_out():
+    pass
+
+@pytest.mark.skip(reason="TODO")
+def test_main():
+    pass
