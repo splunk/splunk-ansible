@@ -5,6 +5,6 @@
     state: touch
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    mode: "u=rw,g=,o="
+    mode: 0660
   become: yes
   become_user: "{{ splunk.user }}"
