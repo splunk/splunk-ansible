@@ -15,7 +15,7 @@
   until: set_multisite_master.rc == 0
   changed_when: set_multisite_master.rc == 0
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   ignore_errors: yes
   notify:
     - Restart the splunkd service

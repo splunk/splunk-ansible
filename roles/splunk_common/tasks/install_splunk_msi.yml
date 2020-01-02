@@ -4,4 +4,4 @@
   register: install_result
   until: install_result is succeeded
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"

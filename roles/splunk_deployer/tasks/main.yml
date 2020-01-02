@@ -30,8 +30,8 @@
   no_log: "{{ hide_password }}"
   register: task_result
   until: task_result.rc == 0
-  retries: "{{ retry_num }}"
-  delay: "{{ shc_bootstrap_delay }}"
+  retries: "{{ shc_sync_retry_num }}"
+  delay: "{{ retry_delay }}"
   when:
     - splunk.search_head_cluster
     - splunk.apps_location

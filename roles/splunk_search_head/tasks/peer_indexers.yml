@@ -12,7 +12,7 @@
   register: set_indexer_as_peer
   until: set_indexer_as_peer.rc == 0 or set_indexer_as_peer.rc == 24
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   changed_when: set_indexer_as_peer.rc == 0
   failed_when: set_indexer_as_peer.rc != 0 and 'already exists' not in set_indexer_as_peer.stderr
   notify:

@@ -13,8 +13,8 @@
     src: "{{ java_download_url }}"
     dest: /opt/container_artifact
     remote_src: yes
-  retries: 5
-  delay: 10
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
   when:
     - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes

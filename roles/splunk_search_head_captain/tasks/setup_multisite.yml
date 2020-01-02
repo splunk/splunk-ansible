@@ -15,7 +15,7 @@
   until: set_new_master.rc == 0 or (set_new_master.rc == 22 and  "Use 'splunk edit cluster-master' to edit information for this" in set_new_master.stderr)
   changed_when: set_new_master.rc == 0
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   ignore_errors: yes
   notify:
     - Restart the splunkd service
@@ -35,7 +35,7 @@
   until: set_associated_site.rc == 0 or (set_associated_site.rc == 22 and 'No change in master or secret or site' in set_associated_site.stderr)
   changed_when: set_associated_site.rc == 0
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   ignore_errors: yes
   notify:
     - Restart the splunkd service

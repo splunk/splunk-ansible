@@ -1,9 +1,10 @@
 ansible_ssh_user: "splunk"
 ansible_pre_tasks:
 ansible_post_tasks:
-delay_num: 3
-shc_bootstrap_delay: 30
-retry_num: 50
+retry_delay: 3
+retry_num: 60
+wait_for_splunk_retry_num: 60
+shc_sync_retry_num: 60
 
 config:
     max_retries: 3
@@ -72,10 +73,10 @@ splunk:
         dfw_num_slots_enabled: False
         spark_master_host: "127.0.0.1"
         spark_master_webui_port: 8080
-    multisite_replication_factor_origin: 3
+    multisite_replication_factor_origin: 2
     multisite_replication_factor_total: 3
-    multisite_search_factor_origin: 3
-    multisite_search_factor_total: 3
+    multisite_search_factor_origin: 1
+    multisite_search_factor_total: 2
 
     enable_service: False
     service_name: "splunk"

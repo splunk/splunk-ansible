@@ -6,8 +6,8 @@
     timeout: 30
   register: download_result
   until: download_result.status_code == 200
-  retries: 5
-  delay: 10
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
 
 - name: Unzip the Java distribution
   unarchive:
