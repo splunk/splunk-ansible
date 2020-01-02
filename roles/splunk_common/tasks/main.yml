@@ -38,8 +38,7 @@
 
 - include_tasks: install_java.yml
   when:
-    - java_version is defined
-    - first_run | bool
+    - java_version is defined and java_version
 
 # This needs to be done before any encrypted passkeys are generated
 - include_tasks: set_splunk_secret.yml
