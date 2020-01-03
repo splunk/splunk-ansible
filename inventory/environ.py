@@ -95,20 +95,9 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
 def getDefaultVars():
     defaultVars = loadDefaultSplunkVariables()
     overrideEnvironmentVars(defaultVars)
-    defaultVars["splunk"]["license_master_included"] = True if os.environ.get('SPLUNK_LICENSE_MASTER_URL', False) else False
-    defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
-    defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
-    defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
-    defaultVars["splunk"]["search_head_cluster_url"] = os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', None)
-    # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
-    defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', 'splunk.lic')
-    if defaultVars["splunk"]["license_uri"] and '*' in defaultVars["splunk"]["license_uri"]:
-        defaultVars["splunk"]["wildcard_license"] = True
-    else:
-        defaultVars["splunk"]["wildcard_license"] = False
-    defaultVars["splunk"]["nfr_license"] = os.environ.get('SPLUNK_NFR_LICENSE', '/tmp/nfr_enterprise.lic')
-    defaultVars["splunk"]["ignore_license"] = os.environ.get('SPLUNK_IGNORE_LICENSE', False)
-    defaultVars["splunk"]["license_download_dest"] = os.environ.get('SPLUNK_LICENSE_INSTALL_PATH', '/tmp/splunk.lic')
+
+    getDistributedTopology(defaultVars)
+    getLicenses(defaultVars)
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
     defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
     defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
@@ -117,12 +106,6 @@ def getDefaultVars():
     #If the value is set, we would use that, otherwise, return True
     defaultVars["splunk"]["preferred_captaincy"] = False if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', "").lower() == "false" else True
     defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
-
-    # Lower indexer search/replication factor when indexer hosts less than 3
-    if "splunk_indexer" in inventory and "hosts" in inventory["splunk_indexer"] and len(inventory["splunk_indexer"]["hosts"]) < 3:
-        defaultVars["splunk"]["idxc"]["search_factor"] = 1
-        defaultVars["splunk"]["idxc"]["replication_factor"] = 1
-
     #When sites are specified, assume multisite
     if "splunk.site" in inventory:
         defaultVars["splunk"]["multisite_replication_factor_origin"] = 1
@@ -136,6 +119,25 @@ def getDefaultVars():
     getSplunkApps(defaultVars)
     getUFSplunkVariables(defaultVars)
     return defaultVars
+
+def getDistributedTopology(vars_scope):
+    # Parse and set parameters to define topology if this is a distributed environment
+    vars_scope["splunk"]["license_master_included"] = bool(os.environ.get("SPLUNK_LICENSE_MASTER_URL"))
+    vars_scope["splunk"]["deployer_included"] = bool(os.environ.get("SPLUNK_DEPLOYER_URL"))
+    vars_scope["splunk"]["indexer_cluster"] = bool(os.environ.get("SPLUNK_CLUSTER_MASTER_URL"))
+    vars_scope["splunk"]["search_head_cluster"] = bool(os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL"))
+    vars_scope["splunk"]["search_head_cluster_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL")
+
+def getLicenses(vars_scope):
+    # Determine the location of Splunk licenses to install at start-up time
+    # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
+    vars_scope["splunk"]["license_uri"] = os.environ.get("SPLUNK_LICENSE_URI", "splunk.lic")
+    vars_scope["splunk"]["wildcard_license"] = False
+    if vars_scope["splunk"]["license_uri"] and '*' in vars_scope["splunk"]["license_uri"]:
+        vars_scope["splunk"]["wildcard_license"] = True
+    vars_scope["splunk"]["nfr_license"] = os.environ.get("SPLUNK_NFR_LICENSE", "/tmp/nfr_enterprise.lic")
+    vars_scope["splunk"]["ignore_license"] = bool(os.environ.get("SPLUNK_IGNORE_LICENSE"))
+    vars_scope["splunk"]["license_download_dest"] = os.environ.get("SPLUNK_LICENSE_INSTALL_PATH", "/tmp/splunk.lic")
 
 def getJava(vars_scope):
     # Parse and set Java installation parameters
@@ -153,13 +155,13 @@ def getJava(vars_scope):
     if java_version == "oracle:8":
         vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz")
         try:
-            vars_scope["java_update_version"] = re.search("jdk-8u(\d+)-linux-x64.tar.gz", vars_scope["java_download_url"]).group(1)
+            vars_scope["java_update_version"] = re.search(r"jdk-8u(\d+)-linux-x64.tar.gz", vars_scope["java_download_url"]).group(1)
         except:
             raise Exception("Invalid Java download URL format")
     elif java_version == "openjdk:11":
         vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz")
         try:
-            vars_scope["java_update_version"] = re.search("openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", vars_scope["java_download_url"]).group(1)
+            vars_scope["java_update_version"] = re.search(r"openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", vars_scope["java_download_url"]).group(1)
         except:
             raise Exception("Invalid Java download URL format")
 
@@ -266,15 +268,15 @@ def convert_path_windows_to_nix(filepath):
         return filepath
 
 def getUFSplunkVariables(vars_scope):
-    if os.environ.get('SPLUNK_DEPLOYMENT_SERVER', False):
-        vars_scope["splunk"]["deployment_server"] = os.environ.get('SPLUNK_DEPLOYMENT_SERVER')
-    if os.environ.get('SPLUNK_ADD', False):
-        vars_scope["splunk"]["add"] = os.environ.get('SPLUNK_ADD').split(',')
-    if os.environ.get('SPLUNK_BEFORE_START_CMD', False):
-        vars_scope["splunk"]["before_start_cmd"] = os.environ.get('SPLUNK_BEFORE_START_CMD').split(',')
-    if os.environ.get('SPLUNK_CMD', False):
-        vars_scope["splunk"]["cmd"] = os.environ.get('SPLUNK_CMD').split(',')
-    vars_scope["docker_version"] = '18.06.0'
+    # Set or override specific environment variables for universal forwarders
+    if os.environ.get("SPLUNK_DEPLOYMENT_SERVER"):
+        vars_scope["splunk"]["deployment_server"] = os.environ.get("SPLUNK_DEPLOYMENT_SERVER")
+    if os.environ.get("SPLUNK_ADD"):
+        vars_scope["splunk"]["add"] = os.environ.get("SPLUNK_ADD").split(",")
+    if os.environ.get("SPLUNK_BEFORE_START_CMD"):
+        vars_scope["splunk"]["before_start_cmd"] = os.environ.get("SPLUNK_BEFORE_START_CMD").split(",")
+    if os.environ.get("SPLUNK_CMD"):
+        vars_scope["splunk"]["cmd"] = os.environ.get("SPLUNK_CMD").split(",")
 
 def getRandomString():
     char_set = string.ascii_uppercase + string.digits

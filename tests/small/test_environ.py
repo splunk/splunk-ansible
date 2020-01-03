@@ -46,6 +46,48 @@ def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVari
     retval = environ.getDefaultVars()
     assert "splunk" in retval
 
+@pytest.mark.parametrize(("os_env", "license_master_included", "deployer_included", "indexer_cluster", "search_head_cluster", "search_head_cluster_url"),
+                         [
+                            ({}, False, False, False, False, None),
+                            # Check individual environment variables
+                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, True, False, False, False, None),
+                            ({"SPLUNK_DEPLOYER_URL": "something"}, False, True, False, False, None),
+                            ({"SPLUNK_CLUSTER_MASTER_URL": "something"}, False, False, True, False, None),
+                            ({"SPLUNK_SEARCH_HEAD_CAPTAIN_URL": "something"}, False, False, False, True, "something"),
+                         ]
+                        )
+def test_getDistributedTopology(os_env, license_master_included, deployer_included, indexer_cluster, search_head_cluster, search_head_cluster_url):
+    vars_scope = {"splunk": {}}
+    with patch("os.environ", new=os_env):
+        environ.getDistributedTopology(vars_scope)
+    assert vars_scope["splunk"]["license_master_included"] == license_master_included
+    assert vars_scope["splunk"]["deployer_included"] == deployer_included
+    assert vars_scope["splunk"]["indexer_cluster"] == indexer_cluster
+    assert vars_scope["splunk"]["search_head_cluster"] == search_head_cluster
+    assert vars_scope["splunk"]["search_head_cluster_url"] == search_head_cluster_url
+
+@pytest.mark.parametrize(("os_env", "license_uri", "wildcard_license", "nfr_license", "ignore_license", "license_download_dest"),
+                         [
+                            ({}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
+                            # Check individual environment variables
+                            ({"SPLUNK_LICENSE_URI": "http://web/license.lic"}, "http://web/license.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_LICENSE_URI": "/mnt/*.lic"}, "/mnt/*.lic", True, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_NFR_LICENSE": "/mnt/nfr.lic"}, "splunk.lic", False, "/mnt/nfr.lic", False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_IGNORE_LICENSE": ""}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_IGNORE_LICENSE": "true"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", True, "/tmp/splunk.lic"),
+                            ({"SPLUNK_LICENSE_INSTALL_PATH": "/Downloads/"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/Downloads/"),
+                         ]
+                        )
+def test_getLicenses(os_env, license_uri, wildcard_license, nfr_license, ignore_license, license_download_dest):
+    vars_scope = {"splunk": {}}
+    with patch("os.environ", new=os_env):
+        environ.getLicenses(vars_scope)
+    assert vars_scope["splunk"]["license_uri"] == license_uri
+    assert vars_scope["splunk"]["wildcard_license"] == wildcard_license
+    assert vars_scope["splunk"]["nfr_license"] == nfr_license
+    assert vars_scope["splunk"]["ignore_license"] == ignore_license
+    assert vars_scope["splunk"]["license_download_dest"] == license_download_dest
+
 @pytest.mark.parametrize(("os_env", "java_version", "java_download_url", "java_update_version"),
                          [
                             ({}, None, None, None),
@@ -216,9 +258,31 @@ def test_convert_path_windows_to_nix(filepath, result):
     outcome = environ.convert_path_windows_to_nix(filepath)
     assert outcome == result
 
-@pytest.mark.skip(reason="TODO")
-def test_getUFSplunkVariables():
-    pass
+@pytest.mark.parametrize(("os_env", "deployment_server", "add", "before_start_cmd", "cmd"),
+                         [
+                            ({}, None, None, None, None),
+                            # Check environment variable parameters
+                            ({"SPLUNK_DEPLOYMENT_SERVER": ""}, None, None, None, None),
+                            ({"SPLUNK_DEPLOYMENT_SERVER": "something"}, "something", None, None, None),
+                            ({"SPLUNK_ADD": ""}, None, None, None, None),
+                            ({"SPLUNK_ADD": "echo 1"}, None, ["echo 1"], None, None),
+                            ({"SPLUNK_ADD": "echo 1,echo 2"}, None, ["echo 1", "echo 2"], None, None),
+                            ({"SPLUNK_BEFORE_START_CMD": ""}, None, None, None, None),
+                            ({"SPLUNK_BEFORE_START_CMD": "echo 1"}, None, None, ["echo 1"], None),
+                            ({"SPLUNK_BEFORE_START_CMD": "echo 1,echo 2"}, None, None, ["echo 1", "echo 2"], None),
+                            ({"SPLUNK_CMD": ""}, None, None, None, None),
+                            ({"SPLUNK_CMD": "echo 1"}, None, None, None, ["echo 1"]),
+                            ({"SPLUNK_CMD": "echo 1,echo 2"}, None, None, None, ["echo 1", "echo 2"]),
+                         ]
+                        )
+def test_getUFSplunkVariables(os_env, deployment_server, add, before_start_cmd, cmd):
+    vars_scope = {"splunk": {}}
+    with patch("os.environ", new=os_env):
+        environ.getUFSplunkVariables(vars_scope)
+    assert vars_scope["splunk"].get("deployment_server") == deployment_server
+    assert vars_scope["splunk"].get("add") == add
+    assert vars_scope["splunk"].get("before_start_cmd") == before_start_cmd
+    assert vars_scope["splunk"].get("cmd") == cmd
 
 def test_getRandomString():
     word = environ.getRandomString()
