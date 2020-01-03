@@ -1,5 +1,5 @@
 ---
-- name: Create {{ conf_directory }} directory if not existing
+- name: Create {{ conf_directory }} directory
   file:
     path: "{{ conf_directory }}"
     state: directory
@@ -7,14 +7,15 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Create {{ conf_file }} if not existing
-  copy:
-    dest: "{{ conf_directory }}/{{ conf_file }}"
-    mode: u=rw,g=,o=
+- name: Create {{ conf_file }}
+  file:
+    path: "{{ conf_directory }}/{{ conf_file }}"
+    state: touch
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    content: ""
-    force: no
+    mode: 0660
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - include_tasks: set_config_stanza.yml
   vars:
