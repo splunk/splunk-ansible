@@ -37,7 +37,7 @@ def test_getVars(regex, result):
 def test_getSplunkInventory():
     pass
 
-@patch('environ.loadDefaultSplunkVariables', return_value={"splunk": {"build_location": None}})
+@patch('environ.loadDefaultSplunkVariables', return_value={"splunk": {"http_port": 8000, "build_location": None}})
 @patch('environ.overrideEnvironmentVars')
 def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVariables):
     '''
@@ -45,6 +45,68 @@ def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVari
     '''
     retval = environ.getDefaultVars()
     assert "splunk" in retval
+
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check null parameters
+                ({}, {}, {"label": None, "secret": None}),
+                # Check default.yml parameters
+                ({"idxc": {}}, {}, {"label": None, "secret": None}),
+                ({"idxc": {"label": None}}, {}, {"label": None, "secret": None}),
+                ({"idxc": {"label": "1234"}}, {}, {"label": "1234", "secret": None}),
+                ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None}),
+                ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234"}),
+                # Check environment variable parameters
+                ({}, {"SPLUNK_IDXC_LABEL": ""}, {"label": "", "secret": None}),
+                ({}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None}),
+                ({}, {"SPLUNK_IDXC_SECRET": ""}, {"label": None, "secret": ""}),
+                ({}, {"SPLUNK_IDXC_SECRET": "abcd"}, {"label": None, "secret": "abcd"}),
+                # Check the union combination of default.yml + environment variables and order of precedence when overwriting
+                ({"idxc": {"label": "1234"}}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None}),
+                ({"idxc": {"secret": "abcd"}}, {"SPLUNK_IDXC_SECRET": "1234"}, {"label": None, "secret": "1234"}),
+            ]
+        )
+def test_getIndexerClustering(default_yml, os_env, output):
+    vars_scope = {"splunk": default_yml}
+    with patch("os.environ", new=os_env):
+        environ.getIndexerClustering(vars_scope)
+    assert type(vars_scope["splunk"]["idxc"]) == dict
+    assert vars_scope["splunk"]["idxc"] == output
+
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check null parameters
+                ({}, {}, {"label": None, "secret": None}),
+                # Check default.yml parameters
+                ({"shc": {}}, {}, {"label": None, "secret": None}),
+                ({"shc": {"label": None}}, {}, {"label": None, "secret": None}),
+                ({"shc": {"label": "1234"}}, {}, {"label": "1234", "secret": None}),
+                ({"shc": {"secret": None}}, {}, {"label": None, "secret": None}),
+                ({"shc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234"}),
+                # Check environment variable parameters
+                ({}, {"SPLUNK_SHC_LABEL": ""}, {"label": "", "secret": None}),
+                ({}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None}),
+                ({}, {"SPLUNK_SHC_SECRET": ""}, {"label": None, "secret": ""}),
+                ({}, {"SPLUNK_SHC_SECRET": "abcd"}, {"label": None, "secret": "abcd"}),
+                # Check the union combination of default.yml + environment variables and order of precedence when overwriting
+                ({"shc": {"label": "1234"}}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None}),
+                ({"shc": {"secret": "abcd"}}, {"SPLUNK_SHC_SECRET": "1234"}, {"label": None, "secret": "1234"}),
+            ]
+        )
+def test_getSearchHeadClustering(default_yml, os_env, output):
+    vars_scope = {"splunk": default_yml}
+    with patch("os.environ", new=os_env):
+        environ.getSearchHeadClustering(vars_scope)
+    assert type(vars_scope["splunk"]["shc"]) == dict
+    assert vars_scope["splunk"]["shc"] == output
+
+@pytest.mark.skip(reason="TODO")
+def test_getMultisite():
+    pass
+
+@pytest.mark.skip(reason="TODO")
+def test_getSplunkWebSSL():
+    pass
 
 @pytest.mark.parametrize(("os_env", "license_master_included", "deployer_included", "indexer_cluster", "search_head_cluster", "search_head_cluster_url"),
                          [
@@ -60,9 +122,13 @@ def test_getDistributedTopology(os_env, license_master_included, deployer_includ
     vars_scope = {"splunk": {}}
     with patch("os.environ", new=os_env):
         environ.getDistributedTopology(vars_scope)
+    assert type(vars_scope["splunk"]["license_master_included"]) == bool
     assert vars_scope["splunk"]["license_master_included"] == license_master_included
+    assert type(vars_scope["splunk"]["deployer_included"]) == bool
     assert vars_scope["splunk"]["deployer_included"] == deployer_included
+    assert type(vars_scope["splunk"]["indexer_cluster"]) == bool
     assert vars_scope["splunk"]["indexer_cluster"] == indexer_cluster
+    assert type(vars_scope["splunk"]["search_head_cluster"]) == bool
     assert vars_scope["splunk"]["search_head_cluster"] == search_head_cluster
     assert vars_scope["splunk"]["search_head_cluster_url"] == search_head_cluster_url
 
@@ -83,8 +149,10 @@ def test_getLicenses(os_env, license_uri, wildcard_license, nfr_license, ignore_
     with patch("os.environ", new=os_env):
         environ.getLicenses(vars_scope)
     assert vars_scope["splunk"]["license_uri"] == license_uri
+    assert type(vars_scope["splunk"]["wildcard_license"]) == bool
     assert vars_scope["splunk"]["wildcard_license"] == wildcard_license
     assert vars_scope["splunk"]["nfr_license"] == nfr_license
+    assert type(vars_scope["splunk"]["ignore_license"]) == bool
     assert vars_scope["splunk"]["ignore_license"] == ignore_license
     assert vars_scope["splunk"]["license_download_dest"] == license_download_dest
 
@@ -245,6 +313,53 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
 def test_overrideEnvironmentVars():
     pass
 
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check null parameters
+                ({}, {}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                # Check default.yml parameters
+                ({"dfs": {"enable": True}}, {}, {"enable": True, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"dfw_num_slots": 20}}, {}, {"enable": False, "dfw_num_slots": 20, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"dfw_num_slots": "15"}}, {}, {"enable": False, "dfw_num_slots": 15, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"dfc_num_slots": 20}}, {}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 20, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"dfc_num_slots": "15"}}, {}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 15, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"dfw_num_slots_enabled": True}}, {}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": True, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"spark_master_host": "10.0.0.1"}}, {}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "10.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"spark_master_webui_port": 8081}}, {}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8081}),
+                ({"dfs": {"spark_master_webui_port": "8082"}}, {}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8082}),
+                # Check environment variable parameters
+                ({}, {"SPLUNK_ENABLE_DFS": ""}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({}, {"SPLUNK_ENABLE_DFS": "true"}, {"enable": True, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({}, {"SPLUNK_ENABLE_DFS": "TRUE"}, {"enable": True, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({}, {"SPLUNK_DFW_NUM_SLOTS": "11"}, {"enable": False, "dfw_num_slots": 11, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({}, {"SPLUNK_DFC_NUM_SLOTS": "1"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 1, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({}, {"SPLUNK_DFW_NUM_SLOTS_ENABLED": ""}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({}, {"SPLUNK_DFW_NUM_SLOTS_ENABLED": "true"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": True, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({}, {"SPLUNK_DFW_NUM_SLOTS_ENABLED": "TRUE"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": True, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({}, {"SPARK_MASTER_HOST": "8.8.8.8"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "8.8.8.8", "spark_master_webui_port": 8080}),
+                ({}, {"SPARK_MASTER_WEBUI_PORT": "8888"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8888}),
+                # Check the union combination of default.yml + environment variables and order of precedence when overwriting
+                ({"dfs": {"enable": False}}, {"SPLUNK_ENABLE_DFS": "true"}, {"enable": True, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"dfw_num_slots": 100}}, {"SPLUNK_DFW_NUM_SLOTS": "101"}, {"enable": False, "dfw_num_slots": 101, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"dfc_num_slots": 100}}, {"SPLUNK_DFC_NUM_SLOTS": "101"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 101, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"dfw_num_slots_enabled": False}}, {"SPLUNK_DFW_NUM_SLOTS_ENABLED": "True"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": True, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8080}),
+                ({"dfs": {"spark_master_host": "10.0.0.1"}}, {"SPARK_MASTER_HOST": "8.8.8.8"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "8.8.8.8", "spark_master_webui_port": 8080}),
+                ({"dfs": {"spark_master_webui_port": 8082}}, {"SPARK_MASTER_WEBUI_PORT": "8888"}, {"enable": False, "dfw_num_slots": 10, "dfc_num_slots": 4, "dfw_num_slots_enabled": False, "spark_master_host": "127.0.0.1", "spark_master_webui_port": 8888}),
+            ]
+        )
+def test_getDFS(default_yml, os_env, output):
+    vars_scope = dict()
+    vars_scope["splunk"] = default_yml
+    with patch("os.environ", new=os_env):
+        environ.getDFS(vars_scope)
+    # Check typing
+    assert type(vars_scope["splunk"]["dfs"]["enable"]) == bool
+    assert type(vars_scope["splunk"]["dfs"]["dfw_num_slots"]) == int
+    assert type(vars_scope["splunk"]["dfs"]["dfc_num_slots"]) == int
+    assert type(vars_scope["splunk"]["dfs"]["dfw_num_slots_enabled"]) == bool
+    assert type(vars_scope["splunk"]["dfs"]["spark_master_webui_port"]) == int
+    assert vars_scope["splunk"]["dfs"] == output
+
 @pytest.mark.parametrize(("filepath", "result"),
                          [
                              ("C:\\opt\\splunk", "/opt/splunk"),
@@ -304,9 +419,23 @@ def test_loadDefaultSplunkVariables():
 def test_loadHostVars():
     pass
 
-@pytest.mark.skip(reason="TODO")
-def test_obfuscate_vars():
-    pass
+@pytest.mark.parametrize(("inputInventory", "outputInventory"),
+            [
+                # Verify null inputs
+                ({}, {}),
+                ({"all": {}}, {"all": {}}),
+                ({"all": {"vars": {}}}, {"all": {"vars": {}}}),
+                ({"all": {"vars": {"splunk": {}}}}, {"all": {"vars": {"splunk": {}}}}),
+                # Verify individual keys to obfuscate
+                ({"all": {"vars": {"splunk": {"password": "helloworld"}}}}, {"all": {"vars": {"splunk": {"password": "**************"}}}}),
+                ({"all": {"vars": {"splunk": {"shc": {"secret": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"shc": {"secret": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"smartstore": {"index": []}}}}}, {"all": {"vars": {"splunk": {"smartstore": {"index": []}}}}}),
+                ({"all": {"vars": {"splunk": {"smartstore": {"index": [{"s3": {"access_key": "1234", "secret_key": "abcd"}}]}}}}}, {"all": {"vars": {"splunk": {"smartstore": {"index": [{"s3": {"access_key": "**************", "secret_key": "**************"}}]}}}}}),
+            ]
+        )
+def test_obfuscate_vars(inputInventory, outputInventory):
+    result = environ.obfuscate_vars(inputInventory)
+    assert result == outputInventory
 
 @pytest.mark.skip(reason="TODO")
 def test_create_parser():
