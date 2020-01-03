@@ -313,14 +313,6 @@ def getDFS(vars_scope):
     dfs_vars["spark_master_host"] = os.environ.get("SPARK_MASTER_HOST", dfs_vars.get("spark_master_host", "127.0.0.1"))
     dfs_vars["spark_master_webui_port"] = int(os.environ.get("SPARK_MASTER_WEBUI_PORT", dfs_vars.get("spark_master_webui_port", 8080)))
 
-def convert_path_windows_to_nix(filepath):
-    """
-    Normalize all filepaths to Unix-style pathing 
-    """
-    if filepath.startswith("C:"):
-        filepath = re.sub(r"\\+", "/", filepath.lstrip("C:"))
-        return filepath
-
 def getUFSplunkVariables(vars_scope):
     """
     Set or override specific environment variables for universal forwarders
@@ -381,9 +373,10 @@ def mergeDefaultSplunkVariables(vars_scope, url):
         return vars_scope
     if url.lower().startswith('file://'):
         url = url[7:]
-    with open(url, 'r') as file:
-        file_content = file.read()
-        vars_scope = merge_dict(vars_scope, yaml.load(file_content, Loader=yaml.Loader))
+    if os.path.exists(url):
+        with open(url, 'r') as file:
+            file_content = file.read()
+            vars_scope = merge_dict(vars_scope, yaml.load(file_content, Loader=yaml.Loader))
     return vars_scope
 
 def loadDefaultSplunkVariables():
@@ -392,29 +385,33 @@ def loadDefaultSplunkVariables():
     In this way, we manage two different methods of loading the default file (which contains potentially sentive
     information
     '''
-    loaded_yaml = {}
-    ### Load the splunk defaults shipped with splunk-ansible
-    if os.environ.get("SPLUNK_ROLE", None) == "splunk_universal_forwarder":
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunkforwarder_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-            loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
-    else:
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-            loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
+    base = loadBaseDefaults()
+    # Load the defaults for the environment, starting with the "baked" files
+    yamls_to_load = []
+    if base.get("config") and base["config"].get("baked"):
+        files = base["config"]["baked"].split(",")
+        default_dir = base["config"].get("defaults_dir", "")
+        yamls_to_load.extend([os.path.join(default_dir, f.strip()) for f in files])
+    # Load the defaults for the environment, ending with URLs provided in environment vars
+    if base.get("config") and base["config"].get("env") and base["config"]["env"].get("var"):
+        urls = os.environ.get(base["config"]["env"]["var"]).split(",")
+        yamls_to_load.extend(urls)
+    # For each new YAML discovered, merge them with base in order so values get superseded
+    for yml in yamls_to_load:
+        base = mergeDefaultSplunkVariables(base, yml)
+    return base
 
-    ### Load the defaults for the environment
-    if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"]:
-        for f in loaded_yaml["config"]["baked"].split(','):
-            full_path = os.path.join(loaded_yaml["config"]["defaults_dir"], f.strip())
-            if os.path.exists(full_path):
-                with open(full_path, 'r') as file:
-                    file_content = file.read()
-                    loaded_yaml = merge_dict(loaded_yaml, yaml.load(file_content, Loader=yaml.Loader))
-
-    if "config" in loaded_yaml and loaded_yaml["config"] is not None and "env" in loaded_yaml["config"] and loaded_yaml["config"]["env"] is not None and "var" in loaded_yaml["config"]["env"] and loaded_yaml["config"]["env"]["var"] is not None and len(loaded_yaml["config"]["env"]["var"]) > 0:
-        urls = os.environ.get(loaded_yaml["config"]["env"]["var"], "")
-        for url in urls.split(','):
-            loaded_yaml = mergeDefaultSplunkVariables(loaded_yaml, url)
-    return loaded_yaml
+def loadBaseDefaults():
+    """
+    Load the base defaults shipped in splunk-ansible
+    """
+    yml = {}
+    filename = "splunk_defaults_{}.yml".format(PLATFORM)
+    if os.environ.get("SPLUNK_ROLE") is "splunk_universal_forwarder":
+        filename = "splunkforwarder_defaults_{}.yml".format(PLATFORM)
+    with open(os.path.join(HERE, filename), "r") as yaml_file:
+        yml = yaml.load(yaml_file, Loader=yaml.Loader)
+    return yml
 
 def loadHostVars(defaults, hostname=None, platform="linux"):
     loaded_yaml = {}
