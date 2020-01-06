@@ -1,19 +1,40 @@
-- name: Enable forwarder monitoring
-  ini_file:
-    path: "{{ splunk.home }}/etc/apps/splunk_monitoring_console/local/savedsearches.conf"
-    section: "DMC Forwarder - Build Asset Table"
-    option: "{{ item.key }}"
-    value: "{{ item.value }}"
-  with_dict: {"cron_schedule": "{{ dmc_asset_interval }}", "alert.track": 0, "disabled": 0}
-  notify:
-    - Restart the splunkd service
+---
+- set_fact:
+    dmc_forwarder_assets_url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC+Forwarder+-+Build+Asset+Table"
 
-- name: Flush restart handlers
-  meta: flush_handlers
+- name: Retrieve forwarder assets query
+  uri:
+    url: "{{ dmc_forwarder_assets_url }}?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200,201
+    timeout: 10
+  register: dmc_forwarder_build_assets
+  no_log: "{{ hide_password }}"
+
+- name: Configure forwarder assets search
+  uri:
+    url: "{{ dmc_forwarder_assets_url }}"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    body:
+      search: "{{ dmc_forwarder_build_assets.json['entry'][0]['content']['search'] }}"
+      request.ui_dispatch_app: splunk_monitoring_console
+      cron_schedule: "{{ dmc_asset_interval }}"
+      alert.track: 0
+      disabled: 0
+    body_format: "form-urlencoded"
+    validate_certs: false
+    status_code: 200,201
+    timeout: 10
+  no_log: "{{ hide_password }}"
 
 - name: Build forwarder assets
   uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/{{ splunk.admin_user }}/splunk_monitoring_console/saved/searches/DMC+Forwarder+-+Build+Asset+Table/dispatch"
+    url: "{{ dmc_forwarder_assets_url }}/dispatch"
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
