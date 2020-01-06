@@ -68,10 +68,16 @@ inventory = {
 }
 
 def getVars(rePattern):
+    """
+    Return a mapping of environment keys::values if they match a given regex
+    """
     return {re.match(rePattern, k).group(1).lower():os.environ[k] for k in os.environ
             if re.match(rePattern, k)}
 
 def getSplunkInventory(inventory, reName=r"(.*)_URL"):
+    """
+    Build an inventory of hosts based on a regex that defines host-groupings
+    """
     group_information = getVars(reName)
     for group_name in group_information:
         if group_name.lower() in roleNames:
@@ -90,6 +96,10 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
         inventory["_meta"]["hostvars"]["localhost"]["ansible_connection"] = "local"
 
 def getDefaultVars():
+    """
+    Load all splunk-ansible defaults and perform overwrites based on 
+    environment variables to return a consolidated inventory object
+    """
     defaultVars = loadDefaultSplunkVariables()
     overrideEnvironmentVars(defaultVars)
 
@@ -247,7 +257,7 @@ def getSplunkBuild(vars_scope):
 
 def getSplunkbaseToken(vars_scope):
     """
-    Authenticate to SplunkBase and modify the variable scope in-place to utilize temporary session token  
+    Authenticate to SplunkBase and modify the variable scope in-place to utilize temporary session token
     """
     splunkbase_username = os.environ.get("SPLUNKBASE_USERNAME", vars_scope.get("splunkbase_username"))
     splunkbase_password = os.environ.get("SPLUNKBASE_PASSWORD", vars_scope.get("splunkbase_password"))
@@ -327,10 +337,16 @@ def getUFSplunkVariables(vars_scope):
         vars_scope["splunk"]["cmd"] = os.environ.get("SPLUNK_CMD").split(",")
 
 def getRandomString():
+    """
+    Generate a random string consisting of characters + digits
+    """
     char_set = string.ascii_uppercase + string.digits
     return ''.join(random.sample(char_set * 6, 6))
 
 def merge_dict(dict1, dict2, path=None):
+    """
+    Merge two dictionaries such that all the keys in dict2 overwrite those in dict1
+    """
     if path is None: path = []
     for key in dict2:
         if key in dict1:
@@ -489,6 +505,9 @@ def obfuscate_vars(inventory):
     return inventory
 
 def create_parser():
+    """
+    Create an argparser to control dynamic inventory execution
+    """
     parser = argparse.ArgumentParser(description='Return Ansible inventory defined in the environment.')
     parser.add_argument('--list', action='store_true', default=True, help='List all hosts (default: True)')
     parser.add_argument('--host', action='store', help='Only get information for a specific host.')
@@ -497,6 +516,9 @@ def create_parser():
     return parser
 
 def prep_for_yaml_out(inventory):
+    """
+    Prune the inventory by removing select keys before printing/writing to file
+    """
     inventory_to_dump = inventory["all"]["vars"]
 
     keys_to_del = ["docker_version",
