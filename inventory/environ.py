@@ -342,41 +342,61 @@ def merge_dict(dict1, dict2, path=None):
             dict1[key] = dict2[key]
     return dict1
 
-def mergeDefaultSplunkVariables(vars_scope, url):
-    url = url.strip()
-    if not url or len(url) == 0:
+def mergeDefaults(vars_scope, src):
+    """
+    Helper method to fetch defaults from various sources/other methods
+    """
+    if not src or not src.strip():
         return vars_scope
-    if url.lower().startswith(('http://', 'https://')):
-        headers = None
-        if "headers" in vars_scope['config']['env'] and vars_scope['config']['env']['headers'] != None and len(vars_scope['config']['env']['headers']) > 0:
-            headers = vars_scope['config']['env']['headers']
+    src = src.strip().lower()
+    if src.startswith("file://"):
+        src = src[7:]
+    if src.startswith(("http://", "https://")):
+        vars_scope = mergeDefaultsFromURL(vars_scope, src)
+    else:
+        vars_scope = mergeDefaultsFromFile(vars_scope, src)
+    return vars_scope
 
-        max_retries = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_RETRIES', vars_scope["config"]["max_retries"]))
-        max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', vars_scope["config"]["max_delay"]))
-        max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', vars_scope["config"]["max_timeout"]))
-        verify = bool(os.environ.get('SPLUNK_DEFAULTS_HTTPS_VERIFY', vars_scope["config"]["env"]["verify"]))
-        unlimited_retries = (max_retries == -1)
-        current_retry = 0
-        while True:
-            try:
-                response = requests.get(url.format(platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
-                response.raise_for_status()
-                vars_scope = merge_dict(vars_scope, yaml.load(response.content, Loader=yaml.Loader))
-                break
-            except Exception as e:
-                if unlimited_retries or current_retry < max_retries:
-                    current_retry += 1
-                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay))
-                    sleep(max_delay)
-                else:
-                    raise e
+def mergeDefaultsFromURL(vars_scope, url):
+    """
+    Fetch defaults from a URL and merge them into a single dict
+    """
+    if not url:
         return vars_scope
-    if url.lower().startswith('file://'):
-        url = url[7:]
-    if os.path.exists(url):
-        with open(url, 'r') as file:
-            file_content = file.read()
-            vars_scope = merge_dict(vars_scope, yaml.load(file_content, Loader=yaml.Loader))
+    headers = None
+    if vars_scope.get("config") and vars_scope["config"].get("env") and vars_scope["config"]["env"].get("headers"):
+        headers = vars_scope["config"]["env"]["headers"]
+
+    max_retries = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_RETRIES", vars_scope["config"].get("max_retries")))
+    max_delay = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_DELAY", vars_scope["config"].get("max_delay")))
+    max_timeout = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT", vars_scope["config"].get("max_timeout")))
+    verify = bool(os.environ.get("SPLUNK_DEFAULTS_HTTPS_VERIFY", vars_scope["config"]["env"].get("verify")))
+    unlimited_retries = (max_retries == -1)
+    current_retry = 0
+    while True:
+        try:
+            resp = requests.get(url, headers=headers, timeout=max_timeout, verify=verify)
+            resp.raise_for_status()
+            vars_scope = merge_dict(vars_scope, yaml.load(resp.content, Loader=yaml.Loader))
+            break
+        except Exception as err:
+            if unlimited_retries or current_retry < max_retries:
+                current_retry += 1
+                print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay))
+                sleep(max_delay)
+                continue
+            raise err
+    return vars_scope
+
+def mergeDefaultsFromFile(vars_scope, file):
+    """
+    Fetch defaults from a file and merge them into a single dict
+    """
+    if not file:
+        return vars_scope
+    if os.path.exists(file):
+        with open(file, "r") as f:
+            vars_scope = merge_dict(vars_scope, yaml.load(f.read(), Loader=yaml.Loader))
     return vars_scope
 
 def loadDefaultSplunkVariables():
@@ -398,7 +418,7 @@ def loadDefaultSplunkVariables():
         yamls_to_load.extend(urls)
     # For each new YAML discovered, merge them with base in order so values get superseded
     for yml in yamls_to_load:
-        base = mergeDefaultSplunkVariables(base, yml)
+        base = mergeDefaults(base, yml)
     return base
 
 def loadBaseDefaults():

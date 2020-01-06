@@ -394,9 +394,61 @@ def test_getRandomString():
 def test_merge_dict():
     pass
 
+@pytest.mark.parametrize(("source", "merge_url_called", "merge_file_called"),
+            [
+                (None, False, False),
+                ("", False, False),
+                ("    ", False, False),
+                ("http://web/default.yml", True, False),
+                ("https://web/default.yml", True, False),
+                ("file:///path/to/default.yml", False, True),
+                ("/path/to/default.yml", False, True),
+                ("rel/path/to/default.yml", False, True),
+            ]
+        )
+def test_mergeDefaults(source, merge_url_called, merge_file_called):
+    with patch("environ.mergeDefaultsFromFile") as mock_merge_file:
+        with patch("environ.mergeDefaultsFromURL") as mock_merge_url:
+            result = environ.mergeDefaults({"hello": "world"}, source)
+            if merge_url_called:
+                mock_merge_url.assert_called_once()
+                mock_merge_file.assert_not_called()
+            else:
+                mock_merge_url.assert_not_called()
+            if merge_file_called:
+                mock_merge_file.assert_called_once()
+                mock_merge_url.assert_not_called()
+            else:
+                mock_merge_file.assert_not_called()
+
 @pytest.mark.skip(reason="TODO")
-def test_mergeDefaultSplunkVariables():
+def test_mergeDefaultsFromURL():
     pass
+
+@pytest.mark.parametrize(("file", "file_exists", "merge_called"),
+            [
+                (None, False, False),
+                ("", False, False),
+                ("    ", False, False),
+                ("/path/to/file", False, False),
+                ("/path/to/file", True, True),
+            ]
+        )
+def test_mergeDefaultsFromFile(file, file_exists, merge_called):
+    mo = mock_open()
+    with patch("environ.open", mo, create=True):
+        with patch("environ.os") as mock_os:
+            with patch("environ.merge_dict") as mock_merge:
+                mock_os.path.exists = MagicMock(return_value=file_exists)
+                result = environ.mergeDefaultsFromFile({"hello": "world"}, file)
+                if merge_called:
+                    mo.assert_called_once()
+                    mock_merge.assert_called_once()
+                else:
+                    mo.assert_not_called()
+                    mock_merge.assert_not_called()
+                    assert result == {"hello": "world"}
+
 
 @pytest.mark.parametrize(("mock_base", "os_env", "merge_call_count"),
             [
@@ -428,7 +480,7 @@ def test_loadDefaultSplunkVariables(mock_base, os_env, merge_call_count):
     mock_base = MagicMock(return_value=mock_base)
     with patch("os.environ", new=os_env):
         with patch("environ.loadBaseDefaults", mock_base):
-            with patch("environ.mergeDefaultSplunkVariables") as mock_merge:
+            with patch("environ.mergeDefaults") as mock_merge:
                 output = environ.loadDefaultSplunkVariables()
                 assert mock_merge.call_count == merge_call_count
 
