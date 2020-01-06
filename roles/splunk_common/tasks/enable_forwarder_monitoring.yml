@@ -1,5 +1,6 @@
 ---
-- set_fact:
+- name: Establish DMC forwarder monitor API
+  set_fact:
     dmc_forwarder_assets_url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC+Forwarder+-+Build+Asset+Table"
 
 - name: Retrieve forwarder assets query
