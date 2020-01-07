@@ -7,7 +7,7 @@ from __future__ import absolute_import
 import os
 import sys
 import pytest
-from mock import MagicMock, patch
+from mock import MagicMock, patch, mock_open
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 #FIXTURES_DIR = os.path.join(FILE_DIR, "fixtures")
@@ -360,19 +360,6 @@ def test_getDFS(default_yml, os_env, output):
     assert type(vars_scope["splunk"]["dfs"]["spark_master_webui_port"]) == int
     assert vars_scope["splunk"]["dfs"] == output
 
-@pytest.mark.parametrize(("filepath", "result"),
-                         [
-                             ("C:\\opt\\splunk", "/opt/splunk"),
-                             ("C:\\opt\\", "/opt/"),
-                             ("C:\\opt", "/opt"),
-                             ("C:\\", "/"),
-                             ("/opt/splunk", None)
-                         ]
-                        )
-def test_convert_path_windows_to_nix(filepath, result):
-    outcome = environ.convert_path_windows_to_nix(filepath)
-    assert outcome == result
-
 @pytest.mark.parametrize(("os_env", "deployment_server", "add", "before_start_cmd", "cmd"),
                          [
                             ({}, None, None, None, None),
@@ -407,13 +394,119 @@ def test_getRandomString():
 def test_merge_dict():
     pass
 
-@pytest.mark.skip(reason="TODO")
-def test_mergeDefaultSplunkVariables():
-    pass
+@pytest.mark.parametrize(("source", "merge_url_called", "merge_file_called"),
+            [
+                (None, False, False),
+                ("", False, False),
+                ("    ", False, False),
+                ("http://web/default.yml", True, False),
+                ("https://web/default.yml", True, False),
+                ("file:///path/to/default.yml", False, True),
+                ("/path/to/default.yml", False, True),
+                ("rel/path/to/default.yml", False, True),
+            ]
+        )
+def test_mergeDefaults(source, merge_url_called, merge_file_called):
+    with patch("environ.mergeDefaultsFromFile") as mock_merge_file:
+        with patch("environ.mergeDefaultsFromURL") as mock_merge_url:
+            result = environ.mergeDefaults({"hello": "world"}, source)
+            if merge_url_called:
+                mock_merge_url.assert_called_once()
+                mock_merge_file.assert_not_called()
+            else:
+                mock_merge_url.assert_not_called()
+            if merge_file_called:
+                mock_merge_file.assert_called_once()
+                mock_merge_url.assert_not_called()
+            else:
+                mock_merge_file.assert_not_called()
 
 @pytest.mark.skip(reason="TODO")
-def test_loadDefaultSplunkVariables():
+def test_mergeDefaultsFromURL():
     pass
+
+@pytest.mark.parametrize(("file", "file_exists", "merge_called"),
+            [
+                (None, False, False),
+                ("", False, False),
+                ("    ", False, False),
+                ("/path/to/file", False, False),
+                ("/path/to/file", True, True),
+            ]
+        )
+def test_mergeDefaultsFromFile(file, file_exists, merge_called):
+    mo = mock_open()
+    with patch("environ.open", mo, create=True):
+        with patch("environ.os") as mock_os:
+            with patch("environ.merge_dict") as mock_merge:
+                mock_os.path.exists = MagicMock(return_value=file_exists)
+                result = environ.mergeDefaultsFromFile({"hello": "world"}, file)
+                if merge_called:
+                    mo.assert_called_once()
+                    mock_merge.assert_called_once()
+                else:
+                    mo.assert_not_called()
+                    mock_merge.assert_not_called()
+                    assert result == {"hello": "world"}
+
+
+@pytest.mark.parametrize(("mock_base", "os_env", "merge_call_count"),
+            [
+                # Null cases
+                ({}, {}, 0),
+                ({"config": None}, {}, 0),
+                ({"config": {}}, {}, 0),
+                # "baked" has 0 entries
+                ({"config": {"baked": None}}, {}, 0),
+                ({"config": {"baked": ""}}, {}, 0),
+                # "baked" has 1 entry
+                ({"config": {"baked": "file1.yml"}}, {}, 1),
+                # "baked" has 3 entries
+                ({"config": {"baked": "file1.yml, file2.yml  , file3.yml"}}, {}, 3),
+                # "env" has 0 entries
+                ({"config": {"env": None}}, {}, 0),
+                ({"config": {"env": {}}}, {}, 0),
+                ({"config": {"env": {"var": None}}}, {}, 0),
+                ({"config": {"env": {"var": ""}}}, {}, 0),
+                # "env" has 1 entry
+                ({"config": {"env": {"var": "abcd"}}}, {"abcd": "abcd"}, 1),
+                # "env" has 3 entries
+                ({"config": {"env": {"var": "abcd"}}}, {"abcd": "a,b,c,d"}, 4),
+                # "baked" as 2 entires and "env" has 3 entries; total should be 5 entries
+                ({"config": {"baked": "1,2", "env": {"var": "abcd"}}}, {"abcd": "a,b,c"}, 5),
+            ]
+        )
+def test_loadDefaultSplunkVariables(mock_base, os_env, merge_call_count):
+    mock_base = MagicMock(return_value=mock_base)
+    with patch("os.environ", new=os_env):
+        with patch("environ.loadBaseDefaults", mock_base):
+            with patch("environ.mergeDefaults") as mock_merge:
+                output = environ.loadDefaultSplunkVariables()
+                assert mock_merge.call_count == merge_call_count
+
+@pytest.mark.parametrize(("os_env", "filename"),
+            [
+                ({}, "splunk_defaults"),
+                ({"SPLUNK_ROLE": "splunk_standalone"}, "splunk_defaults"),
+                ({"SPLUNK_ROLE": "splunk_universal_forwarder"}, "splunkforwarder_defaults"),
+            ]
+        )
+def test_loadBaseDefaults(os_env, filename):
+    sample_yml = """
+this: file
+is: 
+    a: yaml
+"""
+    mo = mock_open(read_data=sample_yml)
+    with patch("environ.open", mo, create=True):
+        with patch("os.environ", new=os_env):
+            output = environ.loadBaseDefaults()
+        mo.assert_called_once()
+        args, _ = mo.call_args
+        assert filename in args[0]
+        assert args[1] == "r"
+    assert type(output) == dict
+    assert output["this"] == "file"
 
 @pytest.mark.skip(reason="TODO")
 def test_loadHostVars():
