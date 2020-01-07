@@ -95,6 +95,8 @@ def getDefaultVars():
 
     getIndexerClustering(defaultVars)
     getSearchHeadClustering(defaultVars)
+    # getMultisite() must be called after getIndexerClustering() + getSearchHeadClustering()
+    # in order to rectify multisite replication and search factors
     getMultisite(defaultVars)
     getSplunkWebSSL(defaultVars)
     getDistributedTopology(defaultVars)
@@ -116,12 +118,6 @@ def getDefaultVars():
     if os.environ.get("SPLUNK_PREFERRED_CAPTAINCY", "").lower() == "false":
         defaultVars["splunk"]["preferred_captaincy"] = False
     defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
-    #When sites are specified, assume multisite
-    if "splunk.site" in inventory:
-        defaultVars["splunk"]["multisite_replication_factor_origin"] = 1
-        defaultVars["splunk"]["multisite_replication_factor_total"] = 1
-        defaultVars["splunk"]["multisite_search_factor_origin"] = 1
-        defaultVars["splunk"]["multisite_search_factor_total"] = 1
 
     getJava(defaultVars)
     getSplunkBuild(defaultVars)
@@ -140,6 +136,10 @@ def getIndexerClustering(vars_scope):
     idxc_vars = vars_scope["splunk"]["idxc"]
     idxc_vars["label"] = os.environ.get("SPLUNK_IDXC_LABEL", idxc_vars.get("label"))
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
+    # Rectify cluster replication + search factors
+    indexer_count = len(inventory.get("splunk_indexer", {}).get("hosts", []))
+    idxc_vars["replication_factor"] = min(indexer_count, int(idxc_vars.get("replication_factor", 0)))
+    idxc_vars["search_factor"] = min(idxc_vars["replication_factor"], int(idxc_vars.get("search_factor", 0)))
 
 def getSearchHeadClustering(vars_scope):
     """
@@ -150,13 +150,16 @@ def getSearchHeadClustering(vars_scope):
     shc_vars = vars_scope["splunk"]["shc"]
     shc_vars["label"] = os.environ.get("SPLUNK_SHC_LABEL", shc_vars.get("label"))
     shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
+    # Rectify SHC replication factor
+    sh_count = len(inventory.get("splunk_search_head", {}).get("hosts", []))
+    shc_vars["replication_factor"] = min(sh_count, int(shc_vars.get("replication_factor", 0)))
 
 def getMultisite(vars_scope):
     """
     Parse and set parameters to configure multisite
     """
-    if "SPLUNK_SITE" in os.environ or "site" in vars_scope["splunk"]:
-        splunk_vars = vars_scope["splunk"]
+    splunk_vars = vars_scope["splunk"]
+    if "SPLUNK_SITE" in os.environ or splunk_vars.get("site"):
         splunk_vars["site"] = os.environ.get("SPLUNK_SITE", splunk_vars.get("site"))
 
         all_sites = os.environ.get("SPLUNK_ALL_SITES", splunk_vars.get("all_sites"))
@@ -166,18 +169,20 @@ def getMultisite(vars_scope):
         multisite_master = os.environ.get("SPLUNK_MULTISITE_MASTER", splunk_vars.get("multisite_master"))
         if multisite_master:
             splunk_vars["multisite_master"] = multisite_master
-
-        splunk_vars["multisite_master_port"] = os.environ.get('SPLUNK_MULTISITE_MASTER_PORT', splunk_vars.get("multisite_master_port", 8089))
-        splunk_vars["multisite_replication_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN', splunk_vars.get("multisite_replication_factor_origin", 1))
-        splunk_vars["multisite_replication_factor_total"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL', splunk_vars.get("multisite_replication_factor_total", 1))
-        splunk_vars["multisite_search_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN', splunk_vars.get("multisite_search_factor_origin", 1))
-        splunk_vars["multisite_search_factor_total"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL', splunk_vars.get("multisite_search_factor_total", 1))
+    # TODO: Split this into its own splunk.multisite.* section
+    splunk_vars["multisite_master_port"] = int(os.environ.get("SPLUNK_MULTISITE_MASTER_PORT", splunk_vars.get("multisite_master_port", 8089)))
+    splunk_vars["multisite_replication_factor_origin"] = int(os.environ.get("SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN", splunk_vars.get("multisite_replication_factor_origin", 1)))
+    splunk_vars["multisite_replication_factor_total"] = int(os.environ.get("SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL", splunk_vars.get("multisite_replication_factor_total", 1)))
+    splunk_vars["multisite_replication_factor_total"] = max(splunk_vars["multisite_replication_factor_total"], splunk_vars["idxc"]["replication_factor"])
+    splunk_vars["multisite_search_factor_origin"] = int(os.environ.get("SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN", splunk_vars.get("multisite_search_factor_origin", 1)))
+    splunk_vars["multisite_search_factor_total"] = int(os.environ.get("SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL", splunk_vars.get("multisite_search_factor_total", 1)))
+    splunk_vars["multisite_search_factor_total"] = max(splunk_vars["multisite_search_factor_total"], splunk_vars["idxc"]["search_factor"])
 
 def getSplunkWebSSL(vars_scope):
     """
     Parse and set parameters to define Splunk Web accessibility
     """
-    # TODO: Split this into its own splunk.http. section
+    # TODO: Split this into its own splunk.http.* section
     splunk_vars = vars_scope["splunk"]
     splunk_vars["http_enableSSL"] = bool(os.environ.get('SPLUNK_HTTP_ENABLESSL', splunk_vars.get("http_enableSSL")))
     splunk_vars["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', splunk_vars.get("http_enableSSL_cert"))
