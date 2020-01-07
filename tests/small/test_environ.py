@@ -49,54 +49,69 @@ def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVari
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters
-                ({}, {}, {"label": None, "secret": None}),
+                ({}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
                 # Check default.yml parameters
-                ({"idxc": {}}, {}, {"label": None, "secret": None}),
-                ({"idxc": {"label": None}}, {}, {"label": None, "secret": None}),
-                ({"idxc": {"label": "1234"}}, {}, {"label": "1234", "secret": None}),
-                ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None}),
-                ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234"}),
+                ({"idxc": {}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"label": None}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"label": "1234"}}, {}, {"label": "1234", "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
+                # Search factor should never exceed replication factor
+                ({"idxc": {"replication_factor": 0, "search_factor": 2}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"replication_factor": 1, "search_factor": 3}}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"replication_factor": "2", "search_factor": 3}}, {}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 2}),
+                # This should return replication_factor=2 because there are only 2 hosts in the "splunk_indexer" group
+                ({"idxc": {"replication_factor": 3, "search_factor": 1}}, {}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
                 # Check environment variable parameters
-                ({}, {"SPLUNK_IDXC_LABEL": ""}, {"label": "", "secret": None}),
-                ({}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None}),
-                ({}, {"SPLUNK_IDXC_SECRET": ""}, {"label": None, "secret": ""}),
-                ({}, {"SPLUNK_IDXC_SECRET": "abcd"}, {"label": None, "secret": "abcd"}),
+                ({}, {"SPLUNK_IDXC_LABEL": ""}, {"label": "", "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({}, {"SPLUNK_IDXC_SECRET": ""}, {"label": None, "secret": "", "replication_factor": 0, "search_factor": 0}),
+                ({}, {"SPLUNK_IDXC_SECRET": "abcd"}, {"label": None, "secret": "abcd", "replication_factor": 0, "search_factor": 0}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
-                ({"idxc": {"label": "1234"}}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None}),
-                ({"idxc": {"secret": "abcd"}}, {"SPLUNK_IDXC_SECRET": "1234"}, {"label": None, "secret": "1234"}),
+                ({"idxc": {"label": "1234"}}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"secret": "abcd"}}, {"SPLUNK_IDXC_SECRET": "1234"}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
             ]
         )
 def test_getIndexerClustering(default_yml, os_env, output):
     vars_scope = {"splunk": default_yml}
-    with patch("os.environ", new=os_env):
-        environ.getIndexerClustering(vars_scope)
+    with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}) as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getIndexerClustering(vars_scope)
     assert type(vars_scope["splunk"]["idxc"]) == dict
     assert vars_scope["splunk"]["idxc"] == output
 
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters
-                ({}, {}, {"label": None, "secret": None}),
+                ({}, {}, {"label": None, "secret": None, "replication_factor": 0}),
                 # Check default.yml parameters
-                ({"shc": {}}, {}, {"label": None, "secret": None}),
-                ({"shc": {"label": None}}, {}, {"label": None, "secret": None}),
-                ({"shc": {"label": "1234"}}, {}, {"label": "1234", "secret": None}),
-                ({"shc": {"secret": None}}, {}, {"label": None, "secret": None}),
-                ({"shc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234"}),
+                ({"shc": {}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
+                ({"shc": {"label": None}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
+                ({"shc": {"label": "1234"}}, {}, {"label": "1234", "secret": None, "replication_factor": 0}),
+                ({"shc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
+                ({"shc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 0}),
+                ({"shc": {"replication_factor": 0}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
+                ({"shc": {"replication_factor": 1}}, {}, {"label": None, "secret": None, "replication_factor": 1}),
+                ({"shc": {"replication_factor": "2"}}, {}, {"label": None, "secret": None, "replication_factor": 2}),
+                # This should return replication_factor=2 because there are only 2 hosts in the "splunk_search_head" group
+                ({"shc": {"replication_factor": 3}}, {}, {"label": None, "secret": None, "replication_factor": 2}),
                 # Check environment variable parameters
-                ({}, {"SPLUNK_SHC_LABEL": ""}, {"label": "", "secret": None}),
-                ({}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None}),
-                ({}, {"SPLUNK_SHC_SECRET": ""}, {"label": None, "secret": ""}),
-                ({}, {"SPLUNK_SHC_SECRET": "abcd"}, {"label": None, "secret": "abcd"}),
+                ({}, {"SPLUNK_SHC_LABEL": ""}, {"label": "", "secret": None, "replication_factor": 0}),
+                ({}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0}),
+                ({}, {"SPLUNK_SHC_SECRET": ""}, {"label": None, "secret": "", "replication_factor": 0}),
+                ({}, {"SPLUNK_SHC_SECRET": "abcd"}, {"label": None, "secret": "abcd", "replication_factor": 0}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
-                ({"shc": {"label": "1234"}}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None}),
-                ({"shc": {"secret": "abcd"}}, {"SPLUNK_SHC_SECRET": "1234"}, {"label": None, "secret": "1234"}),
+                ({"shc": {"label": "1234"}}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0}),
+                ({"shc": {"secret": "abcd"}}, {"SPLUNK_SHC_SECRET": "1234"}, {"label": None, "secret": "1234", "replication_factor": 0}),
             ]
         )
 def test_getSearchHeadClustering(default_yml, os_env, output):
     vars_scope = {"splunk": default_yml}
-    with patch("os.environ", new=os_env):
-        environ.getSearchHeadClustering(vars_scope)
+    with patch("environ.inventory", {"splunk_search_head": {"hosts": ["a", "b"]}}) as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getSearchHeadClustering(vars_scope)
     assert type(vars_scope["splunk"]["shc"]) == dict
     assert vars_scope["splunk"]["shc"] == output
 
