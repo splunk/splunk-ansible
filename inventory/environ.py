@@ -140,6 +140,7 @@ def getIndexerClustering(vars_scope):
     idxc_vars = vars_scope["splunk"]["idxc"]
     idxc_vars["label"] = os.environ.get("SPLUNK_IDXC_LABEL", idxc_vars.get("label"))
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
+    idxc_vars["pass4symkey"] = os.environ.get("SPLUNK_IDXC_PASS4SYMKEY", idxc_vars.get("pass4symkey", idxc_vars.get("secret"))) # For issue #316 backwards-compatibility
 
 def getSearchHeadClustering(vars_scope):
     """
@@ -150,6 +151,7 @@ def getSearchHeadClustering(vars_scope):
     shc_vars = vars_scope["splunk"]["shc"]
     shc_vars["label"] = os.environ.get("SPLUNK_SHC_LABEL", shc_vars.get("label"))
     shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
+    shc_vars["pass4symkey"] = os.environ.get("SPLUNK_SHC_PASS4SYMKEY", shc_vars.get("pass4symkey", shc_vars.get("secret"))) # For issue #316 backwards-compatibility
 
 def getMultisite(vars_scope):
     """

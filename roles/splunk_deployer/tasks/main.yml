@@ -8,7 +8,7 @@
     option: "{{ item.opt }}"
     value: "{{ item.val }}"
   with_items:
-    - { opt: 'pass4SymmKey', val: '{{ splunk.shc.secret }}' }
+    - { opt: 'pass4SymmKey', val: '{{ splunk.shc.pass4symkey }}' }
     - { opt: 'shcluster_label', val: '{{ splunk.shc.label }}' }
   loop_control:
     label: "{{ item.opt }}"

@@ -10,7 +10,7 @@
     validate_certs: false
     body:
       name: "indexer_discovery:splunk-indexer"
-      pass4SymmKey: "{{ splunk.shc.secret }}"
+      pass4SymmKey: "{{ splunk.shc.pass4symkey }}"
       master_uri: "{{ cert_prefix }}://{{ groups['splunk_cluster_master'][0] }}:{{ splunk.svc_port }}"
     body_format: "form-urlencoded"
     status_code: 201,409

@@ -4,7 +4,7 @@
     splunk_instance_address: "{{ cluster_master_host }}"
 
 - name: Set current node as indexer cluster peer
-  command: "{{ splunk.exec }} edit cluster-config -mode slave -master_uri '{{ cert_prefix }}://{{ cluster_master_host }}:{{ splunk.svc_port }}' -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.secret }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} edit cluster-config -mode slave -master_uri '{{ cert_prefix }}://{{ cluster_master_host }}:{{ splunk.svc_port }}' -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4symkey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
