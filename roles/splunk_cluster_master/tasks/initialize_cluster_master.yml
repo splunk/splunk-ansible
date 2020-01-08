@@ -16,7 +16,7 @@
     validate_certs: False
     body:
       name: "indexer_discovery"
-      pass4SymmKey: "{{ splunk.shc.pass4symkey }}"
+      pass4SymmKey: "{{ splunk.shc.pass4SymmKey }}"
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
