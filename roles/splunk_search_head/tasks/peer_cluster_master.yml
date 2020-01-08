@@ -5,7 +5,7 @@
 
 # http://docs.splunk.com/Documentation/Splunk/latest/DistSearch/SHCandindexercluster#Integrate_with_a_single-site_indexer_cluster
 - name: Set cluster master as a search peer
-  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ cert_prefix }}://{{ groups['splunk_cluster_master'][0] }}:{{ splunk.svc_port }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4symkey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ cert_prefix }}://{{ groups['splunk_cluster_master'][0] }}:{{ splunk.svc_port }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_cluster_master_as_peer
