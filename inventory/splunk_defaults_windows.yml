@@ -55,12 +55,14 @@ splunk:
     shc:
         enable: False
         secret:
+        pass4symkey:
         label: "shc_label"
         replication_factor: 3
         replication_port: 9887
     idxc:
         enable: False
         secret:
+        pass4symkey:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3
