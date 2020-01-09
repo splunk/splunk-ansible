@@ -58,12 +58,12 @@ def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVari
                 ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
                 ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
                 ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
-                # Replication factor must always be <= number of indexers (2)
-                # Search factor must always be <= replication factor
-                ({"idxc": {"replication_factor": 0, "search_factor": 0}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({"idxc": {"replication_factor": 1, "search_factor": 1}}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
-                ({"idxc": {"replication_factor": "2", "search_factor": 2}}, {}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 2}),
-                ({"idxc": {"replication_factor": 2, "search_factor": "1"}}, {}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
+                # Search factor should never exceed replication factor
+                ({"idxc": {"replication_factor": 0, "search_factor": 2}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"replication_factor": 1, "search_factor": 3}}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"replication_factor": "2", "search_factor": 3}}, {}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 2}),
+                # This should return replication_factor=2 because there are only 2 hosts in the "splunk_indexer" group
+                ({"idxc": {"replication_factor": 3, "search_factor": 1}}, {}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
                 # Check environment variable parameters
                 ({}, {"SPLUNK_IDXC_LABEL": ""}, {"label": "", "secret": None, "replication_factor": 0, "search_factor": 0}),
                 ({}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0, "search_factor": 0}),
@@ -82,24 +82,6 @@ def test_getIndexerClustering(default_yml, os_env, output):
     assert type(vars_scope["splunk"]["idxc"]) == dict
     assert vars_scope["splunk"]["idxc"] == output
 
-
-@pytest.mark.parametrize(("default_yml", "error"),
-            [
-                ({"idxc": {"replication_factor": 3, "search_factor": 3}}, "Cannot meet replication factor of 3, not enough peers available"),
-                ({"idxc": {"replication_factor": "4", "search_factor": 3}}, "Cannot meet replication factor of 4, not enough peers available"),
-                ({"idxc": {"replication_factor": 2, "search_factor": "3"}}, "Cannot meet search factor of 3, must be at most 2 (replication factor)"),
-                ({"idxc": {"replication_factor": 1, "search_factor": 2}}, "Cannot meet search factor of 2, must be at most 1 (replication factor)"),
-            ]
-        )
-def test_getIndexerClustering_exception(default_yml, error):
-    vars_scope = {"splunk": default_yml}
-    with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}) as mock_inven:
-        with patch("os.environ", new={}):
-            try:
-                environ.getIndexerClustering(vars_scope)
-            except Exception as e:
-                assert str(e) == error
-
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters
@@ -113,6 +95,8 @@ def test_getIndexerClustering_exception(default_yml, error):
                 ({"shc": {"replication_factor": 0}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
                 ({"shc": {"replication_factor": 1}}, {}, {"label": None, "secret": None, "replication_factor": 1}),
                 ({"shc": {"replication_factor": "2"}}, {}, {"label": None, "secret": None, "replication_factor": 2}),
+                # This should return replication_factor=2 because there are only 2 hosts in the "splunk_search_head" group
+                ({"shc": {"replication_factor": 3}}, {}, {"label": None, "secret": None, "replication_factor": 2}),
                 # Check environment variable parameters
                 ({}, {"SPLUNK_SHC_LABEL": ""}, {"label": "", "secret": None, "replication_factor": 0}),
                 ({}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0}),
@@ -130,21 +114,6 @@ def test_getSearchHeadClustering(default_yml, os_env, output):
             environ.getSearchHeadClustering(vars_scope)
     assert type(vars_scope["splunk"]["shc"]) == dict
     assert vars_scope["splunk"]["shc"] == output
-
-@pytest.mark.parametrize(("default_yml", "error"),
-            [
-                ({"shc": {"replication_factor": 3}}, "Cannot meet replication factor of 3, not enough search heads available"),
-                ({"shc": {"replication_factor": "4"}}, "Cannot meet replication factor of 4, not enough search heads available"),
-            ]
-        )
-def test_getSearchHeadClustering_exception(default_yml, error):
-    vars_scope = {"splunk": default_yml}
-    with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}) as mock_inven:
-        with patch("os.environ", new={}):
-            try:
-                environ.getSearchHeadClustering(vars_scope)
-            except Exception as e:
-                assert str(e) == error
 
 @pytest.mark.skip(reason="TODO")
 def test_getMultisite():

@@ -148,16 +148,8 @@ def getIndexerClustering(vars_scope):
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
     # Rectify cluster replication + search factors
     indexer_count = len(inventory.get("splunk_indexer", {}).get("hosts", []))
-    # Replication factor should be <= number of indexers
-    replf = int(idxc_vars.get("replication_factor", 0))
-    if replf > indexer_count:
-        raise Exception("Cannot meet replication factor of {}, not enough peers available".format(replf))
-    idxc_vars["replication_factor"] = replf
-    # Search factor should be <= replication factor
-    searchf = int(idxc_vars.get("search_factor", 0))
-    if searchf > replf:
-        raise Exception("Cannot meet search factor of {}, must be at most {} (replication factor)".format(searchf, replf))
-    idxc_vars["search_factor"] = searchf
+    idxc_vars["replication_factor"] = min(indexer_count, int(idxc_vars.get("replication_factor", 0)))
+    idxc_vars["search_factor"] = min(idxc_vars["replication_factor"], int(idxc_vars.get("search_factor", 0)))
 
 def getSearchHeadClustering(vars_scope):
     """
@@ -170,11 +162,7 @@ def getSearchHeadClustering(vars_scope):
     shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
     # Rectify SHC replication factor
     sh_count = len(inventory.get("splunk_search_head", {}).get("hosts", []))
-    # Replication factor should be <= number of search heads
-    replf = int(shc_vars.get("replication_factor", 0))
-    if replf > sh_count:
-        raise Exception("Cannot meet replication factor of {}, not enough search heads available".format(replf))
-    shc_vars["replication_factor"] = replf
+    shc_vars["replication_factor"] = min(sh_count, int(shc_vars.get("replication_factor", 0)))
 
 def getMultisite(vars_scope):
     """
