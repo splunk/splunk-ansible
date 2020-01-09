@@ -450,7 +450,7 @@ def loadBaseDefaults():
     """
     yml = {}
     filename = "splunk_defaults_{}.yml".format(PLATFORM)
-    if os.environ.get("SPLUNK_ROLE") is "splunk_universal_forwarder":
+    if os.environ.get("SPLUNK_ROLE") == "splunk_universal_forwarder":
         filename = "splunkforwarder_defaults_{}.yml".format(PLATFORM)
     with open(os.path.join(HERE, filename), "r") as yaml_file:
         yml = yaml.load(yaml_file, Loader=yaml.Loader)
