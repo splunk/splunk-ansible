@@ -37,7 +37,7 @@ def test_getVars(regex, result):
 def test_getSplunkInventory():
     pass
 
-@patch('environ.loadDefaultSplunkVariables', return_value={"splunk": {"http_port": 8000, "build_location": None}})
+@patch('environ.loadDefaults', return_value={"splunk": {"http_port": 8000, "build_location": None}})
 @patch('environ.overrideEnvironmentVars')
 def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVariables):
     '''
@@ -45,6 +45,34 @@ def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVari
     '''
     retval = environ.getDefaultVars()
     assert "splunk" in retval
+
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check null parameters
+                ({}, {}, {"opt": None, "home": None, "exec": None, "pid": None}),
+                # Check default.yml parameters
+                ({"opt": "/opt"}, {}, {"opt": "/opt", "home": None, "exec": None, "pid": None}),
+                ({"home": "/tmp/splunk"}, {}, {"opt": None, "home": "/tmp/splunk", "exec": None, "pid": None}),
+                ({"exec": "/opt/splunk/bin/splunk"}, {}, {"opt": None, "home": None, "exec": "/opt/splunk/bin/splunk", "pid": None}),
+                ({"pid": "/splunk.pid"}, {}, {"opt": None, "home": None, "exec": None, "pid": "/splunk.pid"}),
+                # Check environment variable parameters
+                ({}, {"SPLUNK_OPT": "/home/"}, {"opt": "/home/", "home": None, "exec": None, "pid": None}),
+                ({}, {"SPLUNK_HOME": "/home/"}, {"opt": None, "home": "/home/", "exec": None, "pid": None}),
+                ({}, {"SPLUNK_EXEC": "/home/splunk.exe"}, {"opt": None, "home": None, "exec": "/home/splunk.exe", "pid": None}),
+                ({}, {"SPLUNK_PID": "/home/splunk.pid"}, {"opt": None, "home": None, "exec": None, "pid": "/home/splunk.pid"}),
+                # Check the union combination of default.yml + environment variables and order of precedence when overwriting
+                ({"opt": "/home"}, {"SPLUNK_OPT": "/opt"}, {"opt": "/opt", "home": None, "exec": None, "pid": None}),
+                ({"home": "/tmp/splunk"}, {"SPLUNK_HOME": "/opt/splunk"}, {"opt": None, "home": "/opt/splunk", "exec": None, "pid": None}),
+                ({"exec": "/bin/splunk"}, {"SPLUNK_EXEC": "/opt/splunk/bin/splunk"}, {"opt": None, "home": None, "exec": "/opt/splunk/bin/splunk", "pid": None}),
+                ({"pid": "/splunk.pid"}, {"SPLUNK_PID": "/opt/splunk/splunk.pid"}, {"opt": None, "home": None, "exec": None, "pid": "/opt/splunk/splunk.pid"}),
+            ]
+        )
+def test_getSplunkPaths(default_yml, os_env, output):
+    vars_scope = {"splunk": default_yml}
+    with patch("os.environ", new=os_env):
+        environ.getSplunkPaths(vars_scope)
+    assert type(vars_scope["splunk"]) == dict
+    assert vars_scope["splunk"] == output
 
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
@@ -409,7 +437,7 @@ def test_merge_dict():
 def test_mergeDefaults(source, merge_url_called, merge_file_called):
     with patch("environ.mergeDefaultsFromFile") as mock_merge_file:
         with patch("environ.mergeDefaultsFromURL") as mock_merge_url:
-            result = environ.mergeDefaults({"hello": "world"}, source)
+            result = environ.mergeDefaults({"hello": "world"}, "foobar", source)
             if merge_url_called:
                 mock_merge_url.assert_called_once()
                 mock_merge_file.assert_not_called()
@@ -420,6 +448,38 @@ def test_mergeDefaults(source, merge_url_called, merge_file_called):
                 mock_merge_url.assert_not_called()
             else:
                 mock_merge_file.assert_not_called()
+
+@pytest.mark.parametrize(("key"),
+            [
+                ("FOO"),
+                ("BAR"),
+                ("BAZ"),
+            ]
+        )
+def test_mergeDefaults_url_with_req_params(key):
+    config = {
+                "config": {
+                    "FOO": {
+                        "headers": {"HI": "MOM"},
+                        "verify": True
+                    },
+                    "BAR": {
+                        "headers": {"GOODBYE": "MOM"},
+                        "verify": False
+                    }
+                }
+            }
+    with patch("environ.mergeDefaultsFromFile") as mock_merge_file:
+        with patch("environ.mergeDefaultsFromURL") as mock_merge_url:
+            result = environ.mergeDefaults(config, key, "http://website/default.yml")
+            mock_merge_file.assert_not_called()
+            mock_merge_url.assert_called_once()
+            if key == "FOO":
+                mock_merge_url.assert_called_with(config, "http://website/default.yml", {"HI": "MOM"}, True)
+            elif key == "BAR":
+                mock_merge_url.assert_called_with(config, "http://website/default.yml", {"GOODBYE": "MOM"}, False)
+            else:
+                mock_merge_url.assert_called_with(config, "http://website/default.yml", None, False)
 
 @pytest.mark.skip(reason="TODO")
 def test_mergeDefaultsFromURL():
@@ -450,39 +510,39 @@ def test_mergeDefaultsFromFile(file, file_exists, merge_called):
                     assert result == {"hello": "world"}
 
 
-@pytest.mark.parametrize(("mock_base", "os_env", "merge_call_count"),
+@pytest.mark.parametrize(("mock_base", "mock_baked", "mock_env", "mock_host", "merge_call_count"),
             [
                 # Null cases
-                ({}, {}, 0),
-                ({"config": None}, {}, 0),
-                ({"config": {}}, {}, 0),
-                # "baked" has 0 entries
-                ({"config": {"baked": None}}, {}, 0),
-                ({"config": {"baked": ""}}, {}, 0),
-                # "baked" has 1 entry
-                ({"config": {"baked": "file1.yml"}}, {}, 1),
-                # "baked" has 3 entries
-                ({"config": {"baked": "file1.yml, file2.yml  , file3.yml"}}, {}, 3),
-                # "env" has 0 entries
-                ({"config": {"env": None}}, {}, 0),
-                ({"config": {"env": {}}}, {}, 0),
-                ({"config": {"env": {"var": None}}}, {}, 0),
-                ({"config": {"env": {"var": ""}}}, {}, 0),
-                # "env" has 1 entry
-                ({"config": {"env": {"var": "abcd"}}}, {"abcd": "abcd"}, 1),
-                # "env" has 3 entries
-                ({"config": {"env": {"var": "abcd"}}}, {"abcd": "a,b,c,d"}, 4),
-                # "baked" as 2 entires and "env" has 3 entries; total should be 5 entries
-                ({"config": {"baked": "1,2", "env": {"var": "abcd"}}}, {"abcd": "a,b,c"}, 5),
+                ({}, [], [], [], 0),
+                ({"config": None}, [], [], [], 0),
+                ({"config": {}}, [], [], [], 0),
+                # Check baked
+                ({"config": {"foo": "bar"}}, [{"key": "baked", "src": "file1"}], [], [], 1),
+                ({"config": {"foo": "bar"}}, [{"key": "baked", "src": "f1"}, {"key": "baked", "src": "f2"}, {"key": "baked", "src": "f3"}], [], [], 3),
+                # Check env
+                ({"config": {"foo": "bar"}}, [], [{"key": "env", "src": "file1"}], [], 1),
+                ({"config": {"foo": "bar"}}, [], [{"key": "env", "src": "f1"}, {"key": "env", "src": "f2"}, {"key": "env", "src": "f3"}], [], 3),
+                # Check host
+                ({"config": {"foo": "bar"}}, [], [], [{"key": "host", "src": "file1"}], 1),
+                ({"config": {"foo": "bar"}}, [], [], [{"key": "host", "src": "f1"}, {"key": "host", "src": "f2"}, {"key": "host", "src": "f3"}], 3),
+                # Check mixed
+                ({"config": {"foo": "bar"}}, [{"key": "baked", "src": "file1"}], [{"key": "env", "src": "f1"}, {"key": "env", "src": "f2"}], [{"key": "host", "src": "f1"}, {"key": "host", "src": "f2"}], 5),
+                ({"config": None}, [{"key": "baked", "src": "file1"}], [{"key": "env", "src": "f1"}, {"key": "env", "src": "f2"}], [{"key": "host", "src": "f1"}, {"key": "host", "src": "f2"}], 0),
+                ({"config": {}}, [{"key": "baked", "src": "file1"}], [{"key": "env", "src": "f1"}, {"key": "env", "src": "f2"}], [{"key": "host", "src": "f1"}, {"key": "host", "src": "f2"}], 0),
             ]
         )
-def test_loadDefaultSplunkVariables(mock_base, os_env, merge_call_count):
-    mock_base = MagicMock(return_value=mock_base)
-    with patch("os.environ", new=os_env):
-        with patch("environ.loadBaseDefaults", mock_base):
-            with patch("environ.mergeDefaults") as mock_merge:
-                output = environ.loadDefaultSplunkVariables()
-                assert mock_merge.call_count == merge_call_count
+def test_loadDefaults(mock_base, mock_baked, mock_env, mock_host, merge_call_count):
+    mbase = MagicMock(return_value=mock_base)
+    mbaked = MagicMock(return_value=mock_baked)
+    menv = MagicMock(return_value=mock_env)
+    mhost = MagicMock(return_value=mock_host)
+    with patch("environ.loadBaseDefaults", mbase):
+        with patch("environ.loadBakedDefaults", mbaked):
+            with patch("environ.loadEnvDefaults", menv):
+                with patch("environ.loadHostDefaults", mhost):
+                    with patch("environ.mergeDefaults") as mock_merge:
+                        output = environ.loadDefaults()
+                        assert mock_merge.call_count == merge_call_count
 
 @pytest.mark.parametrize(("os_env", "filename"),
             [
@@ -508,9 +568,52 @@ is:
     assert type(output) == dict
     assert output["this"] == "file"
 
-@pytest.mark.skip(reason="TODO")
-def test_loadHostVars():
-    pass
+@pytest.mark.parametrize(("config", "output"),
+            [
+                (None, []),
+                ({}, []),
+                ({"baked": None}, []),
+                ({"baked": ""}, []),
+                ({"baked": "file1"}, [{"key": "baked", "src": "file1"}]),
+                ({"baked": "file1,file2,file3"}, [{"key": "baked", "src": "file1"}, {"key": "baked", "src": "file2"}, {"key": "baked", "src": "file3"}]),
+            ]
+        )
+def test_loadBakedDefaults(config, output):
+    result = environ.loadBakedDefaults(config)
+    assert result == output
+
+@pytest.mark.parametrize(("config", "output"),
+            [
+                (None, []),
+                ({}, []),
+                ({"env": None}, []),
+                ({"env": {}}, []),
+                ({"env": {"var": None}}, []),
+                ({"env": {"var": ""}}, []),
+                ({"env": {"var": "KEY1"}}, [{"key": "env", "src": "file1"}]),
+                ({"env": {"var": "KEY2"}}, [{"key": "env", "src": "file1"}, {"key": "env", "src": "file2"}, {"key": "env", "src": "file3"}]),
+            ]
+        )
+def test_loadEnvDefaults(config, output):
+    with patch("os.environ", new={"KEY1": "file1", "KEY2": "file1,file2,file3"}):
+        result = environ.loadEnvDefaults(config)
+    assert result == output
+
+@pytest.mark.parametrize(("config", "output"),
+            [
+                (None, []),
+                ({}, []),
+                ({"host": None}, []),
+                ({"host": {}}, []),
+                ({"host": {"url": None}}, []),
+                ({"host": {"url": ""}}, []),
+                ({"host": {"url": "file1"}}, [{"key": "host", "src": "file1"}]),
+                ({"host": {"url": "file1,file2,file3"}}, [{"key": "host", "src": "file1"}, {"key": "host", "src": "file2"}, {"key": "host", "src": "file3"}]),
+            ]
+        )
+def test_loadHostDefaults(config, output):
+    result = environ.loadHostDefaults(config)
+    assert result == output
 
 @pytest.mark.parametrize(("inputInventory", "outputInventory"),
             [
