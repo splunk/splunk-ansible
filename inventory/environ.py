@@ -148,8 +148,10 @@ def getIndexerClustering(vars_scope):
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
     # Rectify cluster replication + search factors
     indexer_count = len(inventory.get("splunk_indexer", {}).get("hosts", []))
-    idxc_vars["replication_factor"] = min(indexer_count, int(idxc_vars.get("replication_factor", 0)))
-    idxc_vars["search_factor"] = min(idxc_vars["replication_factor"], int(idxc_vars.get("search_factor", 0)))
+    replf = os.environ.get("SPLUNK_IDXC_REPLICATION_FACTOR", idxc_vars.get("replication_factor", 0))
+    idxc_vars["replication_factor"] = min(indexer_count, int(replf))
+    searchf = os.environ.get("SPLUNK_IDXC_SEARCH_FACTOR", idxc_vars.get("search_factor", 0))
+    idxc_vars["search_factor"] = min(idxc_vars["replication_factor"], int(searchf))
 
 def getSearchHeadClustering(vars_scope):
     """
@@ -162,7 +164,8 @@ def getSearchHeadClustering(vars_scope):
     shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
     # Rectify SHC replication factor
     sh_count = len(inventory.get("splunk_search_head", {}).get("hosts", []))
-    shc_vars["replication_factor"] = min(sh_count, int(shc_vars.get("replication_factor", 0)))
+    replf = os.environ.get("SPLUNK_SHC_REPLICATION_FACTOR", shc_vars.get("replication_factor", 0))
+    shc_vars["replication_factor"] = min(sh_count, int(replf))
 
 def getMultisite(vars_scope):
     """

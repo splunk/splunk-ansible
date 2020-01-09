@@ -69,9 +69,13 @@ def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVari
                 ({}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0, "search_factor": 0}),
                 ({}, {"SPLUNK_IDXC_SECRET": ""}, {"label": None, "secret": "", "replication_factor": 0, "search_factor": 0}),
                 ({}, {"SPLUNK_IDXC_SECRET": "abcd"}, {"label": None, "secret": "abcd", "replication_factor": 0, "search_factor": 0}),
+                ({}, {"SPLUNK_IDXC_REPLICATION_FACTOR": "1"}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 0}),
+                ({}, {"SPLUNK_IDXC_REPLICATION_FACTOR": 2, "SPLUNK_IDXC_SEARCH_FACTOR": "1"}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
                 ({"idxc": {"label": "1234"}}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0, "search_factor": 0}),
                 ({"idxc": {"secret": "abcd"}}, {"SPLUNK_IDXC_SECRET": "1234"}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"replication_factor": 3, "search_factor": 3}}, {"SPLUNK_IDXC_REPLICATION_FACTOR": 2}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 2}),
+                ({"idxc": {"replication_factor": 2, "search_factor": 2}}, {"SPLUNK_IDXC_SEARCH_FACTOR": 1}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
             ]
         )
 def test_getIndexerClustering(default_yml, os_env, output):
@@ -102,9 +106,11 @@ def test_getIndexerClustering(default_yml, os_env, output):
                 ({}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0}),
                 ({}, {"SPLUNK_SHC_SECRET": ""}, {"label": None, "secret": "", "replication_factor": 0}),
                 ({}, {"SPLUNK_SHC_SECRET": "abcd"}, {"label": None, "secret": "abcd", "replication_factor": 0}),
+                ({}, {"SPLUNK_SHC_REPLICATION_FACTOR": "2"}, {"label": None, "secret": None, "replication_factor": 2}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
                 ({"shc": {"label": "1234"}}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0}),
                 ({"shc": {"secret": "abcd"}}, {"SPLUNK_SHC_SECRET": "1234"}, {"label": None, "secret": "1234", "replication_factor": 0}),
+                ({"shc": {"replication_factor": 2}}, {"SPLUNK_SHC_REPLICATION_FACTOR": "1"}, {"label": None, "secret": None, "replication_factor": 1}),
             ]
         )
 def test_getSearchHeadClustering(default_yml, os_env, output):
