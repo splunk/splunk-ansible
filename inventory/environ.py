@@ -229,7 +229,9 @@ def getLicenses(vars_scope):
     if vars_scope["splunk"]["license_uri"] and '*' in vars_scope["splunk"]["license_uri"]:
         vars_scope["splunk"]["wildcard_license"] = True
     vars_scope["splunk"]["nfr_license"] = os.environ.get("SPLUNK_NFR_LICENSE", "/tmp/nfr_enterprise.lic")
-    vars_scope["splunk"]["ignore_license"] = bool(os.environ.get("SPLUNK_IGNORE_LICENSE"))
+    vars_scope["splunk"]["ignore_license"] = False
+    if os.environ.get("SPLUNK_IGNORE_LICENSE", "").lower() == "true":
+        vars_scope["splunk"]["ignore_license"] = True
     vars_scope["splunk"]["license_download_dest"] = os.environ.get("SPLUNK_LICENSE_INSTALL_PATH", "/tmp/splunk.lic")
 
 def getJava(vars_scope):

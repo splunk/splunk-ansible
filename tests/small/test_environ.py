@@ -169,6 +169,8 @@ def test_getDistributedTopology(os_env, license_master_included, deployer_includ
                             ({"SPLUNK_NFR_LICENSE": "/mnt/nfr.lic"}, "splunk.lic", False, "/mnt/nfr.lic", False, "/tmp/splunk.lic"),
                             ({"SPLUNK_IGNORE_LICENSE": ""}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
                             ({"SPLUNK_IGNORE_LICENSE": "true"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", True, "/tmp/splunk.lic"),
+                            ({"SPLUNK_IGNORE_LICENSE": "TRUE"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", True, "/tmp/splunk.lic"),
+                            ({"SPLUNK_IGNORE_LICENSE": "false"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
                             ({"SPLUNK_LICENSE_INSTALL_PATH": "/Downloads/"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/Downloads/"),
                          ]
                         )
