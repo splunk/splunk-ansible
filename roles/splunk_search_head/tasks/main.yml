@@ -20,12 +20,14 @@
 - include_tasks: peer_cluster_master.yml
   when:
     - splunk.indexer_cluster
+    - splunk.multisite_master is not defined
     - splunk.set_search_peers is defined
 
 ## Non Indexer Clustering Scenario
 - include_tasks: peer_indexers.yml
   when:
     - not splunk.indexer_cluster
+    - splunk.multisite_master is not defined
     - splunk.set_search_peers is defined
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
