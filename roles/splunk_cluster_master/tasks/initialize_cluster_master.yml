@@ -1,12 +1,4 @@
 ---
-- name: Rectify cluster replication factor
-  set_fact:
-    idxc_replication_factor: "{% if splunk.idxc.replication_factor|int > groups['splunk_indexer']|length %} {{ groups['splunk_indexer'] | length }} {% else %} {{ splunk.idxc.replication_factor | int }} {% endif %}"
-
-- name: Rectify cluster search factor
-  set_fact:
-    idxc_search_factor: "{% if splunk.idxc.search_factor|int > idxc_replication_factor|int %} {{ idxc_replication_factor | int }} {% else %} {{ splunk.idxc.search_factor | int }} {% endif %}"
-
 - name: Set indexer discovery
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
@@ -28,7 +20,7 @@
   when: splunk.smartstore
 
 - name: Set the current node as a Splunk indexer cluster master
-  command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ idxc_replication_factor }} -search_factor {{ idxc_search_factor }} -secret '{{ splunk.idxc.pass4SymmKey }}' -cluster_label '{{ splunk.idxc.label }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ splunk.idxc.replication_factor }} -search_factor {{ idxc_search_factor }} -secret '{{ splunk.idxc.pass4SymmKey }}' -cluster_label '{{ splunk.idxc.label }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   register: task_result
   until: task_result.rc == 0
   changed_when: task_result.rc == 0
