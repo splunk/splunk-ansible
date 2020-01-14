@@ -77,15 +77,15 @@ def test_getSplunkPaths(default_yml, os_env, output):
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters
-                ({}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
+                ({}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
                 # Check default.yml parameters
-                ({"idxc": {}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({"idxc": {"label": None}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({"idxc": {"label": "1234"}}, {}, {"label": "1234", "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
-                ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {}}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"label": None}}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"label": "1234"}}, {}, {"label": "1234", "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 1, "search_factor": 1}),
                 # Search factor should never exceed replication factor
                 ({"idxc": {"replication_factor": 0, "search_factor": 2}}, {}, {"label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
                 ({"idxc": {"replication_factor": 1, "search_factor": 3}}, {}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
@@ -93,15 +93,15 @@ def test_getSplunkPaths(default_yml, os_env, output):
                 # This should return replication_factor=2 because there are only 2 hosts in the "splunk_indexer" group
                 ({"idxc": {"replication_factor": 3, "search_factor": 1}}, {}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
                 # Check environment variable parameters
-                ({}, {"SPLUNK_IDXC_LABEL": ""}, {"label": "", "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({}, {"SPLUNK_IDXC_SECRET": ""}, {"label": None, "secret": "", "replication_factor": 0, "search_factor": 0}),
-                ({}, {"SPLUNK_IDXC_SECRET": "abcd"}, {"label": None, "secret": "abcd", "replication_factor": 0, "search_factor": 0}),
-                ({}, {"SPLUNK_IDXC_REPLICATION_FACTOR": "1"}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 0}),
+                ({}, {"SPLUNK_IDXC_LABEL": ""}, {"label": "", "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({}, {"SPLUNK_IDXC_SECRET": ""}, {"label": None, "secret": "", "replication_factor": 1, "search_factor": 1}),
+                ({}, {"SPLUNK_IDXC_SECRET": "abcd"}, {"label": None, "secret": "abcd", "replication_factor": 1, "search_factor": 1}),
+                ({}, {"SPLUNK_IDXC_REPLICATION_FACTOR": "1"}, {"label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
                 ({}, {"SPLUNK_IDXC_REPLICATION_FACTOR": 2, "SPLUNK_IDXC_SEARCH_FACTOR": "1"}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
-                ({"idxc": {"label": "1234"}}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0, "search_factor": 0}),
-                ({"idxc": {"secret": "abcd"}}, {"SPLUNK_IDXC_SECRET": "1234"}, {"label": None, "secret": "1234", "replication_factor": 0, "search_factor": 0}),
+                ({"idxc": {"label": "1234"}}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"secret": "abcd"}}, {"SPLUNK_IDXC_SECRET": "1234"}, {"label": None, "secret": "1234", "replication_factor": 1, "search_factor": 1}),
                 ({"idxc": {"replication_factor": 3, "search_factor": 3}}, {"SPLUNK_IDXC_REPLICATION_FACTOR": 2}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 2}),
                 ({"idxc": {"replication_factor": 2, "search_factor": 2}}, {"SPLUNK_IDXC_SEARCH_FACTOR": 1}, {"label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
             ]
@@ -117,27 +117,27 @@ def test_getIndexerClustering(default_yml, os_env, output):
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters
-                ({}, {}, {"label": None, "secret": None, "replication_factor": 0}),
+                ({}, {}, {"label": None, "secret": None, "replication_factor": 1}),
                 # Check default.yml parameters
-                ({"shc": {}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
-                ({"shc": {"label": None}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
-                ({"shc": {"label": "1234"}}, {}, {"label": "1234", "secret": None, "replication_factor": 0}),
-                ({"shc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
-                ({"shc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 0}),
+                ({"shc": {}}, {}, {"label": None, "secret": None, "replication_factor": 1}),
+                ({"shc": {"label": None}}, {}, {"label": None, "secret": None, "replication_factor": 1}),
+                ({"shc": {"label": "1234"}}, {}, {"label": "1234", "secret": None, "replication_factor": 1}),
+                ({"shc": {"secret": None}}, {}, {"label": None, "secret": None, "replication_factor": 1}),
+                ({"shc": {"secret": "1234"}}, {}, {"label": None, "secret": "1234", "replication_factor": 1}),
                 ({"shc": {"replication_factor": 0}}, {}, {"label": None, "secret": None, "replication_factor": 0}),
                 ({"shc": {"replication_factor": 1}}, {}, {"label": None, "secret": None, "replication_factor": 1}),
                 ({"shc": {"replication_factor": "2"}}, {}, {"label": None, "secret": None, "replication_factor": 2}),
                 # This should return replication_factor=2 because there are only 2 hosts in the "splunk_search_head" group
                 ({"shc": {"replication_factor": 3}}, {}, {"label": None, "secret": None, "replication_factor": 2}),
                 # Check environment variable parameters
-                ({}, {"SPLUNK_SHC_LABEL": ""}, {"label": "", "secret": None, "replication_factor": 0}),
-                ({}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0}),
-                ({}, {"SPLUNK_SHC_SECRET": ""}, {"label": None, "secret": "", "replication_factor": 0}),
-                ({}, {"SPLUNK_SHC_SECRET": "abcd"}, {"label": None, "secret": "abcd", "replication_factor": 0}),
+                ({}, {"SPLUNK_SHC_LABEL": ""}, {"label": "", "secret": None, "replication_factor": 1}),
+                ({}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 1}),
+                ({}, {"SPLUNK_SHC_SECRET": ""}, {"label": None, "secret": "", "replication_factor": 1}),
+                ({}, {"SPLUNK_SHC_SECRET": "abcd"}, {"label": None, "secret": "abcd", "replication_factor": 1}),
                 ({}, {"SPLUNK_SHC_REPLICATION_FACTOR": "2"}, {"label": None, "secret": None, "replication_factor": 2}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
-                ({"shc": {"label": "1234"}}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 0}),
-                ({"shc": {"secret": "abcd"}}, {"SPLUNK_SHC_SECRET": "1234"}, {"label": None, "secret": "1234", "replication_factor": 0}),
+                ({"shc": {"label": "1234"}}, {"SPLUNK_SHC_LABEL": "abcd"}, {"label": "abcd", "secret": None, "replication_factor": 1}),
+                ({"shc": {"secret": "abcd"}}, {"SPLUNK_SHC_SECRET": "1234"}, {"label": None, "secret": "1234", "replication_factor": 1}),
                 ({"shc": {"replication_factor": 2}}, {"SPLUNK_SHC_REPLICATION_FACTOR": "1"}, {"label": None, "secret": None, "replication_factor": 1}),
             ]
         )
