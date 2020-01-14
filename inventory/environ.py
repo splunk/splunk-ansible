@@ -34,6 +34,7 @@ urllib3.disable_warnings()
 HERE = os.path.dirname(os.path.normpath(__file__))
 _PLATFORM = platform.platform().lower()
 PLATFORM = "windows" if ("windows" in _PLATFORM or "cygwin" in _PLATFORM) else "linux"
+HOSTNAME = os.uname()[1]
 JAVA_VERSION_WHITELIST = frozenset(("oracle:8", "openjdk:8", "openjdk:9", "openjdk:11"))
 
 roleNames = [
@@ -91,18 +92,18 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     if os.path.isfile("/.dockerenv"):
         if "localhost" not in inventory["all"]["children"]:
             inventory["all"]["hosts"].append("localhost")
-        inventory["_meta"]["hostvars"]["localhost"] = loadHostVars(inventory["all"]["vars"],
-                                                                   os.uname()[1], PLATFORM)
+        inventory["_meta"]["hostvars"]["localhost"] = inventory["all"]["vars"]
         inventory["_meta"]["hostvars"]["localhost"]["ansible_connection"] = "local"
 
 def getDefaultVars():
     """
-    Load all splunk-ansible defaults and perform overwrites based on 
+    Load all splunk-ansible defaults and perform overwrites based on
     environment variables to return a consolidated inventory object
     """
-    defaultVars = loadDefaultSplunkVariables()
+    defaultVars = loadDefaults()
     overrideEnvironmentVars(defaultVars)
 
+    getSplunkPaths(defaultVars)
     getIndexerClustering(defaultVars)
     getSearchHeadClustering(defaultVars)
     # getMultisite() must be called after getIndexerClustering() + getSearchHeadClustering()
@@ -136,6 +137,19 @@ def getDefaultVars():
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
     return defaultVars
+
+def getSplunkPaths(vars_scope):
+    """
+    Normalize the paths used by Splunk for downstream plays
+    """
+    # TODO: Handle changes to SPLUNK_HOME that impact other paths (ex splunk.app_paths.*)
+    splunk_vars = vars_scope["splunk"]
+    splunk_vars["opt"] = os.environ.get("SPLUNK_OPT", splunk_vars.get("opt"))
+    splunk_vars["home"] = os.environ.get("SPLUNK_HOME", splunk_vars.get("home"))
+    # Not sure if we should expose this - exec is fixed relative to SPLUNK_HOME
+    splunk_vars["exec"] = os.environ.get("SPLUNK_EXEC", splunk_vars.get("exec"))
+    # Not sure if we should expose this - pid is fixed relative to SPLUNK_HOME
+    splunk_vars["pid"] = os.environ.get("SPLUNK_PID", splunk_vars.get("pid"))
 
 def getIndexerClustering(vars_scope):
     """
@@ -223,7 +237,9 @@ def getLicenses(vars_scope):
     if vars_scope["splunk"]["license_uri"] and '*' in vars_scope["splunk"]["license_uri"]:
         vars_scope["splunk"]["wildcard_license"] = True
     vars_scope["splunk"]["nfr_license"] = os.environ.get("SPLUNK_NFR_LICENSE", "/tmp/nfr_enterprise.lic")
-    vars_scope["splunk"]["ignore_license"] = bool(os.environ.get("SPLUNK_IGNORE_LICENSE"))
+    vars_scope["splunk"]["ignore_license"] = False
+    if os.environ.get("SPLUNK_IGNORE_LICENSE", "").lower() == "true":
+        vars_scope["splunk"]["ignore_license"] = True
     vars_scope["splunk"]["license_download_dest"] = os.environ.get("SPLUNK_LICENSE_INSTALL_PATH", "/tmp/splunk.lic")
 
 def getJava(vars_scope):
@@ -302,10 +318,6 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
     vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope["ansible_post_tasks"])
     vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
-    vars_scope["splunk"]["opt"] = os.environ.get('SPLUNK_OPT', vars_scope["splunk"]["opt"])
-    vars_scope["splunk"]["home"] = os.environ.get('SPLUNK_HOME', vars_scope["splunk"]["home"])
-    vars_scope["splunk"]["exec"] = os.environ.get('SPLUNK_EXEC', vars_scope["splunk"]["exec"])
-    vars_scope["splunk"]["pid"] = os.environ.get('SPLUNK_PID', vars_scope["splunk"]["pid"])
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
@@ -368,7 +380,7 @@ def merge_dict(dict1, dict2, path=None):
             dict1[key] = dict2[key]
     return dict1
 
-def mergeDefaults(vars_scope, src):
+def mergeDefaults(vars_scope, key, src):
     """
     Helper method to fetch defaults from various sources/other methods
     """
@@ -378,30 +390,31 @@ def mergeDefaults(vars_scope, src):
     if src.startswith("file://"):
         src = src[7:]
     if src.startswith(("http://", "https://")):
-        vars_scope = mergeDefaultsFromURL(vars_scope, src)
+        headers = None
+        verify = False
+        if vars_scope.get("config") and vars_scope["config"].get(key):
+            headers = vars_scope["config"][key].get("headers")
+            verify = bool(vars_scope["config"][key].get("verify"))
+        vars_scope = mergeDefaultsFromURL(vars_scope, src, headers, verify)
     else:
         vars_scope = mergeDefaultsFromFile(vars_scope, src)
     return vars_scope
 
-def mergeDefaultsFromURL(vars_scope, url):
+def mergeDefaultsFromURL(vars_scope, url, headers=None, verify=False):
     """
     Fetch defaults from a URL and merge them into a single dict
     """
     if not url:
         return vars_scope
-    headers = None
-    if vars_scope.get("config") and vars_scope["config"].get("env") and vars_scope["config"]["env"].get("headers"):
-        headers = vars_scope["config"]["env"]["headers"]
-
     max_retries = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_RETRIES", vars_scope["config"].get("max_retries")))
     max_delay = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_DELAY", vars_scope["config"].get("max_delay")))
     max_timeout = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT", vars_scope["config"].get("max_timeout")))
-    verify = bool(os.environ.get("SPLUNK_DEFAULTS_HTTPS_VERIFY", vars_scope["config"]["env"].get("verify")))
     unlimited_retries = (max_retries == -1)
     current_retry = 0
     while True:
         try:
-            resp = requests.get(url, headers=headers, timeout=max_timeout, verify=verify)
+            resp = requests.get(url.format(hostname=HOSTNAME, platform=PLATFORM),
+                                headers=headers, timeout=max_timeout, verify=verify)
             resp.raise_for_status()
             vars_scope = merge_dict(vars_scope, yaml.load(resp.content, Loader=yaml.Loader))
             break
@@ -425,26 +438,27 @@ def mergeDefaultsFromFile(vars_scope, file):
             vars_scope = merge_dict(vars_scope, yaml.load(f.read(), Loader=yaml.Loader))
     return vars_scope
 
-def loadDefaultSplunkVariables():
-    '''
-    This method accepts a url argument, but that argument can be None. If it is None, then we load from a file
-    In this way, we manage two different methods of loading the default file (which contains potentially sentive
-    information
-    '''
+def loadDefaults():
+    """
+    Generate a consolidated map containing variables used to drive Ansible functionality.
+    Defaults are loaded in a particular order such that latter overrides former.
+    """
+    # Load base defaults from splunk-ansible repository
     base = loadBaseDefaults()
-    # Load the defaults for the environment, starting with the "baked" files
-    yamls_to_load = []
-    if base.get("config") and base["config"].get("baked"):
-        files = base["config"]["baked"].split(",")
-        default_dir = base["config"].get("defaults_dir", "")
-        yamls_to_load.extend([os.path.join(default_dir, f.strip()) for f in files])
-    # Load the defaults for the environment, ending with URLs provided in environment vars
-    if base.get("config") and base["config"].get("env") and base["config"]["env"].get("var"):
-        urls = os.environ.get(base["config"]["env"]["var"]).split(",")
-        yamls_to_load.extend(urls)
+    # Build an array of new defaults to override the base
+    ymls = []
+    config = base.get("config")
+    if not config:
+        return base
+    # Add "baked" files to array
+    ymls.extend(loadBakedDefaults(config))
+    # Add "env" URLs to array
+    ymls.extend(loadEnvDefaults(config))
+    # Add "host" URLs to array
+    ymls.extend(loadHostDefaults(config))
     # For each new YAML discovered, merge them with base in order so values get superseded
-    for yml in yamls_to_load:
-        base = mergeDefaults(base, yml)
+    for yml in ymls:
+        base = mergeDefaults(base, yml["key"], yml["src"])
     return base
 
 def loadBaseDefaults():
@@ -459,38 +473,33 @@ def loadBaseDefaults():
         yml = yaml.load(yaml_file, Loader=yaml.Loader)
     return yml
 
-def loadHostVars(defaults, hostname=None, platform="linux"):
-    loaded_yaml = {}
-    if hostname == None:
-        return loaded_yaml
+def loadBakedDefaults(config):
+    """
+    Load the defaults in "baked" key of the configuration.
+    """
+    if not config or not config.get("baked"):
+        return []
+    files = config["baked"].split(",")
+    default_dir = config.get("defaults_dir", "")
+    return [{"key": "baked", "src": os.path.join(default_dir, f.strip())} for f in files]
 
-    url = None
-    if "config" in defaults and defaults["config"] is not None and "host" in defaults["config"] and defaults["config"]["host"] is not None and "url" in defaults['config']['host'] and defaults['config']['host']['url'] is not None and len(defaults['config']['host']['url'].strip()) > 0:
-        url = defaults['config']['host']['url'].strip()
-        headers = None
-        if "headers" in defaults['config']['host'] and defaults['config']['host']['headers'] != None and len(defaults['config']['host']['headers']) > 0:
-            headers = defaults['config']['host']['headers']
+def loadEnvDefaults(config):
+    """
+    Load the defaults in "env" key of the configuration.
+    """
+    if not config or not config.get("env") or not config["env"].get("var"):
+        return []
+    urls = os.environ.get(config["env"]["var"]).split(",")
+    return [{"key": "env", "src": url} for url in urls]
 
-        max_retries = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_RETRIES', defaults["config"]["max_retries"]))
-        max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', defaults["config"]["max_delay"]))
-        max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', defaults["config"]["max_timeout"]))
-        verify = bool(os.environ.get('SPLUNK_DEFAULTS_HTTPS_VERIFY', defaults["config"]["host"]["verify"]))
-        unlimited_retries = (max_retries == -1)
-        current_retry = 0
-        while True:
-            try:
-                response = requests.get(url.format(hostname=hostname, platform=platform), headers=headers, timeout=max_timeout, verify=verify)
-                response.raise_for_status()
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content, Loader=yaml.Loader))
-                break
-            except Exception as e:
-                if unlimited_retries or current_retry < max_retries:
-                    current_retry += 1
-                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay) + str(e))
-                    sleep(max_delay)
-                else:
-                    raise e
-    return loaded_yaml
+def loadHostDefaults(config):
+    """
+    Load the defaults in "host" key of the configuration.
+    """
+    if not config or not config.get("host") or not config["host"].get("url"):
+        return []
+    urls = config["host"]["url"].split(",")
+    return [{"key": "host", "src": url} for url in urls]
 
 def obfuscate_vars(inventory):
     """
