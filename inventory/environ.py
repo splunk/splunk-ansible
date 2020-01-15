@@ -499,8 +499,10 @@ def loadEnvDefaults(config):
     """
     if not config or not config.get("env") or not config["env"].get("var"):
         return []
-    urls = os.environ.get(config["env"]["var"]).split(",")
-    return [{"key": "env", "src": url} for url in urls]
+    urls = os.environ.get(config["env"]["var"], "")
+    if not urls:
+        return []
+    return [{"key": "env", "src": url} for url in urls.split(",")]
 
 def loadHostDefaults(config):
     """

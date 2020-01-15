@@ -613,6 +613,9 @@ def test_loadBakedDefaults(config, output):
                 ({"env": {}}, []),
                 ({"env": {"var": None}}, []),
                 ({"env": {"var": ""}}, []),
+                # Adding test for a key that does not exist
+                ({"env": {"var": "FAKE"}}, []),
+                # Adding tests for keys that exist
                 ({"env": {"var": "KEY1"}}, [{"key": "env", "src": "file1"}]),
                 ({"env": {"var": "KEY2"}}, [{"key": "env", "src": "file1"}, {"key": "env", "src": "file2"}, {"key": "env", "src": "file3"}]),
             ]
