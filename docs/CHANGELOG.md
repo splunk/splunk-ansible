@@ -4,6 +4,7 @@
 
 * [8.0.1](#801)
 * [8.0.0](#800)
+* [7.3.4](#734)
 * [7.3.3](#733)
 * [7.3.2](#732)
 * [7.3.1](#731)
@@ -47,6 +48,16 @@
 * Increasing delay intervals to better handle different platforms
 * Adding vars needed for Ansible Galaxy
 * Bugfix for pre-playbook tasks not supporting URLs
+
+--- 
+
+## 7.3.4
+
+#### What's New?
+* Syncing with latest codebase - currently up to sync with 8.0.1.
+
+#### Changes
+* See [8.0.1](#801) changes
 
 --- 
 
