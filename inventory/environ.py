@@ -318,7 +318,6 @@ def getSplunkApps(vars_scope):
 def getSecrets(vars_scope):
     vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["pass4SymmKey"] = os.environ.get('SPLUNK_PASS4SYMMKEY', vars_scope["splunk"]["pass4SymmKey"])
-    vars_scope["splunk"]["sslPassword"] = os.environ.get('SPLUNK_SSL_PASSWORD', vars_scope["splunk"]["sslPassword"])
     vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"]["secret"])
 
 def overrideEnvironmentVars(vars_scope):

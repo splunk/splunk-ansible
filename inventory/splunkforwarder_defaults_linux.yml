@@ -36,7 +36,6 @@ splunk:
     password:
     secret: 
     pass4SymmKey:
-    sslPassword:
     svc_port: 8089
     s2s:
         enable: True
