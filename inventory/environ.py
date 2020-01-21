@@ -162,11 +162,18 @@ def getIndexerClustering(vars_scope):
     idxc_vars["label"] = os.environ.get("SPLUNK_IDXC_LABEL", idxc_vars.get("label"))
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
     idxc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_IDXC_PASS4SYMMKEY", idxc_vars.get("pass4SymmKey", idxc_vars.get("secret"))) # For issue #316 backwards-compatibility
-    # Rectify cluster replication + search factors
-    indexer_count = len(inventory.get("splunk_indexer", {}).get("hosts", []))
-    replf = os.environ.get("SPLUNK_IDXC_REPLICATION_FACTOR", idxc_vars.get("replication_factor", 0))
+    # Rectify replication factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thereplicationfactor)
+    # Make sure default repl/search factor>0 else Splunk doesn't start unless user-defined
+    if inventory.get("splunk_indexer"):
+        # If there are indexers, we need to make sure the replication factor is <= number of indexers
+        indexer_count = len(inventory["splunk_indexer"].get("hosts", []))
+    else:
+        # Only occurs during create-defaults generation or topologies without indexers
+        indexer_count = idxc_vars.get("replication_factor", 1)
+    replf = os.environ.get("SPLUNK_IDXC_REPLICATION_FACTOR", idxc_vars.get("replication_factor", 1))
     idxc_vars["replication_factor"] = min(indexer_count, int(replf))
-    searchf = os.environ.get("SPLUNK_IDXC_SEARCH_FACTOR", idxc_vars.get("search_factor", 0))
+    # Rectify search factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thesearchfactor)
+    searchf = os.environ.get("SPLUNK_IDXC_SEARCH_FACTOR", idxc_vars.get("search_factor", 1))
     idxc_vars["search_factor"] = min(idxc_vars["replication_factor"], int(searchf))
 
 def getSearchHeadClustering(vars_scope):
@@ -179,10 +186,16 @@ def getSearchHeadClustering(vars_scope):
     shc_vars["label"] = os.environ.get("SPLUNK_SHC_LABEL", shc_vars.get("label"))
     shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
     shc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_SHC_PASS4SYMMKEY", shc_vars.get("pass4SymmKey", shc_vars.get("secret"))) # For issue #316 backwards-compatibility
-    # Rectify SHC replication factor
-    sh_count = len(inventory.get("splunk_search_head", {}).get("hosts", []))
-    replf = os.environ.get("SPLUNK_SHC_REPLICATION_FACTOR", shc_vars.get("replication_factor", 0))
-    shc_vars["replication_factor"] = min(sh_count, int(replf))
+    # Rectify search factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thesearchfactor)
+    # Make sure default repl factor>0 else Splunk doesn't start unless user-defined
+    if inventory.get("splunk_search_head"):
+        # If there are indexers, we need to make sure the replication factor is <= number of search heads
+        shcount = len(inventory["splunk_search_head"].get("hosts", []))
+    else:
+        # Only occurs during create-defaults generation or topologies without search heads
+        shcount = shc_vars.get("replication_factor", 1)
+    replf = os.environ.get("SPLUNK_SHC_REPLICATION_FACTOR", shc_vars.get("replication_factor", 1))
+    shc_vars["replication_factor"] = min(shcount, int(replf))
 
 def getMultisite(vars_scope):
     """
@@ -492,8 +505,10 @@ def loadEnvDefaults(config):
     """
     if not config or not config.get("env") or not config["env"].get("var"):
         return []
-    urls = os.environ.get(config["env"]["var"]).split(",")
-    return [{"key": "env", "src": url} for url in urls]
+    urls = os.environ.get(config["env"]["var"], "")
+    if not urls:
+        return []
+    return [{"key": "env", "src": url} for url in urls.split(",")]
 
 def loadHostDefaults(config):
     """

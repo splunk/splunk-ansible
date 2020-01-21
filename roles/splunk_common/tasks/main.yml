@@ -40,11 +40,6 @@
   when:
     - java_version is defined and java_version
 
-# - include_tasks: set_ssl_password.yml
-#   when:
-#     - "'sslPassword' in splunk"
-#     - first_run | bool
-
 - include_tasks: set_general_symmkey_password.yml
   when:
     - "'pass4SymmKey' in splunk"
