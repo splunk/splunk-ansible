@@ -42,7 +42,7 @@
 
 - include_tasks: set_general_symmkey_password.yml
   when:
-    - "'pass4SymmKey' in splunk" and splunk.pass4SymmKey
+    - ("'pass4SymmKey' in splunk" and splunk.pass4SymmKey)
     - first_run | bool
 
 # This needs to be done before any encrypted passkeys are generated
