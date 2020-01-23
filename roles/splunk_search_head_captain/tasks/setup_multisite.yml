@@ -8,7 +8,7 @@
       multisite_master_uri: "{{ cert_prefix }}://{{ splunk.multisite_master }}:{{ splunk.svc_port }}"
 
 - name: Setup SHC - Captain
-  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ multisite_master_uri }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.secret }}"
+  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ multisite_master_uri }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.pass4SymmKey }}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_new_master
@@ -28,7 +28,7 @@
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_process.yml
 
 - name: Setup SHC with Associated Site - Captain
-  command: "{{ splunk.exec }} edit cluster-master -old_master_uri {{ multisite_master_uri }} -site {{ splunk.site }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.secret }} -multisite True"
+  command: "{{ splunk.exec }} edit cluster-master -old_master_uri {{ multisite_master_uri }} -site {{ splunk.site }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.shc.pass4SymmKey }} -multisite True"
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_associated_site
