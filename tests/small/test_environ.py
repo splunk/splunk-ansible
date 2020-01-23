@@ -164,6 +164,34 @@ def test_getMultisite():
 def test_getSplunkWebSSL():
     pass
 
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check null parameters - Splunk password is required
+                ({"password": "Chang3d!"}, {}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": None}),
+                # Check default.yml parameters
+                ({"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": "Chang3d!", "secret": "1234"}, {}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": "1234"}),
+                # Check environment variable parameters
+                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_SECRET": "1234"}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": "1234"})
+            ]
+        )
+def test_getSecrets(default_yml, os_env, output):
+    vars_scope = {"splunk": default_yml}
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getSecrets(vars_scope)
+    assert vars_scope["splunk"] == output
+
+@pytest.mark.xfail(raises=KeyError)
+def test_noSplunkPassword():
+    vars_scope = {"splunk": {}}
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new={}):
+            environ.getSecrets(vars_scope)
+
 @pytest.mark.parametrize(("os_env", "license_master_included", "deployer_included", "indexer_cluster", "search_head_cluster", "search_head_cluster_url"),
                          [
                             ({}, False, False, False, False, None),
