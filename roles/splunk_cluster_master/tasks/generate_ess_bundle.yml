@@ -10,9 +10,21 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     mode: 0777
+  
+- name: Get ESS version
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local/SplunkEnterpriseSecuritySuite?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200
+    timeout: 10
+  register: ess_info
+  no_log: "{{ hide_password }}"
 
 - name: Execute bundle script
-  command: "{{ splunk.exec }} cmd python /tmp/es_ta_for_indexers.py --password {{ splunk.password }} --username {{ splunk.admin_user }}"
+  command: "{{ splunk.exec }} cmd {% if ess_info.json.entry[0].content.version is version('6.1', '>=') %}python3{% else %}python{% endif %} /tmp/es_ta_for_indexers.py --password {{ splunk.password }} --username {{ splunk.admin_user }}"
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
