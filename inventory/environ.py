@@ -102,6 +102,7 @@ def getDefaultVars():
     """
     defaultVars = loadDefaults()
     overrideEnvironmentVars(defaultVars)
+    getSecrets(defaultVars)
 
     getSplunkPaths(defaultVars)
     getIndexerClustering(defaultVars)
@@ -160,6 +161,7 @@ def getIndexerClustering(vars_scope):
     idxc_vars = vars_scope["splunk"]["idxc"]
     idxc_vars["label"] = os.environ.get("SPLUNK_IDXC_LABEL", idxc_vars.get("label"))
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
+    idxc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_IDXC_PASS4SYMMKEY", idxc_vars.get("pass4SymmKey", idxc_vars.get("secret"))) # For issue #316 backwards-compatibility
     # Rectify replication factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thereplicationfactor)
     # Make sure default repl/search factor>0 else Splunk doesn't start unless user-defined
     if inventory.get("splunk_indexer"):
@@ -183,6 +185,7 @@ def getSearchHeadClustering(vars_scope):
     shc_vars = vars_scope["splunk"]["shc"]
     shc_vars["label"] = os.environ.get("SPLUNK_SHC_LABEL", shc_vars.get("label"))
     shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
+    shc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_SHC_PASS4SYMMKEY", shc_vars.get("pass4SymmKey", shc_vars.get("secret"))) # For issue #316 backwards-compatibility
     # Rectify search factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thesearchfactor)
     # Make sure default repl factor>0 else Splunk doesn't start unless user-defined
     if inventory.get("splunk_search_head"):
@@ -325,6 +328,11 @@ def getSplunkApps(vars_scope):
         appSet.update(apps.split(","))
     vars_scope["splunk"]["apps_location"] = list(appSet)
 
+def getSecrets(vars_scope):
+    vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
+    vars_scope["splunk"]["pass4SymmKey"] = os.environ.get('SPLUNK_PASS4SYMMKEY', vars_scope["splunk"].get("pass4SymmKey"))
+    vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"].get("secret"))
+
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
     vars_scope["splunk"]["group"] = os.environ.get("SPLUNK_GROUP", vars_scope["splunk"]["group"])
@@ -332,10 +340,8 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope["ansible_post_tasks"])
     vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
-    vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
-    vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"]["secret"])
     vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
@@ -525,10 +531,16 @@ def obfuscate_vars(inventory):
     splunkVars = inventory.get("all", {}).get("vars", {}).get("splunk", {})
     if splunkVars.get("password"):
         splunkVars["password"] = stars
+    if splunkVars.get("pass4SymmKey"):
+        splunkvars["pass4SymmKey"] = stars
     if splunkVars.get("shc") and splunkVars["shc"].get("secret"):
         splunkVars["shc"]["secret"] = stars
+    if splunkVars.get("shc") and splunkVars["shc"].get("pass4SymmKey"):
+        splunkVars["shc"]["pass4SymmKey"] = stars
     if splunkVars.get("idxc") and splunkVars["idxc"].get("secret"):
         splunkVars["idxc"]["secret"] = stars
+    if splunkVars.get("idxc") and splunkVars["idxc"].get("pass4SymmKey"):
+        splunkVars["idxc"]["pass4SymmKey"] = stars
     if splunkVars.get("smartstore") and splunkVars["smartstore"].get("index"):
         splunkIndexes = splunkVars["smartstore"]["index"]
         for idx in range(0, len(splunkIndexes)):

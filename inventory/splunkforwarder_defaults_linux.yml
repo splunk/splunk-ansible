@@ -35,6 +35,7 @@ splunk:
     root_endpoint:
     password:
     secret: 
+    pass4SymmKey:
     svc_port: 8089
     s2s:
         enable: True
@@ -55,12 +56,14 @@ splunk:
     shc:
         enable: False
         secret:
+        pass4SymmKey:
         label: "shc_label"
         replication_factor: 3
         replication_port: 9887
     idxc:
         enable: False
         secret:
+        pass4SymmKey:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3

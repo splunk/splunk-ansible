@@ -43,10 +43,13 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_SVC_PORT | Default Admin Port | no | no | no |
 | SPLUNK_ROOT_ENDPOINT | Allow SplunkWeb to be accessed behind a given route (ex. reverse proxy usage) | no | no | no |
 | SPLUNK_PASSWORD* | Default password of the admin user | yes | yes | yes |
+| SPLUNK_PASS4SYMMKEY | Used to overwrite default pass4SymmKey for Splunk secrets | no | no | no |
 | SPLUNK_HEC_TOKEN | HEC (HTTP Event Collector) Token when enabled | no | no | no |
-| SPLUNK_SHC_SECRET | Search Head Clustering Shared secret | no | yes | no |
+| SPLUNK_SHC_SECRET | Search Head Clustering Shared secret (being deprecated in favor of SPLUNK_SHC_PASS4SYMMKEY) | no | no | no |
+| SPLUNK_SHC_PASS4SYMMKEY | Password for the Search Head Clustering Shared secret | no | yes | no |
 | SPLUNK_SHC_LABEL | Search head clustering label | no | yes | no |
-| SPLUNK_IDXC_SECRET | Indexer Clustering Shared Secret | no | no | yes |
+| SPLUNK_IDXC_SECRET | Indexer Clustering Shared Secret (being deprecated in favor of SPLUNK_SHC_PASS4SYMMKEY) | no | no | no |
+| SPLUNK_IDXC_PASS4SYMMKEY | Password for the Indexer Clustering Shared Secret | no | no | yes |
 | SPLUNK_IDXC_LABEL | Indexer clustering label | no | no | yes |
 | NO_HEALTHCHECK | Disable the Splunk healthcheck script | no | no | yes |
 | STEPDOWN_ANSIBLE_USER | Removes Ansible user from the sudo group when set to true. This means that no other users than root will have root access. | no | no | no |
