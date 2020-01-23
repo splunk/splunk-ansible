@@ -527,10 +527,16 @@ def obfuscate_vars(inventory):
     splunkVars = inventory.get("all", {}).get("vars", {}).get("splunk", {})
     if splunkVars.get("password"):
         splunkVars["password"] = stars
+    if splunkVars.get("pass4SymmKey"):
+        splunkvars["pass4SymmKey"] = stars
     if splunkVars.get("shc") and splunkVars["shc"].get("secret"):
         splunkVars["shc"]["secret"] = stars
+    if splunkVars.get("shc") and splunkVars["shc"].get("pass4SymmKey"):
+        splunkVars["shc"]["pass4SymmKey"] = stars
     if splunkVars.get("idxc") and splunkVars["idxc"].get("secret"):
         splunkVars["idxc"]["secret"] = stars
+    if splunkVars.get("idxc") and splunkVars["idxc"].get("pass4SymmKey"):
+        splunkVars["idxc"]["pass4SymmKey"] = stars
     if splunkVars.get("smartstore") and splunkVars["smartstore"].get("index"):
         splunkIndexes = splunkVars["smartstore"]["index"]
         for idx in range(0, len(splunkIndexes)):
