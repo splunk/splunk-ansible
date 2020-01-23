@@ -1,0 +1,3 @@
+---
+- name: Start spark master
+  shell: "{{ splunk.dfs.spark_home }}/sbin/start-master.sh"

@@ -1,0 +1,3 @@
+---
+- name: Start spark worker
+  shell: "{{ splunk.dfs.spark_home }}/sbin/start-slave.sh spark://{{ splunk.dfs.spark_master_hostname }}:{{ splunk.dfs.port }}"

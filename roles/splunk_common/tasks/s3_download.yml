@@ -1,0 +1,27 @@
+---
+- name: Install splunk-mule
+  pip:
+    name: "{{ item }}"
+    extra_args: --index-url=https://repo.splunk.com/artifactory/api/pypi/pypi-virtual/simple
+  become_user: root
+  become: yes
+  with_items:
+  - "splunk-mule"
+  - "six>=1.12.0"
+
+- name: Copying download log file script
+  copy:
+      src: "../scripts/download_logfile.py"
+      dest: /tmp/
+
+- name: Chmod download log file script
+  file:
+    path: /tmp/download_logfile.py
+    mode: 0700
+
+  vars:
+    file_name:
+
+- name: Run log file script
+  command: /tmp/download_logfile.py "{{ openjdk.version }}_{{ openjdk.platform }}_{{ openjdk.build }}.tar.gz"
+  register: hadoop_installed

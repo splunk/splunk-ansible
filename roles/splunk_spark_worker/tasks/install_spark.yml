@@ -1,0 +1,29 @@
+---
+- include_tasks: ../../splunk_common/s3_download.yml
+  when:
+    - hadoop_installed is not defined
+
+- name: Untar Spark tarfile into the Spark Home directory
+  unarchive:
+    src: "/tmp/spark-{{ splunk.dfs.spark_version }}-bin-hadoop{{ splunk.dfs.hadoop_version }}.tgz"
+    dest: /tmp/
+    copy: no
+
+- name: Create spark directory
+  file:
+    path: "{{ splunk.dfs.spark_home }}"
+    mode: 0777
+    state: directory
+  become_user: root
+  become: yes
+
+- name: Move spark-{{ splunk.dfs.spark_version }}-bin-hadoop{{ splunk.dfs.hadoop_version }} to spark
+  copy:
+    src: "/tmp/spark-{{ splunk.dfs.spark_version }}-bin-hadoop{{ splunk.dfs.hadoop_version }}"
+    dest: "{{ spark_home_dir }}"
+    remote_src: yes
+
+- name: Remove temporary directory
+  file:
+    path: "/tmp/spark-{{ splunk.dfs.spark_version }}-bin-hadoop{{ splunk.dfs.hadoop_version }}"
+    state: absent

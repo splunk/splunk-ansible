@@ -1,0 +1,21 @@
+---
+- include_tasks: ../../splunk_common/s3_download.yml
+  when:
+    - hadoop_installed is not defined
+
+- name: Create directory to unpack Oracle JRE
+  file:
+    path: "{{ openjdk.jre_base_dir }}"
+    state: directory
+
+- name: Untar OpenJDK tarfile
+  unarchive:
+    src: "/tmp/{{ openjdk.version }}_{{ openjdk.platform }}_{{ openjdk.build }}.tar.gz"
+    dest: "{{ openjdk.jre_base_dir }}"
+    copy: no
+
+- name: Create alternatives for installed JRE
+  shell: "update-alternatives --install /usr/bin/java java {{ openjdk.jre_base_dir }}/{{ openjdk.jre_dir }}/bin/java 100"
+
+- name: Set Java version
+  shell: "update-alternatives --set java {{ openjdk.jre_base_dir }}/{{ openjdk.jre_dir }}/bin/java"

@@ -1,0 +1,46 @@
+---
+- name: Create spark-env.sh
+  copy:
+    dest: "{{ splunk.dfs.spark_home }}/conf/spark-env.sh"
+    content: |
+      export SPARK_MASTER_WEBUI_PORT={{ splunk.dfs.spark_master_webui_port }}
+      export SPARK_MASTER_PORT={{ splunk.dfs.port }}
+      export SPARK_DAEMON_MEMORY=2g
+      export SPARK_PID_DIR={{ splunk.dfs.dfs_home }}
+      export SPARK_HOME={{ splunk.dfs.spark_home }}
+
+- set_fact:
+    java_home: "{{ splunk_home_dir }}/bin/jars/vendors/java/OpenJDK8U-jre_x64_linux_hotspot_8u212b03"
+
+- set_fact:
+    ld_library_path: "{{ java_home }}/lib/amd64/jli:{{ java_home }}/lib/amd64:$LD_LIBRARY_PATH"
+
+- name: Add java related environment variables for colocated deployment
+  blockinfile:
+    path: "{{ splunk.dfs.spark_home }}/conf/spark-env.sh"
+    insertafter: EOF
+    marker: ""
+    block: |
+      export JAVA_HOME={{ java_home }}
+      export LD_LIBRARY_PATH={{ ld_library_path }}
+  when: ((groups['orca_role_search_head'] is defined and inventory_hostname in groups['orca_role_search_head'] and groups['orca_role_spark_master'] is not defined) or (groups['orca_role_standalone'] is defined and inventory_hostname in groups['orca_role_standalone'] and groups['orca_role_spark_master'] is not defined))
+
+- name: Create spark-defaults.conf
+  become: yes
+  become_user: root
+  blockinfile:
+    path: "{{ splunk.dfs.spark_home }}/conf/spark-defaults.conf"
+    create: yes
+    mode: u+rw
+    insertafter: EOF
+    marker: ""
+    block: |
+      spark.eventLog.dir file://{{ splunk.dfs.dfs_home }}/eventlog
+      spark.history.fs.logDirectory file://{{ splunk.dfs.dfs_home }}/eventlog
+
+# This part should be appended by user input, how many workers they need.
+- name: Create slaves
+  copy:
+    dest: "{{ splunk.dfs.spark_home }}/conf/slaves"
+    content: |
+      {{ splunk.dfs.spark_workers }}

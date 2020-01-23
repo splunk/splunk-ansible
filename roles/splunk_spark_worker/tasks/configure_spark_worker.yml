@@ -1,0 +1,31 @@
+---
+- name: Create spark-env.sh
+  copy:
+    dest: "{{ splunk.dfs.spark_home }}/conf/spark-env.sh"
+    content: |
+      export SPARK_MASTER_WEBUI_PORT={{ splunk.dfs.spark_master_webui_port }}
+      export SPARK_MASTER_PORT={{ splunk.dfs.port }}
+      export SPARK_WORKER_WEBUI_PORT={{ splunk.dfs.spark_worker_webui_port }}
+
+- name: Add memory env variable for non-perf deployment
+  blockinfile:
+    path: "{{ splunk.dfs.spark_home }}/conf/spark-env.sh"
+    insertafter: EOF
+    marker: ""
+    block: |
+      export SPARK_WORKER_MEMORY=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+  when: not is_perf
+
+
+- name: Create spark-defaults.conf
+  become: yes
+  become_user: root
+  blockinfile:
+    path: "{{ splunk.dfs.spark_home }}/conf/spark-defaults.conf"
+    create: yes
+    mode: u+rw
+    insertafter: EOF
+    marker: ""
+    block: |
+      spark.eventLog.dir file://{{ splunk.dfs.dfs_home }}/eventlog
+      spark.history.fs.logDirectory file://{{ splunk.dfs.dfs_home }}/eventlog
