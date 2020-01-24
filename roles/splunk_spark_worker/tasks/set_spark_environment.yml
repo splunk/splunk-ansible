@@ -1,3 +1,0 @@
----
-- name: Run spark environment script
-  script: "{{ splunk.dfs.spark_home }}/setenv.sh"

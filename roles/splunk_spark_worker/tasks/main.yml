@@ -1,6 +1,4 @@
 ---
-- include_tasks: set_spark_environment.yml
-
 - include_tasks: install_jdk.yml
 
 - include_tasks: configure_spark_worker.yml
