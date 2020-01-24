@@ -37,6 +37,7 @@ splunk:
     secret: 
     pass4SymmKey:
     svc_port: 8089
+    launch:
     s2s:
         enable: True
         port: 9997
