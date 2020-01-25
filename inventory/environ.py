@@ -557,7 +557,7 @@ def obfuscate_vars(inventory):
     if splunkVars.get("password"):
         splunkVars["password"] = stars
     if splunkVars.get("pass4SymmKey"):
-        splunkvars["pass4SymmKey"] = stars
+        splunkVars["pass4SymmKey"] = stars
     if splunkVars.get("shc") and splunkVars["shc"].get("secret"):
         splunkVars["shc"]["secret"] = stars
     if splunkVars.get("shc") and splunkVars["shc"].get("pass4SymmKey"):
