@@ -161,7 +161,12 @@ def getIndexerClustering(vars_scope):
     idxc_vars = vars_scope["splunk"]["idxc"]
     idxc_vars["label"] = os.environ.get("SPLUNK_IDXC_LABEL", idxc_vars.get("label"))
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
-    idxc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_IDXC_PASS4SYMMKEY", idxc_vars.get("pass4SymmKey", idxc_vars.get("secret"))) # For issue #316 backwards-compatibility
+    idxc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_IDXC_PASS4SYMMKEY", idxc_vars.get("pass4SymmKey")) # Control flow for issue #316 backwards-compatibility
+    if idxc_vars["pass4SymmKey"]:
+        idxc_vars["secret"] = idxc_vars["pass4SymmKey"]
+    else:
+        idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
+        idxc_vars["pass4SymmKey"] = idxc_vars["secret"]
     # Rectify replication factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thereplicationfactor)
     # Make sure default repl/search factor>0 else Splunk doesn't start unless user-defined
     if inventory.get("splunk_indexer"):
@@ -184,8 +189,12 @@ def getSearchHeadClustering(vars_scope):
         vars_scope["splunk"]["shc"] = {}
     shc_vars = vars_scope["splunk"]["shc"]
     shc_vars["label"] = os.environ.get("SPLUNK_SHC_LABEL", shc_vars.get("label"))
-    shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
-    shc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_SHC_PASS4SYMMKEY", shc_vars.get("pass4SymmKey", shc_vars.get("secret"))) # For issue #316 backwards-compatibility
+    shc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_SHC_PASS4SYMMKEY", shc_vars.get("pass4SymmKey")) # Control flow for issue #316 backwards-compatibility
+    if shc_vars["pass4SymmKey"]:
+        shc_vars["secret"] = shc_vars["pass4SymmKey"]
+    else:
+        shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
+        shc_vars["pass4SymmKey"] = shc_vars["secret"]
     # Rectify search factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thesearchfactor)
     # Make sure default repl factor>0 else Splunk doesn't start unless user-defined
     if inventory.get("splunk_search_head"):
