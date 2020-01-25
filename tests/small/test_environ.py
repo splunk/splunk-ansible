@@ -86,7 +86,7 @@ def test_getSplunkPaths(default_yml, os_env, output):
                 ({"idxc": {"secret": None}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
                 ({"idxc": {"secret": "1234"}}, {}, {"pass4SymmKey": "1234", "label": None, "secret": "1234", "replication_factor": 1, "search_factor": 1}),
                 ({"idxc": {"pass4SymmKey": None}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
-                ({"idxc": {"pass4SymmKey": "1234"}}, {}, {"pass4SymmKey": "1234", "label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"pass4SymmKey": "1234"}}, {}, {"pass4SymmKey": "1234", "label": None, "secret": "1234", "replication_factor": 1, "search_factor": 1}),
                 # Search factor should never exceed replication factor
                 ({"idxc": {"replication_factor": 0, "search_factor": 2}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 0, "search_factor": 0}),
                 ({"idxc": {"replication_factor": 1, "search_factor": 3}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
@@ -98,13 +98,14 @@ def test_getSplunkPaths(default_yml, os_env, output):
                 ({}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"pass4SymmKey": None, "label": "abcd", "secret": None, "replication_factor": 1, "search_factor": 1}),
                 ({}, {"SPLUNK_IDXC_SECRET": ""}, {"pass4SymmKey": "", "label": None, "secret": "", "replication_factor": 1, "search_factor": 1}),
                 ({}, {"SPLUNK_IDXC_SECRET": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": "abcd", "replication_factor": 1, "search_factor": 1}),
-                ({}, {"SPLUNK_IDXC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({}, {"SPLUNK_IDXC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": "abcd", "replication_factor": 1, "search_factor": 1}),
                 ({}, {"SPLUNK_IDXC_REPLICATION_FACTOR": "1"}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
                 ({}, {"SPLUNK_IDXC_REPLICATION_FACTOR": 2, "SPLUNK_IDXC_SEARCH_FACTOR": "1"}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
                 ({"idxc": {"label": "1234"}}, {"SPLUNK_IDXC_LABEL": "abcd"}, {"pass4SymmKey": None, "label": "abcd", "secret": None, "replication_factor": 1, "search_factor": 1}),
                 ({"idxc": {"secret": "abcd"}}, {"SPLUNK_IDXC_SECRET": "1234"}, {"pass4SymmKey": "1234", "label": None, "secret": "1234", "replication_factor": 1, "search_factor": 1}),
-                ({"idxc": {"pass4SymmKey": "1234"}}, {"SPLUNK_IDXC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": None, "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"pass4SymmKey": "1234"}}, {"SPLUNK_IDXC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": "abcd", "replication_factor": 1, "search_factor": 1}),
+                ({"idxc": {"secret": "abcd"}}, {"SPLUNK_IDXC_SECRET": "1234"}, {"pass4SymmKey": "1234", "label": None, "secret": "1234", "replication_factor": 1, "search_factor": 1}),
                 ({"idxc": {"replication_factor": 3, "search_factor": 3}}, {"SPLUNK_IDXC_REPLICATION_FACTOR": 2}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 2, "search_factor": 2}),
                 ({"idxc": {"replication_factor": 2, "search_factor": 2}}, {"SPLUNK_IDXC_SEARCH_FACTOR": 1}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 2, "search_factor": 1}),
             ]
@@ -128,7 +129,7 @@ def test_getIndexerClustering(default_yml, os_env, output):
                 ({"shc": {"secret": None}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 1}),
                 ({"shc": {"secret": "1234"}}, {}, {"pass4SymmKey": "1234", "label": None, "secret": "1234", "replication_factor": 1}),
                 ({"shc": {"pass4SymmKey": None}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 1}),
-                ({"shc": {"pass4SymmKey": "1234"}}, {}, {"pass4SymmKey": "1234", "label": None, "secret": None, "replication_factor": 1}),
+                ({"shc": {"pass4SymmKey": "1234"}}, {}, {"pass4SymmKey": "1234", "label": None, "secret": "1234", "replication_factor": 1}),
                 ({"shc": {"replication_factor": 0}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 0}),
                 ({"shc": {"replication_factor": 1}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 1}),
                 ({"shc": {"replication_factor": "2"}}, {}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 2}),
@@ -139,12 +140,12 @@ def test_getIndexerClustering(default_yml, os_env, output):
                 ({}, {"SPLUNK_SHC_LABEL": "abcd"}, {"pass4SymmKey": None,"label": "abcd", "secret": None, "replication_factor": 1}),
                 ({}, {"SPLUNK_SHC_SECRET": ""}, {"pass4SymmKey": "", "label": None, "secret": "", "replication_factor": 1}),
                 ({}, {"SPLUNK_SHC_SECRET": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": "abcd", "replication_factor": 1}),
-                ({}, {"SPLUNK_SHC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": None, "replication_factor": 1}),
+                ({}, {"SPLUNK_SHC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": "abcd", "replication_factor": 1}),
                 ({}, {"SPLUNK_SHC_REPLICATION_FACTOR": "2"}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 2}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
                 ({"shc": {"label": "1234"}}, {"SPLUNK_SHC_LABEL": "abcd"}, {"pass4SymmKey": None, "label": "abcd", "secret": None, "replication_factor": 1}),
                 ({"shc": {"secret": "abcd"}}, {"SPLUNK_SHC_SECRET": "1234"}, {"pass4SymmKey": "1234", "label": None, "secret": "1234", "replication_factor": 1}),
-                ({"shc": {"pass4SymmKey": "1234"}}, {"SPLUNK_SHC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": None, "replication_factor": 1}),
+                ({"shc": {"pass4SymmKey": "1234"}}, {"SPLUNK_SHC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": "abcd", "replication_factor": 1}),
                 ({"shc": {"replication_factor": 2}}, {"SPLUNK_SHC_REPLICATION_FACTOR": "1"}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 1}),
             ]
         )
