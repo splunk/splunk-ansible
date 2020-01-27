@@ -80,7 +80,6 @@ splunk:
         pass4SymmKey: null
     ignore_license: false
     license_download_dest: /tmp/splunk.lic
-    nfr_license: /tmp/nfr_enterprise.lic
     opt: /opt
     password: helloworld
     pid: /opt/splunk/var/run/splunk/splunkd.pid
@@ -176,7 +175,6 @@ splunk:
         secret: null
     ignore_license: false
     license_download_dest: /tmp/splunk.lic
-    nfr_license: /tmp/nfr_enterprise.lic
     opt: /opt
     password: helloworld
     pid: /opt/splunk/var/run/splunk/splunkd.pid
@@ -267,7 +265,6 @@ splunk:
         secret: null
     ignore_license: false
     license_download_dest: /tmp/splunk.lic
-    nfr_license: /tmp/nfr_enterprise.lic
     opt: /opt
     password: helloworld
     pid: /opt/splunk/var/run/splunk/splunkd.pid
