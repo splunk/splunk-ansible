@@ -241,28 +241,27 @@ def test_getDistributedTopology(os_env, license_master_included, deployer_includ
     assert vars_scope["splunk"]["search_head_cluster"] == search_head_cluster
     assert vars_scope["splunk"]["search_head_cluster_url"] == search_head_cluster_url
 
-@pytest.mark.parametrize(("os_env", "license_uri", "wildcard_license", "nfr_license", "ignore_license", "license_download_dest"),
+@pytest.mark.parametrize(("os_env", "license_uri", "wildcard_license", "ignore_license", "license_download_dest"),
                          [
-                            ({}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
+                            ({}, "splunk.lic", False, False, "/tmp/splunk.lic"),
                             # Check individual environment variables
-                            ({"SPLUNK_LICENSE_URI": "http://web/license.lic"}, "http://web/license.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
-                            ({"SPLUNK_LICENSE_URI": "/mnt/*.lic"}, "/mnt/*.lic", True, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
-                            ({"SPLUNK_NFR_LICENSE": "/mnt/nfr.lic"}, "splunk.lic", False, "/mnt/nfr.lic", False, "/tmp/splunk.lic"),
-                            ({"SPLUNK_IGNORE_LICENSE": ""}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
-                            ({"SPLUNK_IGNORE_LICENSE": "true"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", True, "/tmp/splunk.lic"),
-                            ({"SPLUNK_IGNORE_LICENSE": "TRUE"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", True, "/tmp/splunk.lic"),
-                            ({"SPLUNK_IGNORE_LICENSE": "false"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/tmp/splunk.lic"),
-                            ({"SPLUNK_LICENSE_INSTALL_PATH": "/Downloads/"}, "splunk.lic", False, "/tmp/nfr_enterprise.lic", False, "/Downloads/"),
+                            ({"SPLUNK_LICENSE_URI": "http://web/license.lic"}, "http://web/license.lic", False, False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_LICENSE_URI": "/mnt/*.lic"}, "/mnt/*.lic", True, False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_NFR_LICENSE": "/mnt/nfr.lic"}, "splunk.lic", False, False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_IGNORE_LICENSE": ""}, "splunk.lic", False, False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_IGNORE_LICENSE": "true"}, "splunk.lic", False, True, "/tmp/splunk.lic"),
+                            ({"SPLUNK_IGNORE_LICENSE": "TRUE"}, "splunk.lic", False, True, "/tmp/splunk.lic"),
+                            ({"SPLUNK_IGNORE_LICENSE": "false"}, "splunk.lic", False, False, "/tmp/splunk.lic"),
+                            ({"SPLUNK_LICENSE_INSTALL_PATH": "/Downloads/"}, "splunk.lic", False, False, "/Downloads/"),
                          ]
                         )
-def test_getLicenses(os_env, license_uri, wildcard_license, nfr_license, ignore_license, license_download_dest):
+def test_getLicenses(os_env, license_uri, wildcard_license, ignore_license, license_download_dest):
     vars_scope = {"splunk": {}}
     with patch("os.environ", new=os_env):
         environ.getLicenses(vars_scope)
     assert vars_scope["splunk"]["license_uri"] == license_uri
     assert type(vars_scope["splunk"]["wildcard_license"]) == bool
     assert vars_scope["splunk"]["wildcard_license"] == wildcard_license
-    assert vars_scope["splunk"]["nfr_license"] == nfr_license
     assert type(vars_scope["splunk"]["ignore_license"]) == bool
     assert vars_scope["splunk"]["ignore_license"] == ignore_license
     assert vars_scope["splunk"]["license_download_dest"] == license_download_dest

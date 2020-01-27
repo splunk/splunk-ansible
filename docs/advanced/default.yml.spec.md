@@ -135,10 +135,6 @@ splunk:
   * Path in filesystem where licenses will be downloaded as
   * Default: /tmp/splunk.lic
 
-  nfr_license: <str - filepath>
-  * Path in filesystem where of special NFR licenses
-  * Default: /tmp/nfr_enterprise.lic
-
   wildcard_license: <bool>
   * Enable licenses to be interpreted as fileglobs, to support provisioning with multiple Splunk licenses
   * Default: false
@@ -482,7 +478,6 @@ splunk:
     secret: dmwHG97SpM+GzeGPUELwr7xXowSAVmLW
   ignore_license: false
   license_download_dest: /tmp/splunk.lic
-  nfr_license: /tmp/nfr_enterprise.lic
   opt: /opt
   password: helloworld
   pid: /opt/splunk/var/run/splunk/splunkd.pid

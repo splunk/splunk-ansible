@@ -262,7 +262,6 @@ def getLicenses(vars_scope):
     vars_scope["splunk"]["wildcard_license"] = False
     if vars_scope["splunk"]["license_uri"] and '*' in vars_scope["splunk"]["license_uri"]:
         vars_scope["splunk"]["wildcard_license"] = True
-    vars_scope["splunk"]["nfr_license"] = os.environ.get("SPLUNK_NFR_LICENSE", "/tmp/nfr_enterprise.lic")
     vars_scope["splunk"]["ignore_license"] = False
     if os.environ.get("SPLUNK_IGNORE_LICENSE", "").lower() == "true":
         vars_scope["splunk"]["ignore_license"] = True
