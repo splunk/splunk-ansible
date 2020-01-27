@@ -396,9 +396,82 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
     assert type(vars_scope["splunk"]["apps_location"]) == list
     assert len(vars_scope["splunk"]["apps_location"]) == apps_count
 
-@pytest.mark.skip(reason="TODO")
-def test_overrideEnvironmentVars():
-    pass
+@pytest.mark.parametrize(("default_yml", "os_env", "key", "value"),
+            [
+                # Check ansible_pre_tasks
+                ({"ansible_pre_tasks": "a,b,c"}, {}, "ansible_pre_tasks", "a,b,c"),
+                ({}, {"SPLUNK_ANSIBLE_PRE_TASKS": "a,b"}, "ansible_pre_tasks", "a,b"),
+                # Check ansible_pre_tasks
+                ({"ansible_post_tasks": "a,b,c"}, {}, "ansible_post_tasks", "a,b,c"),
+                ({}, {"SPLUNK_ANSIBLE_POST_TASKS": "a,b"}, "ansible_post_tasks", "a,b"),
+                # Check cert_prefix
+                ({}, {}, "cert_prefix", "https"),
+                ({"cert_prefix": "http"}, {}, "cert_prefix", "http"),
+                ({}, {"SPLUNK_CERT_PREFIX": "fakehttps"}, "cert_prefix", "fakehttps"),
+                # Check splunk.user
+                ({"splunk": {"user": "root"}}, {}, "splunk.user", "root"),
+                ({}, {"SPLUNK_USER": "root"}, "splunk.user", "root"),
+                # Check splunk.group
+                ({"splunk": {"group": "root"}}, {}, "splunk.group", "root"),
+                ({}, {"SPLUNK_GROUP": "root"}, "splunk.group", "root"),
+                # Check splunk.root_endpoint
+                ({"splunk": {"root_endpoint": "/splunk"}}, {}, "splunk.root_endpoint", "/splunk"),
+                ({}, {"SPLUNK_ROOT_ENDPOINT": "/splk"}, "splunk.root_endpoint", "/splk"),
+                # Check splunk.svc_port
+                ({"splunk": {"svc_port": "9089"}}, {}, "splunk.svc_port", "9089"),
+                ({}, {"SPLUNK_SVC_PORT": "8189"}, "splunk.svc_port", "8189"),
+                # Check splunk.s2s.port
+                ({"splunk": {"s2s": {"port": "9999"}}}, {}, "splunk.s2s.port", 9999),
+                ({}, {"SPLUNK_S2S_PORT": "9991"}, "splunk.s2s.port", 9991),
+                # Check splunk.hec_token
+                ({"splunk": {"hec_token": "lalala"}}, {}, "splunk.hec_token", "lalala"),
+                ({}, {"SPLUNK_HEC_TOKEN": "alalal"}, "splunk.hec_token", "alalal"),
+                # Check splunk.enable_service
+                ({"splunk": {"enable_service": "yes"}}, {}, "splunk.enable_service", "yes"),
+                ({}, {"SPLUNK_ENABLE_SERVICE": "no"}, "splunk.enable_service", "no"),
+                # Check splunk.service_name
+                ({"splunk": {"service_name": "SpLuNkD"}}, {}, "splunk.service_name", "SpLuNkD"),
+                ({}, {"SPLUNK_SERVICE_NAME": "sPlUnKd"}, "splunk.service_name", "sPlUnKd"),
+                # Check splunk.allow_upgrade
+                ({"splunk": {"allow_upgrade": "yes"}}, {}, "splunk.allow_upgrade", "yes"),
+                ({}, {"SPLUNK_ALLOW_UPGRADE": "no"}, "splunk.allow_upgrade", "no"),
+                # Check splunk.asan
+                ({"splunk": {"asan": True}}, {}, "splunk.asan", True),
+                ({}, {"SPLUNK_ENABLE_ASAN": ""}, "splunk.asan", False),
+                ({}, {"SPLUNK_ENABLE_ASAN": "anything"}, "splunk.asan", True),
+            ]
+        )
+def test_overrideEnvironmentVars(default_yml, os_env, key, value):
+    vars_scope = {
+                    "ansible_pre_tasks": None,
+                    "ansible_post_tasks": None,
+                    "cert_prefix": "https",
+                    "splunk": {
+                                "user": "splunk",
+                                "group": "splunk",
+                                "root_endpoint": None,
+                                "svc_port": 8089,
+                                "s2s": {"port": 9997},
+                                "hec_token": "abcd1234",
+                                "enable_service": False,
+                                "service_name": "Splunkd",
+                                "allow_upgrade": True,
+                                "asan": None
+                            }
+                }
+    # TODO: Possibly remove the dependency on merge_dict() in this test
+    environ.merge_dict(vars_scope, default_yml)
+    with patch("os.environ", new=os_env):
+        environ.overrideEnvironmentVars(vars_scope)
+    if "splunk" in key:
+        if "s2s" in key:
+            key = key.split(".")[-1]
+            assert vars_scope["splunk"]["s2s"][key] == value
+        else:
+            key = key.split(".")[-1]
+            assert vars_scope["splunk"][key] == value
+    else:
+        assert vars_scope[key] == value
 
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
