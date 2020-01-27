@@ -54,6 +54,10 @@
   when:
     - first_run | bool
 
+- include_tasks: enable_asan.yml
+  when:
+    - "'asan' in splunk and splunk.asan | bool"
+
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
   when:
