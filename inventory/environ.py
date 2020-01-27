@@ -358,7 +358,7 @@ def getLaunchConf(vars_scope):
     # From environment variables
     settings = os.environ.get("SPLUNK_LAUNCH_CONF")
     if settings:
-        launch.update({k:v for k,v in [x.split("=") for x in settings.split(",")]})
+        launch.update({k:v for k,v in [x.split("=", 1) for x in settings.split(",")]})
     vars_scope["splunk"]["launch"] = launch
 
 def overrideEnvironmentVars(vars_scope):

@@ -206,6 +206,7 @@ def test_noSplunkPassword():
                 ({}, {"SPLUNK_LAUNCH_CONF": ""}, {"launch": {}}),
                 ({}, {"SPLUNK_LAUNCH_CONF": "AAA=BBB"}, {"launch": {"AAA": "BBB"}}),
                 ({}, {"SPLUNK_LAUNCH_CONF": "AAA=BBB,CCC=DDD"}, {"launch": {"AAA": "BBB", "CCC": "DDD"}}),
+                ({}, {"SPLUNK_LAUNCH_CONF": "AAA=BBB=CCC,DDD=EEE=FFF"}, {"launch": {"AAA": "BBB=CCC", "DDD": "EEE=FFF"}}),
                 # Check both
                 ({"launch": {"A": "B", "C": "D"}}, {"SPLUNK_LAUNCH_CONF": "A=E,C=D"}, {"launch": {"A": "E", "C": "D"}}),
             ]
