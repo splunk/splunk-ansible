@@ -68,6 +68,10 @@
     - "('s2s_enable' in splunk and splunk.s2s_enable | bool) or ('s2s' in splunk and 'enable' in splunk.s2s and splunk.s2s.enable | bool)"
     - "('s2s_port' in splunk and splunk.s2s_port) or ('s2s' in splunk and 'port' in splunk.s2s and splunk.s2s.port)"
 
+- include_tasks: set_launch_conf.yml
+  when:
+    - "'launch' in splunk and splunk.launch"
+
 - include_tasks: enable_service.yml
   when:
     - splunk.enable_service and ansible_system is match("Linux")

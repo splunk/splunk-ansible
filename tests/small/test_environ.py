@@ -193,6 +193,31 @@ def test_noSplunkPassword():
         with patch("os.environ", new={}):
             environ.getSecrets(vars_scope)
 
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check null parameters
+                ({}, {}, {"launch": {}}),
+                # Check default.yml parameters
+                ({"launch": {}}, {}, {"launch": {}}),
+                ({"launch": {"A": "B"}}, {}, {"launch": {"A": "B"}}),
+                ({"launch": {"A": "B", "C": "D"}}, {}, {"launch": {"A": "B", "C": "D"}}),
+                # Check environment variable parameters
+                ({}, {"SPLUNK_LAUNCH_CONF": None}, {"launch": {}}),
+                ({}, {"SPLUNK_LAUNCH_CONF": ""}, {"launch": {}}),
+                ({}, {"SPLUNK_LAUNCH_CONF": "AAA=BBB"}, {"launch": {"AAA": "BBB"}}),
+                ({}, {"SPLUNK_LAUNCH_CONF": "AAA=BBB,CCC=DDD"}, {"launch": {"AAA": "BBB", "CCC": "DDD"}}),
+                ({}, {"SPLUNK_LAUNCH_CONF": "AAA=BBB=CCC,DDD=EEE=FFF"}, {"launch": {"AAA": "BBB=CCC", "DDD": "EEE=FFF"}}),
+                # Check both
+                ({"launch": {"A": "B", "C": "D"}}, {"SPLUNK_LAUNCH_CONF": "A=E,C=D"}, {"launch": {"A": "E", "C": "D"}}),
+            ]
+        )
+def test_getLaunchConf(default_yml, os_env, output):
+    vars_scope = {"splunk": default_yml}
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getLaunchConf(vars_scope)
+    assert vars_scope["splunk"] == output
+
 @pytest.mark.parametrize(("os_env", "license_master_included", "deployer_included", "indexer_cluster", "search_head_cluster", "search_head_cluster_url"),
                          [
                             ({}, False, False, False, False, None),

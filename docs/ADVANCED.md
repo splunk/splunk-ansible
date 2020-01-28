@@ -9,6 +9,7 @@
     * [Schema](#schema)
 * [Apps](#app)
 * [SmartStore](#smartstore)
+* [Custom splunk-launch.conf](#custom-splunk-launch-conf)
 
 ---
 
@@ -177,4 +178,18 @@ splunk:
           access_key: <access_key>
           secret_key: <secret_key>
           endpoint: http://s3-us-west-2.amazonaws.com
+```
+
+---
+
+## Custom splunk-launch.conf
+`splunk-launch.conf` is a configuration file that exists in `${SPLUNK_HOME}/etc/` that has some global environment variables that are using by the `splunkd` process. You can add new variables to this file using either the `default.yml` or via environment variables. 
+
+For instance, if you want to add `OPTIMISTIC_ABOUT_FILE_LOCKING=1` to the `splunk-launch.conf`, you can use this default.yml as reference: 
+```
+---
+splunk:
+  launch:
+    OPTIMISTIC_ABOUT_FILE_LOCKING: 1
+  ...
 ```

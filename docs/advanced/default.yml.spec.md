@@ -248,6 +248,10 @@ splunk:
   * URL of the Splunk search head cluster
   * Default: null
 
+  launch: null
+  * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
+  * Default: null
+
   secret: null
   * Secret passcode used to encrypt all of Splunk's sensitive information on disk. When not set, Splunk will autogenerate a unique secret local to each installation. This is NOT required for any standalone or distributed Splunk topology
   * NOTE: This may be set once at the start of provisioning any deployment. Any changes made to this splunk.secret after the deployment has been created must be resolved manually, otherwise there is a severe risk of bricking the capabilities of your Splunk environment.
