@@ -135,6 +135,7 @@ def getDefaultVars():
     getSplunkBuild(defaultVars)
     getSplunkbaseToken(defaultVars)
     getSplunkApps(defaultVars)
+    getLaunchConf(defaultVars)
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
     return defaultVars
@@ -337,9 +338,28 @@ def getSplunkApps(vars_scope):
     vars_scope["splunk"]["apps_location"] = list(appSet)
 
 def getSecrets(vars_scope):
+    """
+    Parse sensitive passphrases
+    """
     vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["pass4SymmKey"] = os.environ.get('SPLUNK_PASS4SYMMKEY', vars_scope["splunk"].get("pass4SymmKey"))
     vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"].get("secret"))
+
+def getLaunchConf(vars_scope):
+    """
+    Parse key/value pairs to set in splunk-launch.conf
+    """
+    launch = {}
+    if not "launch" in vars_scope["splunk"]:
+        vars_scope["splunk"]["launch"] = {}
+    # From default.yml
+    if type(vars_scope["splunk"]["launch"]) == dict:
+        launch.update(vars_scope["splunk"]["launch"])
+    # From environment variables
+    settings = os.environ.get("SPLUNK_LAUNCH_CONF")
+    if settings:
+        launch.update({k:v for k,v in [x.split("=", 1) for x in settings.split(",")]})
+    vars_scope["splunk"]["launch"] = launch
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
