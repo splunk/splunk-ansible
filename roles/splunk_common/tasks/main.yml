@@ -32,6 +32,10 @@
     - splunk.allow_upgrade is defined
     - splunk.allow_upgrade | bool
 
+- include_tasks: enable_asan.yml
+  when:
+    - "'asan' in splunk and splunk.asan | bool"
+
 - include_tasks: remove_first_login.yml
   when:
     - first_run | bool

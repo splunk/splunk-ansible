@@ -1,0 +1,23 @@
+---
+- name: Copy ASan libraries
+  copy:
+    src: "{{ splunk.home }}/lib/{{ item }}"
+    dest: "/lib64/{{ item }}"
+    remote_src: yes
+    mode: 0755
+  with_items:
+    - libssp.so.0
+    - libasan.so
+    - libasan.so.2
+    - libasan.so.2.0.0
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Create ASan output directory
+  file:
+    path: "{{ splunk.home }}/_asanoutput"
+    state: directory
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"

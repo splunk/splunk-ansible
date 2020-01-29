@@ -2,6 +2,8 @@
 - name: Run default Splunk provisioning
   hosts: localhost
   gather_facts: true
+  environment:
+    ASAN_OPTIONS: detect_leaks=0
   tasks:
 
     - block:
