@@ -600,6 +600,7 @@ def prep_for_yaml_out(inventory):
                    "build_location",
                    "build_remote_src",
                    "deployer_included",
+                   "hostname",
                    "upgrade",
                    "role",
                    "search_head_cluster",
