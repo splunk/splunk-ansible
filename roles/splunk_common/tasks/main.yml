@@ -38,13 +38,21 @@
     - "'launch_options' in splunk"
     - "splunk['launch_options']|length > 0"
 
+- include_tasks: enable_asan.yml
+  when:
+    - "'asan' in splunk and splunk.asan | bool"
+
 - include_tasks: remove_first_login.yml
   when:
     - first_run | bool
 
 - include_tasks: install_java.yml
   when:
-    - java_version is defined
+    - java_version is defined and java_version
+
+- include_tasks: set_general_symmkey_password.yml
+  when:
+    - "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
     - first_run | bool
 
 # This needs to be done before any encrypted passkeys are generated
@@ -65,6 +73,10 @@
   when:
     - "('s2s_enable' in splunk and splunk.s2s_enable | bool) or ('s2s' in splunk and 'enable' in splunk.s2s and splunk.s2s.enable | bool)"
     - "('s2s_port' in splunk and splunk.s2s_port) or ('s2s' in splunk and 'port' in splunk.s2s and splunk.s2s.port)"
+
+- include_tasks: set_launch_conf.yml
+  when:
+    - "'launch' in splunk and splunk.launch"
 
 - include_tasks: enable_service.yml
   when:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2018 Splunk
+# Copyright 2018-2020 Splunk
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -23,19 +24,18 @@ import re
 import random
 import string
 from time import sleep
+import socket
 import requests
 import urllib3
 import yaml
-import socket
 
 urllib3.disable_warnings()
 
 HERE = os.path.dirname(os.path.normpath(__file__))
-PLATFORM = platform.platform().lower()
-if "windows" in PLATFORM or "cygwin" in PLATFORM:
-    PLATFORM = "windows"
-else:
-    PLATFORM = "linux"
+_PLATFORM = platform.platform().lower()
+PLATFORM = "windows" if ("windows" in _PLATFORM or "cygwin" in _PLATFORM) else "linux"
+HOSTNAME = os.uname()[1]
+JAVA_VERSION_WHITELIST = frozenset(("oracle:8", "openjdk:8", "openjdk:9", "openjdk:11"))
 
 roleNames = [
     'splunk_cluster_master', # (if it exists, set up indexer clustering)
@@ -69,10 +69,16 @@ inventory = {
 }
 
 def getVars(rePattern):
+    """
+    Return a mapping of environment keys::values if they match a given regex
+    """
     return {re.match(rePattern, k).group(1).lower():os.environ[k] for k in os.environ
             if re.match(rePattern, k)}
 
 def getSplunkInventory(inventory, reName=r"(.*)_URL"):
+    """
+    Build an inventory of hosts based on a regex that defines host-groupings
+    """
     group_information = getVars(reName)
     for group_name in group_information:
         if group_name.lower() in roleNames:
@@ -86,83 +92,224 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     if os.path.isfile("/.dockerenv"):
         if "localhost" not in inventory["all"]["children"]:
             inventory["all"]["hosts"].append("localhost")
-        inventory["_meta"]["hostvars"]["localhost"] = loadHostVars(inventory["all"]["vars"],
-                                                                   os.uname()[1], PLATFORM)
+        inventory["_meta"]["hostvars"]["localhost"] = inventory["all"]["vars"]
         inventory["_meta"]["hostvars"]["localhost"]["ansible_connection"] = "local"
 
 def getDefaultVars():
-    defaultVars = loadDefaultSplunkVariables()
+    """
+    Load all splunk-ansible defaults and perform overwrites based on
+    environment variables to return a consolidated inventory object
+    """
+    defaultVars = loadDefaults()
     overrideEnvironmentVars(defaultVars)
-    defaultVars["splunk"]["license_master_included"] = True if os.environ.get('SPLUNK_LICENSE_MASTER_URL', False) else False
-    defaultVars["splunk"]["deployer_included"] = True if os.environ.get('SPLUNK_DEPLOYER_URL', False) else False
-    defaultVars["splunk"]["indexer_cluster"] = True if os.environ.get('SPLUNK_CLUSTER_MASTER_URL', False) else False
-    defaultVars["splunk"]["search_head_cluster"] = True if os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', False) else False
-    defaultVars["splunk"]["search_head_cluster_url"] = os.environ.get('SPLUNK_SEARCH_HEAD_CAPTAIN_URL', None)
-    # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
-    defaultVars["splunk"]["license_uri"] = os.environ.get('SPLUNK_LICENSE_URI', 'splunk.lic')
-    if defaultVars["splunk"]["license_uri"] and '*' in defaultVars["splunk"]["license_uri"]:
-        defaultVars["splunk"]["wildcard_license"] = True
-    else:
-        defaultVars["splunk"]["wildcard_license"] = False
-    defaultVars["splunk"]["nfr_license"] = os.environ.get('SPLUNK_NFR_LICENSE', '/tmp/nfr_enterprise.lic')
-    defaultVars["splunk"]["ignore_license"] = os.environ.get('SPLUNK_IGNORE_LICENSE', False)
-    defaultVars["splunk"]["license_download_dest"] = os.environ.get('SPLUNK_LICENSE_INSTALL_PATH', '/tmp/splunk.lic')
+    getSecrets(defaultVars)
+
+    getSplunkPaths(defaultVars)
+    getIndexerClustering(defaultVars)
+    getSearchHeadClustering(defaultVars)
+    # getMultisite() must be called after getIndexerClustering() + getSearchHeadClustering()
+    # in order to rectify multisite replication and search factors
+    getMultisite(defaultVars)
+    getSplunkWebSSL(defaultVars)
+    getDistributedTopology(defaultVars)
+    getLicenses(defaultVars)
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
-    defaultVars["splunk_home_ownership_enforcement"] = False if os.environ.get('SPLUNK_HOME_OWNERSHIP_ENFORCEMENT', "").lower() == "false" else True
-    defaultVars["hide_password"] = True if os.environ.get('HIDE_PASSWORD', "").lower() == "true" else False
+    # Determine DMC settings
     defaultVars["dmc_forwarder_monitoring"] = os.environ.get('DMC_FORWARDER_MONITORING', False)
     defaultVars["dmc_asset_interval"] = os.environ.get('DMC_ASSET_INTERVAL', '3,18,33,48 * * * *')
-    #If the value is set, we would use that, otherwise, return True
-    defaultVars["splunk"]["preferred_captaincy"] = False if os.environ.get('SPLUNK_PREFERRED_CAPTAINCY', "").lower() == "false" else True
+    # Determine SPLUNK_HOME owner
+    defaultVars["splunk_home_ownership_enforcement"] = True
+    if os.environ.get("SPLUNK_HOME_OWNERSHIP_ENFORCEMENT", "").lower() == "false":
+        defaultVars["splunk_home_ownership_enforcement"] = False
+    # Determine password visibility
+    defaultVars["hide_password"] = False
+    if os.environ.get("HIDE_PASSWORD", "").lower() == "true":
+        defaultVars["hide_password"] = True
+    # Determine SHC preferred captaincy
+    defaultVars["splunk"]["preferred_captaincy"] = True
+    if os.environ.get("SPLUNK_PREFERRED_CAPTAINCY", "").lower() == "false":
+        defaultVars["splunk"]["preferred_captaincy"] = False
     defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
 
-    # Check required Java installation
-    java_version = os.environ.get("JAVA_VERSION", "").lower()
-    if java_version in ['oracle:8', 'openjdk:8', 'openjdk:9','openjdk:11']:
-        defaultVars["java_version"] = os.environ.get("JAVA_VERSION", "")
-        if java_version == "oracle:8":
-            defaultVars["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz")
-            try:
-                defaultVars["java_update_version"] = re.search("jdk-8u(\d+)-linux-x64.tar.gz", defaultVars["java_download_url"]).group(1)
-            except:
-                raise Exception("Invalid Java download URL format")
-        elif java_version == "openjdk:11":
-            defaultVars["java_download_url"] = os.environ.get(
-                "JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz")
-            try:
-                defaultVars["java_update_version"] = re.search(
-                    "openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", defaultVars["java_download_url"]).group(1)
-            except:
-                raise Exception("Invalid Java download URL format")
-
-
-    # Lower indexer search/replication factor when indexer hosts less than 3
-    if "splunk_indexer" in inventory and "hosts" in inventory["splunk_indexer"] and len(inventory["splunk_indexer"]["hosts"]) < 3:
-        defaultVars["splunk"]["idxc"]["search_factor"] = 1
-        defaultVars["splunk"]["idxc"]["replication_factor"] = 1
-
-    #When sites are specified, assume multisite
-    if "splunk.site" in inventory:
-        defaultVars["splunk"]["multisite_replication_factor_origin"] = 1
-        defaultVars["splunk"]["multisite_replication_factor_total"] = 1
-        defaultVars["splunk"]["multisite_search_factor_origin"] = 1
-        defaultVars["splunk"]["multisite_search_factor_total"] = 1
-
+    getJava(defaultVars)
     getSplunkBuild(defaultVars)
+    getSplunkbaseToken(defaultVars)
     getSplunkApps(defaultVars)
+    getLaunchConf(defaultVars)
+    getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
     return defaultVars
 
+def getSplunkPaths(vars_scope):
+    """
+    Normalize the paths used by Splunk for downstream plays
+    """
+    # TODO: Handle changes to SPLUNK_HOME that impact other paths (ex splunk.app_paths.*)
+    splunk_vars = vars_scope["splunk"]
+    splunk_vars["opt"] = os.environ.get("SPLUNK_OPT", splunk_vars.get("opt"))
+    splunk_vars["home"] = os.environ.get("SPLUNK_HOME", splunk_vars.get("home"))
+    # Not sure if we should expose this - exec is fixed relative to SPLUNK_HOME
+    splunk_vars["exec"] = os.environ.get("SPLUNK_EXEC", splunk_vars.get("exec"))
+    # Not sure if we should expose this - pid is fixed relative to SPLUNK_HOME
+    splunk_vars["pid"] = os.environ.get("SPLUNK_PID", splunk_vars.get("pid"))
+
+def getIndexerClustering(vars_scope):
+    """
+    Parse and set parameters to configure indexer clustering
+    """
+    if "idxc" not in vars_scope["splunk"]:
+        vars_scope["splunk"]["idxc"] = {}
+    idxc_vars = vars_scope["splunk"]["idxc"]
+    idxc_vars["label"] = os.environ.get("SPLUNK_IDXC_LABEL", idxc_vars.get("label"))
+    idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
+    idxc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_IDXC_PASS4SYMMKEY", idxc_vars.get("pass4SymmKey")) # Control flow for issue #316 backwards-compatibility
+    if idxc_vars["pass4SymmKey"]:
+        idxc_vars["secret"] = idxc_vars["pass4SymmKey"]
+    else:
+        idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
+        idxc_vars["pass4SymmKey"] = idxc_vars["secret"]
+    # Rectify replication factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thereplicationfactor)
+    # Make sure default repl/search factor>0 else Splunk doesn't start unless user-defined
+    if inventory.get("splunk_indexer"):
+        # If there are indexers, we need to make sure the replication factor is <= number of indexers
+        indexer_count = len(inventory["splunk_indexer"].get("hosts", []))
+    else:
+        # Only occurs during create-defaults generation or topologies without indexers
+        indexer_count = idxc_vars.get("replication_factor", 1)
+    replf = os.environ.get("SPLUNK_IDXC_REPLICATION_FACTOR", idxc_vars.get("replication_factor", 1))
+    idxc_vars["replication_factor"] = min(indexer_count, int(replf))
+    # Rectify search factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thesearchfactor)
+    searchf = os.environ.get("SPLUNK_IDXC_SEARCH_FACTOR", idxc_vars.get("search_factor", 1))
+    idxc_vars["search_factor"] = min(idxc_vars["replication_factor"], int(searchf))
+
+def getSearchHeadClustering(vars_scope):
+    """
+    Parse and set parameters to configure search head clustering
+    """
+    if "shc" not in vars_scope["splunk"]:
+        vars_scope["splunk"]["shc"] = {}
+    shc_vars = vars_scope["splunk"]["shc"]
+    shc_vars["label"] = os.environ.get("SPLUNK_SHC_LABEL", shc_vars.get("label"))
+    shc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_SHC_PASS4SYMMKEY", shc_vars.get("pass4SymmKey")) # Control flow for issue #316 backwards-compatibility
+    if shc_vars["pass4SymmKey"]:
+        shc_vars["secret"] = shc_vars["pass4SymmKey"]
+    else:
+        shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
+        shc_vars["pass4SymmKey"] = shc_vars["secret"]
+    # Rectify search factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thesearchfactor)
+    # Make sure default repl factor>0 else Splunk doesn't start unless user-defined
+    if inventory.get("splunk_search_head"):
+        # If there are indexers, we need to make sure the replication factor is <= number of search heads
+        shcount = len(inventory["splunk_search_head"].get("hosts", []))
+    else:
+        # Only occurs during create-defaults generation or topologies without search heads
+        shcount = shc_vars.get("replication_factor", 1)
+    replf = os.environ.get("SPLUNK_SHC_REPLICATION_FACTOR", shc_vars.get("replication_factor", 1))
+    shc_vars["replication_factor"] = min(shcount, int(replf))
+
+def getMultisite(vars_scope):
+    """
+    Parse and set parameters to configure multisite
+    """
+    splunk_vars = vars_scope["splunk"]
+    if "SPLUNK_SITE" in os.environ or splunk_vars.get("site"):
+        splunk_vars["site"] = os.environ.get("SPLUNK_SITE", splunk_vars.get("site"))
+
+        all_sites = os.environ.get("SPLUNK_ALL_SITES", splunk_vars.get("all_sites"))
+        if all_sites:
+            splunk_vars["all_sites"] = all_sites
+
+        multisite_master = os.environ.get("SPLUNK_MULTISITE_MASTER", splunk_vars.get("multisite_master"))
+        if multisite_master:
+            splunk_vars["multisite_master"] = multisite_master
+    # TODO: Split this into its own splunk.multisite.* section
+    splunk_vars["multisite_master_port"] = int(os.environ.get("SPLUNK_MULTISITE_MASTER_PORT", splunk_vars.get("multisite_master_port", 8089)))
+    splunk_vars["multisite_replication_factor_origin"] = int(os.environ.get("SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN", splunk_vars.get("multisite_replication_factor_origin", 1)))
+    splunk_vars["multisite_replication_factor_total"] = int(os.environ.get("SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL", splunk_vars.get("multisite_replication_factor_total", 1)))
+    splunk_vars["multisite_replication_factor_total"] = max(splunk_vars["multisite_replication_factor_total"], splunk_vars["idxc"]["replication_factor"])
+    splunk_vars["multisite_search_factor_origin"] = int(os.environ.get("SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN", splunk_vars.get("multisite_search_factor_origin", 1)))
+    splunk_vars["multisite_search_factor_total"] = int(os.environ.get("SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL", splunk_vars.get("multisite_search_factor_total", 1)))
+    splunk_vars["multisite_search_factor_total"] = max(splunk_vars["multisite_search_factor_total"], splunk_vars["idxc"]["search_factor"])
+
+def getSplunkWebSSL(vars_scope):
+    """
+    Parse and set parameters to define Splunk Web accessibility
+    """
+    # TODO: Split this into its own splunk.http.* section
+    splunk_vars = vars_scope["splunk"]
+    splunk_vars["http_enableSSL"] = bool(os.environ.get('SPLUNK_HTTP_ENABLESSL', splunk_vars.get("http_enableSSL")))
+    splunk_vars["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', splunk_vars.get("http_enableSSL_cert"))
+    splunk_vars["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', splunk_vars.get("http_enableSSL_privKey"))
+    splunk_vars["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', splunk_vars.get("http_enableSSL_privKey_password"))
+    splunk_vars["http_port"] = int(os.environ.get('SPLUNK_HTTP_PORT', splunk_vars.get("http_port")))
+
+def getDistributedTopology(vars_scope):
+    """
+    Parse and set parameters to define topology if this is a distributed environment
+    """
+    vars_scope["splunk"]["license_master_included"] = bool(os.environ.get("SPLUNK_LICENSE_MASTER_URL"))
+    vars_scope["splunk"]["deployer_included"] = bool(os.environ.get("SPLUNK_DEPLOYER_URL"))
+    vars_scope["splunk"]["indexer_cluster"] = bool(os.environ.get("SPLUNK_CLUSTER_MASTER_URL"))
+    vars_scope["splunk"]["search_head_cluster"] = bool(os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL"))
+    vars_scope["splunk"]["search_head_cluster_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL")
+
+def getLicenses(vars_scope):
+    """
+    Determine the location of Splunk licenses to install at start-up time
+    """
+    # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
+    vars_scope["splunk"]["license_uri"] = os.environ.get("SPLUNK_LICENSE_URI", "splunk.lic")
+    vars_scope["splunk"]["wildcard_license"] = False
+    if vars_scope["splunk"]["license_uri"] and '*' in vars_scope["splunk"]["license_uri"]:
+        vars_scope["splunk"]["wildcard_license"] = True
+    vars_scope["splunk"]["ignore_license"] = False
+    if os.environ.get("SPLUNK_IGNORE_LICENSE", "").lower() == "true":
+        vars_scope["splunk"]["ignore_license"] = True
+    vars_scope["splunk"]["license_download_dest"] = os.environ.get("SPLUNK_LICENSE_INSTALL_PATH", "/tmp/splunk.lic")
+
+def getJava(vars_scope):
+    """
+    Parse and set Java installation parameters
+    """
+    vars_scope["java_version"] = None
+    vars_scope["java_download_url"] = None
+    vars_scope["java_update_version"] = None
+    java_version = os.environ.get("JAVA_VERSION")
+    if not java_version:
+        return
+    java_version = java_version.lower()
+    if java_version not in JAVA_VERSION_WHITELIST:
+        raise Exception("Invalid Java version supplied, supported versions are: {}".format(JAVA_VERSION_WHITELIST))
+    vars_scope["java_version"] = java_version
+    # TODO: We can probably DRY this up
+    if java_version == "oracle:8":
+        vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz")
+        try:
+            vars_scope["java_update_version"] = re.search(r"jdk-8u(\d+)-linux-x64.tar.gz", vars_scope["java_download_url"]).group(1)
+        except:
+            raise Exception("Invalid Java download URL format")
+    elif java_version == "openjdk:11":
+        vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz")
+        try:
+            vars_scope["java_update_version"] = re.search(r"openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", vars_scope["java_download_url"]).group(1)
+        except:
+            raise Exception("Invalid Java download URL format")
+
 def getSplunkBuild(vars_scope):
-    vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"]["build_location"])
+    """
+    Determine the location of the Splunk build
+    """
+    vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"].get("build_location"))
+    vars_scope["splunk"]["build_remote_src"] = False
     if vars_scope["splunk"]["build_location"] and vars_scope["splunk"]["build_location"].startswith("http"):
         vars_scope["splunk"]["build_remote_src"] = True
-    else:
-        vars_scope["splunk"]["build_remote_src"] = False
 
-def getSplunkApps(vars_scope):
-    splunkbase_username = (vars_scope["splunkbase_username"] if "splunkbase_username" in vars_scope else None) or os.environ.get("SPLUNKBASE_USERNAME") or None
-    splunkbase_password = (vars_scope["splunkbase_password"] if "splunkbase_password" in vars_scope else None) or os.environ.get("SPLUNKBASE_PASSWORD") or None
+def getSplunkbaseToken(vars_scope):
+    """
+    Authenticate to SplunkBase and modify the variable scope in-place to utilize temporary session token
+    """
+    splunkbase_username = os.environ.get("SPLUNKBASE_USERNAME", vars_scope.get("splunkbase_username"))
+    splunkbase_password = os.environ.get("SPLUNKBASE_PASSWORD", vars_scope.get("splunkbase_password"))
     if splunkbase_username and splunkbase_password:
         resp = requests.post("https://splunkbase.splunk.com/api/account:login/",
                              data={"username": splunkbase_username, "password": splunkbase_password})
@@ -171,14 +318,48 @@ def getSplunkApps(vars_scope):
         output = resp.content
         splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
         vars_scope["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
-    # calculate apps to install as union of defaults and environment variable
+
+def getSplunkApps(vars_scope):
+    """
+    Determine the set of Splunk apps to install as union of defaults.yml and environment variables
+    """
+    appSet = set()
     if not "apps_location" in vars_scope["splunk"]:
         vars_scope["splunk"]["apps_location"] = []
+    # From default.yml
     elif type(vars_scope["splunk"]["apps_location"]) == str:
-        vars_scope["splunk"]["apps_location"] = vars_scope["splunk"]["apps_location"].split(",")
-    apps = os.environ.get("SPLUNK_APPS_URL", None)
+        appSet.update(vars_scope["splunk"]["apps_location"].split(","))
+    elif type(vars_scope["splunk"]["apps_location"]) == list:
+        appSet.update(vars_scope["splunk"]["apps_location"])
+    # From environment variables
+    apps = os.environ.get("SPLUNK_APPS_URL")
     if apps:
-        vars_scope["splunk"]["apps_location"].extend(apps.split(","))
+        appSet.update(apps.split(","))
+    vars_scope["splunk"]["apps_location"] = list(appSet)
+
+def getSecrets(vars_scope):
+    """
+    Parse sensitive passphrases
+    """
+    vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
+    vars_scope["splunk"]["pass4SymmKey"] = os.environ.get('SPLUNK_PASS4SYMMKEY', vars_scope["splunk"].get("pass4SymmKey"))
+    vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"].get("secret"))
+
+def getLaunchConf(vars_scope):
+    """
+    Parse key/value pairs to set in splunk-launch.conf
+    """
+    launch = {}
+    if not "launch" in vars_scope["splunk"]:
+        vars_scope["splunk"]["launch"] = {}
+    # From default.yml
+    if type(vars_scope["splunk"]["launch"]) == dict:
+        launch.update(vars_scope["splunk"]["launch"])
+    # From environment variables
+    settings = os.environ.get("SPLUNK_LAUNCH_CONF")
+    if settings:
+        launch.update({k:v for k,v in [x.split("=", 1) for x in settings.split(",")]})
+    vars_scope["splunk"]["launch"] = launch
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
@@ -186,82 +367,53 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
     vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope["ansible_post_tasks"])
     vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
-    vars_scope["splunk"]["opt"] = os.environ.get('SPLUNK_OPT', vars_scope["splunk"]["opt"])
-    vars_scope["splunk"]["home"] = os.environ.get('SPLUNK_HOME', vars_scope["splunk"]["home"])
-    vars_scope["splunk"]["exec"] = os.environ.get('SPLUNK_EXEC', vars_scope["splunk"]["exec"])
-    vars_scope["splunk"]["pid"] = os.environ.get('SPLUNK_PID', vars_scope["splunk"]["pid"])
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
-    vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
-    vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"]["secret"])
     vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
-    if "shc" not in vars_scope["splunk"]:
-        vars_scope["splunk"]["shc"] = {}
-    vars_scope["splunk"]["shc"]["label"] = os.environ.get('SPLUNK_SHC_LABEL', vars_scope["splunk"]["shc"]["label"])
-    vars_scope["splunk"]["shc"]["secret"] = os.environ.get('SPLUNK_SHC_SECRET', vars_scope["splunk"]["shc"]["secret"])
-    if "idxc" not in vars_scope["splunk"]:
-        vars_scope["splunk"]["idxc"] = {}
-    vars_scope["splunk"]["idxc"]["label"] = os.environ.get('SPLUNK_IDXC_LABEL', vars_scope["splunk"]["idxc"]["label"])
-    vars_scope["splunk"]["idxc"]["secret"] = os.environ.get('SPLUNK_IDXC_SECRET', vars_scope["splunk"]["idxc"]["secret"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
-    vars_scope["splunk"]["build_location"] = os.environ.get('SPLUNK_INSTALLER', vars_scope["splunk"]["build_location"])
-    # add ssl variables
-    vars_scope["splunk"]["http_enableSSL"] = os.environ.get('SPLUNK_HTTP_ENABLESSL', vars_scope["splunk"]["http_enableSSL"])
-    vars_scope["splunk"]["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', vars_scope["splunk"]["http_enableSSL_cert"])
-    vars_scope["splunk"]["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', vars_scope["splunk"]["http_enableSSL_privKey"])
-    vars_scope["splunk"]["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', vars_scope["splunk"]["http_enableSSL_privKey_password"])
-    vars_scope["splunk"]["http_port"] = os.environ.get('SPLUNK_HTTP_PORT', vars_scope["splunk"]["http_port"])
-    #Used for multisite
-    if 'SPLUNK_SITE' in os.environ or 'site' in vars_scope["splunk"]:
-        vars_scope["splunk"]["site"] = os.environ.get('SPLUNK_SITE', vars_scope["splunk"].get("site"))
+    vars_scope["splunk"]["asan"] = bool(os.environ.get("SPLUNK_ENABLE_ASAN", vars_scope["splunk"].get("asan")))
 
-        all_sites = os.environ.get('SPLUNK_ALL_SITES', vars_scope["splunk"].get("all_sites"))
-        if all_sites:
-            vars_scope["splunk"]["all_sites"] = all_sites
-
-        multisite_master = os.environ.get('SPLUNK_MULTISITE_MASTER', vars_scope["splunk"].get("multisite_master"))
-        if multisite_master:
-            vars_scope["splunk"]["multisite_master"] = multisite_master
-
-        vars_scope["splunk"]["multisite_master_port"] = os.environ.get('SPLUNK_MULTISITE_MASTER_PORT', vars_scope["splunk"].get("multisite_master_port", 8089))
-        vars_scope["splunk"]["multisite_replication_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_replication_factor_origin", 1))
-        vars_scope["splunk"]["multisite_replication_factor_total"] = os.environ.get('SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_replication_factor_total", 1))
-        vars_scope["splunk"]["multisite_search_factor_origin"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN', vars_scope["splunk"].get("multisite_search_factor_origin", 1))
-        vars_scope["splunk"]["multisite_search_factor_total"] = os.environ.get('SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL', vars_scope["splunk"].get("multisite_search_factor_total", 1))
-    #Used for DFS
+def getDFS(vars_scope):
+    """
+    Parse and set parameters to configure Data Fabric Search
+    """
     if "dfs" not in vars_scope["splunk"]:
         vars_scope["splunk"]["dfs"] = {}
-    vars_scope["splunk"]["dfs"]["enable"] = os.environ.get('SPLUNK_ENABLE_DFS', vars_scope["splunk"]["dfs"].get("enable", "false"))
-    vars_scope["splunk"]["dfs"]["dfw_num_slots"] = os.environ.get('SPLUNK_DFW_NUM_SLOTS', vars_scope["splunk"]["dfs"].get("dfw_num_slots", 10))
-    vars_scope["splunk"]["dfs"]["dfc_num_slots"] = os.environ.get('SPLUNK_DFC_NUM_SLOTS', vars_scope["splunk"]["dfs"].get("dfc_num_slots", 4))
-    vars_scope["splunk"]["dfs"]["dfw_num_slots_enabled"] = os.environ.get('SPLUNK_DFW_NUM_SLOTS_ENABLED', vars_scope["splunk"]["dfs"].get("dfw_num_slots_enabled", "false"))
-    vars_scope["splunk"]["dfs"]["spark_master_host"] = os.environ.get('SPARK_MASTER_HOST', vars_scope["splunk"]["dfs"].get("spark_master_host", "127.0.0.1"))
-    vars_scope["splunk"]["dfs"]["spark_master_webui_port"] = os.environ.get('SPARK_MASTER_WEBUI_PORT', vars_scope["splunk"]["dfs"].get("spark_master_webui_port", 8080))
-
-def convert_path_windows_to_nix(filepath):
-    if filepath.startswith("C:"):
-        filepath = re.sub(r"\\+", "/", filepath.lstrip("C:"))
-        return filepath
+    dfs_vars = vars_scope["splunk"]["dfs"]
+    dfs_vars["enable"] = bool(os.environ.get("SPLUNK_ENABLE_DFS", dfs_vars.get("enable")))
+    dfs_vars["dfw_num_slots"] = int(os.environ.get("SPLUNK_DFW_NUM_SLOTS", dfs_vars.get("dfw_num_slots", 10)))
+    dfs_vars["dfc_num_slots"] = int(os.environ.get("SPLUNK_DFC_NUM_SLOTS", dfs_vars.get("dfc_num_slots", 4)))
+    dfs_vars["dfw_num_slots_enabled"] = bool(os.environ.get('SPLUNK_DFW_NUM_SLOTS_ENABLED', dfs_vars.get("dfw_num_slots_enabled")))
+    dfs_vars["spark_master_host"] = os.environ.get("SPARK_MASTER_HOST", dfs_vars.get("spark_master_host", "127.0.0.1"))
+    dfs_vars["spark_master_webui_port"] = int(os.environ.get("SPARK_MASTER_WEBUI_PORT", dfs_vars.get("spark_master_webui_port", 8080)))
 
 def getUFSplunkVariables(vars_scope):
-    if os.environ.get('SPLUNK_DEPLOYMENT_SERVER', False):
-        vars_scope["splunk"]["deployment_server"] = os.environ.get('SPLUNK_DEPLOYMENT_SERVER')
-    if os.environ.get('SPLUNK_ADD', False):
-        vars_scope["splunk"]["add"] = os.environ.get('SPLUNK_ADD').split(',')
-    if os.environ.get('SPLUNK_BEFORE_START_CMD', False):
-        vars_scope["splunk"]["before_start_cmd"] = os.environ.get('SPLUNK_BEFORE_START_CMD').split(',')
-    if os.environ.get('SPLUNK_CMD', False):
-        vars_scope["splunk"]["cmd"] = os.environ.get('SPLUNK_CMD').split(',')
-    vars_scope["docker_version"] = '18.06.0'
+    """
+    Set or override specific environment variables for universal forwarders
+    """
+    if os.environ.get("SPLUNK_DEPLOYMENT_SERVER"):
+        vars_scope["splunk"]["deployment_server"] = os.environ.get("SPLUNK_DEPLOYMENT_SERVER")
+    if os.environ.get("SPLUNK_ADD"):
+        vars_scope["splunk"]["add"] = os.environ.get("SPLUNK_ADD").split(",")
+    if os.environ.get("SPLUNK_BEFORE_START_CMD"):
+        vars_scope["splunk"]["before_start_cmd"] = os.environ.get("SPLUNK_BEFORE_START_CMD").split(",")
+    if os.environ.get("SPLUNK_CMD"):
+        vars_scope["splunk"]["cmd"] = os.environ.get("SPLUNK_CMD").split(",")
 
 def getRandomString():
+    """
+    Generate a random string consisting of characters + digits
+    """
     char_set = string.ascii_uppercase + string.digits
     return ''.join(random.sample(char_set * 6, 6))
 
 def merge_dict(dict1, dict2, path=None):
+    """
+    Merge two dictionaries such that all the keys in dict2 overwrite those in dict1
+    """
     if path is None: path = []
     for key in dict2:
         if key in dict1:
@@ -273,123 +425,161 @@ def merge_dict(dict1, dict2, path=None):
             dict1[key] = dict2[key]
     return dict1
 
-def mergeDefaultSplunkVariables(vars_scope, url):
-    url = url.strip()
-    if not url or len(url) == 0:
+def mergeDefaults(vars_scope, key, src):
+    """
+    Helper method to fetch defaults from various sources/other methods
+    """
+    if not src or not src.strip():
         return vars_scope
-    if url.lower().startswith(('http://', 'https://')):
+    src = src.strip().lower()
+    if src.startswith("file://"):
+        src = src[7:]
+    if src.startswith(("http://", "https://")):
         headers = None
-        if "headers" in vars_scope['config']['env'] and vars_scope['config']['env']['headers'] != None and len(vars_scope['config']['env']['headers']) > 0:
-            headers = vars_scope['config']['env']['headers']
-
-        max_retries = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_RETRIES', vars_scope["config"]["max_retries"]))
-        max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', vars_scope["config"]["max_delay"]))
-        max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', vars_scope["config"]["max_timeout"]))
-        verify = bool(os.environ.get('SPLUNK_DEFAULTS_HTTPS_VERIFY', vars_scope["config"]["env"]["verify"]))
-        unlimited_retries = (max_retries == -1)
-        current_retry = 0
-        while True:
-            try:
-                response = requests.get(url.format(platform=PLATFORM), headers=headers, timeout=max_timeout, verify=verify)
-                response.raise_for_status()
-                vars_scope = merge_dict(vars_scope, yaml.load(response.content, Loader=yaml.Loader))
-                break
-            except Exception as e:
-                if unlimited_retries or current_retry < max_retries:
-                    current_retry += 1
-                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay))
-                    sleep(max_delay)
-                else:
-                    raise e
-        return vars_scope
-    if url.lower().startswith('file://'):
-        url = url[7:]
-    with open(url, 'r') as file:
-        file_content = file.read()
-        vars_scope = merge_dict(vars_scope, yaml.load(file_content, Loader=yaml.Loader))
+        verify = False
+        if vars_scope.get("config") and vars_scope["config"].get(key):
+            headers = vars_scope["config"][key].get("headers")
+            verify = bool(vars_scope["config"][key].get("verify"))
+        vars_scope = mergeDefaultsFromURL(vars_scope, src, headers, verify)
+    else:
+        vars_scope = mergeDefaultsFromFile(vars_scope, src)
     return vars_scope
 
-def loadDefaultSplunkVariables():
-    '''
-    This method accepts a url argument, but that argument can be None. If it is None, then we load from a file
-    In this way, we manage two different methods of loading the default file (which contains potentially sentive
-    information
-    '''
-    loaded_yaml = {}
-    ### Load the splunk defaults shipped with splunk-ansible
-    if os.environ.get("SPLUNK_ROLE", None) == "splunk_universal_forwarder":
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunkforwarder_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-            loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
-    else:
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "splunk_defaults_{platform}.yml".format(platform=PLATFORM)), 'r') as yaml_file:
-            loaded_yaml = yaml.load(yaml_file, Loader=yaml.Loader)
+def mergeDefaultsFromURL(vars_scope, url, headers=None, verify=False):
+    """
+    Fetch defaults from a URL and merge them into a single dict
+    """
+    if not url:
+        return vars_scope
+    max_retries = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_RETRIES", vars_scope["config"].get("max_retries")))
+    max_delay = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_DELAY", vars_scope["config"].get("max_delay")))
+    max_timeout = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT", vars_scope["config"].get("max_timeout")))
+    unlimited_retries = (max_retries == -1)
+    current_retry = 0
+    while True:
+        try:
+            resp = requests.get(url.format(hostname=HOSTNAME, platform=PLATFORM),
+                                headers=headers, timeout=max_timeout, verify=verify)
+            resp.raise_for_status()
+            vars_scope = merge_dict(vars_scope, yaml.load(resp.content, Loader=yaml.Loader))
+            break
+        except Exception as err:
+            if unlimited_retries or current_retry < max_retries:
+                current_retry += 1
+                print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay))
+                sleep(max_delay)
+                continue
+            raise err
+    return vars_scope
 
-    ### Load the defaults for the environment
-    if "config" in loaded_yaml and loaded_yaml["config"] is not None and "baked" in loaded_yaml["config"]:
-        for f in loaded_yaml["config"]["baked"].split(','):
-            full_path = os.path.join(loaded_yaml["config"]["defaults_dir"], f.strip())
-            if os.path.exists(full_path):
-                with open(full_path, 'r') as file:
-                    file_content = file.read()
-                    loaded_yaml = merge_dict(loaded_yaml, yaml.load(file_content, Loader=yaml.Loader))
+def mergeDefaultsFromFile(vars_scope, file):
+    """
+    Fetch defaults from a file and merge them into a single dict
+    """
+    if not file:
+        return vars_scope
+    if os.path.exists(file):
+        with open(file, "r") as f:
+            vars_scope = merge_dict(vars_scope, yaml.load(f.read(), Loader=yaml.Loader))
+    return vars_scope
 
-    if "config" in loaded_yaml and loaded_yaml["config"] is not None and "env" in loaded_yaml["config"] and loaded_yaml["config"]["env"] is not None and "var" in loaded_yaml["config"]["env"] and loaded_yaml["config"]["env"]["var"] is not None and len(loaded_yaml["config"]["env"]["var"]) > 0:
-        urls = os.environ.get(loaded_yaml["config"]["env"]["var"], "")
-        for url in urls.split(','):
-            loaded_yaml = mergeDefaultSplunkVariables(loaded_yaml, url)
-    return loaded_yaml
+def loadDefaults():
+    """
+    Generate a consolidated map containing variables used to drive Ansible functionality.
+    Defaults are loaded in a particular order such that latter overrides former.
+    """
+    # Load base defaults from splunk-ansible repository
+    base = loadBaseDefaults()
+    # Build an array of new defaults to override the base
+    ymls = []
+    config = base.get("config")
+    if not config:
+        return base
+    # Add "baked" files to array
+    ymls.extend(loadBakedDefaults(config))
+    # Add "env" URLs to array
+    ymls.extend(loadEnvDefaults(config))
+    # Add "host" URLs to array
+    ymls.extend(loadHostDefaults(config))
+    # For each new YAML discovered, merge them with base in order so values get superseded
+    for yml in ymls:
+        base = mergeDefaults(base, yml["key"], yml["src"])
+    return base
 
-def loadHostVars(defaults, hostname=None, platform="linux"):
-    loaded_yaml = {}
-    if hostname == None:
-        return loaded_yaml
+def loadBaseDefaults():
+    """
+    Load the base defaults shipped in splunk-ansible
+    """
+    yml = {}
+    filename = "splunk_defaults_{}.yml".format(PLATFORM)
+    if os.environ.get("SPLUNK_ROLE") == "splunk_universal_forwarder":
+        filename = "splunkforwarder_defaults_{}.yml".format(PLATFORM)
+    with open(os.path.join(HERE, filename), "r") as yaml_file:
+        yml = yaml.load(yaml_file, Loader=yaml.Loader)
+    return yml
 
-    url = None
-    if "config" in defaults and defaults["config"] is not None and "host" in defaults["config"] and defaults["config"]["host"] is not None and "url" in defaults['config']['host'] and defaults['config']['host']['url'] is not None and len(defaults['config']['host']['url'].strip()) > 0:
-        url = defaults['config']['host']['url'].strip()
-        headers = None
-        if "headers" in defaults['config']['host'] and defaults['config']['host']['headers'] != None and len(defaults['config']['host']['headers']) > 0:
-            headers = defaults['config']['host']['headers']
+def loadBakedDefaults(config):
+    """
+    Load the defaults in "baked" key of the configuration.
+    """
+    if not config or not config.get("baked"):
+        return []
+    files = config["baked"].split(",")
+    default_dir = config.get("defaults_dir", "")
+    return [{"key": "baked", "src": os.path.join(default_dir, f.strip())} for f in files]
 
-        max_retries = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_RETRIES', defaults["config"]["max_retries"]))
-        max_delay = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_DELAY', defaults["config"]["max_delay"]))
-        max_timeout = int(os.environ.get('SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT', defaults["config"]["max_timeout"]))
-        verify = bool(os.environ.get('SPLUNK_DEFAULTS_HTTPS_VERIFY', defaults["config"]["host"]["verify"]))
-        unlimited_retries = (max_retries == -1)
-        current_retry = 0
-        while True:
-            try:
-                response = requests.get(url.format(hostname=hostname, platform=platform), headers=headers, timeout=max_timeout, verify=verify)
-                response.raise_for_status()
-                loaded_yaml = merge_dict(loaded_yaml, yaml.load(response.content, Loader=yaml.Loader))
-                break
-            except Exception as e:
-                if unlimited_retries or current_retry < max_retries:
-                    current_retry += 1
-                    print('URL request #{0} failed, sleeping {1} seconds and retrying'.format(current_retry, max_delay) + str(e))
-                    sleep(max_delay)
-                else:
-                    raise e
-    return loaded_yaml
+def loadEnvDefaults(config):
+    """
+    Load the defaults in "env" key of the configuration.
+    """
+    if not config or not config.get("env") or not config["env"].get("var"):
+        return []
+    urls = os.environ.get(config["env"]["var"], "")
+    if not urls:
+        return []
+    return [{"key": "env", "src": url} for url in urls.split(",")]
+
+def loadHostDefaults(config):
+    """
+    Load the defaults in "host" key of the configuration.
+    """
+    if not config or not config.get("host") or not config["host"].get("url"):
+        return []
+    urls = config["host"]["url"].split(",")
+    return [{"key": "host", "src": url} for url in urls]
 
 def obfuscate_vars(inventory):
-    stars = '**************'
-    if inventory["all"]["vars"]["splunk"].get("password"):
-        inventory["all"]["vars"]["splunk"]["password"] = stars
-    if inventory["all"]["vars"]["splunk"].get("shc") and inventory["all"]["vars"]["splunk"]["shc"].get("secret"):
-        inventory["all"]["vars"]["splunk"]["shc"]["secret"] = stars
-    if inventory["all"]["vars"]["splunk"].get("idxc") and inventory["all"]["vars"]["splunk"]["idxc"].get("secret"):
-        inventory["all"]["vars"]["splunk"]["idxc"]["secret"] = stars
-    if inventory["all"]["vars"]["splunk"].get("smartstore", False):
-        for idx in range(0, len(inventory["all"]["vars"]["splunk"]["smartstore"]["index"])):
-            if inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx].get("s3", False):
-                if inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx]["s3"].get("access_key", False):
-                    inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx]["s3"]["access_key"] = stars
-                if inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx]["s3"].get("secret_key", False):
-                    inventory["all"]["vars"]["splunk"]["smartstore"]["index"][idx]["s3"]["secret_key"] = stars
+    """
+    Remove sensitive variables when dumping inventory out to stdout or file
+    """
+    stars = "*"*14
+    splunkVars = inventory.get("all", {}).get("vars", {}).get("splunk", {})
+    if splunkVars.get("password"):
+        splunkVars["password"] = stars
+    if splunkVars.get("pass4SymmKey"):
+        splunkVars["pass4SymmKey"] = stars
+    if splunkVars.get("shc") and splunkVars["shc"].get("secret"):
+        splunkVars["shc"]["secret"] = stars
+    if splunkVars.get("shc") and splunkVars["shc"].get("pass4SymmKey"):
+        splunkVars["shc"]["pass4SymmKey"] = stars
+    if splunkVars.get("idxc") and splunkVars["idxc"].get("secret"):
+        splunkVars["idxc"]["secret"] = stars
+    if splunkVars.get("idxc") and splunkVars["idxc"].get("pass4SymmKey"):
+        splunkVars["idxc"]["pass4SymmKey"] = stars
+    if splunkVars.get("smartstore") and splunkVars["smartstore"].get("index"):
+        splunkIndexes = splunkVars["smartstore"]["index"]
+        for idx in range(0, len(splunkIndexes)):
+            if splunkIndexes[idx].get("s3"):
+                if splunkIndexes[idx]["s3"].get("access_key"):
+                    splunkIndexes[idx]["s3"]["access_key"] = stars
+                if splunkIndexes[idx]["s3"].get("secret_key"):
+                    splunkIndexes[idx]["s3"]["secret_key"] = stars
     return inventory
 
 def create_parser():
+    """
+    Create an argparser to control dynamic inventory execution
+    """
     parser = argparse.ArgumentParser(description='Return Ansible inventory defined in the environment.')
     parser.add_argument('--list', action='store_true', default=True, help='List all hosts (default: True)')
     parser.add_argument('--host', action='store', help='Only get information for a specific host.')
@@ -398,6 +588,9 @@ def create_parser():
     return parser
 
 def prep_for_yaml_out(inventory):
+    """
+    Prune the inventory by removing select keys before printing/writing to file
+    """
     inventory_to_dump = inventory["all"]["vars"]
 
     keys_to_del = ["docker_version",
@@ -407,6 +600,7 @@ def prep_for_yaml_out(inventory):
                    "build_location",
                    "build_remote_src",
                    "deployer_included",
+                   "hostname",
                    "upgrade",
                    "role",
                    "search_head_cluster",
@@ -432,6 +626,9 @@ def prep_for_yaml_out(inventory):
     return inventory_to_dump
 
 def main():
+    """
+    Primary entrypoint to dynamic inventory script
+    """
     parser = create_parser()
     args = parser.parse_args()
 
