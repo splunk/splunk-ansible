@@ -102,8 +102,9 @@ def getDefaultVars():
     """
     defaultVars = loadDefaults()
     overrideEnvironmentVars(defaultVars)
+    getAnsibleContext(defaultVars)
+    getASan(defaultVars)
     getSecrets(defaultVars)
-
     getSplunkPaths(defaultVars)
     getIndexerClustering(defaultVars)
     getSearchHeadClustering(defaultVars)
@@ -361,11 +362,28 @@ def getLaunchConf(vars_scope):
         launch.update({k:v for k,v in [x.split("=", 1) for x in settings.split(",")]})
     vars_scope["splunk"]["launch"] = launch
 
+def getAnsibleContext(vars_scope):
+    """
+    Parse parameters that influence Ansible execution
+    """
+    vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope.get("ansible_pre_tasks"))
+    vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope.get("ansible_post_tasks"))
+    vars_scope["ansible_env"] = vars_scope.get("ansible_env") or {}
+    env = os.environ.get("SPLUNK_ANSIBLE_ENV")
+    if env:
+        vars_scope["ansible_env"].update({k:v for k,v in [x.split("=", 1) for x in env.split(",")]})
+
+def getASan(vars_scope):
+    """
+    Enable ASan debug builds
+    """
+    vars_scope["splunk"]["asan"] = bool(os.environ.get("SPLUNK_ENABLE_ASAN", vars_scope["splunk"].get("asan")))
+    if vars_scope["splunk"]["asan"]:
+        vars_scope["ansible_env"].update({"ASAN_OPTIONS": "detect_leaks=0"})
+
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
     vars_scope["splunk"]["group"] = os.environ.get("SPLUNK_GROUP", vars_scope["splunk"]["group"])
-    vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
-    vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope["ansible_post_tasks"])
     vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
@@ -374,7 +392,6 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
-    vars_scope["splunk"]["asan"] = bool(os.environ.get("SPLUNK_ENABLE_ASAN", vars_scope["splunk"].get("asan")))
 
 def getDFS(vars_scope):
     """
