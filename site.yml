@@ -2,7 +2,7 @@
 - name: Run default Splunk provisioning
   hosts: localhost
   gather_facts: true
-  environment: "{{ ansible_env }}"
+  environment: "{{ ansible_environment }}"
   tasks:
 
     - block:
