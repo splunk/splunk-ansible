@@ -218,6 +218,69 @@ def test_getLaunchConf(default_yml, os_env, output):
             environ.getLaunchConf(vars_scope)
     assert vars_scope["splunk"] == output
 
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check null parameters
+                ({}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_env": {}}),
+                # Check ansible_pre_tasks using defaults or env vars
+                ({"ansible_pre_tasks": ""}, {}, {"ansible_pre_tasks": "", "ansible_post_tasks": None, "ansible_env": {}}),
+                ({"ansible_pre_tasks": "a"}, {}, {"ansible_pre_tasks": "a", "ansible_post_tasks": None, "ansible_env": {}}),
+                ({"ansible_pre_tasks": "a,b,c"}, {}, {"ansible_pre_tasks": "a,b,c", "ansible_post_tasks": None, "ansible_env": {}}),
+                ({}, {"SPLUNK_ANSIBLE_PRE_TASKS": "d"}, {"ansible_pre_tasks": "d", "ansible_post_tasks": None, "ansible_env": {}}),
+                ({}, {"SPLUNK_ANSIBLE_PRE_TASKS": "e,f,g"}, {"ansible_pre_tasks": "e,f,g", "ansible_post_tasks": None, "ansible_env": {}}),
+                ({"ansible_pre_tasks": "a,b,c"}, {"SPLUNK_ANSIBLE_PRE_TASKS": "e,f,g"}, {"ansible_pre_tasks": "e,f,g", "ansible_post_tasks": None, "ansible_env": {}}),
+                # Check ansible_post_tasks using defaults or env vars
+                ({"ansible_post_tasks": ""}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": "", "ansible_env": {}}),
+                ({"ansible_post_tasks": "a"}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": "a", "ansible_env": {}}),
+                ({"ansible_post_tasks": "a,b,c"}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": "a,b,c", "ansible_env": {}}),
+                ({}, {"SPLUNK_ANSIBLE_POST_TASKS": "d"}, {"ansible_pre_tasks": None, "ansible_post_tasks": "d", "ansible_env": {}}),
+                ({}, {"SPLUNK_ANSIBLE_POST_TASKS": "e,f,g"}, {"ansible_pre_tasks": None, "ansible_post_tasks": "e,f,g", "ansible_env": {}}),
+                ({"ansible_post_tasks": "a,b,c"}, {"SPLUNK_ANSIBLE_POST_TASKS": "e,f,g"}, {"ansible_pre_tasks": None, "ansible_post_tasks": "e,f,g", "ansible_env": {}}),
+                # Check ansible_env using defaults or env vars
+                ({"ansible_env": None}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_env": {}}),
+                ({"ansible_env": {"a": "b"}}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_env": {"a": "b"}}),
+                ({"ansible_env": {"a": "b", "d": "e"}}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_env": {"a": "b", "d": "e"}}),
+                ({}, {"SPLUNK_ANSIBLE_ENV": "a=b"}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_env": {"a": "b"}}),
+                ({}, {"SPLUNK_ANSIBLE_ENV": "a=b,x=y"}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_env": {"a": "b", "x": "y"}}),
+                ({"ansible_env": {"a": "c", "d": "e"}}, {"SPLUNK_ANSIBLE_ENV": "a=b,x=y"}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_env": {"a": "b", "d": "e", "x": "y"}}),
+            ]
+        )
+def test_getAnsibleContext(default_yml, os_env, output):
+    vars_scope = default_yml
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getAnsibleContext(vars_scope)
+    assert vars_scope == output
+
+@pytest.mark.parametrize(("default_yml", "os_env", "splunk_asan"),
+            [
+                # Check null parameters
+                ({}, {}, False),
+                # Check default.yml parameters
+                ({"asan": False}, {}, False),
+                ({"asan": True}, {}, True),
+                # Check env var parameters
+                ({}, {"SPLUNK_ENABLE_ASAN": ""}, False),
+                ({}, {"SPLUNK_ENABLE_ASAN": "anything"}, True),
+                # Check both
+                ({"asan": False}, {"SPLUNK_ENABLE_ASAN": ""}, False),
+                ({"asan": True}, {"SPLUNK_ENABLE_ASAN": ""}, False),
+                ({"asan": True}, {"SPLUNK_ENABLE_ASAN": "true"}, True),
+                ({"asan": False}, {"SPLUNK_ENABLE_ASAN": "yes"}, True),
+            ]
+        )
+def test_getASan(default_yml, os_env, splunk_asan):
+    vars_scope = {"ansible_env": {}, "splunk": {}}
+    vars_scope["splunk"] = default_yml
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getASan(vars_scope)
+    assert vars_scope["splunk"]["asan"] == splunk_asan
+    if vars_scope["splunk"]["asan"]:
+        assert vars_scope["ansible_env"].get("ASAN_OPTIONS") == "detect_leaks=0"
+    else:
+        assert vars_scope["ansible_env"].get("ASAN_OPTIONS") == None
+
 @pytest.mark.parametrize(("os_env", "license_master_included", "deployer_included", "indexer_cluster", "search_head_cluster", "search_head_cluster_url"),
                          [
                             ({}, False, False, False, False, None),
@@ -422,12 +485,6 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
 
 @pytest.mark.parametrize(("default_yml", "os_env", "key", "value"),
             [
-                # Check ansible_pre_tasks
-                ({"ansible_pre_tasks": "a,b,c"}, {}, "ansible_pre_tasks", "a,b,c"),
-                ({}, {"SPLUNK_ANSIBLE_PRE_TASKS": "a,b"}, "ansible_pre_tasks", "a,b"),
-                # Check ansible_pre_tasks
-                ({"ansible_post_tasks": "a,b,c"}, {}, "ansible_post_tasks", "a,b,c"),
-                ({}, {"SPLUNK_ANSIBLE_POST_TASKS": "a,b"}, "ansible_post_tasks", "a,b"),
                 # Check cert_prefix
                 ({}, {}, "cert_prefix", "https"),
                 ({"cert_prefix": "http"}, {}, "cert_prefix", "http"),
@@ -459,10 +516,6 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 # Check splunk.allow_upgrade
                 ({"splunk": {"allow_upgrade": "yes"}}, {}, "splunk.allow_upgrade", "yes"),
                 ({}, {"SPLUNK_ALLOW_UPGRADE": "no"}, "splunk.allow_upgrade", "no"),
-                # Check splunk.asan
-                ({"splunk": {"asan": True}}, {}, "splunk.asan", True),
-                ({}, {"SPLUNK_ENABLE_ASAN": ""}, "splunk.asan", False),
-                ({}, {"SPLUNK_ENABLE_ASAN": "anything"}, "splunk.asan", True),
             ]
         )
 def test_overrideEnvironmentVars(default_yml, os_env, key, value):
