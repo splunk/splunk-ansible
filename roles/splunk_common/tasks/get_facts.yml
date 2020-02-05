@@ -8,6 +8,7 @@
 - name: "Identify service system (Linux)"
   command: "ps --no-headers -o comm 1"
   register: pid1
+  changed_when: False
   when: splunk.enable_service and ansible_system is match("Linux")
 
 # If there is no Splunk executable, we will need to install.
