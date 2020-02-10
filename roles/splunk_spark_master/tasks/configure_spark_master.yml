@@ -8,9 +8,11 @@
       export SPARK_DAEMON_MEMORY=2g
       export SPARK_PID_DIR={{ splunk.dfs.dfs_home }}
       export SPARK_HOME={{ splunk.dfs.spark_home }}
+  become_user: root
+  become: yes
 
 - set_fact:
-    java_home: "{{ splunk_home_dir }}/bin/jars/vendors/java/OpenJDK8U-jre_x64_linux_hotspot_8u212b03"
+    java_home: "{{ splunk.home }}/bin/jars/vendors/java/OpenJDK8U-jre_x64_linux_hotspot_8u212b03"
 
 - set_fact:
     ld_library_path: "{{ java_home }}/lib/amd64/jli:{{ java_home }}/lib/amd64:$LD_LIBRARY_PATH"
@@ -38,9 +40,10 @@
       spark.eventLog.dir file://{{ splunk.dfs.dfs_home }}/eventlog
       spark.history.fs.logDirectory file://{{ splunk.dfs.dfs_home }}/eventlog
 
+# This conf/slaves file is only used on the spark master for starting all workers at once
 # This part should be appended by user input, how many workers they need.
-- name: Create slaves
-  copy:
-    dest: "{{ splunk.dfs.spark_home }}/conf/slaves"
-    content: |
-      {{ splunk.dfs.spark_workers }}
+#- name: Create slaves
+#  copy:
+#    dest: "{{ splunk.dfs.spark_home }}/conf/slaves"
+#    content: |
+#      {{ splunk.dfs.spark_workers }}

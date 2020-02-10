@@ -78,6 +78,7 @@ splunk:
     dfs:
         dfs_home: "/opt/dfs"
         spark_home: "/opt/spark"
+        java_home: "/opt/jdk"
         enable: False
         port: 7777
         dfc_num_slots: 4

@@ -68,6 +68,20 @@ splunk:
         search_factor: 3
         replication_factor: 3
         replication_port: 9887
+    dfs:
+        dfs_home: "/opt/dfs"
+        spark_home: "/opt/spark"
+        java_home: "/opt/jdk"
+        enable: False
+        port: 7777
+        dfc_num_slots: 4
+        dfw_num_slots: 10
+        dfw_num_slots_enabled: False
+        spark_master_host: "127.0.0.1"
+        spark_master_webui_port: 8009
+        spark_worker_webui_port: 7000
+        spark_version: 2.3.0
+        hadoop_version: 2.7
     multisite_replication_factor_origin: 2
     multisite_replication_factor_total: 3
     multisite_search_factor_origin: 1

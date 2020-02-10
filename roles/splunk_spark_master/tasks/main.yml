@@ -1,8 +1,4 @@
 ---
-- include_tasks: ../../splunk_spark_worker/install_jdk.yml
-
-- include_tasks: ../../splunk_spark_worker/install_spark.yml
-
 - include_tasks: configure_spark_master.yml
 
 - include_tasks: start_spark_master.yml
