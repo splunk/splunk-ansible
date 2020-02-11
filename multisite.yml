@@ -2,7 +2,7 @@
 - name: Run multisite provisioning
   hosts: localhost
   gather_facts: true
-  environment: "{{ ansible_environment }}"
+  environment: "{{ ansible_environment | default({}) }}"
   tasks:
       # These should only be run for the three roles that currently
       # have multisite defined; cluster master, search head, and indexer
