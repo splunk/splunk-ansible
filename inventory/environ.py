@@ -368,10 +368,10 @@ def getAnsibleContext(vars_scope):
     """
     vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope.get("ansible_pre_tasks"))
     vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope.get("ansible_post_tasks"))
-    vars_scope["ansible_env"] = vars_scope.get("ansible_env") or {}
+    vars_scope["ansible_environment"] = vars_scope.get("ansible_environment") or {}
     env = os.environ.get("SPLUNK_ANSIBLE_ENV")
     if env:
-        vars_scope["ansible_env"].update({k:v for k,v in [x.split("=", 1) for x in env.split(",")]})
+        vars_scope["ansible_environment"].update({k:v for k,v in [x.split("=", 1) for x in env.split(",")]})
 
 def getASan(vars_scope):
     """
@@ -379,7 +379,7 @@ def getASan(vars_scope):
     """
     vars_scope["splunk"]["asan"] = bool(os.environ.get("SPLUNK_ENABLE_ASAN", vars_scope["splunk"].get("asan")))
     if vars_scope["splunk"]["asan"]:
-        vars_scope["ansible_env"].update({"ASAN_OPTIONS": "detect_leaks=0"})
+        vars_scope["ansible_environment"].update({"ASAN_OPTIONS": "detect_leaks=0"})
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
