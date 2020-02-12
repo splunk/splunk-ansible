@@ -8,7 +8,7 @@
     option: "{{ item.opt }}"
     value: "{{ item.val }}"
   with_items:
-    - { opt: 'pass4SymmKey', val: '{{ splunk.shc.secret }}' }
+    - { opt: 'pass4SymmKey', val: '{{ splunk.shc.pass4SymmKey }}' }
     - { opt: 'shcluster_label', val: '{{ splunk.shc.label }}' }
   loop_control:
     label: "{{ item.opt }}"
@@ -30,8 +30,8 @@
   no_log: "{{ hide_password }}"
   register: task_result
   until: task_result.rc == 0
-  retries: "{{ retry_num }}"
-  delay: "{{ shc_bootstrap_delay }}"
+  retries: "{{ shc_sync_retry_num }}"
+  delay: "{{ retry_delay }}"
   when:
     - splunk.search_head_cluster
     - splunk.apps_location

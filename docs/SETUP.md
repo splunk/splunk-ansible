@@ -1,20 +1,22 @@
 ## Navigation
 
-* [Install](#install)
-* [Configure](#configure)
-* [Run](#run)
-* [Summary](#summary)
+* [Install splunk-ansible](#install-splunk-ansible)
+* [Configure Parameters](#configure-parameters)
+* [Execute Playbooks](#execute-playbooks)
+* [Next Steps](#next-steps)
 
 ----
 
-## Install
+## Install splunk-ansible
+The playbooks of splunk-ansible are executed through a local connection. You should run the `ansible-playbook` command on the node you wish to bring up as a fully-fledged Splunk Enterprise instance. Accordingly, this means the contents of this repository must be packaged into the infrastructure layer itself.
 
-This codebase is meant to be used via local connection, which brings up the node you run the `ansible-playbook` command on as a full-fledged Splunk instance. This does require you to embed this entire set of Ansible playbooks into the infrastructure layer itself. While it is entirely possible to provision a remote instance using these same plays, we do not officially support this.
+While it can be possible to provision a remote instance using these same playbooks, we do not officially support this.
 
-In order to run Ansible and use these plays, you'll need the following prerequisites and dependencies installed on the node you wish to deploy as a Splunk installation:
-1. Linux-based operating system (Debian, CentOS, etc.)
-2. Python 2 interpreter
-3. System utilities:
+#### Requirements
+In order to run Ansible and use these plays, you need to install the following dependencies on the host you want to deploy as a Splunk Enterprise installation:
+* Linux-based operating system (Debian, CentOS, etc.)
+* Python 2 interpreter
+* System utilities:
     * `rsync`
     * `tar`
     * `ps`
@@ -25,52 +27,55 @@ In order to run Ansible and use these plays, you'll need the following prerequis
     * `ping`
     * `nslookup`
     * `ansible` (this can also be installed via Python's package manager `pip`)
-4. PyPI packages:
+* PyPI packages:
     * `pip`
     * `requests`
-5. Users/groups:
+* Users/groups:
     * `splunk/splunk`
     * `ansible/ansible` with sudo access
     * `root/root`
 
-Be mindful of the hardware and system requirements for each role in your deployment's topology. For more information, please see [Splunk's hardware and capacity recommendations](https://docs.splunk.com/Documentation/Splunk/7.2.4/Installation/Systemrequirements).
+Be mindful of the different hardware and system requirements for each node in your Splunk Enterprise deployment. For more information, see [Splunk Enterprise recommended hardware](https://docs.splunk.com/Documentation/Splunk/latest/Installation/Systemrequirements#Recommended_hardware) guidelines.
 
-## Configure
-Before we can run Ansible, we need to tell it what hosts to act against, as well as tune how Splunk gets set up!
+## Configure Parameters
+Before you run Ansible, you need to tell it what hosts to act against, as well as tune how Splunk Enterprise gets set up!
 
-Let's start with standing up a host. For the purposes of bringing up an ephemeral target environment, we'll be using [Docker](https://www.docker.com/) to bring up the image [`splunk/splunk`](https://hub.docker.com/r/splunk/splunk/) as so:
+1. Start with standing up a host. For the purposes of bringing up an ephemeral target environment, we'll be using [Docker](https://www.docker.com/) to bring up the image [`splunk/splunk:latest`](https://hub.docker.com/r/splunk/splunk/) as so:
 ```
-$ docker run -d --name splcontainer -p 8000:8000 splunk/splunk no-provision
+$ docker run -d --name splcontainer -p 8000:8000 splunk/splunk:latest no-provision
 ```
 
-Next, we'll need to generate all the variables necessary to setup Splunk. From here on forward, we'll call this collection of variables the `default.yml`. For the sake of simplicity, let's download the example `default.yml` supplied [here](advanced/default.yml.spec.md#sample).
+2. Next, you must generate all the variables necessary to setup Splunk Enterprise. From here on forward, this collection of variables will be known as the `default.yml`. The [`splunk/splunk:latest`](https://hub.docker.com/r/splunk/splunk/) Docker image can also be used to generate these variables:
+```
+$ docker run -it splunk/splunk:latest create-defaults > default.yml
+```
+Alternatively, you can download the example `default.yml` supplied [here](advanced/default.yml.spec.md#sample).
 
-Feel free to inspect your newly-created `default.yml` and tweak options as you see fit. For a full list of options, please see the [`default.yml.spec`](advanced/default.yml.spec.md#spec).
+3. Inspect your newly-created `default.yml` and tweak options as you see fit. For a full list of parameters, please see the [`default.yml.spec`](advanced/default.yml.spec.md#spec).
 
-## Run
-In order to get your container to run Ansible, we'll need to give it all the playbooks. This Docker image conveniently has our playbooks already, but for the sake of experimentation let's dump everything into a new location:
+## Execute Playbooks
+In order to get your container to run Ansible, it needs a copy of all the playbooks. 
+
+1. If you're using the `splunk/splunk` Docker image, it conveniently already has all of the playbooks available - but for the sake of this exercise, copy everything in this repo into your remote host which is the container:
 ```
 $ docker cp . splcontainer:/tmp/splunk-ansible/
 ```
 
-If you've followed all of the directions above, you should be able to run the following command
+2. Run the following command
 ```
 $ docker exec -it splcontainer bash -c 'cd /tmp/splunk-ansible; ansible-playbook --connection local site.yml --extra-vars "@default.yml"'
 ```
+You should see streaming Ansible output in your terminal. Here is what is happening when you run the above command:
+* `ansible-playbook` command is invoked using the playbook `site.yml`
+* The local connection plugin is explicityly used with `--connection local`
+* Splunk Enterprise is configured towards your desired state as defined in `--extra-vars "@default.yml"`
 
-Breaking down what this does:
-1. Invoking the `ansible-playbook` command with the master playbook `site.yml`
-2. Use the connection plugin to run locally with `--connection local`
-3. Supply variables that control how Splunk is started with `--extra-vars "@default.yml"`
-
-Let the magic happen, and if everything provisions successfully you will see:
+3. If everything went smoothly, you can log in to Splunk Enterprise with your browser pointed at `http://localhost:8000` using the credentials `admin/helloworld`. Additionally, Ansible should exit gracefully and you will the following if there are no errors:
 ```
 PLAY RECAP ****************************************************************
 splunk                     : ok=29   changed=2    unreachable=0    failed=0
 ```
 __NOTE:__ The `ok`/`changed` count may change over time, but it's vital to see `failed=0` if everything went well.
 
-## Summary
-You've successfully used `splunk-ansible`! If everything went smoothly, you can login to Splunk with your browser pointed at `http://localhost:8000` using the credentials `admin/helloworld`.
-
-Ready for more? Now that your feet are wet, go learn more about the [design and architecture](ARCHITECTURE.md) of these plays or play around with more [advanced scenarios](ADVANCED.md).
+## Next Steps
+You successfully used `splunk-ansible`! Ready for more? Now that your feet are wet, play with more [examples](EXAMPLES.md), read more about the [architecture](ARCHITECTURE.md) of these Ansible playbooks, or learn how to setup more [advanced](ADVANCED.md) scenarios.

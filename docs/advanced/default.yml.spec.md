@@ -24,11 +24,15 @@ hide_password: <bool>
 
 retry_num: <int>
 * Number of retries to make for potentially flakey/error-prone tasks
-* Default: 50
+* Default: 60
 
-shc_bootstrap_delay: <int>
-* Number of seconds of delay when verifying SHC success on the deployer
-* Default: 30
+wait_for_splunk_retry_num: <int>
+* Number of retries to make when waiting for a Splunk instance to be available
+* Default: 60
+
+shc_sync_retry_num: <int>
+* Number of retries to make when waiting for sync up with a search head cluster
+* Default: 60
 
 splunk_home_ownership_enforcement: true
 * Boolean that to control and enable UAC on $SPLUNK_HOME (recommended to be enabled)
@@ -130,10 +134,6 @@ splunk:
   license_download_dest: <str - filepath>
   * Path in filesystem where licenses will be downloaded as
   * Default: /tmp/splunk.lic
-
-  nfr_license: <str - filepath>
-  * Path in filesystem where of special NFR licenses
-  * Default: /tmp/nfr_enterprise.lic
 
   wildcard_license: <bool>
   * Enable licenses to be interpreted as fileglobs, to support provisioning with multiple Splunk licenses
@@ -248,9 +248,17 @@ splunk:
   * URL of the Splunk search head cluster
   * Default: null
 
-  secret: null
+  launch: null
+  * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
+  * Default: null
+
+  secret: <str>
   * Secret passcode used to encrypt all of Splunk's sensitive information on disk. When not set, Splunk will autogenerate a unique secret local to each installation. This is NOT required for any standalone or distributed Splunk topology
   * NOTE: This may be set once at the start of provisioning any deployment. Any changes made to this splunk.secret after the deployment has been created must be resolved manually, otherwise there is a severe risk of bricking the capabilities of your Splunk environment.
+  * Default: null
+
+  pass4SymmKey: <str>
+  * Password for Symmetric Key used to encrypt Splunk's sensitive information on disk. When not set, Splunk will encrypt a default value (`changeme`) with `splunk.secret` and set it as `pass4SymmKey` in the `[general]` stanza of `/opt/splunk/etc/system/local/server.conf`.
   * Default: null
 
   idxc:
@@ -275,7 +283,12 @@ splunk:
     * Default: 3
 
     secret: <str>
-    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in server.conf.
+    * Determine the secret used to configure indexer clustering. This is pass4SymmKey in the `[clustering]` stanza of server.conf.
+    * NOTE: This is being deprecated in favor of `splunk.idxc.pass4SymmKey`.
+    * Default: null
+
+    pass4SymmKey: <str>
+    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in the `[clustering]` stanza of server.conf.
     * Default: null
 
   shc:
@@ -296,7 +309,12 @@ splunk:
     * Default: 9887
 
     secret: <str>
-    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in server.conf.
+    * Determine the secret used to configure search head clustering. This is pass4SymmKey in server.conf.
+    * NOTE: This is being deprecated in favor of `splunk.shc.pass4SymmKey`
+    * Default: null
+
+    pass4SymmKey: <str>
+    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in the `[shclustering]` stanza of server.conf.
     * Default: null
 
   dfs:
@@ -416,8 +434,10 @@ The following is used in the quickstart section to start Splunk in a standalone 
 ansible_post_tasks: null
 ansible_pre_tasks: null
 hide_password: false
-retry_num: 50
-shc_bootstrap_delay: 30
+retry_delay: 3
+retry_num: 60
+wait_for_splunk_retry_num: 60
+shc_sync_retry_num: 60
 splunk_home_ownership_enforcement: true
 
 config:
@@ -472,7 +492,6 @@ splunk:
     secret: dmwHG97SpM+GzeGPUELwr7xXowSAVmLW
   ignore_license: false
   license_download_dest: /tmp/splunk.lic
-  nfr_license: /tmp/nfr_enterprise.lic
   opt: /opt
   password: helloworld
   pid: /opt/splunk/var/run/splunk/splunkd.pid

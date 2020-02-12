@@ -10,6 +10,9 @@
     timeout: 10
   register: ssl_enabled
   ignore_errors: true
+  delay: "{{ retry_delay }}"
+  retries: "{{ retry_num }}"
+  until: ssl_enabled.status == 200 or ssl_enabled.status == 404
 
 # If the https call failed, we will revert to http and continue REST with normal error handling
 - name: "Set url prefix for future REST calls"

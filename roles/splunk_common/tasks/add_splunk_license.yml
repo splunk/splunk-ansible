@@ -9,12 +9,6 @@
   with_items: "{{ splunk.license_uri.split(',') }}"
   when: splunk.license_uri is defined and splunk.license_uri
 
-# TODO: We should remove this and include it as part of splunk.license_uri now that it supports an array
-- name: Include NFR license
-  set_fact:
-    licenses: "{{ licenses }} + [ '{{ splunk.nfr_license }}' ]"
-  when: splunk.nfr_license is defined and splunk.nfr_license
-
 - name: Apply licenses
   include_tasks: apply_licenses.yml
   with_items:

@@ -20,6 +20,7 @@
       max_timeout: 1200
     hide_password: false
     retry_num: 50
+    retry_delay: 3
     splunk:
       role: splunk_universal_forwarder
       indexer_cluster: false
@@ -58,7 +59,6 @@
       http_port: 8000
       ignore_license: false
       license_download_dest: /tmp/splunk.lic
-      nfr_license: /tmp/nfr_enterprise.lic
       opt: /opt
       password: helloworld
       pid: /opt/splunkforwarder/var/run/splunk/splunkd.pid

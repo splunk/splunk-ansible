@@ -1,19 +1,32 @@
 ---
+- name: Set default captaincy
+  set_fact:
+    splunk_search_head_captain: false
+
+- name: Determine captaincy
+  set_fact:
+    splunk_search_head_captain: true
+  when: ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+        ansible_fqdn == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+        splunk.hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
+        splunk.role == "splunk_search_head_captain"
+
 - include_tasks: search_head_clustering.yml
   when:
     - splunk.search_head_cluster
     - splunk.deployer_included
-    - splunk_search_head_captain is defined
 
 ## Indexer Clustering Scenario
 - include_tasks: peer_cluster_master.yml
   when:
     - splunk.indexer_cluster
+    - splunk.multisite_master is not defined
 
 ## Non Indexer Clustering Scenario
 - include_tasks: peer_indexers.yml
   when:
     - not splunk.indexer_cluster
+    - splunk.multisite_master is not defined
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
@@ -33,6 +46,11 @@
   when:
     - splunk.site is defined
     - splunk.multisite_master is defined
+
+- include_tasks: ../../splunk_common/tasks/enable_forwarder_monitoring.yml
+  when:
+    - dmc_forwarder_monitoring is defined
+    - dmc_forwarder_monitoring | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_dfs.yml
   when:

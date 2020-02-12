@@ -2,19 +2,10 @@
 - name: Run default Splunk provisioning
   hosts: localhost
   gather_facts: true
-  vars:
-    splunk_search_head_captain: false
+  environment: "{{ ansible_environment | default({}) }}"
   tasks:
 
     - block:
-        - name: Determine captaincy
-          set_fact:
-            splunk_search_head_captain: true
-          when: ansible_hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
-                ansible_fqdn == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
-                splunk.hostname == lookup('env', 'SPLUNK_SEARCH_HEAD_CAPTAIN_URL') or
-                splunk.role == "splunk_search_head_captain"
-
         - name: Execute pre-setup playbooks
           include_tasks: execute_adhoc_plays.yml
           vars:

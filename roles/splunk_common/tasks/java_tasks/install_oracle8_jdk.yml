@@ -8,8 +8,8 @@
     timeout: 90
   register: download_result
   until: download_result.status_code == 200
-  retries: 5
-  delay: 10
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
   when:
     - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes

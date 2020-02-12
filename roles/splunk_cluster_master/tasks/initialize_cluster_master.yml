@@ -1,19 +1,4 @@
 ---
-- name: Get indexer count
-  set_fact:
-    num_indexer_hosts: "{{ groups['splunk_indexer'] | length }}"
-
-- name: Get default replication factor
-  set_fact:
-    idxc_search_factor: "{{ splunk.idxc.search_factor }}"
-    idxc_replication_factor: "{{ splunk.idxc.replication_factor }}"
-
-- name: Lower indexer search/replication factor
-  set_fact:
-    idxc_search_factor: 1
-    idxc_replication_factor: 1
-  when: num_indexer_hosts|int < 3
-
 - name: Set indexer discovery
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
@@ -23,7 +8,7 @@
     validate_certs: False
     body:
       name: "indexer_discovery"
-      pass4SymmKey: "{{ splunk.shc.secret }}"
+      pass4SymmKey: "{{ splunk.idxc.pass4SymmKey }}"
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
@@ -35,12 +20,12 @@
   when: splunk.smartstore
 
 - name: Set the current node as a Splunk indexer cluster master
-  command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ splunk.idxc.replication_factor }} -search_factor {{ splunk.idxc.search_factor }} -secret '{{ splunk.idxc.secret }}' -cluster_label '{{ splunk.idxc.label }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} edit cluster-config -mode master -replication_factor {{ splunk.idxc.replication_factor }} -search_factor {{ splunk.idxc.search_factor }} -secret '{{ splunk.idxc.pass4SymmKey }}' -cluster_label '{{ splunk.idxc.label }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   register: task_result
   until: task_result.rc == 0
   changed_when: task_result.rc == 0
   retries: "{{ retry_num }}"
-  delay: 3
+  delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
   become: yes

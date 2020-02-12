@@ -28,7 +28,7 @@ class ShcReady(object):
         shc_peers = resp['entry'][0]['content']['peers']
         # Check #1, see if peers are up
         # the comparison will be >= in case play is run after cluster is setup
-        if len(shc_peers.keys()) < len(self.shc_peers): # SH Captain included in list
+        if not shc_peers or len(shc_peers.keys()) < len(self.shc_peers): # SH Captain included in list
             raise Exception("SHC failure, setup not complete. Insufficient number of peers online")
         #correct number of peers online
         # Check #2, see if peers are ready to accept bundle
