@@ -5,6 +5,8 @@
     section: settings
     option: "enableSplunkWebSSL"
     value: "True"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
 
 - name: Set Web certificate path
   ini_file:
@@ -12,6 +14,8 @@
     section: settings
     option: "serverCert"
     value: "{{ splunk.http_enableSSL_cert }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   when:
     - splunk.http_enableSSL_cert is defined
     - splunk.http_enableSSL_cert
@@ -22,6 +26,8 @@
     section: settings
     option: "privKeyPath"
     value: "{{ splunk.http_enableSSL_privKey }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   when:
     - splunk.http_enableSSL_privKey is defined
     - splunk.http_enableSSL_privKey
@@ -32,6 +38,8 @@
     section: settings
     option: "sslPassword"
     value: "{{ splunk.http_enableSSL_privKey_password }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   when:
     - splunk.http_enableSSL_privKey_password is defined
     - splunk.http_enableSSL_privKey_password
