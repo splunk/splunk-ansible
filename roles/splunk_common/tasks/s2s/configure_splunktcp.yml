@@ -4,7 +4,7 @@
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: "splunktcp://{{ splunk.s2s_port if splunk.s2s_port is defined else splunk.s2s.port }}"
     option: "disabled"
-    value: "0"
+    value: "{{ 0 if 's2s' in splunk and 'enable' in splunk.s2s and splunk.s2s.enable else 1 }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   notify:
