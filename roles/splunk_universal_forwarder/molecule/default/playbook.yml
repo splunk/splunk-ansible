@@ -62,8 +62,9 @@
       opt: /opt
       password: helloworld
       pid: /opt/splunkforwarder/var/run/splunk/splunkd.pid
-      s2s_enable: true
-      s2s_port: 9997
+      s2s:
+        enable: true
+        port: 9997
       secret: null
       smartstore: null
       svc_port: 8089
