@@ -342,7 +342,12 @@ def getSecrets(vars_scope):
     """
     Parse sensitive passphrases
     """
-    vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
+    vars_scope["splunk"]["password"] = os.environ.get("SPLUNK_PASSWORD", vars_scope["splunk"]["password"])
+    if os.path.isfile(vars_scope["splunk"]["password"]):
+        with open(vars_scope["splunk"]["password"], "r") as f:
+            vars_scope["splunk"]["password"] = f.read().strip()
+            if not vars_scope["splunk"]["password"]:
+                raise Exception("Splunk password supplied is empty/null")
     vars_scope["splunk"]["pass4SymmKey"] = os.environ.get('SPLUNK_PASS4SYMMKEY', vars_scope["splunk"].get("pass4SymmKey"))
     vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"].get("secret"))
 
