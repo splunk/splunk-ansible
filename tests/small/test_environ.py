@@ -168,23 +168,52 @@ def test_getSplunkWebSSL():
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters - Splunk password is required
-                ({"password": "Chang3d!"}, {}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": None}),
+                ({"password": "helloworld"}, {}, {"password": "helloworld", "pass4SymmKey": None, "secret": None}),
                 # Check default.yml parameters
-                ({"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}),
-                ({"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
-                ({"password": "Chang3d!", "secret": "1234"}, {}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": "1234"}),
+                ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": "helloworld", "secret": "1234"}, {}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"}),
                 # Check environment variable parameters
-                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}),
-                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
-                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_SECRET": "1234"}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": "1234"})
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"})
             ]
         )
 def test_getSecrets(default_yml, os_env, output):
     vars_scope = {"splunk": default_yml}
     with patch("environ.inventory") as mock_inven:
         with patch("os.environ", new=os_env):
-            environ.getSecrets(vars_scope)
+            with patch("environ.os.path") as mock_os_path:
+                mock_os_path.isfile = MagicMock()
+                mock_os_path.isfile.return_value = False
+                environ.getSecrets(vars_scope)
     assert vars_scope["splunk"] == output
+
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check when Splunk password is a file
+                ({"password": "/tmp/splunk-password"}, {}, {"password": "worldneversayshiback", "pass4SymmKey": None, "secret": None}),
+                ({"password": "helloworld"}, {"SPLUNK_PASSWORD": "/tmp/splunk-password"}, {"password": "worldneversayshiback", "pass4SymmKey": None, "secret": None}),
+            ]
+        )
+def test_getSecrets_passwordFromFile(default_yml, os_env, output):
+    file_contents = """
+
+worldneversayshiback
+
+"""
+    m = mock_open(read_data=file_contents)
+    vars_scope = {"splunk": default_yml}
+    with patch("environ.open", m, create=True) as mopen:
+        with patch("environ.inventory") as mock_inven:
+            with patch("os.environ", new=os_env):
+                with patch("os.path") as mock_os_path:
+                    # Make sure that the isfile() check returns True
+                    mock_os_path.isfile = MagicMock()
+                    mock_os_path.isfile.return_value = True
+                    environ.getSecrets(vars_scope)
+                    mopen.assert_called_once()
+    assert vars_scope["splunk"]["password"] == "worldneversayshiback"
 
 @pytest.mark.xfail(raises=KeyError)
 def test_noSplunkPassword():
