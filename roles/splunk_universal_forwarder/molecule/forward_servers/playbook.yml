@@ -23,6 +23,9 @@
     retry_delay: 3
     splunk:
       role: splunk_universal_forwarder
+      forward_servers:
+        - splunk-indexer1.test.local
+        - splunk-indexer2.test.local
       indexer_cluster: false
       license_master_included: false
       license_uri: null

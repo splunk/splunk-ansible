@@ -62,7 +62,8 @@
   no_log: "{{ hide_password }}"
 
 # set up forward servers set by get_facts
-- include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
+- name: Add forward_servers
+  include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
   vars:
     forward_servers: "{{ splunk_forward_servers }}"
   when:

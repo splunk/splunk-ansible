@@ -8,7 +8,7 @@ lint:
   options:
     c: ../../.yamllint
 platforms:
-  - name: instance
+  - name: instance-forward_servers
     image: splunk/universalforwarder
     command: no-provision
 provisioner:
@@ -20,7 +20,7 @@ provisioner:
       x: ["204", "701"]
       force-color: true
 scenario:
-  name: default
+  name: forward_servers
 verifier:
   name: testinfra
   lint:
@@ -28,4 +28,4 @@ verifier:
     options:
       ignore: E501
   options:
-    junit-xml: ../../../../tests/results/uf-default-results.xml
+    junit-xml: ../../../../tests/results/uf-forward_servers-results.xml

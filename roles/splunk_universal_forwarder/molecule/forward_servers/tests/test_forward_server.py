@@ -49,6 +49,17 @@ def test_custom_user_prefs(host):
     assert f.exists
     assert f.user == 'splunk'
     assert f.group == 'splunk'
-    assert f.contains("[general]")
+    assert f.contains("\\[general\\]")
     assert f.contains("default_namespace = appboilerplate")
     assert f.contains("search_syntax_highlighting = dark")
+
+
+def test_forward_servers(host):
+    f = host.file('/opt/splunkforwarder/etc/system/local/outputs.conf')
+    assert f.exists
+    assert f.user == 'splunk'
+    assert f.group == 'splunk'
+    assert f.contains("\\[tcpout-server://splunk-indexer1.test.local:9997\\]")
+    assert f.contains("\\[tcpout-server://splunk-indexer2.test.local:9997\\]")
+    assert f.contains("\\[tcpout:default-autolb-group\\]")
+    assert f.contains("server = splunk-indexer1.test.local:9997,splunk-indexer2.test.local:9997")
