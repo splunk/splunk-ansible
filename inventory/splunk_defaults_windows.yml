@@ -1,6 +1,7 @@
 ansible_ssh_user: "splunk"
 ansible_pre_tasks:
 ansible_post_tasks:
+ansible_environment: {}
 retry_delay: 10
 retry_num: 60
 wait_for_splunk_retry_num: 150
@@ -35,7 +36,9 @@ splunk:
     root_endpoint:
     password:
     secret: 
+    pass4SymmKey:
     svc_port: 8089
+    launch:
     s2s:
         enable: True
         port: 9997
@@ -55,12 +58,14 @@ splunk:
     shc:
         enable: False
         secret:
+        pass4SymmKey:
         label: "shc_label"
         replication_factor: 3
         replication_port: 9887
     idxc:
         enable: False
         secret:
+        pass4SymmKey:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3

@@ -102,7 +102,9 @@ def getDefaultVars():
     """
     defaultVars = loadDefaults()
     overrideEnvironmentVars(defaultVars)
-
+    getAnsibleContext(defaultVars)
+    getASan(defaultVars)
+    getSecrets(defaultVars)
     getSplunkPaths(defaultVars)
     getIndexerClustering(defaultVars)
     getSearchHeadClustering(defaultVars)
@@ -134,6 +136,7 @@ def getDefaultVars():
     getSplunkBuild(defaultVars)
     getSplunkbaseToken(defaultVars)
     getSplunkApps(defaultVars)
+    getLaunchConf(defaultVars)
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
     return defaultVars
@@ -160,6 +163,12 @@ def getIndexerClustering(vars_scope):
     idxc_vars = vars_scope["splunk"]["idxc"]
     idxc_vars["label"] = os.environ.get("SPLUNK_IDXC_LABEL", idxc_vars.get("label"))
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
+    idxc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_IDXC_PASS4SYMMKEY", idxc_vars.get("pass4SymmKey")) # Control flow for issue #316 backwards-compatibility
+    if idxc_vars["pass4SymmKey"]:
+        idxc_vars["secret"] = idxc_vars["pass4SymmKey"]
+    else:
+        idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
+        idxc_vars["pass4SymmKey"] = idxc_vars["secret"]
     # Rectify replication factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thereplicationfactor)
     # Make sure default repl/search factor>0 else Splunk doesn't start unless user-defined
     if inventory.get("splunk_indexer"):
@@ -182,7 +191,12 @@ def getSearchHeadClustering(vars_scope):
         vars_scope["splunk"]["shc"] = {}
     shc_vars = vars_scope["splunk"]["shc"]
     shc_vars["label"] = os.environ.get("SPLUNK_SHC_LABEL", shc_vars.get("label"))
-    shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
+    shc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_SHC_PASS4SYMMKEY", shc_vars.get("pass4SymmKey")) # Control flow for issue #316 backwards-compatibility
+    if shc_vars["pass4SymmKey"]:
+        shc_vars["secret"] = shc_vars["pass4SymmKey"]
+    else:
+        shc_vars["secret"] = os.environ.get("SPLUNK_SHC_SECRET", shc_vars.get("secret"))
+        shc_vars["pass4SymmKey"] = shc_vars["secret"]
     # Rectify search factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thesearchfactor)
     # Make sure default repl factor>0 else Splunk doesn't start unless user-defined
     if inventory.get("splunk_search_head"):
@@ -249,7 +263,6 @@ def getLicenses(vars_scope):
     vars_scope["splunk"]["wildcard_license"] = False
     if vars_scope["splunk"]["license_uri"] and '*' in vars_scope["splunk"]["license_uri"]:
         vars_scope["splunk"]["wildcard_license"] = True
-    vars_scope["splunk"]["nfr_license"] = os.environ.get("SPLUNK_NFR_LICENSE", "/tmp/nfr_enterprise.lic")
     vars_scope["splunk"]["ignore_license"] = False
     if os.environ.get("SPLUNK_IGNORE_LICENSE", "").lower() == "true":
         vars_scope["splunk"]["ignore_license"] = True
@@ -325,17 +338,61 @@ def getSplunkApps(vars_scope):
         appSet.update(apps.split(","))
     vars_scope["splunk"]["apps_location"] = list(appSet)
 
+def getSecrets(vars_scope):
+    """
+    Parse sensitive passphrases
+    """
+    vars_scope["splunk"]["password"] = os.environ.get("SPLUNK_PASSWORD", vars_scope["splunk"]["password"])
+    if os.path.isfile(vars_scope["splunk"]["password"]):
+        with open(vars_scope["splunk"]["password"], "r") as f:
+            vars_scope["splunk"]["password"] = f.read().strip()
+            if not vars_scope["splunk"]["password"]:
+                raise Exception("Splunk password supplied is empty/null")
+    vars_scope["splunk"]["pass4SymmKey"] = os.environ.get('SPLUNK_PASS4SYMMKEY', vars_scope["splunk"].get("pass4SymmKey"))
+    vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"].get("secret"))
+
+def getLaunchConf(vars_scope):
+    """
+    Parse key/value pairs to set in splunk-launch.conf
+    """
+    launch = {}
+    if not "launch" in vars_scope["splunk"]:
+        vars_scope["splunk"]["launch"] = {}
+    # From default.yml
+    if type(vars_scope["splunk"]["launch"]) == dict:
+        launch.update(vars_scope["splunk"]["launch"])
+    # From environment variables
+    settings = os.environ.get("SPLUNK_LAUNCH_CONF")
+    if settings:
+        launch.update({k:v for k,v in [x.split("=", 1) for x in settings.split(",")]})
+    vars_scope["splunk"]["launch"] = launch
+
+def getAnsibleContext(vars_scope):
+    """
+    Parse parameters that influence Ansible execution
+    """
+    vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope.get("ansible_pre_tasks"))
+    vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope.get("ansible_post_tasks"))
+    vars_scope["ansible_environment"] = vars_scope.get("ansible_environment") or {}
+    env = os.environ.get("SPLUNK_ANSIBLE_ENV")
+    if env:
+        vars_scope["ansible_environment"].update({k:v for k,v in [x.split("=", 1) for x in env.split(",")]})
+
+def getASan(vars_scope):
+    """
+    Enable ASan debug builds
+    """
+    vars_scope["splunk"]["asan"] = bool(os.environ.get("SPLUNK_ENABLE_ASAN", vars_scope["splunk"].get("asan")))
+    if vars_scope["splunk"]["asan"]:
+        vars_scope["ansible_environment"].update({"ASAN_OPTIONS": "detect_leaks=0"})
+
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
     vars_scope["splunk"]["group"] = os.environ.get("SPLUNK_GROUP", vars_scope["splunk"]["group"])
-    vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope["ansible_pre_tasks"])
-    vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope["ansible_post_tasks"])
     vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
-    vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
-    vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"]["secret"])
     vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
@@ -523,10 +580,16 @@ def obfuscate_vars(inventory):
     splunkVars = inventory.get("all", {}).get("vars", {}).get("splunk", {})
     if splunkVars.get("password"):
         splunkVars["password"] = stars
+    if splunkVars.get("pass4SymmKey"):
+        splunkVars["pass4SymmKey"] = stars
     if splunkVars.get("shc") and splunkVars["shc"].get("secret"):
         splunkVars["shc"]["secret"] = stars
+    if splunkVars.get("shc") and splunkVars["shc"].get("pass4SymmKey"):
+        splunkVars["shc"]["pass4SymmKey"] = stars
     if splunkVars.get("idxc") and splunkVars["idxc"].get("secret"):
         splunkVars["idxc"]["secret"] = stars
+    if splunkVars.get("idxc") and splunkVars["idxc"].get("pass4SymmKey"):
+        splunkVars["idxc"]["pass4SymmKey"] = stars
     if splunkVars.get("smartstore") and splunkVars["smartstore"].get("index"):
         splunkIndexes = splunkVars["smartstore"]["index"]
         for idx in range(0, len(splunkIndexes)):
@@ -561,6 +624,7 @@ def prep_for_yaml_out(inventory):
                    "build_location",
                    "build_remote_src",
                    "deployer_included",
+                   "hostname",
                    "upgrade",
                    "role",
                    "search_head_cluster",

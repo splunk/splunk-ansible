@@ -77,9 +77,9 @@ splunk:
         replication_port: 9887
         search_factor: 3
         secret: null
+        pass4SymmKey: null
     ignore_license: false
     license_download_dest: /tmp/splunk.lic
-    nfr_license: /tmp/nfr_enterprise.lic
     opt: /opt
     password: helloworld
     pid: /opt/splunk/var/run/splunk/splunkd.pid
@@ -87,12 +87,14 @@ splunk:
     s2s_port: 9997
     search_head_cluster_url: null
     secret: null
+    pass4SymmKey: null
     shc:
         enable: false
         label: shc_label
         replication_factor: 3
         replication_port: 9887
         secret: null
+        pass4SymmKey: null
     smartstore: null
     svc_port: 8089
     tar_dir: splunk
@@ -173,7 +175,6 @@ splunk:
         secret: null
     ignore_license: false
     license_download_dest: /tmp/splunk.lic
-    nfr_license: /tmp/nfr_enterprise.lic
     opt: /opt
     password: helloworld
     pid: /opt/splunk/var/run/splunk/splunkd.pid
@@ -264,7 +265,6 @@ splunk:
         secret: null
     ignore_license: false
     license_download_dest: /tmp/splunk.lic
-    nfr_license: /tmp/nfr_enterprise.lic
     opt: /opt
     password: helloworld
     pid: /opt/splunk/var/run/splunk/splunkd.pid
