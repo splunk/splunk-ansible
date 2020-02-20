@@ -19,7 +19,7 @@
 
 - name: "Restart the splunkd service - Via windows system"
   win_service:
-    name: splunk_service_name
+    name: "{{ splunk_service_name }}"
     state: restarted
   when: splunk.enable_service and not ansible_system is match("Linux")
 
