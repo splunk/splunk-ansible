@@ -20,8 +20,8 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- include_tasks:
-    file: restrict_permissions.yml
+- name: "Restrict Permissions on splunk.key"
+  include_tasks: restrict_permissions.yml
   vars:
     file_path: "{{ item }}"
   with_items:
