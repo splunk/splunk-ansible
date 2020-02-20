@@ -32,12 +32,6 @@
     - splunk.allow_upgrade is defined
     - splunk.allow_upgrade | bool
 
-- name: "Set splunk-launch.conf options"
-  include_tasks: set_splunk-launch_options.yml
-  when:
-    - "'launch_options' in splunk"
-    - "splunk['launch_options']|length > 0"
-
 - include_tasks: enable_asan.yml
   when:
     - "'asan' in splunk and splunk.asan | bool"

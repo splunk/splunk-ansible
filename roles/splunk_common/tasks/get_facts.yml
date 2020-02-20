@@ -130,12 +130,6 @@
     # standalone instances UNLESS they are specified by forward-servers
     - "'splunk_search_head' not in groups"
 
-- name: "Retrieve PID 1 process information (Linux)"
-  command: "ps 1"
-  register: pid1
-  changed_when: false
-  when:  ansible_system is match("Linux")
-
 - name: "Set systemd boolean"
   set_fact:
     splunk_systemd: "{{ pid1.stdout.find('systemd') != -1 }}"

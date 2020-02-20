@@ -1,7 +1,0 @@
----
-- name: "Set splunk-launch.conf options"
-  lineinfile:
-    path: "{{ splunk.home }}/etc/splunk-launch.conf"
-    regexp: "^{{ item.key }}"
-    line: "{{ item.key }}={{ item.value }}"
-  loop: "{{ splunk.launch_options | dict2items }}"
