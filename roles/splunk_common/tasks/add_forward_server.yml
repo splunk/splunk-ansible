@@ -5,7 +5,7 @@
   become_user: "{{ splunk.user }}"
   with_items: "{{ forward_servers }}"
   register: forward_status
-  when: '"s2s" in splunk and "ssl" in splunk.s2s and not splunk.s2s.ssl | bool'
+  when: '("s2s" not in splunk and "s2s_port" in splunk) or ("s2s" in splunk and ("ssl" not in splunk.s2s or ("ssl" in splunk.s2s and not splunk.s2s.ssl))) | bool'
   changed_when:
     - "'Added forwarding to: ' in forward_status.stdout"
     - "'forwarded-server already present' not in forward_status.stderr"
