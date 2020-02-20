@@ -11,6 +11,13 @@
   changed_when: False
   when: splunk.enable_service and ansible_system is match("Linux")
 
+- name: "Set systemd boolean"
+  set_fact:
+    splunk_systemd: "{{ pid1.stdout.find('systemd') != -1 }}"
+  when:
+    - splunk.enable_service
+    - ansible_system is match("Linux")
+
 # If there is no Splunk executable, we will need to install.
 - name: "Check for existing installation"
   stat:
@@ -129,12 +136,6 @@
     # (Only standalone and search heads) we should not automatically forward the data to
     # standalone instances UNLESS they are specified by forward-servers
     - "'splunk_search_head' not in groups"
-
-- name: "Set systemd boolean"
-  set_fact:
-    splunk_systemd: "{{ pid1.stdout.find('systemd') != -1 }}"
-  when:
-    - ansible_system is match("Linux")
 
 # usually we can auto detect what the service name should be, but sometimes
 # we want to manually specify it. This is where we detect it was manually set.
