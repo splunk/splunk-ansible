@@ -1,7 +1,7 @@
 ---
 - name: Define versioned file name
   set_fact:
-    versioned_name: "spark-{ splunk.dfs.spark_version }}-bin-hadoop{{ splunk.dfs.hadoop_version }}"
+    versioned_name: "spark-{{ splunk.dfs.spark_version }}-bin-hadoop{{ splunk.dfs.hadoop_version }}"
 
 - name: Download Hadoop
   include_tasks: s3_download.yml
