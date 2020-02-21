@@ -135,10 +135,6 @@ splunk:
   * Path in filesystem where licenses will be downloaded as
   * Default: /tmp/splunk.lic
 
-  nfr_license: <str - filepath>
-  * Path in filesystem where of special NFR licenses
-  * Default: /tmp/nfr_enterprise.lic
-
   wildcard_license: <bool>
   * Enable licenses to be interpreted as fileglobs, to support provisioning with multiple Splunk licenses
   * Default: false
@@ -252,9 +248,17 @@ splunk:
   * URL of the Splunk search head cluster
   * Default: null
 
-  secret: null
+  launch: null
+  * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
+  * Default: null
+
+  secret: <str>
   * Secret passcode used to encrypt all of Splunk's sensitive information on disk. When not set, Splunk will autogenerate a unique secret local to each installation. This is NOT required for any standalone or distributed Splunk topology
   * NOTE: This may be set once at the start of provisioning any deployment. Any changes made to this splunk.secret after the deployment has been created must be resolved manually, otherwise there is a severe risk of bricking the capabilities of your Splunk environment.
+  * Default: null
+
+  pass4SymmKey: <str>
+  * Password for Symmetric Key used to encrypt Splunk's sensitive information on disk. When not set, Splunk will encrypt a default value (`changeme`) with `splunk.secret` and set it as `pass4SymmKey` in the `[general]` stanza of `/opt/splunk/etc/system/local/server.conf`.
   * Default: null
 
   idxc:
@@ -279,7 +283,12 @@ splunk:
     * Default: 3
 
     secret: <str>
-    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in server.conf.
+    * Determine the secret used to configure indexer clustering. This is pass4SymmKey in the `[clustering]` stanza of server.conf.
+    * NOTE: This is being deprecated in favor of `splunk.idxc.pass4SymmKey`.
+    * Default: null
+
+    pass4SymmKey: <str>
+    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in the `[clustering]` stanza of server.conf.
     * Default: null
 
   shc:
@@ -300,7 +309,12 @@ splunk:
     * Default: 9887
 
     secret: <str>
-    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in server.conf.
+    * Determine the secret used to configure search head clustering. This is pass4SymmKey in server.conf.
+    * NOTE: This is being deprecated in favor of `splunk.shc.pass4SymmKey`
+    * Default: null
+
+    pass4SymmKey: <str>
+    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in the `[shclustering]` stanza of server.conf.
     * Default: null
 
   dfs:
@@ -478,7 +492,6 @@ splunk:
     secret: dmwHG97SpM+GzeGPUELwr7xXowSAVmLW
   ignore_license: false
   license_download_dest: /tmp/splunk.lic
-  nfr_license: /tmp/nfr_enterprise.lic
   opt: /opt
   password: helloworld
   pid: /opt/splunk/var/run/splunk/splunkd.pid

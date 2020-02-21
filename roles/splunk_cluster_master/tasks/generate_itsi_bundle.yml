@@ -8,3 +8,12 @@
 - name: Remove ITSI apps from installed apps list
   set_fact:
     installed_apps: "{{ installed_apps | difference(itsi_apps) | unique }}"
+
+# Per ITSI consultation, remove apps from running on the master
+- name: Remove ITSI apps
+  file:
+    path: "{{ splunk.app_paths.default }}/{{ item }}"
+    state: absent
+  with_items: "{{ itsi_apps }}"
+  notify:
+    - Restart the splunkd service
