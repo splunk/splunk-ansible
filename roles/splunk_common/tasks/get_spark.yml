@@ -32,3 +32,5 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     recurse: yes
+  become_user: "{{ privileged_user }}"
+  become: yes
