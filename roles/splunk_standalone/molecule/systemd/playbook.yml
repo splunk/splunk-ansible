@@ -81,7 +81,7 @@
       smartstore: null
       svc_port: 8089
       user: splunk
-      launch_options:
+      launch:
         OPTIMISTIC_ABOUT_FILE_LOCKING: "1"
     splunk_home_ownership_enforcement: true
   roles:
