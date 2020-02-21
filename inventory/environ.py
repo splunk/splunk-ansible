@@ -398,10 +398,9 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
 
-    # always set_splunk_search_peers as True except when create multisite topology
-    vars_scope["splunk"]["set_splunk_search_peers"] = bool(vars_scope["splunk"].get("set_splunk_search_peers", True))
-    if os.environ.get("SET_SPLUNK_SEARCH_PEERS", "").lower() == "false":
-        vars_scope["splunk"]["set_splunk_search_peers"] = False
+    # Set set_search_peers to False to disable peering to indexers when creating multisite topology
+    if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
+        vars_scope["splunk"]["set_search_peers"] = False
 
 def getDFS(vars_scope):
     """

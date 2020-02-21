@@ -545,6 +545,10 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 # Check splunk.allow_upgrade
                 ({"splunk": {"allow_upgrade": "yes"}}, {}, "splunk.allow_upgrade", "yes"),
                 ({}, {"SPLUNK_ALLOW_UPGRADE": "no"}, "splunk.allow_upgrade", "no"),
+                # Check splunk.set_search_peers
+                ({"splunk": {"set_search_peers": False}}, {}, "splunk.set_search_peers", False),
+                ({}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
+                ({"splunk": {"set_search_peers": True}}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
             ]
         )
 def test_overrideEnvironmentVars(default_yml, os_env, key, value):
@@ -562,7 +566,8 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "enable_service": False,
                                 "service_name": "Splunkd",
                                 "allow_upgrade": True,
-                                "asan": None
+                                "asan": None,
+                                "set_search_peers": True,
                             }
                 }
     # TODO: Possibly remove the dependency on merge_dict() in this test
