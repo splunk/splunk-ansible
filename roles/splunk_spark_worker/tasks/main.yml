@@ -1,4 +1,8 @@
 ---
+- name: "Set privilege escalation user"
+  set_fact:
+    privileged_user: "{% if ansible_system is match('CYGWIN*|Win32NT') %}Administrator{% else %}root{% endif %}"
+
 - include_tasks: configure_spark_worker.yml
 
 - include_tasks: start_spark_worker.yml

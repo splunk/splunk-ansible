@@ -1,3 +1,5 @@
 ---
 - name: Start spark worker
   shell: "export JAVA_HOME={{ splunk.dfs.java_home }} && {{ splunk.dfs.spark_home }}/sbin/start-slave.sh spark://spark-master:{{ splunk.dfs.port }}"
+  become: yes
+  become_user: "{{ privileged_user }}"
