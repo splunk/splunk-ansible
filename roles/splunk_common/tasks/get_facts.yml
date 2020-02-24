@@ -73,23 +73,6 @@
   set_fact:
     splunk_upgrade: "{{ 'build_location' in splunk and splunk.build_location and not splunk_install and splunk_target_version and splunk_target_version != splunk_current_version | default(False) }}"
 
-# determine if we need to set up indexer clusters
-# First, if it is manually specified in the config, use that
-- name: "Setting indexer cluster fact from config"
-  set_fact:
-    splunk_indexer_cluster: "{{ splunk.indexer_cluster }}"
-  when:
-    - "'indexer_cluster' in splunk"
-
-# Second, if there is a cluster master, set to true
-- name: "Setting indexer cluster fact because master found"
-  set_fact:
-    splunk_indexer_cluster: true
-  when:
-    - "splunk_indexer_cluster is not defined"
-    - "'splunk_cluster_master' in groups"
-    - "groups['splunk_cluster_master']|length > 0"
-
 # Last, if it wasn't set yet, set it to false
 - name: "Setting indexer cluster fact to false"
   set_fact:

@@ -21,8 +21,6 @@
 
 - name: Set as license slave
   include_tasks: set_as_license_slave.yml
-  vars:
-    license_master_host: "{{ groups.splunk_license_master[0] }}"
   when:
     - splunk.license_master_included | bool
     - splunk.role != "splunk_license_master"

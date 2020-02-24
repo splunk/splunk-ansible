@@ -248,9 +248,11 @@ def getDistributedTopology(vars_scope):
     """
     Parse and set parameters to define topology if this is a distributed environment
     """
-    vars_scope["splunk"]["license_master_included"] = bool(os.environ.get("SPLUNK_LICENSE_MASTER_URL"))
+    vars_scope["splunk"]["license_master_url"] = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url"))
+    vars_scope["splunk"]["license_master_included"] = bool(vars_scope["splunk"]["license_master_url"])
     vars_scope["splunk"]["deployer_included"] = bool(os.environ.get("SPLUNK_DEPLOYER_URL"))
-    vars_scope["splunk"]["indexer_cluster"] = bool(os.environ.get("SPLUNK_CLUSTER_MASTER_URL"))
+    vars_scope["splunk"]["cluster_master_url"] = os.environ.get("SPLUNK_CLUSTER_MASTER_URL", vars_scope["splunk"].get("cluster_master_url"))
+    vars_scope["splunk"]["indexer_cluster"] = bool(vars_scope["splunk"].get("cluster_master_url"))
     vars_scope["splunk"]["search_head_cluster"] = bool(os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL"))
     vars_scope["splunk"]["search_head_cluster_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL")
 

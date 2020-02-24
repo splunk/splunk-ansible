@@ -75,6 +75,8 @@ splunk:
     multisite_replication_factor_total: 3
     multisite_search_factor_origin: 1
     multisite_search_factor_total: 2
+    license_master_url:
+    cluster_master_url:
     enable_service: False
     service_name: "splunkd"
     smartstore:

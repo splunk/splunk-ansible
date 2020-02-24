@@ -111,9 +111,13 @@ splunk:
   * Boolean to determine whether the installer is local (false) or remote (true)
   * Default: true
 
-  license_master_included: <bool>
-  * Boolean to determine whether there exists a separate license master 
-  * Default: false
+  license_master_url: <str>
+  * Hostname of remote Splunk Enterprise license master instance. May be overridden using SPLUNK_LICENSE_MASTER_URL environment variable.
+  * Default: null
+
+  cluster_master_url: <str>
+  * Hostname of remote Splunk Enterprise cluster master instance. May be overridden using SPLUNK_CLUSTER_MASTER_URL environment variable.
+  * Default: null
   
   preferred_captaincy: <bool>
   * Boolean to determine whether splunk should set a preferred captain.  This can have an effect on day 2 operations if the search heads need to be restarted 
@@ -460,7 +464,6 @@ splunk:
   upgrade: false
   build_location: /tmp/splunk.tgz
   build_remote_src: true
-  license_master_included: false
   apps_location: null
   license_uri: null
   admin_user: admin

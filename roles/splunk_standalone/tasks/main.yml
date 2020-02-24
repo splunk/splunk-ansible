@@ -18,6 +18,27 @@
     - dmc_forwarder_monitoring is defined
     - dmc_forwarder_monitoring | bool
 
+## Indexer Clustering Scenario
+- include_tasks: ../../splunk_common/tasks/peer_cluster_master.yml
+  when:
+    - splunk.indexer_cluster
+    - splunk.multisite_master is not defined
+    - splunk.set_search_peers is defined
+    - splunk.set_search_peers | bool
+
+## Non Indexer Clustering Scenario
+- include_tasks: ../../splunk_common/tasks/peer_indexers.yml
+  when:
+    - not splunk.indexer_cluster
+    - splunk.multisite_master is not defined
+    - splunk.set_search_peers is defined
+    - splunk.set_search_peers | bool
+    - "'splunk_indexer' in groups"
+
+- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
+  when:
+    - splunk.indexer_cluster or splunk_forward_servers is defined
+
 - include_tasks: ../../splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
