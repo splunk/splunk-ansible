@@ -398,6 +398,10 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
 
+    # Set set_search_peers to False to disable peering to indexers when creating multisite topology
+    if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
+        vars_scope["splunk"]["set_search_peers"] = False
+
 def getDFS(vars_scope):
     """
     Parse and set parameters to configure Data Fabric Search
