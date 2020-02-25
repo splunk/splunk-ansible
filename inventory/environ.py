@@ -355,15 +355,11 @@ def getDFS(vars_scope):
         vars_scope["splunk"]["dfs"] = {}
     dfs_vars = vars_scope["splunk"]["dfs"]
     dfs_vars["enable"] = bool(os.environ.get("SPLUNK_ENABLE_DFS", dfs_vars.get("enable")))
-    dfs_vars["dfw_num_slots"] = int(os.environ.get("SPLUNK_DFW_NUM_SLOTS", dfs_vars.get("dfw_num_slots", 10)))
-    dfs_vars["dfc_num_slots"] = int(os.environ.get("SPLUNK_DFC_NUM_SLOTS", dfs_vars.get("dfc_num_slots", 4)))
+    dfs_vars["dfw_num_slots"] = int(os.environ.get("SPLUNK_DFW_NUM_SLOTS", dfs_vars.get("dfw_num_slots")))
+    dfs_vars["dfc_num_slots"] = int(os.environ.get("SPLUNK_DFC_NUM_SLOTS", dfs_vars.get("dfc_num_slots")))
     dfs_vars["dfw_num_slots_enabled"] = bool(os.environ.get('SPLUNK_DFW_NUM_SLOTS_ENABLED', dfs_vars.get("dfw_num_slots_enabled")))
-    dfs_vars["spark_master_host"] = os.environ.get("SPARK_MASTER_HOST", dfs_vars.get("spark_master_host", "127.0.0.1"))
-    dfs_vars["spark_master_webui_port"] = int(os.environ.get("SPARK_MASTER_WEBUI_PORT", dfs_vars.get("spark_master_webui_port", 8080)))
-    if os.environ.get("SPARK_MASTER_HOSTNAME"):
-        dfs_vars["spark_master_hostname"] = os.environ.get("SPARK_MASTER_HOSTNAME")
-    if os.environ.get("SPARK_WORKERS"):
-        dfs_vars["spark_workers"] = os.environ.get("SPARK_WORKERS")
+    dfs_vars["spark_master_host"] = os.environ.get("SPARK_MASTER_HOST", dfs_vars.get("spark_master_host"))
+    dfs_vars["spark_master_webui_port"] = int(os.environ.get("SPARK_MASTER_WEBUI_PORT", dfs_vars.get("spark_master_webui_port")))
 
 def getUFSplunkVariables(vars_scope):
     """
