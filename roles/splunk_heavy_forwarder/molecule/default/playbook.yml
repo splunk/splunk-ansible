@@ -24,6 +24,7 @@
     splunk:
       role: splunk_heavy_forwarder
       license_master_included: false
+      indexer_cluster: false
       license_uri: null
       preferred_captaincy: true
       wildcard_license: false
