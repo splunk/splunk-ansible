@@ -40,7 +40,6 @@
   when:
     - "'splunkbase.splunk.com' not in app_url"
     - app_url is match("^(https?|file)://.*")
-  ignore_errors: true
 
 # Some premium apps require installation via untar command, while others can be installed normally.
 # We'll need to verify the contents of the package to see if it's a premium app
