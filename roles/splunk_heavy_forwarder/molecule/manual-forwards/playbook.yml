@@ -26,8 +26,6 @@
       forward_servers:
         - forwarder1.test.com
         - forwarder2.test.com
-      indexer_cluster: false
-      license_master_included: false
       license_uri: null
       preferred_captaincy: true
       wildcard_license: false

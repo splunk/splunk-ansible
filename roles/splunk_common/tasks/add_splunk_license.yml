@@ -17,12 +17,12 @@
     loop_var: license
   when:
     - licenses and licenses | length > 0
-    - not splunk.license_master_included | bool or splunk.role == "splunk_license_master"
+    - "not ('license_master_url' in splunk and splunk.license_master_url) or splunk.role == 'splunk_license_master'"
 
 - name: Set as license slave
   include_tasks: set_as_license_slave.yml
   when:
-    - splunk.license_master_included | bool
+    - "'license_master_url' in splunk and splunk.license_master_url"
     - splunk.role != "splunk_license_master"
 
 - name: Flush handlers

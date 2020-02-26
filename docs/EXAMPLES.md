@@ -71,7 +71,6 @@ splunk:
     http_enableSSL_privKey_password: null
     http_port: 8000
     idxc:
-        enable: false
         label: idxc_label
         replication_factor: 3
         replication_port: 9887
@@ -89,7 +88,6 @@ splunk:
     secret: null
     pass4SymmKey: null
     shc:
-        enable: false
         label: shc_label
         replication_factor: 3
         replication_port: 9887
@@ -167,7 +165,6 @@ splunk:
     http_enableSSL_privKey_password: null
     http_port: 8000
     idxc:
-        enable: false
         label: idxc_label
         replication_factor: 3
         replication_port: 9887
@@ -183,7 +180,6 @@ splunk:
     search_head_cluster_url: null
     secret: null
     shc:
-        enable: false
         label: shc_label
         replication_factor: 3
         replication_port: 9887
@@ -257,7 +253,6 @@ splunk:
     http_enableSSL_privKey_password: null
     http_port: 8000
     idxc:
-        enable: false
         label: idxc_label
         replication_factor: 3
         replication_port: 9887
@@ -273,7 +268,6 @@ splunk:
     search_head_cluster_url: null
     secret: null
     shc:
-        enable: false
         label: shc_label
         replication_factor: 3
         replication_port: 9887

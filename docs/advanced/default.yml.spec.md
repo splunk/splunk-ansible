@@ -112,13 +112,26 @@ splunk:
   * Default: true
 
   license_master_url: <str>
-  * Hostname of remote Splunk Enterprise license master instance. May be overridden using SPLUNK_LICENSE_MASTER_URL environment variable.
+  * Hostname of Splunk Enterprise license master instance. May be overridden using SPLUNK_LICENSE_MASTER_URL environment variable.
   * Default: null
 
   cluster_master_url: <str>
-  * Hostname of remote Splunk Enterprise cluster master instance. May be overridden using SPLUNK_CLUSTER_MASTER_URL environment variable.
+  * Hostname of Splunk Enterprise cluster master instance. May be overridden using SPLUNK_CLUSTER_MASTER_URL environment variable.
   * Default: null
   
+  deployer_url: null
+  * Hostname of Splunk Enterprise deployer instance. May be overridden using SPLUNK_DEPLOYER_URL environment variable.
+  * Default: null
+
+  search_head_captain_url: null
+  * Hostname of Splunk Enterprise search head cluster captain instance. May be overridden using SPLUNK_SEARCH_HEAD_CAPTAIN_URL environment variable.
+  * Default: null
+
+  search_head_cluster_url: null
+  * URL of the Splunk search head cluster
+  * NOTE: This is being deprecated in favor of `splunk.search_head_captain_url`.
+  * Default: null
+
   preferred_captaincy: <bool>
   * Boolean to determine whether splunk should set a preferred captain.  This can have an effect on day 2 operations if the search heads need to be restarted 
   * Default: true
@@ -248,10 +261,6 @@ splunk:
   * Determine the port used for Splunk management/remote API calls
   * Default: 8089
 
-  search_head_cluster_url: null
-  * URL of the Splunk search head cluster
-  * Default: null
-
   launch: null
   * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null
@@ -266,10 +275,6 @@ splunk:
   * Default: null
 
   idxc:
-    enable: <bool>
-    * Enable indexer clustering
-    * Default: false
-
     label: <str>
     * Provide a label for indexer clustering configuration
     * Default: idxc_label
@@ -296,10 +301,6 @@ splunk:
     * Default: null
 
   shc:
-    enable: <bool>
-    * Enable search head clustering
-    * Default: false
-
     label: <str>
     * Provide a label for search head clustering configuration
     * Default: shc_label
@@ -500,7 +501,7 @@ splunk:
   pid: /opt/splunk/var/run/splunk/splunkd.pid
   s2s_enable: true
   s2s_port: 9997
-  search_head_cluster_url: null
+  search_head_captain_url: null
   secret: null
   shc:
     enable: false
