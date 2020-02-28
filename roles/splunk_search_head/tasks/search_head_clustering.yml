@@ -1,10 +1,10 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
-    splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
+    splunk_instance_address: "{{ splunk.deployer_url }}"
 
 - name: Initialize SHC cluster config
-  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ splunk.shc.replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ groups['splunk_deployer'][0] }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.pass4SymmKey }}' -shcluster_label '{{ splunk.shc.label }}'"
+  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ splunk.shc.replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.pass4SymmKey }}' -shcluster_label '{{ splunk.shc.label }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
@@ -40,7 +40,7 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
-    splunk_instance_address: "{{ groups['splunk_deployer'][0] }}"
+    splunk_instance_address: "{{ splunk.deployer_url }}"
 
 - name: Boostrap SHC captain
   command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}{{ cert_prefix }}://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
@@ -58,7 +58,7 @@
   no_log: "{{ hide_password }}"
 
 - name: Add new member to SHC
-  command: "{{ splunk.exec }} add shcluster-member -current_member_uri {{ cert_prefix }}://{{ groups['splunk_search_head_captain'][0] }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add shcluster-member -current_member_uri {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when: not splunk_search_head_captain | bool

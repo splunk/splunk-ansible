@@ -310,29 +310,28 @@ def test_getASan(default_yml, os_env, splunk_asan):
     else:
         assert vars_scope["ansible_environment"].get("ASAN_OPTIONS") == None
 
-@pytest.mark.parametrize(("os_env", "license_master_included", "deployer_included", "indexer_cluster", "search_head_cluster", "search_head_cluster_url"),
+@pytest.mark.parametrize(("os_env", "license_master_url", "deployer_url", "cluster_master_url", "search_head_captain_url"),
                          [
-                            ({}, False, False, False, False, None),
+                            ({}, "", "", "", ""),
                             # Check individual environment variables
-                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, True, False, False, False, None),
-                            ({"SPLUNK_DEPLOYER_URL": "something"}, False, True, False, False, None),
-                            ({"SPLUNK_CLUSTER_MASTER_URL": "something"}, False, False, True, False, None),
-                            ({"SPLUNK_SEARCH_HEAD_CAPTAIN_URL": "something"}, False, False, False, True, "something"),
+                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, "something", "", "", ""),
+                            ({"SPLUNK_DEPLOYER_URL": "something"}, "", "something", "", ""),
+                            ({"SPLUNK_CLUSTER_MASTER_URL": "something"}, "", "", "something", ""),
+                            ({"SPLUNK_SEARCH_HEAD_CAPTAIN_URL": "something"}, "", "", "", "something"),
                          ]
                         )
-def test_getDistributedTopology(os_env, license_master_included, deployer_included, indexer_cluster, search_head_cluster, search_head_cluster_url):
+def test_getDistributedTopology(os_env, license_master_url, deployer_url, cluster_master_url, search_head_captain_url):
     vars_scope = {"splunk": {}}
     with patch("os.environ", new=os_env):
         environ.getDistributedTopology(vars_scope)
-    assert type(vars_scope["splunk"]["license_master_included"]) == bool
-    assert vars_scope["splunk"]["license_master_included"] == license_master_included
-    assert type(vars_scope["splunk"]["deployer_included"]) == bool
-    assert vars_scope["splunk"]["deployer_included"] == deployer_included
-    assert type(vars_scope["splunk"]["indexer_cluster"]) == bool
-    assert vars_scope["splunk"]["indexer_cluster"] == indexer_cluster
-    assert type(vars_scope["splunk"]["search_head_cluster"]) == bool
-    assert vars_scope["splunk"]["search_head_cluster"] == search_head_cluster
-    assert vars_scope["splunk"]["search_head_cluster_url"] == search_head_cluster_url
+    assert type(vars_scope["splunk"]["license_master_url"]) == str
+    assert vars_scope["splunk"]["license_master_url"] == license_master_url
+    assert type(vars_scope["splunk"]["deployer_url"]) == str
+    assert vars_scope["splunk"]["deployer_url"] == deployer_url
+    assert type(vars_scope["splunk"]["cluster_master_url"]) == str
+    assert vars_scope["splunk"]["cluster_master_url"] == cluster_master_url
+    assert type(vars_scope["splunk"]["search_head_captain_url"]) == str
+    assert vars_scope["splunk"]["search_head_captain_url"] == search_head_captain_url
 
 @pytest.mark.parametrize(("os_env", "license_uri", "wildcard_license", "ignore_license", "license_download_dest"),
                          [
