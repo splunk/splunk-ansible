@@ -29,9 +29,8 @@
             - ansible_post_tasks is not none
             - ansible_post_tasks is match("^(http|https|file)://.*")
 
-        # TODO: we can keep this if we end up installing splunk on all spark instances, otherwise we need a better plan
-        #- name: Check all instances for required restarts
-        #  include_tasks: ./roles/splunk_common/tasks/check_for_required_restarts.yml
+        - name: Check all instances for required restarts
+          include_tasks: ./roles/splunk_common/tasks/check_for_required_restarts.yml
 
         - name: Flush restart handlers
           meta: flush_handlers
