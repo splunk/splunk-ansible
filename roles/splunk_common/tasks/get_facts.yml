@@ -35,16 +35,6 @@
   set_fact:
     first_run: "{{ not pre_existing_splunk_secret.stat.exists | default(True) }}"
 
-# Checking that the .dockerenv file exists is enough to know if we are inside a docker container.
-- name: "Check if we are in a docker"
-  stat:
-    path: "/.dockerenv"
-  register: docker_env
-
-- name: "Set docker fact"
-  set_fact:
-    is_docker: "{{ docker_env.stat.exists | default(False) }}"
-
 - name: "Set splunk_build_type fact"
   include_tasks: get_facts_build_type.yml
 

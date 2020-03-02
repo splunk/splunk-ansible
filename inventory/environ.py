@@ -88,8 +88,10 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
                 'hosts': list([host.split(':')[0] for host in hosts])
             }
     inventory["all"]["vars"] = getDefaultVars()
+    inventory["all"]["vars"]["docker"] = False
 
     if os.path.isfile("/.dockerenv"):
+        inventory["all"]["vars"]["docker"] = True
         if "localhost" not in inventory["all"]["children"]:
             inventory["all"]["hosts"].append("localhost")
         inventory["_meta"]["hostvars"]["localhost"] = inventory["all"]["vars"]
