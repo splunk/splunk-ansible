@@ -88,7 +88,7 @@
 # See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
 - name: "Setting forward servers fact from index cluster group"
   set_fact:
-    splunk_forward_servers: "{{ groups['splunk_indexer'] }}"
+    splunk_forward_servers: "{{ groups['splunk_indexer'] | difference([ansible_hostname]) }}"
   when:
     - "splunk_forward_servers is not defined"
     - "'splunk_indexer' in groups"
@@ -98,7 +98,7 @@
 # See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/forwardersdirecttopeers
 - name: "Setting forward servers fact from standalone group"
   set_fact:
-    splunk_forward_servers: "{{ groups['splunk_standalone'] }}"
+    splunk_forward_servers: "{{ groups['splunk_standalone'] | difference([ansible_hostname]) }}"
   when:
     - "splunk_forward_servers is not defined"
     - "'splunk_standalone' in groups"
