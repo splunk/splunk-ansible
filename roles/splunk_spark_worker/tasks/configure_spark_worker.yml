@@ -6,7 +6,7 @@
       export SPARK_MASTER_WEBUI_PORT={{ splunk.dfs.spark_master_webui_port }}
       export SPARK_MASTER_PORT={{ splunk.dfs.port }}
       export SPARK_WORKER_WEBUI_PORT={{ splunk.dfs.spark_worker_webui_port }}
-  become_user: root
+  become_user: "{{ privileged_user }}"
   become: yes
 
 - name: Add memory env variable for non-perf deployment
@@ -16,14 +16,14 @@
     marker: ""
     block: |
       export SPARK_WORKER_MEMORY=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-  become_user: root
+  become_user: "{{ privileged_user }}"
   become: yes
   when:
     - perf is not defined or (perf is defined and not perf)
 
 - name: Create spark-defaults.conf
   become: yes
-  become_user: root
+  become_user: "{{ privileged_user }}"
   blockinfile:
     path: "{{ splunk.dfs.spark_home }}/conf/spark-defaults.conf"
     create: yes
