@@ -4,4 +4,6 @@
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "appServerPorts"
-    value: "{{ splunk.appserver_port }}"
+    value: "{{ splunk.appserver.port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"

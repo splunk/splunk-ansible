@@ -548,15 +548,12 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 ({"splunk": {"set_search_peers": False}}, {}, "splunk.set_search_peers", False),
                 ({}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
                 ({"splunk": {"set_search_peers": True}}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
-                # Check splunk.appserver_port
-                ({"splunk": {"appserver_port": "9291"}}, {}, "splunk.appserver_port", "9291"),
-                ({}, {"SPLUNK_APPSERVER_PORT": "9391"}, "splunk.sppserver_port", "9391"),
-                # Check splunk.kvstore_port
-                ({"splunk": {"kvstore_port": "9165"}}, {}, "splunk.kvstore_port", "9165"),
-                ({}, {"SPLUNK_KVSTORE_PORT": "9265"}, "splunk.kvstore_port", "9265"),
-                # Check splunk.hec_port
-                ({"splunk": {"hec_port": "9188"}}, {}, "splunk.hec_port", "9188"),
-                ({}, {"SPLUNK_HEC_PORT": "9288"}, "splunk.hec_port", "9288"),
+                # Check splunk.appserver.port	
+                ({"splunk": {"appserver": {"port": "9291"}}}, {}, "splunk.appserver.port", "9291"),	
+                ({}, {"SPLUNK_APPSERVER_PORT": "9391"}, "splunk.appserver.port", "9391"),	
+                # Check splunk.kvstore.port	
+                ({"splunk": {"kvstore" :{"port": "9165"}}}, {}, "splunk.kvstore.port", "9165"),	
+                ({}, {"SPLUNK_KVSTORE_PORT": "9265"}, "splunk.kvstore.port", "9265"),
             ]
         )
 def test_overrideEnvironmentVars(default_yml, os_env, key, value):
@@ -570,6 +567,8 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "root_endpoint": None,
                                 "svc_port": 8089,
                                 "s2s": {"port": 9997},
+                                "appserver": {"port": 8065},
+                                "kvstore": {"port": 8191},  
                                 "hec_token": "abcd1234",
                                 "enable_service": False,
                                 "service_name": "Splunkd",
@@ -583,9 +582,9 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
     with patch("os.environ", new=os_env):
         environ.overrideEnvironmentVars(vars_scope)
     if "splunk" in key:
-        if "s2s" in key:
-            key = key.split(".")[-1]
-            assert vars_scope["splunk"]["s2s"][key] == value
+        if "s2s" in key or "appserver" in key or "kvstore" in key:
+            section, key = key.split(".")[-2:]
+            assert vars_scope["splunk"][section][key] == value
         else:
             key = key.split(".")[-1]
             assert vars_scope["splunk"][key] == value
