@@ -111,10 +111,27 @@ splunk:
   * Boolean to determine whether the installer is local (false) or remote (true)
   * Default: true
 
-  license_master_included: <bool>
-  * Boolean to determine whether there exists a separate license master 
-  * Default: false
+  license_master_url: <str>
+  * Hostname of Splunk Enterprise license master instance. May be overridden using SPLUNK_LICENSE_MASTER_URL environment variable.
+  * Default: null
+
+  cluster_master_url: <str>
+  * Hostname of Splunk Enterprise cluster master instance. May be overridden using SPLUNK_CLUSTER_MASTER_URL environment variable.
+  * Default: null
   
+  deployer_url: null
+  * Hostname of Splunk Enterprise deployer instance. May be overridden using SPLUNK_DEPLOYER_URL environment variable.
+  * Default: null
+
+  search_head_captain_url: null
+  * Hostname of Splunk Enterprise search head cluster captain instance. May be overridden using SPLUNK_SEARCH_HEAD_CAPTAIN_URL environment variable.
+  * Default: null
+
+  search_head_cluster_url: null
+  * URL of the Splunk search head cluster
+  * NOTE: This is being deprecated in favor of `splunk.search_head_captain_url`.
+  * Default: null
+
   preferred_captaincy: <bool>
   * Boolean to determine whether splunk should set a preferred captain.  This can have an effect on day 2 operations if the search heads need to be restarted 
   * Default: true
@@ -134,10 +151,6 @@ splunk:
   license_download_dest: <str - filepath>
   * Path in filesystem where licenses will be downloaded as
   * Default: /tmp/splunk.lic
-
-  nfr_license: <str - filepath>
-  * Path in filesystem where of special NFR licenses
-  * Default: /tmp/nfr_enterprise.lic
 
   wildcard_license: <bool>
   * Enable licenses to be interpreted as fileglobs, to support provisioning with multiple Splunk licenses
@@ -248,20 +261,20 @@ splunk:
   * Determine the port used for Splunk management/remote API calls
   * Default: 8089
 
-  search_head_cluster_url: null
-  * URL of the Splunk search head cluster
+  launch: null
+  * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null
 
-  secret: null
+  secret: <str>
   * Secret passcode used to encrypt all of Splunk's sensitive information on disk. When not set, Splunk will autogenerate a unique secret local to each installation. This is NOT required for any standalone or distributed Splunk topology
   * NOTE: This may be set once at the start of provisioning any deployment. Any changes made to this splunk.secret after the deployment has been created must be resolved manually, otherwise there is a severe risk of bricking the capabilities of your Splunk environment.
   * Default: null
 
-  idxc:
-    enable: <bool>
-    * Enable indexer clustering
-    * Default: false
+  pass4SymmKey: <str>
+  * Password for Symmetric Key used to encrypt Splunk's sensitive information on disk. When not set, Splunk will encrypt a default value (`changeme`) with `splunk.secret` and set it as `pass4SymmKey` in the `[general]` stanza of `/opt/splunk/etc/system/local/server.conf`.
+  * Default: null
 
+  idxc:
     label: <str>
     * Provide a label for indexer clustering configuration
     * Default: idxc_label
@@ -279,14 +292,15 @@ splunk:
     * Default: 3
 
     secret: <str>
-    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in server.conf.
+    * Determine the secret used to configure indexer clustering. This is pass4SymmKey in the `[clustering]` stanza of server.conf.
+    * NOTE: This is being deprecated in favor of `splunk.idxc.pass4SymmKey`.
+    * Default: null
+
+    pass4SymmKey: <str>
+    * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in the `[clustering]` stanza of server.conf.
     * Default: null
 
   shc:
-    enable: <bool>
-    * Enable search head clustering
-    * Default: false
-
     label: <str>
     * Provide a label for search head clustering configuration
     * Default: shc_label
@@ -300,7 +314,12 @@ splunk:
     * Default: 9887
 
     secret: <str>
-    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in server.conf.
+    * Determine the secret used to configure search head clustering. This is pass4SymmKey in server.conf.
+    * NOTE: This is being deprecated in favor of `splunk.shc.pass4SymmKey`
+    * Default: null
+
+    pass4SymmKey: <str>
+    * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in the `[shclustering]` stanza of server.conf.
     * Default: null
 
   dfs:
@@ -446,7 +465,6 @@ splunk:
   upgrade: false
   build_location: /tmp/splunk.tgz
   build_remote_src: true
-  license_master_included: false
   apps_location: null
   license_uri: null
   admin_user: admin
@@ -478,13 +496,12 @@ splunk:
     secret: dmwHG97SpM+GzeGPUELwr7xXowSAVmLW
   ignore_license: false
   license_download_dest: /tmp/splunk.lic
-  nfr_license: /tmp/nfr_enterprise.lic
   opt: /opt
   password: helloworld
   pid: /opt/splunk/var/run/splunk/splunkd.pid
   s2s_enable: true
   s2s_port: 9997
-  search_head_cluster_url: null
+  search_head_captain_url: null
   secret: null
   shc:
     enable: false

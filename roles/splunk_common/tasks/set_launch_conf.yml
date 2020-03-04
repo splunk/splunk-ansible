@@ -1,0 +1,10 @@
+---
+- name: Set splunk-launch.conf variables
+  lineinfile:
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }}={{ item.value }}"
+    create: yes
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_dict: "{{ splunk.launch }}"
