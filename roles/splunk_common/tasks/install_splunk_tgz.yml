@@ -5,6 +5,9 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     remote_src: "{{ splunk.build_remote_src }}"
+  environment:
+    http_proxy: "{{ lookup('env','http_proxy') | default('') }}"
+    https_proxy: "{{ lookup('env','https_proxy') | default('') }}"
   when: splunk.build_remote_src
   register: install_result
   until: install_result is succeeded
