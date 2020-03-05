@@ -23,7 +23,7 @@
 
 - name: Wait for SHC to be ready
   shc_ready:
-    captain_url="{{ splunk.search_head_cluster_url }}"
+    captain_url="{{ splunk.search_head_captain_url }}"
     shc_peers="{{ groups['splunk_search_head'] }}"
     spl_user="{{ splunk.admin_user }}"
     spl_pass="{{ splunk.password }}"
@@ -33,7 +33,7 @@
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
   when:
-    - splunk.search_head_cluster
+    - splunk_search_head_cluster is defined
     - splunk.apps_location
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml

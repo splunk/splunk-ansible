@@ -88,8 +88,10 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
                 'hosts': list([host.split(':')[0] for host in hosts])
             }
     inventory["all"]["vars"] = getDefaultVars()
+    inventory["all"]["vars"]["docker"] = False
 
     if os.path.isfile("/.dockerenv"):
+        inventory["all"]["vars"]["docker"] = True
         if "localhost" not in inventory["all"]["children"]:
             inventory["all"]["hosts"].append("localhost")
         inventory["_meta"]["hostvars"]["localhost"] = inventory["all"]["vars"]
@@ -248,11 +250,12 @@ def getDistributedTopology(vars_scope):
     """
     Parse and set parameters to define topology if this is a distributed environment
     """
-    vars_scope["splunk"]["license_master_included"] = bool(os.environ.get("SPLUNK_LICENSE_MASTER_URL"))
-    vars_scope["splunk"]["deployer_included"] = bool(os.environ.get("SPLUNK_DEPLOYER_URL"))
-    vars_scope["splunk"]["indexer_cluster"] = bool(os.environ.get("SPLUNK_CLUSTER_MASTER_URL"))
-    vars_scope["splunk"]["search_head_cluster"] = bool(os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL"))
-    vars_scope["splunk"]["search_head_cluster_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL")
+    vars_scope["splunk"]["license_master_url"] = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", ""))
+    vars_scope["splunk"]["deployer_url"] = os.environ.get("SPLUNK_DEPLOYER_URL", vars_scope["splunk"].get("deployer_url", ""))
+    vars_scope["splunk"]["cluster_master_url"] = os.environ.get("SPLUNK_CLUSTER_MASTER_URL", vars_scope["splunk"].get("cluster_master_url", ""))
+    vars_scope["splunk"]["search_head_captain_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL", vars_scope["splunk"].get("search_head_captain_url", ""))
+    if not vars_scope["splunk"]["search_head_captain_url"] and "search_head_cluster_url" in vars_scope["splunk"]:
+        vars_scope["splunk"]["search_head_captain_url"] = vars_scope["splunk"]["search_head_cluster_url"]
 
 def getLicenses(vars_scope):
     """
@@ -625,13 +628,9 @@ def prep_for_yaml_out(inventory):
                    "apps_location",
                    "build_location",
                    "build_remote_src",
-                   "deployer_included",
                    "hostname",
                    "upgrade",
                    "role",
-                   "search_head_cluster",
-                   "indexer_cluster",
-                   "license_master_included",
                    "preferred_captaincy",
                    "license_uri"]
     for key in keys_to_del:

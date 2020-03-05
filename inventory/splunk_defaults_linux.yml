@@ -57,14 +57,12 @@ splunk:
     hec_enableSSL: 1
     hec_token:
     shc:
-        enable: False
         secret:
         pass4SymmKey:
         label: "shc_label"
         replication_factor: 3
         replication_port: 9887
     idxc:
-        enable: False
         secret:
         pass4SymmKey:
         label: "idxc_label"
@@ -83,6 +81,10 @@ splunk:
     multisite_replication_factor_total: 3
     multisite_search_factor_origin: 1
     multisite_search_factor_total: 2
+    license_master_url:
+    cluster_master_url:
+    search_head_captain_url:
+    deployer_url:
 
     enable_service: False
     service_name: "splunk"
