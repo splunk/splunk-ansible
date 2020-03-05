@@ -1,9 +1,6 @@
 ---
 - include_tasks: ../../splunk_common/tasks/set_as_hec_receiver.yml
-  when:
-    - first_run | bool
-    - not splunk.hec_disabled | bool
-    - splunk.hec_token is defined and splunk.hec_token != None
+  when: splunk.hec_token is defined and splunk.hec_token != None
 
 - include_tasks: ../../splunk_common/tasks/add_splunk_object.yml
   when: splunk.add is defined
