@@ -21,9 +21,12 @@
     state: directory
   become_user: "{{ privileged_user }}"
   become: yes
+  register: spark_directory
 
 - name: Move Spark package to directory
   shell: /bin/bash -c "mv /tmp/{{ versioned_name }}/* {{ splunk.dfs.spark_home }}"
+  when:
+    - spark_directory is defined
 
 - name: Chmod Spark directory
   file:

@@ -11,3 +11,5 @@
 
 - name: Download {{ file_name }}
   command: "{{ playbook_dir }}/library/download_logfile.py {{ file_name }}"
+  when:
+    - mule_installed is defined
