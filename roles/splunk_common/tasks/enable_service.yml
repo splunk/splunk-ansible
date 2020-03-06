@@ -44,6 +44,10 @@
     path: "/etc/systemd/system/{{ splunk_service_name }}"
     regexp: '^ExecStartPost=(.*)$'
     replace: '#ExecStartPost=\1'
+  when:
+    - ansible_system is match("Linux")
+    - splunk_systemd
+    - installed_splunk_version[0] is version("8.0.0", ">=")
 
 - name: "Reload daemons via systemctl - Linux (systemd)"
   become: yes
