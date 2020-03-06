@@ -34,6 +34,7 @@
     mode: 0644
   become: yes
   become_user: "{{ privileged_user }}"
+  register: splunkd_unit_file
   when:
     - ansible_system is match("Linux")
     - splunk_systemd
@@ -44,9 +45,12 @@
     path: "/etc/systemd/system/{{ splunk_service_name }}"
     regexp: '^ExecStartPost=(.*)$'
     replace: '#ExecStartPost=\1'
+  become: yes
+  become_user: "{{ privileged_user }}"
   when:
     - ansible_system is match("Linux")
     - splunk_systemd
+    - splunkd_unit_file is changed
     - installed_splunk_version[0] is version("8.0.0", ">=")
 
 - name: "Reload daemons via systemctl - Linux (systemd)"
