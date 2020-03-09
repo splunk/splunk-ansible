@@ -106,6 +106,7 @@ def getDefaultVars():
     overrideEnvironmentVars(defaultVars)
     getAnsibleContext(defaultVars)
     getASan(defaultVars)
+    getHEC(defaultVars)
     getSecrets(defaultVars)
     getSplunkPaths(defaultVars)
     getIndexerClustering(defaultVars)
@@ -389,6 +390,20 @@ def getASan(vars_scope):
     if vars_scope["splunk"]["asan"]:
         vars_scope["ansible_environment"].update({"ASAN_OPTIONS": "detect_leaks=0"})
 
+def getHEC(vars_scope):
+    """
+    Configure HEC settings
+    """
+    if not "hec" in vars_scope["splunk"]:
+        vars_scope["splunk"]["hec"] = {}
+    vars_scope["splunk"]["hec"]["token"] = os.environ.get("SPLUNK_HEC_TOKEN", vars_scope["splunk"]["hec"].get("token"))
+    vars_scope["splunk"]["hec"]["port"] = int(os.environ.get("SPLUNK_HEC_PORT", vars_scope["splunk"]["hec"].get("port")))
+    ssl = os.environ.get("SPLUNK_HEC_SSL", "")
+    if ssl.lower() == "false":
+        vars_scope["splunk"]["hec"]["ssl"] = False
+    else:
+        vars_scope["splunk"]["hec"]["ssl"] = bool(vars_scope["splunk"]["hec"].get("ssl"))
+
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
     vars_scope["splunk"]["group"] = os.environ.get("SPLUNK_GROUP", vars_scope["splunk"]["group"])
@@ -396,7 +411,6 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
-    vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
