@@ -6,18 +6,18 @@
     - splunk.hec_token is defined and splunk.hec_token != None
 
 - include_tasks: indexer_clustering.yml
-  when: "splunk_indexer_cluster is defined"
+  when: splunk_indexer_cluster | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when:
     - splunk.deployment_server is defined
     - splunk.deployment_server
-    - splunk_indexer_cluster is not defined
+    - not splunk_indexer_cluster | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
-    - splunk_indexer_cluster is not defined
+    - not splunk_indexer_cluster | bool
     - splunk.deployment_server is not defined or not splunk.deployment_server
 
 - include_tasks: setup_multisite.yml
