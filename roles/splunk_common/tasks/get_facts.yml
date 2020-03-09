@@ -74,14 +74,12 @@
 # determine if we need to set up indexer clusters
 - name: "Setting indexer cluster fact from config"
   set_fact:
-    splunk_indexer_cluster: "true"
-  when: "'cluster_master_url' in splunk and splunk.cluster_master_url"
+    splunk_indexer_cluster: "{{ True if 'cluster_master_url' in splunk and splunk.cluster_master_url else False }}"
 
 # determine if we need to set up search head clusters
 - name: "Setting search head cluster fact from config"
   set_fact:
-    splunk_search_head_cluster: "true"
-  when: "'search_head_captain_url' in splunk and splunk.search_head_captain_url"
+    splunk_search_head_cluster: "{{ True if 'search_head_captain_url' in splunk and splunk.search_head_captain_url else False }}"
 
 # determine if we need to set up forward servers
 # First, if they are manually specified in the config, use them
