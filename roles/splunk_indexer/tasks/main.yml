@@ -1,6 +1,5 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
-  when: splunk.hec_token is defined and splunk.hec_token != None
 
 - include_tasks: indexer_clustering.yml
   when: "splunk_indexer_cluster is defined"

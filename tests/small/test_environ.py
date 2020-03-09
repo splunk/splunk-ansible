@@ -311,10 +311,6 @@ def test_getASan(default_yml, os_env, splunk_asan):
     else:
         assert vars_scope["ansible_environment"].get("ASAN_OPTIONS") == None
 
-
-
-
-
 @pytest.mark.parametrize(("default_yml", "os_env", "result"),
             [
                 # Check null parameters
@@ -351,9 +347,6 @@ def test_getHEC(default_yml, os_env, result):
         with patch("os.environ", new=os_env):
             environ.getHEC(vars_scope)
     assert vars_scope["splunk"]["hec"] == result
-
-
-
 
 @pytest.mark.parametrize(("os_env", "license_master_url", "deployer_url", "cluster_master_url", "search_head_captain_url"),
                          [

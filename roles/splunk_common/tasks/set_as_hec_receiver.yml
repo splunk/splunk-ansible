@@ -1,5 +1,6 @@
 ---
-# TODO: Remove secondary conditional on deprecation of splunk.hec_* variables
+# TODO: Remove all secondary conditionals on deprecation of splunk.hec_* variables
+
 - name: Setup global HEC
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http/http"
@@ -16,8 +17,37 @@
     timeout: 10
   no_log: "{{ hide_password }}"
 
-# TODO: Remove secondary conditional on deprecation of splunk.hec_* variables
-- name: Create/update HEC token
+- name: Get existing HEC token
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http/splunk_hec_token?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200,404
+    timeout: 10
+  register: hec_token
+  when: ('hec' in splunk and 'token' in splunk.hec) or ('hec_token' in splunk)
+  no_log: "{{ hide_password }}"
+
+# The REST API does not support modifying tokens in-place, so we'll need to delete/re-create
+- name: Remove existing HEC token
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http/splunk_hec_token"
+    method: DELETE
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200,404
+    timeout: 10
+  register: delete_hec_token
+  changed_when: delete_hec_token.status == 200
+  when:
+    - hec_token.status == 200
+    - ('hec' in splunk and 'token' in splunk.hec and hec_token.json['entry'][0]['content']['token'] != splunk.hec.token) or ('hec_token' in splunk and hec_token.json['entry'][0]['content']['token'] != splunk.hec_token)
+  no_log: "{{ hide_password }}"
+
+- name: Update HEC token configuration
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http"
     method: POST
@@ -27,13 +57,10 @@
     body:
       name: "splunk_hec_token"
       token: "{% if 'hec' in splunk and 'token' in splunk.hec and splunk.hec.token %}{{ splunk.hec.token }}{% else %}{{ splunk.hec_token }}{% endif %}"
-      disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
-  ignore_errors: true
-  changed_when: splunk_hec_input.status == 201
-  when:
-    - ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
-  register: splunk_hec_input
+  register: create_hec_token
+  changed_when: create_hec_token.status == 201
+  when: ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
   no_log: "{{ hide_password }}"
