@@ -10,6 +10,7 @@ Meta
     $Change$
 """
 
+from __future__ import absolute_import
 import sys
 import mule
 from mule.connector.s3connector import S3Connector
