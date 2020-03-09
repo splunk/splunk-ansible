@@ -58,3 +58,12 @@ def test_service(host):
     s = host.service('SplunkForwarder')
     assert s.is_running
     assert s.is_enabled
+
+
+def test_splunkforwarder_systemd_file(host):
+    # This test uses Splunk UF version 8.0.2, which now does not have ExecStartPost directives
+    f = host.file('/etc/systemd/system/SplunkForwarder.service')
+    assert f.is_file
+    assert f.user == "root"
+    assert f.group == "root"
+    assert "ExecStartPost" not in f.content_string

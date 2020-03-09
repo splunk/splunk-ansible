@@ -87,3 +87,12 @@ def test_service(host):
     s = host.service('Splunkd')
     assert s.is_running
     assert s.is_enabled
+
+
+def test_splunkd_systemd_file(host):
+    f = host.file('/etc/systemd/system/Splunkd.service')
+    assert f.is_file
+    assert f.user == "root"
+    assert f.group == "root"
+    assert f.contains('ExecStartPost=/bin/bash -c "chown -R splunk:splunk /sys/fs/cgroup/cpu/system.slice/%n"')
+    assert f.contains('ExecStartPost=/bin/bash -c "chown -R splunk:splunk /sys/fs/cgroup/memory/system.slice/%n"')
