@@ -41,7 +41,7 @@
   command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
 
 - name: Get JAVA_HOME
   shell: 'readlink -f /usr/bin/java | sed "s:bin/java::"'
@@ -50,7 +50,7 @@
   become_user: "{{ privileged_user }}"
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
 
 - name: Set JAVA_HOME in splunk-launch.conf
   become: yes
@@ -61,4 +61,4 @@
     line: "JAVA_HOME={{ java_home.stdout }}"
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
