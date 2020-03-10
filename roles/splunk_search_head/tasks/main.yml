@@ -59,12 +59,9 @@
     - dmc_forwarder_monitoring is defined
     - dmc_forwarder_monitoring | bool
 
-- include_tasks: ../../../roles/splunk_common/tasks/get_spark.yml
-  when:
-    - splunk.dfs.enable | bool
-
 - include_tasks: ../../../roles/splunk_common/tasks/enable_dfs.yml
   when:
+    - "'dfs' in splunk and 'enable' in splunk.dfs and splunk.dfs.enable is not none"
     - splunk.dfs.enable | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
