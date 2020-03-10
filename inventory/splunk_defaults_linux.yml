@@ -7,13 +7,6 @@ retry_num: 60
 wait_for_splunk_retry_num: 60
 shc_sync_retry_num: 60
 
-openjdk:
-    version: OpenJDK8U-jdk
-    platform: x64_linux_hotspot
-    build: 8u212b03
-    jre_dir: jdk8u212-b03
-    jre_base_dir: /opt/jdk
-
 config:
     max_retries: 3
     max_delay: 60
