@@ -52,10 +52,11 @@ splunk:
     http_enableSSL_cert:
     http_enableSSL_privKey:
     http_enableSSL_privKey_password:
-    hec_port: 8088
-    hec_disabled: 0
-    hec_enableSSL: 1
-    hec_token:
+    hec:
+        enable: True
+        port: 8088
+        ssl: True
+        token:
     shc:
         enable: False
         secret:

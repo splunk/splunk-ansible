@@ -60,10 +60,11 @@ splunk:
     enable_service: false
     exec: /opt/splunk/bin/splunk
     group: splunk
-    hec_disabled: 1
-    hec_enableSSL: 1
-    hec_port: 8088
-    hec_token: null
+    hec:
+        enable: True
+        ssl: True
+        token: null
+        port: 8088
     home: /opt/splunk
     http_enableSSL: 0
     http_enableSSL_cert: null
@@ -154,10 +155,11 @@ splunk:
     enable_service: false
     exec: /opt/splunk/bin/splunk
     group: splunk
-    hec_disabled: 0
-    hec_enableSSL: 1
-    hec_port: 8088
-    hec_token: abcd-1234-efgh-5678
+    hec:
+        enable: True
+        ssl: True
+        token: abcd-1234-efgh-5678
+        port: 8088
     home: /opt/splunk
     http_enableSSL: 0
     http_enableSSL_cert: null
@@ -198,7 +200,7 @@ Execution command:
 ansible-playbook --inventory hosts --connection local site.yml --extra-vars "@default.yml" 
 ```
 
-For this case, please take note that the `hec_enableSSL` parameter will govern whether or not the HEC endpoint will be reachable over HTTP or HTTPS.
+For this case, please take note that the `splunk.hec.ssl` parameter will govern whether or not the HEC endpoint will be reachable over HTTP or HTTPS.
 
 ---
 
@@ -242,10 +244,11 @@ splunk:
     enable_service: false
     exec: /opt/splunk/bin/splunk
     group: splunk
-    hec_disabled: 0
-    hec_enableSSL: 1
-    hec_port: 8088
-    hec_token: abcd-1234-efgh-5678
+    hec:
+        enable: True
+        ssl: True
+        token: abcd-1234-efgh-5678
+        port: 8088
     home: /opt/splunk
     http_enableSSL: 0
     http_enableSSL_cert: null
