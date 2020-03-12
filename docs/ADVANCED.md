@@ -79,6 +79,7 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_HTTP_ENABLESSL_CERT | Path to SSL certificate used for SplunkWeb, if HTTPS is enabled | no | no | no |
 | SPLUNK_HTTP_ENABLESSL_PRIVKEY | Path to SSL private key used for SplunkWeb, if HTTPS is enabled | no | no | no |
 | SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD | SSL certificate private key password used with SplunkWeb, if HTTPS is enabled | no | no | no |
+| SPLUNK_SET_SEARCH_PEERS | Boolean to configure whether search heads should connect to search peers. Default: `True`. Not recommended to change | no | no | no |
 | SPLUNK_SITE | For multisite topologies, define the site of this particular Splunk Enterprise instance | no | no | no |
 | SPLUNK_ALL_SITES | For multisite topologies, define all sites of the topology | no | no | no |
 | SPLUNK_MULTISITE_MASTER | For multisite topologies, define location of the multisite cluster master | no | no | no |

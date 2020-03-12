@@ -2,9 +2,11 @@
 
 ## Navigation
 
+* [8.0.2.1](#8021)
 * [8.0.2](#802)
 * [8.0.1](#801)
 * [8.0.0](#800)
+* [7.3.4.2](#7342)
 * [7.3.4](#734)
 * [7.3.3](#733)
 * [7.3.2](#732)
@@ -21,6 +23,19 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.0.2.1
+
+#### What's New?
+* Added support for reading `SPLUNK_PASSWORD` from a file
+* License master and cluster master URLs are now also configurable in the `default.yml` config, as well as with the `LICENSE_MASTER_URL` and `CLUSTER_MASTER_URL` environment variables
+* Added support for auto-detecting the `service_name` for SplunkForwarder and allowing manual configuration with `splunk.service_name`
+
+#### Changes
+* All HEC related variables were revised to follow a nested dict format in `default.yml`, i.e. `splunk.hec_enableSSL` is now `splunk.hec.ssl`. See the [Provision HEC](https://github.com/splunk/splunk-ansible/blob/develop/docs/EXAMPLES.md#provision-hec) example in the docs.
+* Fixed HEC-related API calls to be idempotent. This supports changing anything in `splunk.hec.*` and having the change be reflected upon next container restart.
 
 ---
 
@@ -73,6 +88,16 @@
 * Adding vars needed for Ansible Galaxy
 * Bugfix for pre-playbook tasks not supporting URLs
 
+---
+
+## 7.3.4.2
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.0.2.1.
+
+#### Changes
+* See [8.0.2.1](#8021) changes.
+
 --- 
 
 ## 7.3.4
@@ -81,7 +106,7 @@
 * Syncing with latest codebase - currently up to sync with 8.0.1.
 
 #### Changes
-* See [8.0.1](#801) changes
+* See [8.0.1](#801) changes.
 
 --- 
 

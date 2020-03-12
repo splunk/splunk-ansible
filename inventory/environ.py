@@ -88,8 +88,10 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
                 'hosts': list([host.split(':')[0] for host in hosts])
             }
     inventory["all"]["vars"] = getDefaultVars()
+    inventory["all"]["vars"]["docker"] = False
 
     if os.path.isfile("/.dockerenv"):
+        inventory["all"]["vars"]["docker"] = True
         if "localhost" not in inventory["all"]["children"]:
             inventory["all"]["hosts"].append("localhost")
         inventory["_meta"]["hostvars"]["localhost"] = inventory["all"]["vars"]
@@ -104,6 +106,7 @@ def getDefaultVars():
     overrideEnvironmentVars(defaultVars)
     getAnsibleContext(defaultVars)
     getASan(defaultVars)
+    getHEC(defaultVars)
     getSecrets(defaultVars)
     getSplunkPaths(defaultVars)
     getIndexerClustering(defaultVars)
@@ -248,11 +251,12 @@ def getDistributedTopology(vars_scope):
     """
     Parse and set parameters to define topology if this is a distributed environment
     """
-    vars_scope["splunk"]["license_master_included"] = bool(os.environ.get("SPLUNK_LICENSE_MASTER_URL"))
-    vars_scope["splunk"]["deployer_included"] = bool(os.environ.get("SPLUNK_DEPLOYER_URL"))
-    vars_scope["splunk"]["indexer_cluster"] = bool(os.environ.get("SPLUNK_CLUSTER_MASTER_URL"))
-    vars_scope["splunk"]["search_head_cluster"] = bool(os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL"))
-    vars_scope["splunk"]["search_head_cluster_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL")
+    vars_scope["splunk"]["license_master_url"] = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", ""))
+    vars_scope["splunk"]["deployer_url"] = os.environ.get("SPLUNK_DEPLOYER_URL", vars_scope["splunk"].get("deployer_url", ""))
+    vars_scope["splunk"]["cluster_master_url"] = os.environ.get("SPLUNK_CLUSTER_MASTER_URL", vars_scope["splunk"].get("cluster_master_url", ""))
+    vars_scope["splunk"]["search_head_captain_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL", vars_scope["splunk"].get("search_head_captain_url", ""))
+    if not vars_scope["splunk"]["search_head_captain_url"] and "search_head_cluster_url" in vars_scope["splunk"]:
+        vars_scope["splunk"]["search_head_captain_url"] = vars_scope["splunk"]["search_head_cluster_url"]
 
 def getLicenses(vars_scope):
     """
@@ -342,7 +346,12 @@ def getSecrets(vars_scope):
     """
     Parse sensitive passphrases
     """
-    vars_scope["splunk"]["password"] = os.environ.get('SPLUNK_PASSWORD', vars_scope["splunk"]["password"])
+    vars_scope["splunk"]["password"] = os.environ.get("SPLUNK_PASSWORD", vars_scope["splunk"]["password"])
+    if os.path.isfile(vars_scope["splunk"]["password"]):
+        with open(vars_scope["splunk"]["password"], "r") as f:
+            vars_scope["splunk"]["password"] = f.read().strip()
+            if not vars_scope["splunk"]["password"]:
+                raise Exception("Splunk password supplied is empty/null")
     vars_scope["splunk"]["pass4SymmKey"] = os.environ.get('SPLUNK_PASS4SYMMKEY', vars_scope["splunk"].get("pass4SymmKey"))
     vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"].get("secret"))
 
@@ -381,6 +390,20 @@ def getASan(vars_scope):
     if vars_scope["splunk"]["asan"]:
         vars_scope["ansible_environment"].update({"ASAN_OPTIONS": "detect_leaks=0"})
 
+def getHEC(vars_scope):
+    """
+    Configure HEC settings
+    """
+    if not "hec" in vars_scope["splunk"]:
+        vars_scope["splunk"]["hec"] = {}
+    vars_scope["splunk"]["hec"]["token"] = os.environ.get("SPLUNK_HEC_TOKEN", vars_scope["splunk"]["hec"].get("token"))
+    vars_scope["splunk"]["hec"]["port"] = int(os.environ.get("SPLUNK_HEC_PORT", vars_scope["splunk"]["hec"].get("port")))
+    ssl = os.environ.get("SPLUNK_HEC_SSL", "")
+    if ssl.lower() == "false":
+        vars_scope["splunk"]["hec"]["ssl"] = False
+    else:
+        vars_scope["splunk"]["hec"]["ssl"] = bool(vars_scope["splunk"]["hec"].get("ssl"))
+
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
     vars_scope["splunk"]["group"] = os.environ.get("SPLUNK_GROUP", vars_scope["splunk"]["group"])
@@ -388,10 +411,13 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
-    vars_scope["splunk"]["hec_token"] = os.environ.get('SPLUNK_HEC_TOKEN', vars_scope["splunk"]["hec_token"])
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
+
+    # Set set_search_peers to False to disable peering to indexers when creating multisite topology
+    if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
+        vars_scope["splunk"]["set_search_peers"] = False
 
 def getDFS(vars_scope):
     """
@@ -616,13 +642,9 @@ def prep_for_yaml_out(inventory):
                    "apps_location",
                    "build_location",
                    "build_remote_src",
-                   "deployer_included",
                    "hostname",
                    "upgrade",
                    "role",
-                   "search_head_cluster",
-                   "indexer_cluster",
-                   "license_master_included",
                    "preferred_captaincy",
                    "license_uri"]
     for key in keys_to_del:

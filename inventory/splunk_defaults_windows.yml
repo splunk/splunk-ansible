@@ -39,6 +39,7 @@ splunk:
     pass4SymmKey:
     svc_port: 8089
     launch:
+    set_search_peers: True
     s2s:
         enable: True
         port: 9997
@@ -51,19 +52,18 @@ splunk:
     http_enableSSL_cert:
     http_enableSSL_privKey:
     http_enableSSL_privKey_password:
-    hec_port: 8088
-    hec_disabled: 0
-    hec_enableSSL: 1
-    hec_token:
+    hec:
+        enable: True
+        port: 8088
+        ssl: True
+        token:
     shc:
-        enable: False
         secret:
         pass4SymmKey:
         label: "shc_label"
         replication_factor: 3
         replication_port: 9887
     idxc:
-        enable: False
         secret:
         pass4SymmKey:
         label: "idxc_label"
@@ -74,6 +74,10 @@ splunk:
     multisite_replication_factor_total: 3
     multisite_search_factor_origin: 1
     multisite_search_factor_total: 2
+    license_master_url:
+    cluster_master_url:
+    search_head_captain_url:
+    deployer_url:
     enable_service: False
     service_name: "splunkd"
     smartstore:

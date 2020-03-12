@@ -20,8 +20,8 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- include_tasks:
-    file: restrict_permissions.yml
+- name: "Restrict Permissions on splunk.key"
+  include_tasks: restrict_permissions.yml
   vars:
     file_path: "{{ item }}"
   with_items:
@@ -41,7 +41,7 @@
 
 - name: "Start Splunk via service"
   service:
-    name: "{% if pid1.stdout.find('systemd') != -1 %}Splunkd{% else %}{{ splunk.service_name }}{% endif %}"
+    name: "{{ splunk_service_name }}"
     state: restarted
   when:
     - splunk.enable_service

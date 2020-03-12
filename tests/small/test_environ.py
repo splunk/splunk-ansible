@@ -40,7 +40,8 @@ def test_getSplunkInventory():
 @patch('environ.loadDefaults', return_value={"splunk": {"http_port": 8000, "build_location": None}})
 @patch('environ.overrideEnvironmentVars')
 @patch('environ.getSecrets')
-def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVariables, mock_getSecrets):
+@patch('environ.getHEC')
+def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVariables, mock_getSecrets, mock_getHEC):
     '''
     Unit test for getting our default variables
     '''
@@ -168,23 +169,52 @@ def test_getSplunkWebSSL():
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters - Splunk password is required
-                ({"password": "Chang3d!"}, {}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": None}),
+                ({"password": "helloworld"}, {}, {"password": "helloworld", "pass4SymmKey": None, "secret": None}),
                 # Check default.yml parameters
-                ({"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}),
-                ({"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
-                ({"password": "Chang3d!", "secret": "1234"}, {}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": "1234"}),
+                ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": "helloworld", "secret": "1234"}, {}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"}),
                 # Check environment variable parameters
-                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": None}),
-                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "Chang3d!", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
-                ({"password": None}, {"SPLUNK_PASSWORD": "Chang3d!", "SPLUNK_SECRET": "1234"}, {"password": "Chang3d!", "pass4SymmKey": None, "secret": "1234"})
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"})
             ]
         )
 def test_getSecrets(default_yml, os_env, output):
     vars_scope = {"splunk": default_yml}
     with patch("environ.inventory") as mock_inven:
         with patch("os.environ", new=os_env):
-            environ.getSecrets(vars_scope)
+            with patch("environ.os.path") as mock_os_path:
+                mock_os_path.isfile = MagicMock()
+                mock_os_path.isfile.return_value = False
+                environ.getSecrets(vars_scope)
     assert vars_scope["splunk"] == output
+
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Check when Splunk password is a file
+                ({"password": "/tmp/splunk-password"}, {}, {"password": "worldneversayshiback", "pass4SymmKey": None, "secret": None}),
+                ({"password": "helloworld"}, {"SPLUNK_PASSWORD": "/tmp/splunk-password"}, {"password": "worldneversayshiback", "pass4SymmKey": None, "secret": None}),
+            ]
+        )
+def test_getSecrets_passwordFromFile(default_yml, os_env, output):
+    file_contents = """
+
+worldneversayshiback
+
+"""
+    m = mock_open(read_data=file_contents)
+    vars_scope = {"splunk": default_yml}
+    with patch("environ.open", m, create=True) as mopen:
+        with patch("environ.inventory") as mock_inven:
+            with patch("os.environ", new=os_env):
+                with patch("os.path") as mock_os_path:
+                    # Make sure that the isfile() check returns True
+                    mock_os_path.isfile = MagicMock()
+                    mock_os_path.isfile.return_value = True
+                    environ.getSecrets(vars_scope)
+                    mopen.assert_called_once()
+    assert vars_scope["splunk"]["password"] == "worldneversayshiback"
 
 @pytest.mark.xfail(raises=KeyError)
 def test_noSplunkPassword():
@@ -281,29 +311,65 @@ def test_getASan(default_yml, os_env, splunk_asan):
     else:
         assert vars_scope["ansible_environment"].get("ASAN_OPTIONS") == None
 
-@pytest.mark.parametrize(("os_env", "license_master_included", "deployer_included", "indexer_cluster", "search_head_cluster", "search_head_cluster_url"),
+@pytest.mark.parametrize(("default_yml", "os_env", "result"),
+            [
+                # Check null parameters
+                ({}, {}, {"enable": True, "port": 8088, "token": None, "ssl": True}),
+                # Check default.yml parameters
+                ({"enable": False}, {}, {"enable": False, "port": 8088, "token": None, "ssl": True}),
+                ({"port": 8099}, {}, {"enable": True, "port": 8099, "token": None, "ssl": True}),
+                ({"token": "abcd"}, {}, {"enable": True, "port": 8088, "token": "abcd", "ssl": True}),
+                ({"ssl": False}, {}, {"enable": True, "port": 8088, "token": None, "ssl": False}),
+                # Check env var parameters
+                ({}, {"SPLUNK_HEC_TOKEN": "qwerty"}, {"enable": True, "port": 8088, "token": "qwerty", "ssl": True}),
+                ({}, {"SPLUNK_HEC_PORT": "9999"}, {"enable": True, "port": 9999, "token": None, "ssl": True}),
+                ({}, {"SPLUNK_HEC_SSL": "true"}, {"enable": True, "port": 8088, "token": None, "ssl": True}),
+                ({}, {"SPLUNK_HEC_SSL": "false"}, {"enable": True, "port": 8088, "token": None, "ssl": False}),
+                ({}, {"SPLUNK_HEC_SSL": "FALSE"}, {"enable": True, "port": 8088, "token": None, "ssl": False}),
+                # Check both
+                ({"port": 8099}, {"SPLUNK_HEC_PORT": "19999"}, {"enable": True, "port": 19999, "token": None, "ssl": True}),
+                ({"token": "abcd"}, {"SPLUNK_HEC_TOKEN": "fdsa"}, {"enable": True, "port": 8088, "token": "fdsa", "ssl": True}),
+                ({"ssl": True}, {"SPLUNK_HEC_SSL": "fAlSe"}, {"enable": True, "port": 8088, "token": None, "ssl": False}),
+            ]
+        )
+def test_getHEC(default_yml, os_env, result):
+    vars_scope = {"splunk": {}}
+    vars_scope["splunk"] = {
+        "hec": {
+            "enable": True,
+            "port": 8088,
+            "token": None,
+            "ssl": True
+        }
+    }
+    vars_scope["splunk"]["hec"].update(default_yml)
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getHEC(vars_scope)
+    assert vars_scope["splunk"]["hec"] == result
+
+@pytest.mark.parametrize(("os_env", "license_master_url", "deployer_url", "cluster_master_url", "search_head_captain_url"),
                          [
-                            ({}, False, False, False, False, None),
+                            ({}, "", "", "", ""),
                             # Check individual environment variables
-                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, True, False, False, False, None),
-                            ({"SPLUNK_DEPLOYER_URL": "something"}, False, True, False, False, None),
-                            ({"SPLUNK_CLUSTER_MASTER_URL": "something"}, False, False, True, False, None),
-                            ({"SPLUNK_SEARCH_HEAD_CAPTAIN_URL": "something"}, False, False, False, True, "something"),
+                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, "something", "", "", ""),
+                            ({"SPLUNK_DEPLOYER_URL": "something"}, "", "something", "", ""),
+                            ({"SPLUNK_CLUSTER_MASTER_URL": "something"}, "", "", "something", ""),
+                            ({"SPLUNK_SEARCH_HEAD_CAPTAIN_URL": "something"}, "", "", "", "something"),
                          ]
                         )
-def test_getDistributedTopology(os_env, license_master_included, deployer_included, indexer_cluster, search_head_cluster, search_head_cluster_url):
+def test_getDistributedTopology(os_env, license_master_url, deployer_url, cluster_master_url, search_head_captain_url):
     vars_scope = {"splunk": {}}
     with patch("os.environ", new=os_env):
         environ.getDistributedTopology(vars_scope)
-    assert type(vars_scope["splunk"]["license_master_included"]) == bool
-    assert vars_scope["splunk"]["license_master_included"] == license_master_included
-    assert type(vars_scope["splunk"]["deployer_included"]) == bool
-    assert vars_scope["splunk"]["deployer_included"] == deployer_included
-    assert type(vars_scope["splunk"]["indexer_cluster"]) == bool
-    assert vars_scope["splunk"]["indexer_cluster"] == indexer_cluster
-    assert type(vars_scope["splunk"]["search_head_cluster"]) == bool
-    assert vars_scope["splunk"]["search_head_cluster"] == search_head_cluster
-    assert vars_scope["splunk"]["search_head_cluster_url"] == search_head_cluster_url
+    assert type(vars_scope["splunk"]["license_master_url"]) == str
+    assert vars_scope["splunk"]["license_master_url"] == license_master_url
+    assert type(vars_scope["splunk"]["deployer_url"]) == str
+    assert vars_scope["splunk"]["deployer_url"] == deployer_url
+    assert type(vars_scope["splunk"]["cluster_master_url"]) == str
+    assert vars_scope["splunk"]["cluster_master_url"] == cluster_master_url
+    assert type(vars_scope["splunk"]["search_head_captain_url"]) == str
+    assert vars_scope["splunk"]["search_head_captain_url"] == search_head_captain_url
 
 @pytest.mark.parametrize(("os_env", "license_uri", "wildcard_license", "ignore_license", "license_download_dest"),
                          [
@@ -504,9 +570,6 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 # Check splunk.s2s.port
                 ({"splunk": {"s2s": {"port": "9999"}}}, {}, "splunk.s2s.port", 9999),
                 ({}, {"SPLUNK_S2S_PORT": "9991"}, "splunk.s2s.port", 9991),
-                # Check splunk.hec_token
-                ({"splunk": {"hec_token": "lalala"}}, {}, "splunk.hec_token", "lalala"),
-                ({}, {"SPLUNK_HEC_TOKEN": "alalal"}, "splunk.hec_token", "alalal"),
                 # Check splunk.enable_service
                 ({"splunk": {"enable_service": "yes"}}, {}, "splunk.enable_service", "yes"),
                 ({}, {"SPLUNK_ENABLE_SERVICE": "no"}, "splunk.enable_service", "no"),
@@ -516,6 +579,10 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 # Check splunk.allow_upgrade
                 ({"splunk": {"allow_upgrade": "yes"}}, {}, "splunk.allow_upgrade", "yes"),
                 ({}, {"SPLUNK_ALLOW_UPGRADE": "no"}, "splunk.allow_upgrade", "no"),
+                # Check splunk.set_search_peers
+                ({"splunk": {"set_search_peers": False}}, {}, "splunk.set_search_peers", False),
+                ({}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
+                ({"splunk": {"set_search_peers": True}}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
             ]
         )
 def test_overrideEnvironmentVars(default_yml, os_env, key, value):
@@ -533,7 +600,8 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "enable_service": False,
                                 "service_name": "Splunkd",
                                 "allow_upgrade": True,
-                                "asan": None
+                                "asan": None,
+                                "set_search_peers": True,
                             }
                 }
     # TODO: Possibly remove the dependency on merge_dict() in this test

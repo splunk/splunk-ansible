@@ -111,10 +111,27 @@ splunk:
   * Boolean to determine whether the installer is local (false) or remote (true)
   * Default: true
 
-  license_master_included: <bool>
-  * Boolean to determine whether there exists a separate license master 
-  * Default: false
+  license_master_url: <str>
+  * Hostname of Splunk Enterprise license master instance. May be overridden using SPLUNK_LICENSE_MASTER_URL environment variable.
+  * Default: null
+
+  cluster_master_url: <str>
+  * Hostname of Splunk Enterprise cluster master instance. May be overridden using SPLUNK_CLUSTER_MASTER_URL environment variable.
+  * Default: null
   
+  deployer_url: null
+  * Hostname of Splunk Enterprise deployer instance. May be overridden using SPLUNK_DEPLOYER_URL environment variable.
+  * Default: null
+
+  search_head_captain_url: null
+  * Hostname of Splunk Enterprise search head cluster captain instance. May be overridden using SPLUNK_SEARCH_HEAD_CAPTAIN_URL environment variable.
+  * Default: null
+
+  search_head_cluster_url: null
+  * URL of the Splunk search head cluster
+  * NOTE: This is being deprecated in favor of `splunk.search_head_captain_url`.
+  * Default: null
+
   preferred_captaincy: <bool>
   * Boolean to determine whether splunk should set a preferred captain.  This can have an effect on day 2 operations if the search heads need to be restarted 
   * Default: true
@@ -196,21 +213,22 @@ splunk:
     * Path in filesystem of search head cluster apps (this will depend on splunk.home)
     * Default: /opt/splunk/etc/shcluster/apps
 
-  hec_disabled: <int|bool>
-  * Determine whether or not to disable setting up the HTTP event collector (HEC)
-  * Default: 0
+  hec:
+    enable: <bool>
+    * Determine whether or not to disable setting up the HTTP event collector (HEC)
+    * Default: True
 
-  hec_enableSSL: <int|bool>
-  * Determine whether or not to enable SSL on the HTTP event collector (HEC) endpoint
-  * Default: 1
+    ssl: <bool>
+    * Determine whether or not to enable SSL on the HTTP event collector (HEC) endpoint
+    * Default: True
 
-  hec_port: <int>
-  * Determine the port used for the HTTP event collector (HEC) endpoint
-  * Default: 8088
+    port <int>
+    * Determine the port used for the HTTP event collector (HEC) endpoint
+    * Default: 8088
 
-  hec_token: <str>
-  * Determine a token to use for the HTTP event collector (HEC) endpoint
-  * Default: null
+    token: <str>
+    * Determine a token to use for the HTTP event collector (HEC) endpoint
+    * Default: null
 
   http_enableSSL: <int|bool>
   * Determine whether or not to enable SSL on SplunkWeb
@@ -244,10 +262,6 @@ splunk:
   * Determine the port used for Splunk management/remote API calls
   * Default: 8089
 
-  search_head_cluster_url: null
-  * URL of the Splunk search head cluster
-  * Default: null
-
   launch: null
   * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null
@@ -262,10 +276,6 @@ splunk:
   * Default: null
 
   idxc:
-    enable: <bool>
-    * Enable indexer clustering
-    * Default: false
-
     label: <str>
     * Provide a label for indexer clustering configuration
     * Default: idxc_label
@@ -292,10 +302,6 @@ splunk:
     * Default: null
 
   shc:
-    enable: <bool>
-    * Enable search head clustering
-    * Default: false
-
     label: <str>
     * Provide a label for search head clustering configuration
     * Default: shc_label
@@ -460,7 +466,6 @@ splunk:
   upgrade: false
   build_location: /tmp/splunk.tgz
   build_remote_src: true
-  license_master_included: false
   apps_location: null
   license_uri: null
   admin_user: admin
@@ -473,10 +478,11 @@ splunk:
   enable_service: false
   exec: /opt/splunk/bin/splunk
   group: splunk
-  hec_disabled: 0
-  hec_enableSSL: 1
-  hec_port: 8088
-  hec_token: 4a8a737d-5452-426c-a6f7-106dca4e813f
+  hec:
+    enable: True
+    ssl: True
+    port: 8088
+    token: 4a8a737d-5452-426c-a6f7-106dca4e813f
   home: /opt/splunk
   http_enableSSL: 0
   http_enableSSL_cert: null
@@ -497,7 +503,7 @@ splunk:
   pid: /opt/splunk/var/run/splunk/splunkd.pid
   s2s_enable: true
   s2s_port: 9997
-  search_head_cluster_url: null
+  search_head_captain_url: null
   secret: null
   shc:
     enable: false

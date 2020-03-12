@@ -1,15 +1,12 @@
 ---
 - name: Check Splunk instance is running
   uri:
-    url: "{{ cert_prefix }}://{{ splunk_instance_address }}:{{ splunk.svc_port }}/services/server/info?output_mode=json"
+    url: "{{ cert_prefix }}://{{ splunk_instance_address }}:{{ splunk.svc_port }}"
     method: GET
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
     validate_certs: false
   register: task_response
   until:
     - task_response.status == 200
-    - lookup('pipe', 'date +"%s"')|int - task_response.json.entry[0].content.startup_time > 10
   retries: "{{ wait_for_splunk_retry_num }}"
   delay: "{{ retry_delay }}"
   ignore_errors: true

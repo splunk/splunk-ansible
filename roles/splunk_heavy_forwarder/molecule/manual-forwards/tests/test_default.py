@@ -58,3 +58,14 @@ def test_splunkweb_root_endpoint(host):
     output = host.run('curl http://localhost:8080/splunkui/en-US/')
     assert "This resource can be found at" in output.stdout
     assert "/account/login?return_to" in output.stdout
+
+
+def test_forward_servers(host):
+    f = host.file('/opt/splunk/etc/system/local/outputs.conf')
+    assert f.exists
+    assert f.user == 'splunk'
+    assert f.group == 'splunk'
+    assert f.contains("\\[tcpout-server://forwarder1.test.com:9997\\]")
+    assert f.contains("\\[tcpout-server://forwarder2.test.com:9997\\]")
+    assert f.contains("\\[tcpout:default-autolb-group\\]")
+    assert f.contains("server = forwarder1.test.com:9997,forwarder2.test.com:9997")

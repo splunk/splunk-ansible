@@ -2,10 +2,10 @@
 - name: Wait for the license master
   include_tasks: wait_for_splunk_instance.yml
   vars:
-    splunk_instance_address: "{{ license_master_host }}"
+    splunk_instance_address: "{{ splunk.license_master_url }}"
 
 - name: Set node as license slave
-  command: "{{ splunk.exec }} edit licenser-localslave -master_uri {{ cert_prefix }}://{{ license_master_host }}:{{ splunk.svc_port }} -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} edit licenser-localslave -master_uri {{ cert_prefix }}://{{ splunk.license_master_url }}:{{ splunk.svc_port }} -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: linux_set_lic_slave
