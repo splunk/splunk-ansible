@@ -30,7 +30,7 @@
     - splunk_status.rc != 0
 
 - name: "Start Splunk"
-  block: 
+  block:
     - name: "Start Splunk via CLI"
       command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
       register: start_splunk
@@ -38,7 +38,7 @@
       become: yes
       become_user: "{{ splunk.user }}"
       when:
-      
+
     - name: "Start Splunk via service"
       service:
         name: "{{ splunk_service_name }}"
