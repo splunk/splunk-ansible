@@ -38,6 +38,7 @@
       become: yes
       become_user: "{{ splunk.user }}"
       when:
+        - not splunk.enable_service
 
     - name: "Start Splunk via service"
       service:
