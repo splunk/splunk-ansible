@@ -1,110 +1,93 @@
-This folder provides guiendence in how to use splunk-ansible in your own environment.  The examples here setup a very
- basic container, that only exposes port 22 and has NOTHING preinstalled (not even ansible). You can follow this exact workflow with baremetal machines / vm's.
- 
- In this case, first we'll spin up 4 containers to mimic our base baremetal hosts with ssh installed.  I've included a docker-compose file to easily build the image, and spin up the stack.
+# Remote Execution
+This folder provides guidance in how to use `splunk-ansible` from a controller node, setting up and provisioning a Splunk Enterprise indexer cluster on a series of remote instances. Or visually, the example shown here can be represented by the diagram below:
 
-```
-docker-compose -f docker-compose.yml up -d
-```
-This should stand up the full deployment and create all the required networking.
+![diagram](./remote-diagram.png)
 
-Verify they are all running with docker ps:
-```
-wrapper-example$ docker ps
+## Configure hosts
+First, we'll need a few hosts to run these Ansible plays against. For convenience, we can use a set of containers to mimic a baremetal hosts running `sshd`. These hosts are also setup to pre-install the `splunk` user. For more information, please see the [Dockerfile](./Dockerfile) in used.
 
-CONTAINER ID        IMAGE                       COMMAND               CREATED             STATUS              PORTS                   NAMES
-1337ac381424        debian_buster_sshd          "/usr/sbin/sshd -D"   5 seconds ago       Up 3 seconds        0.0.0.0:32772->22/tcp   wrapper-example_cluster_master_1
-a325a28ba9ea        debian_buster_sshd          "/usr/sbin/sshd -D"   5 seconds ago       Up 4 seconds        0.0.0.0:32771->22/tcp   wrapper-example_indexer3_1
-88d8ab42bc11        debian_buster_sshd          "/usr/sbin/sshd -D"   5 seconds ago       Up 4 seconds        0.0.0.0:32770->22/tcp   wrapper-example_indexer1_1
-29d73413c155        debian_buster_sshd          "/usr/sbin/sshd -D"   5 seconds ago       Up 4 seconds        0.0.0.0:32769->22/tcp   wrapper-example_indexer2_1
-2646ede6484a        debian_buster_sshd          "/usr/sbin/sshd -D"   6 seconds ago       Up 5 seconds        0.0.0.0:32768->22/tcp   wrapper-example_search_head_1
+Additionally, see the [docker-compose.yml](./docker-compose.yml) file included for how the multiple containers are defined to assume the roles in the Splunk deployment.
+```bash
+$ docker-compose up -d
 ```
 
-Next we'll copy our target key in for passwordless login:
+## Setup hosts file
+Ansible's inventory files are used to define the multiple nodes or hosts you plan on managing. For more information, see [how to build your inventory](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html#inventory-basics-formats-hosts-and-groups) on Ansible's documentation. 
 
+For our use case, we will be add all the hosts used to compose the indexer cluster in the [hosts.yml](./hosts.yml) file. The key things here are:
+* Each host is added to the respective group matching the Splunk role it expects to fulfill
+* In addition to group membership, each instance should have a matching `splunk.role` variable defined
+* All top-level variables, including SSH connection parameters - for instance user, password, and port - can be included in `all.vars`
+* Host-specific variables can be defined at the individual host level
+
+Given that we are using Docker containers for the target hosts in this example, the corresponding `hosts.yml` file will look like the following:
 ```
-ssh-copy-id -i ~/.ssh/mykey root@0.0.0.0 -p <port>
-```
-Make sure to do the above command for all containers. (Assuming you haven't changed the password for root in the Dockerfile, it's set to "**screencast**")
-
-Now lets build an ansible inventory to work with our hosts, I personally am using the yaml version, but you can build your inventory
-however you'd like.  See: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html.  I've attached the sample
-inventory, ansible_inventory.yaml.sample
-
-```
-$vi ansible_inventory.yaml
-
 all:
   vars:
+    # These vars are used to access the remote hosts
     ansible_user: root
+    ansible_password: screencast
   children:
+    # Configure individual information about each Splunk Enterprise instance
     splunk_search_head:
       hosts:
-        wrapper-example_search_head_1:
-          ansible_port: 32768
+        sh1:
+          ansible_port: 2222
           ansible_host: 0.0.0.0
+          splunk:
+            role: splunk_search_head
     splunk_cluster_master:
       hosts:
-        wrapper-example_cluster_master_1:
-          ansible_port: 32772
+        cm1:
+          ansible_port: 2223
           ansible_host: 0.0.0.0
+          splunk:
+            role: splunk_cluster_master
     splunk_indexer:
       hosts:
-        wrapper-example_indexer1_1:
-          ansible_port: 32770
+        idx1:
+          ansible_port: 2224
           ansible_host: 0.0.0.0
-        wrapper-example_indexer2_1:
-          ansible_port: 32769
+          splunk:
+            role: splunk_indexer
+        idx2:
+          ansible_port: 2225
           ansible_host: 0.0.0.0
-        wrapper-example_indexer3_1:
-          ansible_port: 32771
+          splunk:
+            role: splunk_indexer
+        idx3:
+          ansible_port: 2226
           ansible_host: 0.0.0.0
+          splunk:
+            role: splunk_indexer
 ```
 
-We're now ready to test our first run.  Let's test this with the hello-world.playbook:
+## Test connection
+Ansible's `ping` module can be used to quickly confirm that:
+1. The `hosts.yml` file is setup properly
+2. The target instances are reachable from the controller node
 
-```
-$ ansible-playbook -vv -i ansible_inventory.yaml hello-world.playbook
-```
-
-This playbook will install a simple python-minimal instance, and then send "echo hello_world" to the command line, and store
-the output in a registered var.  By running with -vv on ansible-playbook, we'll be able to see that register in the task:
-```
-TASK [echo hello_world on each host] ****************************************************************************************************************************************************************
-task path: /Projects/splunk-ansible/wrapper-example/hello-world.playbook:13
-changed: [indexer3] => {"changed": true, "cmd": ["echo", "hello_world"], "delta": "0:00:00.002486", "end": "2019-03-05 20:41:17.468653", "rc": 0, "start": "2019-03-05 20:41:17.466167", "stderr": "", "stderr_lines": [], "stdout": "hello_world", "stdout_lines": ["hello_world"]}
-changed: [indexer1] => {"changed": true, "cmd": ["echo", "hello_world"], "delta": "0:00:00.002334", "end": "2019-03-05 20:41:17.468749", "rc": 0, "start": "2019-03-05 20:41:17.466415", "stderr": "", "stderr_lines": [], "stdout": "hello_world", "stdout_lines": ["hello_world"]}
-changed: [cluster_master] => {"changed": true, "cmd": ["echo", "hello_world"], "delta": "0:00:00.002773", "end": "2019-03-05 20:41:17.480882", "rc": 0, "start": "2019-03-05 20:41:17.478109", "stderr": "", "stderr_lines": [], "stdout": "hello_world", "stdout_lines": ["hello_world"]}
-changed: [indexer2] => {"changed": true, "cmd": ["echo", "hello_world"], "delta": "0:00:00.003453", "end": "2019-03-05 20:41:17.484681", "rc": 0, "start": "2019-03-05 20:41:17.481228", "stderr": "", "stderr_lines": [], "stdout": "hello_world", "stdout_lines": ["hello_world"]}
+To test the connection, run:
+```bash
+$ ansible -i hosts.yml all -m ping
 ```
 
-As long as the hello_world example had no failures, we're now ready to setup this index cluster. Please note, if you did not manually
- log into each container ahead of time, you may get a "host key not verified" error for ssh.  Either manually login and approve each
- container's ssh key, or you can add host_key_checking=False to the ansible-playbook commands.  Please setup a defaults.yml file (referenced in the docs)
-and place it inside of our current working directory, next to the playbooks.  In the example below, I'm just going to use the
-auto-generated defaults off of the splunk container to get started.
+## Setup variables
+The playbooks in `splunk-ansible` use a series of variables that drive how Splunk is configured. These are known as the `default.yml`, and the full spec can be found [here](https://github.com/splunk/splunk-ansible/blob/develop/inventory/splunk_defaults_linux.yml).
 
-```
-docker run --rm -it splunk/splunk:latest create-defaults > default.yml
+To generate a template of this `default.yml`, you can use Splunk's official Docker image as follows:
+```bash
+$ docker run -it splunk/splunk:latest create-defaults > default.yml
 ```
 
-The supplied play will setup all of  "install-splunk-ansible.playbook" will setup all the required prereqs for splunk-ansible, 
-copy the defaults file to /tmp/defaults/default.yml and prep the install of splunk.  Run it now using:
+If you plan on running Ansible remotely, there are a few key variables you must make sure you define:
+* `splunk.role`: the role this instance will play in the Splunk Enterprise deployment
+* `splunk.build_location`: URL to dynamically fetch the Splunk Enterprise build and install it at run time
+* `splunk.build_remote_src`: this wll be `true` when `splunk.build_location` above is a URL
+* `splunk.password`: default `admin` user password that Splunk will be provisioned with on first-time run
 
+## Deploy Splunk
+Once the `default.yml` has been setup to your liking, execute the following command to setup the indexer cluster:
+```bash
+ansible-playbook -i hosts.yml site.yml -e "@default.yml"
 ```
-ansible-playbook -vv -i ansible_inventory.yaml install-splunk-ansible.playbook
-```
-Grab some coffee, this might take a bit!
-
-Once the play finishes for splunk-ansible, we're now ready to embed splunk-ansible as a module.  There's a couple of different ways to do this,
-one you could use the "delegate_to" function of an ansible playbook command, or two, we tell ansible to run in an async method.  The install-splunk.playbook, runs
-in the form of the latter. 
-
-You can now create different default.yml for each role of splunk, or override the options in your playbook for each group.  Once your playbook is configured, run:
-```
-ansible-playbook -vv -i ansible_inventory.yaml install-splunk.playbook
-```
-*PLEASE NOTE: If you don't have a machine fast enough to handle 5 instances of splunk in containers starting, you may hit timeouts during the installation!*
-
-You should now have a setup splunk instance, configured entirely asynchronously and utilizing splunk-ansible without needing to 
-touch splunk-ansible's inventory directly. You're free now to connect to your searchhead / cluster_master port 8000's that are exposed!

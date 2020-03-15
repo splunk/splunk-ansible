@@ -14,5 +14,9 @@ RUN mkdir /var/run/sshd && \
 	echo "Setup passwordless sudo access" && \
 	sed -i 's/^%sudo.*/%sudo ALL=(ALL) NOPASSWD: ALL/g' /etc/sudoers
 
+RUN groupadd -r splunk && \
+	useradd -r -m -g splunk splunk && \
+	usermod -aG sudo splunk
+
 EXPOSE 2222
 CMD ["/usr/sbin/sshd", "-D", "-p", "2222"]
