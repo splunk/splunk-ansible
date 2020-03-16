@@ -213,21 +213,22 @@ splunk:
     * Path in filesystem of search head cluster apps (this will depend on splunk.home)
     * Default: /opt/splunk/etc/shcluster/apps
 
-  hec_disabled: <int|bool>
-  * Determine whether or not to disable setting up the HTTP event collector (HEC)
-  * Default: 0
+  hec:
+    enable: <bool>
+    * Determine whether or not to disable setting up the HTTP event collector (HEC)
+    * Default: True
 
-  hec_enableSSL: <int|bool>
-  * Determine whether or not to enable SSL on the HTTP event collector (HEC) endpoint
-  * Default: 1
+    ssl: <bool>
+    * Determine whether or not to enable SSL on the HTTP event collector (HEC) endpoint
+    * Default: True
 
-  hec_port: <int>
-  * Determine the port used for the HTTP event collector (HEC) endpoint
-  * Default: 8088
+    port <int>
+    * Determine the port used for the HTTP event collector (HEC) endpoint
+    * Default: 8088
 
-  hec_token: <str>
-  * Determine a token to use for the HTTP event collector (HEC) endpoint
-  * Default: null
+    token: <str>
+    * Determine a token to use for the HTTP event collector (HEC) endpoint
+    * Default: null
 
   http_enableSSL: <int|bool>
   * Determine whether or not to enable SSL on SplunkWeb
@@ -477,10 +478,11 @@ splunk:
   enable_service: false
   exec: /opt/splunk/bin/splunk
   group: splunk
-  hec_disabled: 0
-  hec_enableSSL: 1
-  hec_port: 8088
-  hec_token: 4a8a737d-5452-426c-a6f7-106dca4e813f
+  hec:
+    enable: True
+    ssl: True
+    port: 8088
+    token: 4a8a737d-5452-426c-a6f7-106dca4e813f
   home: /opt/splunk
   http_enableSSL: 0
   http_enableSSL_cert: null
