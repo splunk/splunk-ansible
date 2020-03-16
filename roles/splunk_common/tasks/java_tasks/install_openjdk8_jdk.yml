@@ -38,7 +38,7 @@
 - name: Install openjdk for CentOS
   yum:
     name: java-1.8.0-openjdk
-    state: latest
+    state: present
   when:
     - ansible_distribution == 'CentOS'
   become: yes
