@@ -1,32 +1,42 @@
 ---
-- name: "Setting service_name to SplunkForwarder.service"
-  set_fact:
-    splunk_service_name: "SplunkForwarder.service"
-  when:
-    - splunk_service_name is not defined
-    - splunk.enable_service and ansible_system is match("Linux")
-    - splunk_systemd
-    - splunk.build_location is search('forwarder')
+- name: Set Splunk service name
+  block:
+    - name: Setting SplunkForwarder service
+      set_fact:
+        splunk_service_name: "SplunkForwarder.service"
+      when:
+        - ansible_system is match("Linux")
+        - splunk_systemd
+        - splunk.role == "splunk_universal_forwarder"
 
-- name: "Setting service_name to Splunkd.service"
-  set_fact:
-    splunk_service_name: "Splunkd.service"
-  when:
-    - splunk_service_name is not defined
-    - splunk.enable_service and ansible_system is match("Linux")
-    - splunk_systemd
+    - name: Setting Splunkd service
+      set_fact:
+        splunk_service_name: "Splunkd.service"
+      when:
+        - ansible_system is match("Linux")
+        - splunk_systemd
+        - splunk.role != "splunk_universal_forwarder"
 
-- name: "Setting service_name to splunkd"
-  set_fact:
-    splunk_service_name: "splunkd"
-  when:
-    - splunk_service_name is not defined
-    - splunk.enable_service and ansible_system is match("Linux")
-    - splunk_systemd is False
+    - name: Setting splunk service
+      set_fact:
+        splunk_service_name: "splunk"
+      when:
+        - ansible_system is match("Linux")
+        - not splunk_systemd
 
-- name: "Setting service_name to splunkd"
-  set_fact:
-    splunk_service_name: "splunkd"
+    - name: Setting splunkforwarder Windows service
+      set_fact:
+        splunk_service_name: "splunkforwarder"
+      when:
+        - ansible_system is not match("Linux")
+        - splunk.role == "splunk_universal_forwarder"
+
+    - name: Setting splunkd Windows service
+      set_fact:
+        splunk_service_name: "splunkd"
+      when:
+        - ansible_system is not match("Linux")
+        - splunk.role != "splunk_universal_forwarder"
   when:
     - splunk_service_name is not defined
-    - splunk.enable_service and not ansible_system is match("Linux")
+    - splunk.enable_service
