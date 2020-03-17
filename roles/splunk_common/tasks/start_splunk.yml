@@ -20,7 +20,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: "Restrict Permissions on splunk.key"
+- name: "Restrict permissions on splunk.key"
   include_tasks: restrict_permissions.yml
   vars:
     file_path: "{{ item }}"
@@ -29,35 +29,35 @@
   when:
     - splunk_status.rc != 0
 
-- name: "Start Splunk via cli"
-  command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: start_splunk
-  changed_when: start_splunk.rc == 0 and 'already running' not in start_splunk.stdout
-  when:
-    - not splunk.enable_service
-    - splunk_status.rc != 0
+- name: "Start Splunk"
+  block:
+    - name: "Start Splunk via CLI"
+      command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
+      register: start_splunk
+      changed_when: start_splunk.rc == 0 and 'already running' not in start_splunk.stdout
+      become: yes
+      become_user: "{{ splunk.user }}"
+      when:
+        - not splunk.enable_service
 
-- name: "Start Splunk via service"
-  service:
-    name: "{{ splunk_service_name }}"
-    state: restarted
-  when:
-    - splunk.enable_service
-    - splunk_status.rc != 0
-    - ansible_system is match("Linux")
-  become: yes
-  become_user: "{{ privileged_user }}"
+    - name: "Start Splunk via service"
+      service:
+        name: "{{ splunk_service_name }}"
+        state: started
+      become: yes
+      become_user: "{{ privileged_user }}"
+      when:
+        - splunk.enable_service
+        - ansible_system is match("Linux")
 
-- name: "Start Splunk via Windows service"
-  win_service:
-    name: splunkd
-    state: restarted
-  when:
-    - splunk.enable_service
-    - splunk_status.rc != 0
-    - ansible_os_family == "Windows"
+    - name: "Start Splunk via Windows service"
+      win_service:
+        name: splunkd
+        state: started
+      when:
+        - splunk.enable_service
+        - ansible_os_family == "Windows"
+  when: splunk_status.rc != 0
 
 - name: "Wait for splunkd management port"
   wait_for:

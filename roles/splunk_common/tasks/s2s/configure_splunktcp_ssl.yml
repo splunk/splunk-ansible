@@ -8,8 +8,7 @@
     value: "0"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  notify:
-    - Restart the splunkd service
+  register: splunktcp_ssl_enabled
 
 - name: Remove splunktcp input
   ini_file:
@@ -18,8 +17,7 @@
     state: absent
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  notify:
-    - Restart the splunkd service
+  register: splunktcp_disabled
 
 - name: Configure SSL certificate path
   ini_file:
@@ -29,8 +27,7 @@
     value: "{{ splunk.s2s.cert }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  notify:
-    - Restart the splunkd service
+  register: splunktcp_ssl_cert_configured
 
 - name: Configure SSL password
   ini_file:
@@ -40,8 +37,7 @@
     value: "{{ splunk.s2s.password }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  notify:
-    - Restart the splunkd service
+  register: splunktcp_ssl_pass_configured
 
 - name: Configure SSL root CA
   ini_file:
@@ -52,5 +48,20 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when: ansible_system is not match("CYGWIN*|Win32NT")
+  register: splunktcp_ssl_ca_configured
+
+- name: "Get Splunk status"
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  changed_when: False
+  failed_when: False
+  ignore_errors: yes
+
+# We want to restart only when Splunk is currently running and when any of the above have changed
+- name: Trigger restart
+  command: ls
+  changed_when: splunk_status.rc == 0 and (splunktcp_disabled is changed or splunktcp_ssl_cert_configured is changed or splunktcp_ssl_pass_configured is changed or splunktcp_ssl_ca_configured is changed)
   notify:
     - Restart the splunkd service
