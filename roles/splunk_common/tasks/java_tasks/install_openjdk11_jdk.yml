@@ -20,13 +20,22 @@
   become: yes
   become_user: "{{ privileged_user }}"
 
+- name: Install openjdk for CentOS
+  yum:
+    name: java-11-openjdk
+    state: present
+  when:
+    - ansible_distribution == 'CentOS'
+  become: yes
+  become_user: "{{ privileged_user }}"
+
 - name: Create splunk-launch.conf
   become: yes
   become_user: "{{ privileged_user }}"
   command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'
 
 - name: Create symlinks for java/javac
   file:
@@ -50,4 +59,4 @@
     regexp: '^JAVA_HOME'
     line: "JAVA_HOME=/opt/container_artifact/jdk-{{ java_update_version }}"
   when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'
