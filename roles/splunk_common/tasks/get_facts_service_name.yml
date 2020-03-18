@@ -1,4 +1,10 @@
 ---
+- name: "Setting service_name fact from config"
+  set_fact:
+    splunk_service_name: "{{ splunk.service_name }}"
+  when:
+    - "'service_name' in splunk"
+
 - name: Set Splunk service name
   block:
     - name: Setting SplunkForwarder service
@@ -38,5 +44,5 @@
         - ansible_system is not match("Linux")
         - splunk.role != "splunk_universal_forwarder"
   when:
-    - splunk_service_name is not defined
+    - splunk_service_name is not defined or not splunk_service_name
     - splunk.enable_service
