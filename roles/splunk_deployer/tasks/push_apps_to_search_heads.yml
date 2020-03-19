@@ -1,15 +1,10 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/find_installed_apps.yml
 
-# TODO: Might be better to use synchronize here, but we'll need rsync installed
-- name: Copy installed apps to shcluster/apps
-  command: "cp -R {{ splunk.app_paths.default }}/{{ item }} {{ splunk.app_paths.shc }}"
-  register: copy_apps
-  changed_when: copy_apps.rc == 0
-  failed_when: copy_apps.rc != 0
-  become: yes
-  become_user: "{{ splunk.user }}"
-  with_items: "{{ installed_apps }}"
+- include_tasks: ../../../roles/splunk_common/tasks/copy_installed_apps.yml
+  vars:
+    installed_apps: "{{ installed_apps }}"
+    dest: "{{ splunk.app_paths.shc }}"
 
 - name: Apply shcluster bundle
   command: "{{ splunk.exec }} apply shcluster-bundle -target {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --answer-yes"
