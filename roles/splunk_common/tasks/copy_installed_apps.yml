@@ -1,7 +1,7 @@
 ---
 # TODO: Might be better to use synchronize here, but we'll need rsync installed
 - name: "Copy installed apps to {{ dest }}"
-  shell: "tar -c --exclude local {{ splunk.app_paths.default }}/{{ item }} | tar -x -C {{ dest }}"
+  shell: "set -o pipefail && tar -c --exclude local {{ splunk.app_paths.default }}/{{ item }} | tar -x -C {{ dest }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ installed_apps }}"
