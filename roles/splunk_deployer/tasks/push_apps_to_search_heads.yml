@@ -3,7 +3,7 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/copy_installed_apps.yml
   vars:
-    installed_apps: "{{ installed_apps }}"
+    apps: "{{ installed_apps }}"
     dest: "{{ splunk.app_paths.shc }}"
 
 - name: Apply shcluster bundle
