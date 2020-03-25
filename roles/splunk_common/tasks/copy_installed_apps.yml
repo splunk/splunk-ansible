@@ -6,6 +6,6 @@
     chdir: "{{ splunk.app_paths.default }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  with_items: "{{ installed_apps }}"
+  with_items: "{{ apps }}"
   register: copy_app
   changed_when: copy_app.rc == 0
