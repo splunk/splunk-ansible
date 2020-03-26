@@ -6,12 +6,14 @@
 * [8.0.2](#802)
 * [8.0.1](#801)
 * [8.0.0](#800)
+* [7.3.5](#735)
 * [7.3.4.2](#7342)
 * [7.3.4](#734)
 * [7.3.3](#733)
 * [7.3.2](#732)
 * [7.3.1](#731)
 * [7.3.0](#730)
+* [7.2.10](#7210)
 * [7.2.9](#729)
 * [7.2.8](#728)
 * [7.2.7](#727)
@@ -87,6 +89,16 @@
 * Increasing delay intervals to better handle different platforms
 * Adding vars needed for Ansible Galaxy
 * Bugfix for pre-playbook tasks not supporting URLs
+
+---
+
+## 7.3.5
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.0.2.1.
+
+#### Changes
+* See [8.0.2.1](#8021) changes.
 
 ---
 
@@ -166,6 +178,16 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 * More multi-site functionality
 * Support for Cygwin-based Windows environments
 * Minor documentation changes
+
+---
+
+## 7.2.10
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.0.2.1.
+
+#### Changes
+* See [8.0.2.1](#8021) changes.
 
 ---
 
