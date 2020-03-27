@@ -4,6 +4,7 @@
   shell:
     cmd: "set -o pipefail && tar -c --exclude=local {{ item }} | tar -x -C {{ dest }}"
     chdir: "{{ splunk.app_paths.default }}"
+    executable: /bin/bash
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ apps }}"

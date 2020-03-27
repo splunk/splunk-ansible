@@ -204,6 +204,8 @@ $ ansible-playbook -i inventory/environ.py ...
 
 If SplunkBase apps are not specified or needed, the `splunkbase_username` and `splunkbase_password` variables should be omitted entirely.
 
+When deploying distributed Splunk Enterprise environments, apps should be installed on the deployer, cluster master, and deployment server instances. Each of these roles will take care of bundling and pushing the apps to their respective downstream peers. Note that any configuration files in any custom app's `local` directory will *not* be sent to peers - this is in alignment with Splunk best practices around configuration management. 
+
 ---
 
 ## SmartStore
