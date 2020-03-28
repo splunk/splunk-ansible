@@ -13,7 +13,7 @@
 
 - include_tasks: search_head_clustering.yml
   when:
-    - splunk_search_head_cluster is defined
+    - splunk_search_head_cluster | bool
     - "'deployer_url' in splunk and splunk.deployer_url"
 
 ## Indexer Clustering Scenario
@@ -41,12 +41,12 @@
   when:
     - splunk.deployment_server is defined
     - splunk.deployment_server
-    - splunk_search_head_cluster is not defined
+    - not splunk_search_head_cluster | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
-    - splunk_search_head_cluster is not defined
+    - not splunk_search_head_cluster | bool
     - splunk.deployment_server is not defined or not splunk.deployment_server
 
 - include_tasks: setup_multisite.yml
