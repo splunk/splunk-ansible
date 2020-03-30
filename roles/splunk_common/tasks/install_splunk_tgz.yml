@@ -9,9 +9,10 @@
   become: yes
   become_user: "{{ privileged_user }}"
 
-- set_fact:
+- name: Define a path for the downloaded package
+  set_fact:
     downloaded_splunk_path: "{{ download_result.dest }}"
-  when: download_result is defined and download_result.changed | bool
+  when: download_result is defined
 
 - name: Install Splunk from downloaded local build
   unarchive:
