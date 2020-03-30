@@ -34,7 +34,7 @@
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
   when:
-    - splunk_search_head_cluster is defined
+    - splunk_search_head_cluster | bool
     - splunk.apps_location
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
