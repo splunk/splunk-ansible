@@ -12,7 +12,7 @@
 - name: Define a path for the downloaded package
   set_fact:
     downloaded_splunk_path: "{{ download_result.dest }}"
-  when: download_result is defined
+  when: download_result is defined and download_result.dest is defined
 
 - name: Install Splunk from downloaded local build
   unarchive:
@@ -20,7 +20,7 @@
     dest: "{{ splunk.opt }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  when: download_result is defined
+  when: downloaded_splunk_path is defined
   register: install_result
   until: install_result is succeeded
   retries: "{{ retry_num }}"
