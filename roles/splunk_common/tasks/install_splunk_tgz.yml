@@ -1,4 +1,4 @@
-- name: Download Splunk with the bearer token authentication
+- name: Download Splunk with an optional bearer token
   get_url:
     url: "{{ splunk.build_location }}"
     dest: "{{ splunk.opt }}"
