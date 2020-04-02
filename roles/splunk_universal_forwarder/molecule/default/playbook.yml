@@ -25,7 +25,6 @@
       role: splunk_universal_forwarder
       license_uri: null
       preferred_captaincy: true
-      build_remote_src: true
       build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.1.1/linux/splunkforwarder-7.3.1.1-7651b7244cf2-Linux-x86_64.tgz
       apps_location: null
       admin_user: admin
