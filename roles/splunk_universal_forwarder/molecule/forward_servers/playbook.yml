@@ -30,6 +30,7 @@
       preferred_captaincy: true
       build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.1.1/linux/splunkforwarder-7.3.1.1-7651b7244cf2-Linux-x86_64.tgz
       apps_location: null
+      build_url_bearer_token: null
       admin_user: admin
       app_paths:
         default: /opt/splunkforwarder/etc/apps

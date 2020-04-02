@@ -27,6 +27,7 @@
       preferred_captaincy: true
       build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.2/linux/splunkforwarder-7.3.2-c60db69f8e32-linux-2.6-amd64.deb
       apps_location: null
+      build_url_bearer_token: null
       admin_user: admin
       app_paths:
         default: /opt/splunkforwarder/etc/apps
