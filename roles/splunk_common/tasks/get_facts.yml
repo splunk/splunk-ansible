@@ -98,6 +98,8 @@
   when:
     - "splunk_forward_servers is not defined"
     - "'splunk_indexer' in groups"
+    # Prevent self-forwarding
+    - splunk.role != "splunk_indexer"
 
 # if not specified in config *and*
 # no index clusters, then look for standalone
@@ -108,19 +110,14 @@
   when:
     - "splunk_forward_servers is not defined"
     - "'splunk_standalone' in groups"
+    # Prevent self-forwarding
+    - splunk.role != "splunk_standalone"
     # This part takes a little explaining.  If we have a mixed cluster with no indexers
     # (Only standalone and search heads) we should not automatically forward the data to
     # standalone instances UNLESS they are specified by forward-servers
     - "'splunk_search_head' not in groups"
 
-# usually we can auto detect what the service name should be, but sometimes
+# Usually we can auto detect what the service name should be, but sometimes
 # we want to manually specify it. This is where we detect it was manually set.
-- name: "Setting service_name fact from config"
-  set_fact:
-    splunk_service_name: "{{ splunk.service_name }}"
-  when:
-    - "'service_name' in splunk"
-
-- name: "Auto Detect service_name"
+- name: "Detect service name"
   include_tasks: get_facts_service_name.yml
-  when: splunk_service_name is not defined

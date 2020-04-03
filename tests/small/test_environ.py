@@ -440,36 +440,35 @@ def test_getJava_exception(os_env, java_version, java_download_url, err_msg):
     assert vars_scope["java_download_url"] == java_download_url
     assert vars_scope["java_update_version"] == None
 
-@pytest.mark.parametrize(("default_yml", "os_env", "remote_src", "build"),
+@pytest.mark.parametrize(("default_yml", "os_env", "build", "build_url_bearer_token"),
                          [
-                            ({}, {}, False, None),
+                            ({}, {}, None, None),
                             # Check default.yml parameters
-                            ({"buildlocation": "http://server/file.tgz"}, {}, False, None),
-                            ({"build_location": None}, {}, False, None),
-                            ({"build_location": ""}, {}, False, ""),
-                            ({"build_location": "/path/to/file.tgz"}, {}, False, "/path/to/file.tgz"),
-                            ({"build_location": "http://server/file.tgz"}, {}, True, "http://server/file.tgz"),
-                            ({"build_location": "https://server/file.tgz"}, {}, True, "https://server/file.tgz"),
+                            ({"buildlocation": "http://server/file.tgz"}, {}, None, None),
+                            ({"build_location": None}, {}, None, None),
+                            ({"build_location": ""}, {}, "", None),
+                            ({"build_location": "/path/to/file.tgz"}, {}, "/path/to/file.tgz", None),
+                            ({"build_location": "http://server/file.tgz"}, {}, "http://server/file.tgz", None),
+                            ({"build_location": "https://server/file.tgz"}, {}, "https://server/file.tgz", None),
                             # Check environment variable parameters
-                            ({}, {"SPLUNK_BUILD": "http://server/file.tgz"}, False, None),
-                            ({}, {"SPLUNK_BUILD_URL": None}, False, None),
-                            ({}, {"SPLUNK_BUILD_URL": ""}, False, ""),
-                            ({}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz"}, False, "/path/to/file.tgz"),
-                            ({}, {"SPLUNK_BUILD_URL": "http://server/file.tgz"}, True, "http://server/file.tgz"),
-                            ({}, {"SPLUNK_BUILD_URL": "https://server/file.tgz"}, True, "https://server/file.tgz"),
+                            ({}, {"SPLUNK_BUILD": "http://server/file.tgz"}, None, None),
+                            ({}, {"SPLUNK_BUILD_URL": None}, None, None),
+                            ({}, {"SPLUNK_BUILD_URL": ""}, "", None),
+                            ({}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz", "SPLUNK_BUILD_URL_BEARER_TOKEN": "testToken"}, "/path/to/file.tgz", "testToken"),
+                            ({}, {"SPLUNK_BUILD_URL": "http://server/file.tgz", "SPLUNK_BUILD_URL_BEARER_TOKEN": "testToken"}, "http://server/file.tgz", "testToken"),
+                            ({}, {"SPLUNK_BUILD_URL": "https://server/file.tgz", "SPLUNK_BUILD_URL_BEARER_TOKEN": "testToken"}, "https://server/file.tgz", "testToken"),
                             # Check order of precedence
-                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "https://server/file2.tgz"}, True, "https://server/file2.tgz"),
-                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz"}, False, "/path/to/file.tgz"),
+                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "https://server/file2.tgz"}, "https://server/file2.tgz", None),
+                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz"}, "/path/to/file.tgz", None),
                          ]
                         )
-def test_getSplunkBuild(default_yml, os_env, remote_src, build):
+def test_getSplunkBuild(default_yml, os_env, build, build_url_bearer_token):
     vars_scope = dict()
     vars_scope["splunk"] = default_yml
     with patch("os.environ", new=os_env):
         environ.getSplunkBuild(vars_scope)
-    assert type(vars_scope["splunk"]["build_remote_src"]) == bool
-    assert vars_scope["splunk"]["build_remote_src"] == remote_src
     assert vars_scope["splunk"]["build_location"] == build
+    assert vars_scope["splunk"]["build_url_bearer_token"] == build_url_bearer_token
 
 @pytest.mark.parametrize(("default_yml", "trigger_splunkbase"),
                          [

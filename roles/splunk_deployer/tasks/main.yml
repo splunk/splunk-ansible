@@ -1,6 +1,7 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
+# TODO: Maybe we can make this a REST call?
 - name: Set deployer SHC key and label
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
@@ -33,7 +34,7 @@
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
   when:
-    - splunk_search_head_cluster is defined
+    - splunk_search_head_cluster | bool
     - splunk.apps_location
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml

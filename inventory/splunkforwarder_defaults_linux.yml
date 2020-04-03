@@ -73,7 +73,7 @@ splunk:
         replication_factor: 3
         replication_port: 9887
     enable_service: False
-    service_name: "splunk"
+    service_name:
     smartstore:
     app_paths:
         default: !!python/object/apply:os.path.join [*home, "etc", "apps"]

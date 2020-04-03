@@ -1,3 +1,4 @@
+---
 - include_tasks: ../../../roles/splunk_common/tasks/find_installed_apps.yml
 
 - include_tasks: generate_ess_bundle.yml
@@ -8,11 +9,7 @@
   when:
     - '"itsi" in installed_apps'
 
-# TODO: Might be better to use synchronize here, but we'll need rsync installed
-- name: Copy installed apps to master-apps
-  command: "cp -R {{ splunk.app_paths.default }}/{{ item }} {{ splunk.app_paths.idxc }}"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  with_items: "{{ installed_apps }}"
-  register: copy_app
-  changed_when: copy_app.rc == 0
+- include_tasks: ../../../roles/splunk_common/tasks/copy_installed_apps.yml
+  vars:
+    apps: "{{ installed_apps }}"
+    dest: "{{ splunk.app_paths.idxc }}"

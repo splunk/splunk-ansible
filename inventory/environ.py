@@ -304,10 +304,8 @@ def getSplunkBuild(vars_scope):
     """
     Determine the location of the Splunk build
     """
+    vars_scope["splunk"]["build_url_bearer_token"] = os.environ.get("SPLUNK_BUILD_URL_BEARER_TOKEN", vars_scope["splunk"].get("build_url_bearer_token"))
     vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"].get("build_location"))
-    vars_scope["splunk"]["build_remote_src"] = False
-    if vars_scope["splunk"]["build_location"] and vars_scope["splunk"]["build_location"].startswith("http"):
-        vars_scope["splunk"]["build_remote_src"] = True
 
 def getSplunkbaseToken(vars_scope):
     """
@@ -641,7 +639,6 @@ def prep_for_yaml_out(inventory):
                    "delay_num",
                    "apps_location",
                    "build_location",
-                   "build_remote_src",
                    "hostname",
                    "upgrade",
                    "role",

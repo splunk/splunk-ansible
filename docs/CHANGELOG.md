@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [8.0.3](#803)
 * [8.0.2.1](#8021)
 * [8.0.2](#802)
 * [8.0.1](#801)
@@ -25,6 +26,18 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.0.3
+
+#### What's New?
+* Support for Java installations on Red Hat and CentOS
+* Updated defaults for `service_name`
+
+#### Changes
+* In S2S configuration, revised Splunk restart trigger to occur only when splunktcp has changed and Splunk is running
+* Refactored how apps are copied and disabled
 
 ---
 
@@ -110,7 +123,7 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 #### Changes
 * See [8.0.2.1](#8021) changes.
 
---- 
+---
 
 ## 7.3.4
 
@@ -120,7 +133,7 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 #### Changes
 * See [8.0.1](#801) changes.
 
---- 
+---
 
 ## 7.3.3
 
@@ -136,7 +149,7 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 * Support for cluster labels via environment variables
 * Bugfixes around app installation (through default.yml and pathing)
 
---- 
+---
 
 ## 7.3.2
 
@@ -148,7 +161,7 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 * Support and compatibility across Python 2 and Python 3
 * Various bugfixes
 
---- 
+---
 
 ## 7.3.1
 
@@ -211,7 +224,7 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 
 ---
 
-## 7.2.7 
+## 7.2.7
 
 #### What's New?
 * Reorganizing multi-site playbooks
