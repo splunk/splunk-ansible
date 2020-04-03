@@ -107,10 +107,6 @@ splunk:
   * Splunk build location, either on the filesystem or a remote URL
   * Default: /tmp/splunk.tgz
 
-  build_remote_src: <bool>
-  * Boolean to determine whether the installer is local (false) or remote (true)
-  * Default: true
-
   license_master_url: <str>
   * Hostname of Splunk Enterprise license master instance. May be overridden using SPLUNK_LICENSE_MASTER_URL environment variable.
   * Default: null
@@ -465,7 +461,6 @@ splunk:
   role: splunk_standalone
   upgrade: false
   build_location: /tmp/splunk.tgz
-  build_remote_src: true
   apps_location: null
   license_uri: null
   admin_user: admin
