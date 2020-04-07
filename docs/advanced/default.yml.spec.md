@@ -254,13 +254,30 @@ splunk:
   * Determine the port used for SplunkWeb
   * Default: 8000
 
-  s2s_enable: <int|bool>
-  * Determine whether or not to enable Splunk-to-Splunk communication. This is REQUIRED for any distributed topologies.
-  * Default: true
+  s2s:
+    enable: <bool>
+    * Determine whether or not to enable Splunk-to-Splunk communication. This is REQUIRED for any distributed topologies.
+    * Default: true
 
-  s2s_port: <int>
-  * Determine the port used for Splunk-to-Splunk communication
-  * Default: 9997
+    port: <int>
+    * Determine the port used for the Splunk-to-Splunk networking
+    * Default: 9997
+
+    ssl: <bool>
+    * When true, enables splunktcp input to use SSL
+    * Default: false
+
+    cert: <str>
+    * Coupled with the ssl parameter above, specify the path to the SSL certificate used for splunktcp-ssl
+    * Default: null
+
+    password: <str>
+    * Coupled with the ssl parameter above, specify the SSL password used for splunktcp-ssl
+    * Default: null
+
+    ca: <str>
+    * Coupled with the ssl parameter above, specify the path to the CA certificate used for splunktcp-ssl
+    * Default: null
 
   svc_port: <int>
   * Determine the port used for Splunk management/remote API calls
