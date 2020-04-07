@@ -226,6 +226,14 @@ splunk:
     * Determine a token to use for the HTTP event collector (HEC) endpoint
     * Default: null
 
+    cert: <str>
+    * Filepath to a custom SSL certificate for HEC
+    * Default: null
+
+    password: <str>
+    * SSL password used to create the SSL certificate for HEC
+    * Default: null
+
   http_enableSSL: <int|bool>
   * Determine whether or not to enable SSL on SplunkWeb
   * Default: 0
