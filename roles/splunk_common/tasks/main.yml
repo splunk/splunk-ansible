@@ -94,9 +94,7 @@
     - first_run | bool
 
 - include_tasks: set_any_generic_config.yml
-  when:
-    - "'conf' in splunk"
-    - first_run | bool
+  when: "'conf' in splunk and splunk.conf"
 
 - include_tasks: start_splunk.yml
 

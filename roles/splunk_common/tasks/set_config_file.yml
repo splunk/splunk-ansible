@@ -21,10 +21,6 @@
   vars:
     stanza_name: "{{ stanza.key }}"
     stanza_settings: "{{ stanza.value }}"
-  when:
-    - stanza.value is defined
-    - stanza.value
-    - (stanza.value | length > 0)
   with_dict: "{{ conf_stanzas }}"
   loop_control:
     loop_var: stanza

@@ -380,16 +380,17 @@ splunk:
   * Name of directory for the Splunk tar
   * Default: splunk
   
-  conf: <dict>
-    (filename):
-      directory: <str - filepath>
-      * Path in filesystem to create `.conf` file
-      * Default: /opt/splunk/etc/system/local
+  conf: <list>
+    - key: <sttr - filename without .conf suffix)
+      value:
+        directory: <str - filepath>
+        * Path in filesystem to create `.conf` file
+        * Default: /opt/splunk/etc/system/local
 
-      content: <dict>
-        (section name): <dict>
-          (name) : (value)
-            * Key-value pairs in configuration file
+        content: <dict>
+          (section name): <dict>
+            (name) : (value)
+              * Key-value pairs in configuration file
 ```
 
 ### Configuration files
@@ -398,22 +399,23 @@ splunk:
 
 The `default.yml` file can be used to specify multiple named configuration files.
 
-`conf` accepts a dictionary where keys are names of `.conf` files and values contain the `directory` and `contents`. Files will be created in the directory specified in `directory` or the default directory (`/opt/splunk/etc/system/local`) if none are provided. `content` accepts a dictionary where keys are section names and values are key-value pairs to be listed in the configuration file.
+`conf` accepts an array of objects where each entry's key corresponds to the name of the `.conf` file and each entry's value contains a mapping of `directory` and `contents`. Files will be created in the directory specified in `directory` or the default directory (`/opt/splunk/etc/system/local`) if not provided. `content` accepts a dictionary where keys are section names and values are key-value pairs to be listed in the configuration file.
   
   
 The following example generates `user-prefs.conf` in `/opt/splunk/etc/users/admin/user-prefs/local`
 ```
 splunk:
   conf:
-    user-prefs:
-      directory: /opt/splunk/etc/users/admin/user-prefs/local
-      content:
-        general:
-          default_namespace : appboilerplate
-          search_use_advanced_editor : true
-          search_line_numbers : false
-          search_auto_format : false
-          search_syntax_highlighting : dark
+    - key: user-prefs
+      value: 
+        directory: /opt/splunk/etc/users/admin/user-prefs/local
+        content:
+          general:
+            default_namespace : appboilerplate
+            search_use_advanced_editor : true
+            search_line_numbers : false
+            search_auto_format : false
+            search_syntax_highlighting : dark
 ```
 
 ```
