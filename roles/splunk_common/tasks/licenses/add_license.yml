@@ -6,7 +6,9 @@
 
 - name: Copy license
   command: "cp {{ lic }} {{ splunk.license_download_dest }}"
-  when: lic_source.stat.exists
+  when:
+    - lic_source.stat.exists
+    - lic != splunk.license_download_dest
 
 - name: Download license
   get_url:
