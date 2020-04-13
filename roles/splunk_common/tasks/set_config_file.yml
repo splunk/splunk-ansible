@@ -21,6 +21,6 @@
   vars:
     stanza_name: "{{ stanza.key }}"
     stanza_settings: "{{ stanza.value }}"
-  with_dict: "{{ conf_stanzas }}"
+  with_dict: "{{ conf_stanzas | default({}) }}"
   loop_control:
     loop_var: stanza
