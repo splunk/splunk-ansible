@@ -7,20 +7,10 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Create {{ conf_file }}
-  file:
-    path: "{{ conf_directory }}/{{ conf_file }}"
-    state: touch
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-    mode: 0660
-  become: yes
-  become_user: "{{ splunk.user }}"
-
 - include_tasks: set_config_stanza.yml
   vars:
     stanza_name: "{{ stanza.key }}"
-    stanza_settings: "{{ stanza.value }}"
-  with_dict: "{{ conf_stanzas | default({}) }}"
+    stanza_settings: "{{ stanza.value | default({}) }}"
+  with_dict: "{{ conf_stanzas }}"
   loop_control:
     loop_var: stanza
