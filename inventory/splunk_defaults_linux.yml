@@ -38,6 +38,11 @@ splunk:
     secret: 
     pass4SymmKey:
     svc_port: 8089
+    ssl:
+        enable: True
+        cert:
+        password:
+        ca:
     launch:
     set_search_peers: True
     s2s:
