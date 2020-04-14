@@ -93,10 +93,13 @@
     - splunk.http_enableSSL | bool
     - first_run | bool
 
-- include_tasks: set_any_generic_config.yml
-  when:
-    - "'conf' in splunk"
-    - first_run | bool
+- include_tasks: set_config_file.yml
+  vars:
+    conf_file: "{{ item.key }}.conf"
+    conf_directory: "{{ item.value.directory | default(splunk.home + '/etc/system/local', true) }}"
+    conf_stanzas: "{{ item.value.content | default({}) }}"
+  with_items: "{% if splunk.conf is mapping %}{{ splunk.conf | dict2items }}{% else %}{{ splunk.conf }}{% endif %}"
+  when: "'conf' in splunk and splunk.conf"
 
 - include_tasks: start_splunk.yml
 
