@@ -1,34 +1,32 @@
 ## Navigation
 
 * [Inventory Script](#inventory-script)
-    * [Environment variables for Splunk instance](#environment-variables-for-splunk-instance)
-    * [Additional environment variables for Splunk universal forwarder](#additional-environment-variables-for-splunk-universal-forwarder)
+    * [Supported environment variables](#supported-environment-variables)
+    * [Additional Splunk Universal Forwarder variables](#additional-splunk-universal-forwarder-variables)
 * [Defaults](#defaults)
     * [Loading defaults through file](#loading-defaults-through-file)
     * [Loading defaults through URL](#loading-defaults-through-url)
     * [Schema](#schema)
-* [Apps](#app)
+* [Apps](#apps)
 * [SmartStore](#smartstore)
-* [Custom splunk-launch.conf](#custom-splunk-launch-conf)
+* [Custom splunk-launch.conf](#custom-splunk-launchconf)
 
 ---
 
 ## Inventory Script
-Splunk-Ansible ships with an inventory script under `inventory/environ.py`. Environ.py is responsible for gathering user configurations from a local yaml file and/or os environment variables. Then, environ.py converts gathered configurations into Ansible variables that are accessible in Ansible tasks.
+Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The script gathers user configurations from a local YAML file and/or OS environment variables and converts them into Ansible variables accessible in Ansible tasks.
 
-Below is the list of all environment variables that the inventory script can work with.
-
-#### Environment variables for Splunk instance
+### Supported environment variables
 
 | Environment Variable Name | Description | Required for Standalone | Required for Search Head Clustering | Required for Index Clustering |
 | --- | --- | --- | --- | --- |
-| SPLUNK_BUILD_URL | URL to Splunk build where we can fetch a Splunk build to install | no | no | no |
-| SPLUNK_DEFAULTS_URL | default.yml URL | no | no | no |
-| SPLUNK_ALLOW_UPGRADE | If this is True (default), we compare the target build version against the current installed one, and perform an upgrade if they're different. | no | no | no |
-| SPLUNK_ROLE | Specify the container’s current Splunk Enterprise role. Supported Roles: splunk_standalone, splunk_indexer, splunk_deployer, splunk_search_head, etc. | no | yes | yes |
+| SPLUNK_BUILD_URL | URL of Splunk build to be installed | no | no | no |
+| SPLUNK_DEFAULTS_URL | URL of `default.yml` | no | no | no |
+| SPLUNK_ALLOW_UPGRADE | Perform upgrade if target build version doesn't match installed version | no | no | no |
+| SPLUNK_ROLE | The container’s current Splunk Enterprise role. Supported Roles: `splunk_standalone`, `splunk_indexer`, `splunk_deployer`, `splunk_search_head`, etc. See [Roles](https://github.com/splunk/splunk-ansible/tree/develop/roles). | no | yes | yes |
 | SPLUNK_HOSTNAME | Specify the instance's hostname. | no | no | no |
 | DEBUG | Print Ansible vars to stdout (supports Docker logging) | no | no | no |
-| SPLUNK_START_ARGS | Accept the license with “—accept-license”. Please note, we will not start a container without the existence of --accept-license in this variable. | yes | yes | yes |
+| SPLUNK_START_ARGS | Accept the license with `—accept-license` in this variable. The container will not start without it. | yes | yes | yes |
 | SPLUNK_LICENSE_URI | URI we can fetch a Splunk Enterprise license. This can be a local path, a remote URL, or ["Free"](https://docs.splunk.com/Documentation/Splunk/latest/Admin/MoreaboutSplunkFree). | no | no | no |
 | SPLUNK_IGNORE_LICENSE | Flag to disable any plays that would add a license. Set this env var to "true" if you do not want to license your installation. | no | no | no |
 | SPLUNK_LICENSE_INSTALL_PATH | Path on filesystem where Splunk license will be moved/downloaded to | no | no | no |
@@ -88,7 +86,7 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL | For multisite topologies, define the total replication factor | no | no | no |
 | SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN | For multisite topologies, define the origin search factor | no | no | no |
 | SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL | For multisite topologies, define the total search factor | no | no | no |
-| NO_HEALTHCHECK | Disable the Splunk healthcheck script | no | no | yes |
+| NO_HEALTHCHECK | Disable the Splunk health check script | no | no | yes |
 | STEPDOWN_ANSIBLE_USER | Removes Ansible user from the sudo group when set to true. This means that no other users than root will have root access. | no | no | no |
 | SPLUNK_HOME_OWNERSHIP_ENFORCEMENT | Recursively enforces ${SPLUNK_HOME} to be owned by the user "splunk". Default value is true. | no | no | no |
 | HIDE_PASSWORD | Set to true to hide all Ansible task logs with Splunk password in them in order to secure our output to stdout. | no | no | no |
@@ -112,19 +110,19 @@ Below is the list of all environment variables that the inventory script can wor
 | SPLUNK_ANSIBLE_POST_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed after `site.yml` | no | no | no |
 | SPLUNK_ANSIBLE_ENV | Pass in a comma-separated list of "key=value" pairs that will be mapped to environment variables used during the entirety of `site.yml` execution | no | no | no |
 
-* Password must be set either in default.yml or as the environment variable `SPLUNK_PASSWORD`
+\* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 
-#### Additional environment variables for Splunk universal forwarder
+#### Additional Splunk Universal Forwarder variables
 
 The `splunk/universalforwarder` image accepts the majority* environment variables as the `splunk/splunk` image above. However, there are some additional ones that are specific to the Universal Forwarder.
 
-* **Note:** Specifically for the `splunk/universalforwarder` image, the environment variable `SPLUNK_ROLE` will by default be set to `splunk_universal_forwarder`. This image cannot accept any other role, and should not be changed (unlike its `splunk/splunk` image counterpart).
+\* **Note:** Specifically for the `splunk/universalforwarder` image, the environment variable `SPLUNK_ROLE` will by default be set to `splunk_universal_forwarder`. This image cannot accept any other role, and should not be changed (unlike its `splunk/splunk` image counterpart).
 
 | Environment Variable Name | Description | Required for Standalone | Required for Search Head Clustering | Required for Index Clustering |
 | --- | --- | --- | --- | --- |
 | SPLUNK_CMD | List of commands to run after Splunk starts separated by comma. Ansible will run “{{splunk.exec}} {{item}}”. | no | no | no |
 
-#### Suggestions for environment variables for splunk search heasd cluster
+#### Suggestions for environment variables for splunk search head cluster
 
 Based on splunk official guide for splunk search cluster configuration we suggest to pass in environment variable `SPLUNK_HOSTNAME` with a fully qualified domain name. The dynamic inventory script will assign the value of environment `SPLUNK_HOSTNAME` if passed in or `socket.getfqdn()` to "{{ splunk.hostname }}" ansible variable finally which will be used to init search head cluster member. As environment variable `SPLUNK_SEARCH_HEAD_URL` will be used as the `--server_list` argument of search cluster captain bootstrap command and it requires that each member in `--server_list` must be exactly the same as the "{{ splunk.hostname }}" that you specified earlier when init each search head cluster member, so the member of `SPLUNK_SEARCH_HEAD_URL` must be fully qualified domain name too. To be consistent, we suggest to pass in the environment variables: `SPLUNK_SEARCH_HEAD_CAPTAIN_URL`, `SPLUNK_INDEXER_URL` and `SPLUNK_DEPLOYER_URL` with the fully qualified domain name too.
 
@@ -147,7 +145,7 @@ In order for the file in `/tmp/defaults/default.yml` to be read and interpreted,
 $ ansible-playbook -i inventory/environ.py ...
 ```
 
-##### Loading defaults through URL
+#### Loading defaults through URL
 If the `default.yml` file is hosted as a static asset on some webserver, it can be retrieved using an HTTP GET request. The URL must point to a file in a proper YAML format in order for it to be used correctly. Currently, no parameters can be passed through the request. However, redirects are permitted.
 
 To specify a URL to pull a given `default.yml`, a dummy `default.yml` can be baked into each instance ([as instructed above](#loading-defaults-through-file)) to force Ansible to dynamically pull a new one. This placeholder will simply modify the url parameter shown below:
@@ -190,7 +188,7 @@ splunkbase_username: ...
 splunkbase_password: ...
 splunk:
   ...
-  apps_location: 
+  apps_location:
     - /tmp/app.tgz
     - http://webserver.com/path/to/splunkApp.spl
     - https://splunkbase.splunk.com/app/978/release/1.1/download
@@ -204,7 +202,7 @@ $ ansible-playbook -i inventory/environ.py ...
 
 If SplunkBase apps are not specified or needed, the `splunkbase_username` and `splunkbase_password` variables should be omitted entirely.
 
-When deploying distributed Splunk Enterprise environments, apps should be installed on the deployer, cluster master, and deployment server instances. Each of these roles will take care of bundling and pushing the apps to their respective downstream peers. Note that any configuration files in any custom app's `local` directory will *not* be sent to peers - this is in alignment with Splunk best practices around configuration management. 
+When deploying distributed Splunk Enterprise environments, apps should be installed on the deployer, cluster master, and deployment server instances. Each of these roles will take care of bundling and pushing the apps to their respective downstream peers. Note that any configuration files in any custom app's `local` directory will *not* be sent to peers - this is in alignment with Splunk best practices around configuration management.
 
 ---
 
@@ -230,9 +228,9 @@ splunk:
 ---
 
 ## Custom splunk-launch.conf
-`splunk-launch.conf` is a configuration file that exists in `${SPLUNK_HOME}/etc/` that has some global environment variables that are using by the `splunkd` process. You can add new variables to this file using either the `default.yml` or via environment variables. 
+`splunk-launch.conf` is a configuration file that exists in `${SPLUNK_HOME}/etc/` that has some global environment variables that are using by the `splunkd` process. You can add new variables to this file using either the `default.yml` or via environment variables.
 
-For instance, if you want to add `OPTIMISTIC_ABOUT_FILE_LOCKING=1` to the `splunk-launch.conf`, you can use this default.yml as reference: 
+For instance, if you want to add `OPTIMISTIC_ABOUT_FILE_LOCKING=1` to the `splunk-launch.conf`, you can use this `default.yml` as reference:
 ```
 ---
 splunk:
