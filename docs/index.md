@@ -26,9 +26,9 @@ See the [Ansible User Guide](https://docs.ansible.com/ansible/latest/user_guide/
 ## Table of Contents
 
 * [Getting Started](SETUP.md)
-    * [Install](SETUP.md#install)
-    * [Configure](SETUP.md#configure)
-    * [Run](SETUP.md#run)
+    * [Install splunk-ansible](SETUP.md#install-splunk-ansible)
+    * [Configure parameters](SETUP.md#configure-parameters)
+    * [Execute playbooks](SETUP.md#execute-playbooks)
 * [Examples](EXAMPLES.md)
 * [Advanced Usage](ADVANCED.md)
 * [Architecture](ARCHITECTURE.md)

@@ -1,14 +1,14 @@
 ## Navigation
 
-* [Install splunk-ansible](#install-splunk-ansible)
-* [Configure Parameters](#configure-parameters)
-* [Execute Playbooks](#execute-playbooks)
-* [Next Steps](#next-steps)
+* [Install Splunk-Ansible](#install-splunk-ansible)
+* [Configure parameters](#configure-parameters)
+* [Execute playbooks](#execute-playbooks)
+* [See also](#see-also)
 
 ----
 
-## Install splunk-ansible
-The playbooks of splunk-ansible are executed through a local connection. You should run the `ansible-playbook` command on the node you wish to bring up as a fully-fledged Splunk Enterprise instance. Accordingly, this means the contents of this repository must be packaged into the infrastructure layer itself.
+## Install Splunk-Ansible
+The playbooks of Splunk-Ansible are executed through a local connection. You should run the `ansible-playbook` command on the node you wish to bring up as a fully-fledged Splunk Enterprise instance. Accordingly, this means the contents of this repository must be packaged into the infrastructure layer itself.
 
 While it can be possible to provision a remote instance using these same playbooks, we do not officially support this.
 
@@ -37,7 +37,7 @@ In order to run Ansible and use these plays, you need to install the following d
 
 Be mindful of the different hardware and system requirements for each node in your Splunk Enterprise deployment. For more information, see [Splunk Enterprise recommended hardware](https://docs.splunk.com/Documentation/Splunk/latest/Installation/Systemrequirements#Recommended_hardware) guidelines.
 
-## Configure Parameters
+## Configure parameters
 Before you run Ansible, you need to tell it what hosts to act against, as well as tune how Splunk Enterprise gets set up!
 
 1. Start with standing up a host. For the purposes of bringing up an ephemeral target environment, we'll be using [Docker](https://www.docker.com/) to bring up the image [`splunk/splunk:latest`](https://hub.docker.com/r/splunk/splunk/) as so:
@@ -53,7 +53,7 @@ Alternatively, you can download the example `default.yml` supplied [here](advanc
 
 3. Inspect your newly-created `default.yml` and tweak options as you see fit. For a full list of parameters, please see the [`default.yml.spec`](advanced/default.yml.spec.md#spec).
 
-## Execute Playbooks
+## Execute playbooks
 In order to get your container to run Ansible, it needs a copy of all the playbooks. 
 
 1. If you're using the `splunk/splunk` Docker image, it conveniently already has all of the playbooks available - but for the sake of this exercise, copy everything in this repo into your remote host which is the container:
@@ -67,7 +67,7 @@ $ docker exec -it splcontainer bash -c 'cd /tmp/splunk-ansible; ansible-playbook
 ```
 You should see streaming Ansible output in your terminal. Here is what is happening when you run the above command:
 * `ansible-playbook` command is invoked using the playbook `site.yml`
-* The local connection plugin is explicityly used with `--connection local`
+* The local connection plugin is explicitly used with `--connection local`
 * Splunk Enterprise is configured towards your desired state as defined in `--extra-vars "@default.yml"`
 
 3. If everything went smoothly, you can log in to Splunk Enterprise with your browser pointed at `http://localhost:8000` using the credentials `admin/helloworld`. Additionally, Ansible should exit gracefully and you will the following if there are no errors:
@@ -75,7 +75,10 @@ You should see streaming Ansible output in your terminal. Here is what is happen
 PLAY RECAP ****************************************************************
 splunk                     : ok=29   changed=2    unreachable=0    failed=0
 ```
-__NOTE:__ The `ok`/`changed` count may change over time, but it's vital to see `failed=0` if everything went well.
+**NOTE:** The `ok`/`changed` count may change over time, but it's vital to see `failed=0` if everything went well.
 
-## Next Steps
-You successfully used `splunk-ansible`! Ready for more? Now that your feet are wet, play with more [examples](EXAMPLES.md), read more about the [architecture](ARCHITECTURE.md) of these Ansible playbooks, or learn how to setup more [advanced](ADVANCED.md) scenarios.
+## See also
+
+* [More examples](EXAMPLES.md)
+* [Architecture of Splunk-Ansible](ARCHITECTURE.md)
+* [Adding advanced configuration](ADVANCED.md)

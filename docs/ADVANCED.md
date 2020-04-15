@@ -30,31 +30,31 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_LICENSE_URI | URI we can fetch a Splunk Enterprise license. This can be a local path, a remote URL, or ["Free"](https://docs.splunk.com/Documentation/Splunk/latest/Admin/MoreaboutSplunkFree). | no | no | no |
 | SPLUNK_IGNORE_LICENSE | Flag to disable any plays that would add a license. Set this env var to "true" if you do not want to license your installation. | no | no | no |
 | SPLUNK_LICENSE_INSTALL_PATH | Path on filesystem where Splunk license will be moved/downloaded to | no | no | no |
-| SPLUNK_STANDALONE_URL | List of all Splunk Enterprise standalone hosts (network alias) separated by comma | no | no | no |
-| SPLUNK_SEARCH_HEAD_URL | List of all Splunk Enterprise search head hosts (network alias) separated by comma | no | yes | yes |
-| SPLUNK_INDEXER_URL| List of all Splunk Enterprise indexer hosts (network alias) separated by comma | no | yes | yes |
-| SPLUNK_HEAVY_FORWARDER_URL | List of all Splunk Enterprise heavy forwarder hosts (network alias) separated by comma | no | no | no |
+| SPLUNK_STANDALONE_URL | Comma-separated list of all Splunk Enterprise standalone hosts (network alias) | no | no | no |
+| SPLUNK_SEARCH_HEAD_URL | Comma-separated list of all Splunk Enterprise search head hosts (network alias) | no | yes | yes |
+| SPLUNK_INDEXER_URL| Comma-separated list of all Splunk Enterprise indexer hosts (network alias) | no | yes | yes |
+| SPLUNK_HEAVY_FORWARDER_URL | Comma-separated list of all Splunk Enterprise heavy forwarder hosts (network alias) | no | no | no |
 | SPLUNK_DEPLOYER_URL | One Splunk Enterprise deployer host (network alias) | no | yes | no |
 | SPLUNK_CLUSTER_MASTER_URL | One Splunk Enterprise cluster master host (network alias) | no | no | yes |
 | SPLUNK_SEARCH_HEAD_CAPTAIN_URL | One Splunk Enterprise search head host (network alias). Passing this ENV variable will enable search head clustering. | no | yes | no |
 | SPLUNK_LICENSE_MASTER_URL | One Splunk Enterprise license master host (network alias). Passing this ENV variable will enable license master setup. | no | no | no |
-| SPLUNK_DEPLOYMENT_SERVER | One Splunk host (network alias) that we use as a [deployment server](http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients) | no | no | no |
-| SPLUNK_ADD | List of items to add to monitoring separated by comma. Example, SPLUNK_ADD=udp 1514,monitor /var/log/\*. This will monitor udp 1514 port and /var/log/\* files. | no | no | no |
-| SPLUNK_BEFORE_START_CMD | List of commands to run before Splunk starts separated by comma. Ansible will run “{{splunk.exec}} {{item}}”. | no | no | no |
+| SPLUNK_DEPLOYMENT_SERVER | One Splunk host (network alias) that we use as a [deployment server](http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients). | no | no | no |
+| SPLUNK_ADD | Comma-separated list of items to add to monitoring. Example: `SPLUNK_ADD=udp 1514,monitor /var/log/\*`. This will monitor the UDP port 1514 and `/var/log/\*` files. | no | no | no |
+| SPLUNK_BEFORE_START_CMD | Comma-separated list of commands to run before Splunk starts. Ansible will run <!-- {% raw %} -->`{{splunk.exec}} {{item}}`<!-- {% endraw %} -->. | no | no | no |
 | SPLUNK_S2S_PORT | Splunk forwarding/receiving port. Default: `9997` | no | no | no |
 | SPLUNK_SVC_PORT | Splunk management/administration port. Default: `8089` | no | no | no |
 | SPLUNK_CERT_PREFIX | HTTP scheme used when making API requests to Splunk management endpoint. Default: `https` | no | no | no |
 | SPLUNK_ROOT_ENDPOINT | Allow SplunkWeb to be accessed behind a given route (ex. reverse proxy usage) | no | no | no |
 | SPLUNK_PASSWORD* | Default password of the admin user | yes | yes | yes |
-| SPLUNK_PASS4SYMMKEY | Used to overwrite default pass4SymmKey for Splunk secrets | no | no | no |
-| SPLUNK_HEC_TOKEN | HEC (HTTP Event Collector) Token when enabled | no | no | no |
-| SPLUNK_SHC_SECRET | Search Head Clustering Shared secret (being deprecated in favor of SPLUNK_SHC_PASS4SYMMKEY) | no | no | no |
-| SPLUNK_SHC_PASS4SYMMKEY | Password for the Search Head Clustering Shared secret | no | yes | no |
+| SPLUNK_PASS4SYMMKEY | Used to overwrite default `pass4SymmKey` for Splunk secrets | no | no | no |
+| SPLUNK_HEC_TOKEN | HEC (HTTP Event Collector) token when enabled | no | no | no |
+| SPLUNK_SHC_SECRET | Search Head Clustering shared secret (deprecated in favor of `SPLUNK_SHC_PASS4SYMMKEY`) | no | no | no |
+| SPLUNK_SHC_PASS4SYMMKEY | Password for the Search Head Clustering shared secret | no | yes | no |
 | SPLUNK_SHC_LABEL | Search head clustering label | no | yes | no |
 | SPLUNK_SHC_REPLICATION_FACTOR | Configure search head clustering replication factor | no | no | no |
-| SPLUNK_PREFERRED_CAPTAINCY | Setup search head clustering with preferred captaincy, typically pinned to the instance designated as the 'splunk_search_head_captain' | no | no | no |
-| SPLUNK_IDXC_SECRET | Indexer Clustering Shared Secret (being deprecated in favor of SPLUNK_SHC_PASS4SYMMKEY) | no | no | no |
-| SPLUNK_IDXC_PASS4SYMMKEY | Password for the Indexer Clustering Shared Secret | no | no | yes |
+| SPLUNK_PREFERRED_CAPTAINCY | Set up search head clustering with preferred captaincy, typically pinned to the instance designated as `splunk_search_head_captain` | no | no | no |
+| SPLUNK_IDXC_SECRET | Indexer Clustering shared Secret (deprecated in favor of `SPLUNK_SHC_PASS4SYMMKEY`) | no | no | no |
+| SPLUNK_IDXC_PASS4SYMMKEY | Password for the Indexer Clustering shared Secret | no | no | yes |
 | SPLUNK_IDXC_LABEL | Indexer clustering label | no | no | yes |
 | SPLUNK_IDXC_REPLICATION_FACTOR | Configure indexer clustering data replication factor | no | no | no |
 | SPLUNK_IDXC_SEARCH_FACTOR | Configure indexer clustering search factor | no | no | no |
@@ -64,7 +64,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_PID | Location of Splunk Enterprise process ID file (not recommended to change). Default: `/opt/splunk/var/run/splunk/splunkd.pid` | no | no | no |
 | SPLUNK_USER | User which owns the Splunk home directory and runs the splunkd process (not recommended to change). Default: `splunk` | no | no | no |
 | SPLUNK_GROUP | Group which owns the Splunk home directory and runs the splunkd process (not recommended to change). Default: `splunk` | no | no | no |
-| SPLUNK_PASS4SYMMKEY | Set user-defined pass4SymmKey in the general stanza of server.conf instead of using the Splunk default | no | no | no |
+| SPLUNK_PASS4SYMMKEY | Set user-defined `pass4SymmKey` in the general stanza of server.conf instead of using the Splunk default | no | no | no |
 | SPLUNK_SECRET | Set user-defined `${SPLUNK_HOME}/etc/splunk.secret` instead of using the Splunk default | no | no | no |
 | SPLUNK_ENABLE_SERVICE | Enable Splunk to start as a system service (`enable boot-start`) | no | no | no |
 | SPLUNK_SERVICE_NAME | Define Splunk service name when set to start as a system service | no | no | no |
@@ -88,19 +88,19 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL | For multisite topologies, define the total search factor | no | no | no |
 | NO_HEALTHCHECK | Disable the Splunk health check script | no | no | yes |
 | STEPDOWN_ANSIBLE_USER | Removes Ansible user from the sudo group when set to true. This means that no other users than root will have root access. | no | no | no |
-| SPLUNK_HOME_OWNERSHIP_ENFORCEMENT | Recursively enforces ${SPLUNK_HOME} to be owned by the user "splunk". Default value is true. | no | no | no |
-| HIDE_PASSWORD | Set to true to hide all Ansible task logs with Splunk password in them in order to secure our output to stdout. | no | no | no |
-| JAVA_VERSION | Supply "oracle:8", "openjdk:8", or "openjdk:11" to install a respective Java distribution. | no | no | no |
+| SPLUNK_HOME_OWNERSHIP_ENFORCEMENT | Recursively enforces `${SPLUNK_HOME}` to be owned by the user "splunk". Default: `True` | no | no | no |
+| HIDE_PASSWORD | Hide all Ansible task logs containing Splunk password to secure output to `stdout`. | no | no | no |
+| JAVA_VERSION | Supply `"oracle:8"`, `"openjdk:8"`, or `"openjdk:11"` to install a respective Java distribution. | no | no | no |
 | JAVA_DOWNLOAD_URL | Provide a custom URL where the Java installation will be fetched| no | no | no |
-| SPLUNK_TAIL_FILE | Determine which file gets written to the container's stdout (default: splunkd_stderr.log) | no | no | no |
-| SPLUNK_ENABLE_DFS | Enable Data Fabric Search (DFS) | no | no | no |
+| SPLUNK_TAIL_FILE | Determine which file gets written to the container's stdout (default: `splunkd_stderr.log`) | no | no | no |
+| SPLUNK_ENABLE_DFS | Enable [Data Fabric Search (DFS)](https://docs.splunk.com/Documentation/DFS/latest/DFS/Overview) | no | no | no |
 | SPLUNK_DFW_NUM_SLOTS | Maximum number of concurrent DFS searches that run on a search head cluster | no | no | no |
 | SPLUNK_DFC_NUM_SLOTS | Maximum number of concurrent DFS searches that run on each search head | no | no | no |
-| SPLUNK_DFW_NUM_SLOTS_ENABLED | Enables you to set the value of the field dfw_num_slots. | no | no | no |
+| SPLUNK_DFW_NUM_SLOTS_ENABLED | Enables you to set the value of the field `dfw_num_slots`. | no | no | no |
 | SPARK_MASTER_HOST | This setting identifies the Spark master. | no | no | no |
 | SPARK_MASTER_WEBUI_PORT | Identifies the port for the Spark master web UI. | no | no | no |
-| DMC_FORWARDER_MONITORING | Enables forwarder monitoring on all standalone and search head instances (default: False) | no | no | no |
-| DMC_ASSET_INTERVAL | Cron schedule that determines how often forwarder assets are re-built (default "3,18,33,48 * * * *" - every 15 minutes) | no | no | no |
+| DMC_FORWARDER_MONITORING | Enables forwarder monitoring on all standalone and search head instances. Default: `False` | no | no | no |
+| DMC_ASSET_INTERVAL | Cron schedule that determines how often forwarder assets are re-built. Default: `"3,18,33,48 * * * *"` = every 15 minutes) | no | no | no |
 | SPLUNK_ENABLE_ASAN | Internally used trigger to handle special provisioning of debug builds of Splunk Enterprise | no | no | no |
 | SPLUNK_DEFAULTS_URL | URL to a remote `default.yml` file - when fetched, this will get merged into a consolidated mapping of variables | no | no | no |
 | SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT | When fetching a remote `default.yml`, specify the timeout of the request | no | no | no |
@@ -108,7 +108,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_DEFAULTS_HTTP_MAX_DELAY | When fetching a remote `default.yml`, specify the delay between each retry | no | no | no |
 | SPLUNK_ANSIBLE_PRE_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed before `site.yml` | no | no | no |
 | SPLUNK_ANSIBLE_POST_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed after `site.yml` | no | no | no |
-| SPLUNK_ANSIBLE_ENV | Pass in a comma-separated list of "key=value" pairs that will be mapped to environment variables used during the entirety of `site.yml` execution | no | no | no |
+| SPLUNK_ANSIBLE_ENV | Pass in a comma-separated list of "key=value" pairs that will be mapped to environment variables used during `site.yml` execution | no | no | no |
 
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 
@@ -120,11 +120,15 @@ The `splunk/universalforwarder` image accepts the majority* environment variable
 
 | Environment Variable Name | Description | Required for Standalone | Required for Search Head Clustering | Required for Index Clustering |
 | --- | --- | --- | --- | --- |
-| SPLUNK_CMD | List of commands to run after Splunk starts separated by comma. Ansible will run “{{splunk.exec}} {{item}}”. | no | no | no |
+| SPLUNK_CMD | Comma-separated list of commands to run after Splunk starts. Ansible will run <!-- {% raw %} -->`{{splunk.exec}} {{item}}`<!-- {% endraw %} -->. | no | no | no |
 
-#### Suggestions for environment variables for splunk search head cluster
+#### Suggestions for environment variables for Splunk search head cluster
 
-Based on splunk official guide for splunk search cluster configuration we suggest to pass in environment variable `SPLUNK_HOSTNAME` with a fully qualified domain name. The dynamic inventory script will assign the value of environment `SPLUNK_HOSTNAME` if passed in or `socket.getfqdn()` to "{{ splunk.hostname }}" ansible variable finally which will be used to init search head cluster member. As environment variable `SPLUNK_SEARCH_HEAD_URL` will be used as the `--server_list` argument of search cluster captain bootstrap command and it requires that each member in `--server_list` must be exactly the same as the "{{ splunk.hostname }}" that you specified earlier when init each search head cluster member, so the member of `SPLUNK_SEARCH_HEAD_URL` must be fully qualified domain name too. To be consistent, we suggest to pass in the environment variables: `SPLUNK_SEARCH_HEAD_CAPTAIN_URL`, `SPLUNK_INDEXER_URL` and `SPLUNK_DEPLOYER_URL` with the fully qualified domain name too.
+For Splunk search cluster configuration, we suggest passing in the environment variables `SPLUNK_HOSTNAME` and `SPLUNK_SEARCH_HEAD_URL` with fully qualified domain names.
+
+The dynamic inventory script will assign the value of `SPLUNK_HOSTNAME` if defined or `socket.getfqdn()` to the <!-- {% raw %} -->`{{ splunk.hostname }}`<!-- {% endraw %} --> Ansible variable, which will be used to init search head cluster member. `SPLUNK_SEARCH_HEAD_URL` will be used as the `--server_list` argument of search cluster captain bootstrap command, and it requires that each member in `--server_list` must be exactly the same as the <!-- {% raw %} -->`{{ splunk.hostname }}`<!-- {% endraw %} --> specified earlier.
+
+To be consistent, we suggest passing in the environment variables `SPLUNK_SEARCH_HEAD_CAPTAIN_URL`, `SPLUNK_INDEXER_URL` and `SPLUNK_DEPLOYER_URL` with fully qualified domain names as well.
 
 ## Defaults
 For security purposes, we do not ship with a standard `default.yml`. However, it is a required component when running these Ansible playbooks in this codebase. This file can be created manually, but for a quick shortcut you can run:
@@ -172,7 +176,7 @@ To use the URL-based loading of a `default.yml`, it is required that the Ansible
 $ ansible-playbook -i inventory/environ.py ...
 ```
 
-##### Schema
+#### Schema
 For more information on the format and options exposed in a `default.yml`, please see the [full spec](advanced/default.yml.spec.md).
 
 ---
