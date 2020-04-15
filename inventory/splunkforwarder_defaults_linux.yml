@@ -35,7 +35,7 @@ splunk:
     admin_user: "admin"
     root_endpoint:
     password:
-    secret: 
+    secret:
     pass4SymmKey:
     svc_port: 8089
     launch:
@@ -46,7 +46,7 @@ splunk:
         ssl: False
         cert:
         password:
-        ca: 
+        ca:
     http_port: 8000
     http_enableSSL: 0
     http_enableSSL_cert:
@@ -57,6 +57,8 @@ splunk:
         port: 8088
         ssl: True
         token:
+        cert:
+        password:
     shc:
         enable: False
         secret:
