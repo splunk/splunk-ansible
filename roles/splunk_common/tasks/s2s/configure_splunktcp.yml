@@ -7,8 +7,7 @@
     value: "{{ 0 if 's2s' in splunk and 'enable' in splunk.s2s and splunk.s2s.enable else 1 }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  notify:
-    - Restart the splunkd service
+  register: splunktcp_enabled
 
 - name: Remove splunktcp-ssl input
   ini_file:
@@ -17,8 +16,7 @@
     state: absent
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  notify:
-    - Restart the splunkd service
+  register: splunktcp_ssl_disabled
 
 - name: Remove input SSL settings
   ini_file:
@@ -27,8 +25,7 @@
     state: absent
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  notify:
-    - Restart the splunkd service
+  register: splunktcp_ssl_reset
 
 - name: Reset root CA
   ini_file:
@@ -38,5 +35,20 @@
     state: absent
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+  register: splunktcp_ssl_ca_reset
+
+- name: "Get Splunk status"
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  changed_when: False
+  failed_when: False
+  ignore_errors: yes
+
+# We want to restart only when Splunk is currently running and when any of the above have changed
+- name: Trigger restart
+  command: ls
+  changed_when: splunk_status.rc == 0 and (splunktcp_enabled is changed or splunktcp_ssl_disabled is changed or splunktcp_ssl_reset is changed or splunktcp_ssl_ca_reset is changed)
   notify:
     - Restart the splunkd service

@@ -17,16 +17,17 @@ From a design perspective, the plays within `splunk-ansible` are meant to be run
 ---
 
 ## Provision local standalone
-<details><summary>"hosts" file inventory</summary><p>
+
+<details><summary markdown='span'><code>hosts</code> file inventory</summary><p></p>
 
 ```
 localhost ansible_connection=local
 ```
-</p></details>
+</details><p></p>
 
-<details><summary>"default.yml" contents</summary><p>
+<details><summary markdown='span'><code>default.yml</code></summary><p></p>
 
-```
+```yaml
 ---
 ansible_post_tasks: null
 ansible_pre_tasks: null
@@ -60,10 +61,11 @@ splunk:
     enable_service: false
     exec: /opt/splunk/bin/splunk
     group: splunk
-    hec_disabled: 1
-    hec_enableSSL: 1
-    hec_port: 8088
-    hec_token: null
+    hec:
+        enable: True
+        ssl: True
+        token: null
+        port: 8088
     home: /opt/splunk
     http_enableSSL: 0
     http_enableSSL_cert: null
@@ -100,7 +102,7 @@ splunk:
     wildcard_license: false
 splunk_home_ownership_enforcement: true
 ```
-</p></details>
+</details><p></p>
 
 Execution command:
 ```
@@ -111,16 +113,16 @@ ansible-playbook --inventory hosts --connection local site.yml --extra-vars "@de
 
 ## Provision HEC
 The HTTP Event Collector (HEC) enables sending data directly to Splunk via a HTTP endpoint and a token. Here's how you can enable it with a user-defined token (`abcd-1234-efgh-5678`).
-<details><summary>"hosts" file inventory</summary><p>
+<details><summary markdown='span'><code>hosts</code> file inventory</summary><p></p>
 
 ```
 localhost ansible_connection=local
 ```
-</p></details>
+</details><p></p>
 
-<details><summary>"default.yml" contents</summary><p>
+<details><summary markdown='span'><code>default.yml</code></summary><p></p>
 
-```
+```yaml
 ---
 ansible_post_tasks: null
 ansible_pre_tasks: null
@@ -154,10 +156,11 @@ splunk:
     enable_service: false
     exec: /opt/splunk/bin/splunk
     group: splunk
-    hec_disabled: 0
-    hec_enableSSL: 1
-    hec_port: 8088
-    hec_token: abcd-1234-efgh-5678
+    hec:
+        enable: True
+        ssl: True
+        token: abcd-1234-efgh-5678
+        port: 8088
     home: /opt/splunk
     http_enableSSL: 0
     http_enableSSL_cert: null
@@ -191,23 +194,23 @@ splunk:
     wildcard_license: false
 splunk_home_ownership_enforcement: true
 ```
-</p></details>
+</details><p></p>
 
 Execution command:
 ```
 ansible-playbook --inventory hosts --connection local site.yml --extra-vars "@default.yml" 
 ```
 
-For this case, please take note that the `hec_enableSSL` parameter will govern whether or not the HEC endpoint will be reachable over HTTP or HTTPS.
+For this case, the `splunk.hec.ssl` parameter will govern whether the HEC endpoint will be reachable over HTTP or HTTPS.
 
 ---
 
 ## Enable Reverse Proxy
 A reverse proxy can be used to access Splunk through some ingress controller resource or behind a load-balancer within your corporate firewall policy. Here's how you can enable SplunkWeb to run behind a prefix route such as `/splunkweb`.
 
-<details><summary>"default.yml" contents</summary><p>
+<details><summary markdown='span'><code>default.yml</code></summary><p></p>
 
-```
+```yaml
 ---
 ansible_post_tasks: null
 ansible_pre_tasks: null
@@ -242,10 +245,11 @@ splunk:
     enable_service: false
     exec: /opt/splunk/bin/splunk
     group: splunk
-    hec_disabled: 0
-    hec_enableSSL: 1
-    hec_port: 8088
-    hec_token: abcd-1234-efgh-5678
+    hec:
+        enable: True
+        ssl: True
+        token: abcd-1234-efgh-5678
+        port: 8088
     home: /opt/splunk
     http_enableSSL: 0
     http_enableSSL_cert: null
@@ -279,21 +283,21 @@ splunk:
     wildcard_license: false
 splunk_home_ownership_enforcement: true
 ```
-</p></details>
+</details><p></p>
 
 Execution command:
 ```
 ansible-playbook --inventory hosts --connection local site.yml --extra-vars "@default.yml" 
 ```
 
-After this runs, you should be able to access SplunkWeb at `http://localhost:8000/splunkweb`.
+After the command runs, you can access SplunkWeb at <http://localhost:8000/splunkweb>.
 
 ---
 
 ## Provision with Dynamic Inventory
 Ansible enables the use of custom inventory scripts. For more information on how to do this and how to create your own inventory script, please go to Ansible's documentation on dynamic inventories.
 
-This codebase includes an example of this, located at `inventory/environ.py`. This script is meant for the local connection use, and is the primary driver in making Splunk's official Docker image successful. The `environ.py` converts environment variables into Ansible variables dynamically so there's no need for the `default.yml` from previous examples. However, in some cases, the `default.yml` is still necessary in order to consolidate state across multiple instances of a distributed deployment.
+This codebase includes an example of this, located at `inventory/environ.py`. This script is meant for local connection use and is the primary driver in making the official Splunk Docker image successful. The `environ.py` converts environment variables into Ansible variables dynamically so there's no need for the `default.yml` from previous examples. However, in some cases, the `default.yml` is still necessary in order to consolidate state across multiple instances of a distributed deployment.
 
 Execution command:
 ```

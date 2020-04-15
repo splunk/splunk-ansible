@@ -35,7 +35,7 @@ splunk:
     admin_user: "admin"
     root_endpoint:
     password:
-    secret: 
+    secret:
     pass4SymmKey:
     svc_port: 8089
     launch:
@@ -52,10 +52,13 @@ splunk:
     http_enableSSL_cert:
     http_enableSSL_privKey:
     http_enableSSL_privKey_password:
-    hec_port: 8088
-    hec_disabled: 0
-    hec_enableSSL: 1
-    hec_token:
+    hec:
+        enable: True
+        port: 8088
+        ssl: True
+        token:
+        cert:
+        password:
     shc:
         secret:
         pass4SymmKey:
@@ -93,7 +96,7 @@ splunk:
     deployer_url:
 
     enable_service: False
-    service_name: "splunk"
+    service_name:
     smartstore:
     app_paths:
         default: !!python/object/apply:os.path.join [*home, "etc", "apps"]

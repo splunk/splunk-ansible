@@ -27,9 +27,9 @@
       license_master_included: false
       license_uri: null
       preferred_captaincy: true
-      build_remote_src: true
       build_location: https://download.splunk.com/products/universalforwarder/releases/8.0.2/linux/splunkforwarder-8.0.2-a7f645ddaf91-linux-2.6-x86_64.rpm
       apps_location: null
+      build_url_bearer_token: null
       admin_user: admin
       app_paths:
         default: /opt/splunkforwarder/etc/apps

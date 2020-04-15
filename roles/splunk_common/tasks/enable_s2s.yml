@@ -1,8 +1,10 @@
 ---
 - include_tasks: s2s/configure_splunktcp_ssl.yml
+  register: splunktcp_ssl_result
   when:
     - "'s2s' in splunk and 'ssl' in splunk.s2s and splunk.s2s.ssl | bool"
 
 - include_tasks: s2s/configure_splunktcp.yml
+  register: splunktcp_result
   when:
     - "'s2s' not in splunk or ('ssl' not in splunk.s2s or not splunk.s2s.ssl | bool)"

@@ -40,7 +40,8 @@ def test_getSplunkInventory():
 @patch('environ.loadDefaults', return_value={"splunk": {"http_port": 8000, "build_location": None}})
 @patch('environ.overrideEnvironmentVars')
 @patch('environ.getSecrets')
-def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVariables, mock_getSecrets):
+@patch('environ.getHEC')
+def test_getDefaultVars(mock_overrideEnvironmentVars, mock_loadDefaultSplunkVariables, mock_getSecrets, mock_getHEC):
     '''
     Unit test for getting our default variables
     '''
@@ -310,6 +311,43 @@ def test_getASan(default_yml, os_env, splunk_asan):
     else:
         assert vars_scope["ansible_environment"].get("ASAN_OPTIONS") == None
 
+@pytest.mark.parametrize(("default_yml", "os_env", "result"),
+            [
+                # Check null parameters
+                ({}, {}, {"enable": True, "port": 8088, "token": None, "ssl": True}),
+                # Check default.yml parameters
+                ({"enable": False}, {}, {"enable": False, "port": 8088, "token": None, "ssl": True}),
+                ({"port": 8099}, {}, {"enable": True, "port": 8099, "token": None, "ssl": True}),
+                ({"token": "abcd"}, {}, {"enable": True, "port": 8088, "token": "abcd", "ssl": True}),
+                ({"ssl": False}, {}, {"enable": True, "port": 8088, "token": None, "ssl": False}),
+                # Check env var parameters
+                ({}, {"SPLUNK_HEC_TOKEN": "qwerty"}, {"enable": True, "port": 8088, "token": "qwerty", "ssl": True}),
+                ({}, {"SPLUNK_HEC_PORT": "9999"}, {"enable": True, "port": 9999, "token": None, "ssl": True}),
+                ({}, {"SPLUNK_HEC_SSL": "true"}, {"enable": True, "port": 8088, "token": None, "ssl": True}),
+                ({}, {"SPLUNK_HEC_SSL": "false"}, {"enable": True, "port": 8088, "token": None, "ssl": False}),
+                ({}, {"SPLUNK_HEC_SSL": "FALSE"}, {"enable": True, "port": 8088, "token": None, "ssl": False}),
+                # Check both
+                ({"port": 8099}, {"SPLUNK_HEC_PORT": "19999"}, {"enable": True, "port": 19999, "token": None, "ssl": True}),
+                ({"token": "abcd"}, {"SPLUNK_HEC_TOKEN": "fdsa"}, {"enable": True, "port": 8088, "token": "fdsa", "ssl": True}),
+                ({"ssl": True}, {"SPLUNK_HEC_SSL": "fAlSe"}, {"enable": True, "port": 8088, "token": None, "ssl": False}),
+            ]
+        )
+def test_getHEC(default_yml, os_env, result):
+    vars_scope = {"splunk": {}}
+    vars_scope["splunk"] = {
+        "hec": {
+            "enable": True,
+            "port": 8088,
+            "token": None,
+            "ssl": True
+        }
+    }
+    vars_scope["splunk"]["hec"].update(default_yml)
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getHEC(vars_scope)
+    assert vars_scope["splunk"]["hec"] == result
+
 @pytest.mark.parametrize(("os_env", "license_master_url", "deployer_url", "cluster_master_url", "search_head_captain_url"),
                          [
                             ({}, "", "", "", ""),
@@ -402,36 +440,35 @@ def test_getJava_exception(os_env, java_version, java_download_url, err_msg):
     assert vars_scope["java_download_url"] == java_download_url
     assert vars_scope["java_update_version"] == None
 
-@pytest.mark.parametrize(("default_yml", "os_env", "remote_src", "build"),
+@pytest.mark.parametrize(("default_yml", "os_env", "build", "build_url_bearer_token"),
                          [
-                            ({}, {}, False, None),
+                            ({}, {}, None, None),
                             # Check default.yml parameters
-                            ({"buildlocation": "http://server/file.tgz"}, {}, False, None),
-                            ({"build_location": None}, {}, False, None),
-                            ({"build_location": ""}, {}, False, ""),
-                            ({"build_location": "/path/to/file.tgz"}, {}, False, "/path/to/file.tgz"),
-                            ({"build_location": "http://server/file.tgz"}, {}, True, "http://server/file.tgz"),
-                            ({"build_location": "https://server/file.tgz"}, {}, True, "https://server/file.tgz"),
+                            ({"buildlocation": "http://server/file.tgz"}, {}, None, None),
+                            ({"build_location": None}, {}, None, None),
+                            ({"build_location": ""}, {}, "", None),
+                            ({"build_location": "/path/to/file.tgz"}, {}, "/path/to/file.tgz", None),
+                            ({"build_location": "http://server/file.tgz"}, {}, "http://server/file.tgz", None),
+                            ({"build_location": "https://server/file.tgz"}, {}, "https://server/file.tgz", None),
                             # Check environment variable parameters
-                            ({}, {"SPLUNK_BUILD": "http://server/file.tgz"}, False, None),
-                            ({}, {"SPLUNK_BUILD_URL": None}, False, None),
-                            ({}, {"SPLUNK_BUILD_URL": ""}, False, ""),
-                            ({}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz"}, False, "/path/to/file.tgz"),
-                            ({}, {"SPLUNK_BUILD_URL": "http://server/file.tgz"}, True, "http://server/file.tgz"),
-                            ({}, {"SPLUNK_BUILD_URL": "https://server/file.tgz"}, True, "https://server/file.tgz"),
+                            ({}, {"SPLUNK_BUILD": "http://server/file.tgz"}, None, None),
+                            ({}, {"SPLUNK_BUILD_URL": None}, None, None),
+                            ({}, {"SPLUNK_BUILD_URL": ""}, "", None),
+                            ({}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz", "SPLUNK_BUILD_URL_BEARER_TOKEN": "testToken"}, "/path/to/file.tgz", "testToken"),
+                            ({}, {"SPLUNK_BUILD_URL": "http://server/file.tgz", "SPLUNK_BUILD_URL_BEARER_TOKEN": "testToken"}, "http://server/file.tgz", "testToken"),
+                            ({}, {"SPLUNK_BUILD_URL": "https://server/file.tgz", "SPLUNK_BUILD_URL_BEARER_TOKEN": "testToken"}, "https://server/file.tgz", "testToken"),
                             # Check order of precedence
-                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "https://server/file2.tgz"}, True, "https://server/file2.tgz"),
-                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz"}, False, "/path/to/file.tgz"),
+                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "https://server/file2.tgz"}, "https://server/file2.tgz", None),
+                            ({"build_location": "http://server/file1.tgz"}, {"SPLUNK_BUILD_URL": "/path/to/file.tgz"}, "/path/to/file.tgz", None),
                          ]
                         )
-def test_getSplunkBuild(default_yml, os_env, remote_src, build):
+def test_getSplunkBuild(default_yml, os_env, build, build_url_bearer_token):
     vars_scope = dict()
     vars_scope["splunk"] = default_yml
     with patch("os.environ", new=os_env):
         environ.getSplunkBuild(vars_scope)
-    assert type(vars_scope["splunk"]["build_remote_src"]) == bool
-    assert vars_scope["splunk"]["build_remote_src"] == remote_src
     assert vars_scope["splunk"]["build_location"] == build
+    assert vars_scope["splunk"]["build_url_bearer_token"] == build_url_bearer_token
 
 @pytest.mark.parametrize(("default_yml", "trigger_splunkbase"),
                          [
@@ -532,9 +569,6 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 # Check splunk.s2s.port
                 ({"splunk": {"s2s": {"port": "9999"}}}, {}, "splunk.s2s.port", 9999),
                 ({}, {"SPLUNK_S2S_PORT": "9991"}, "splunk.s2s.port", 9991),
-                # Check splunk.hec_token
-                ({"splunk": {"hec_token": "lalala"}}, {}, "splunk.hec_token", "lalala"),
-                ({}, {"SPLUNK_HEC_TOKEN": "alalal"}, "splunk.hec_token", "alalal"),
                 # Check splunk.enable_service
                 ({"splunk": {"enable_service": "yes"}}, {}, "splunk.enable_service", "yes"),
                 ({}, {"SPLUNK_ENABLE_SERVICE": "no"}, "splunk.enable_service", "no"),
