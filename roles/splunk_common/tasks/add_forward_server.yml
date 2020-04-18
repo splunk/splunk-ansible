@@ -17,6 +17,8 @@
   no_log: "{{ hide_password }}"
 
 - name: "Enable ssl-forwarding to {{ forward_servers }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "tcpout:group1"

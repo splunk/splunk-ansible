@@ -2,6 +2,8 @@
 # Configure forwarding to indexer cluster master
 # See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/indexerdiscovery
 - name: Setup indexer discovery for index-clustering
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "indexer_discovery:splunk-indexer"
@@ -18,6 +20,8 @@
     - Restart the splunkd service
 
 - name: Setup tcpout group for index-clustering
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "tcpout:group1"
@@ -34,6 +38,8 @@
   no_log: "{{ hide_password }}"
 
 - name: Setup default tcpout group for index-clustering
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "tcpout"
@@ -58,6 +64,8 @@
 
 # NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "indexAndForward"
