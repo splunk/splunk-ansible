@@ -208,7 +208,7 @@ If SplunkBase apps are not specified or needed, the `splunkbase_username` and `s
 
 When deploying distributed Splunk Enterprise environments, apps should be installed on the deployer, cluster master, and deployment server instances. Each of these roles will take care of bundling and pushing the apps to their respective downstream peers. Note that any configuration files in any custom app's `local` directory will *not* be sent to peers - this is in alignment with Splunk best practices around configuration management.
 
-To install an app from elsewhere, provide a path to a compressed splunkApp.spl file (either through a filesystem or URL) as seen above. For proper installation, apps should be compressed using `tar` in a GNU/Linux environment, apps compressed on OSX or other BSD-variant operating systems have been known to cause issues.
+To install an app from elsewhere, provide a path to a compressed `splunkApp.spl` file (either through a filesystem or URL) as seen above. For proper installation, apps should be compressed using `tar` in a GNU/Linux environment, as apps compressed on OSX or other BSD-variant operating systems have been known to cause issues.
 
 ---
 
