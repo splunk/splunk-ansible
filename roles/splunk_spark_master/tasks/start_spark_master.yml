@@ -1,3 +1,5 @@
 ---
 - name: Start spark master
   shell: "export JAVA_HOME={{ splunk.dfs.java_home }} && {{ splunk.dfs.spark_home }}/sbin/start-master.sh"
+  become: yes
+  become_user: "{{ privileged_user }}"
