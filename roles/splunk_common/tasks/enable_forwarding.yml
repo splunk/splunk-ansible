@@ -16,8 +16,6 @@
     - splunk_indexer_cluster | bool
     - item.value | length > 0
   no_log: "{{ hide_password }}"
-  notify:
-    - Restart the splunkd service
 
 - name: Setup tcpout group for index-clustering
   become: yes
@@ -74,3 +72,10 @@
   with_items:
     - {key: "index", value: "false"}
   no_log: "{{ hide_password }}"
+
+# We want to restart only when Splunk is currently running and when any of the above have changed
+- name: Trigger restart
+  command: ls
+  changed_when: splunk_status.rc == 0 and (splunktcp_enabled is changed or splunktcp_ssl_disabled is changed or splunktcp_ssl_reset is changed or splunktcp_ssl_ca_reset is changed)
+  notify:
+    - Restart the splunkd service
