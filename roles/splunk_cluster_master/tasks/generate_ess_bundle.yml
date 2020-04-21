@@ -52,18 +52,6 @@
     - ta_location is success
     - ansible_system is match("CYGWIN*|Win32NT")
 
-- name: Determine ESS default apps
-  set_fact:
-    ess_apps: ["DA-ESS-AccessProtection", "DA-ESS-EndpointProtection", "DA-ESS-IdentityManagement", "DA-ESS-NetworkProtection",
-               "DA-ESS-ThreatIntelligence", "SA-AccessProtection", "SA-AuditAndDataProtection", "SA-EndpointProtection", "SA-IdentityManagement",
-               "SA-NetworkProtection", "SA-ThreatIntelligence", "SA-UEBA", "SA-Utils", "SplunkEnterpriseSecuritySuite", "Splunk_SA_CIM",
-               "Splunk_SA_ExtremeSearch", "Splunk_TA_bluecoat-proxysg", "Splunk_TA_bro", "Splunk_TA_flowfix", "Splunk_TA_juniper",
-               "Splunk_TA_mcafee", "Splunk_TA_nessus", "Splunk_TA_nix", "Splunk_TA_oracle", "Splunk_TA_ossec", "Splunk_TA_rsa-securid",
-               "Splunk_TA_sophos", "Splunk_TA_sourcefire", "Splunk_TA_symantec-ep", "Splunk_TA_ueba", "Splunk_TA_websense-cg", "Splunk_TA_windows",
-               "TA-airdefense", "TA-alcatel", "TA-cef", "TA-fortinet", "TA-ftp", "TA-nmap", "TA-tippingpoint", "TA-trendmicro",
-               "Splunk_ML_Toolkit", "Splunk_SA_Scientific_Python_linux_x86_64", "Splunk_SA_Scientific_Python_linux_x86",
-               "Splunk_SA_Scientific_Python_darwin_x86_64", "Splunk_SA_Scientific_Python_windows_x86_64"]
-
 - name: Remove ESS apps from installed apps list
   set_fact:
     installed_apps: "{{ installed_apps | difference(ess_apps) | unique }}"

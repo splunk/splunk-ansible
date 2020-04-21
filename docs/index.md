@@ -1,32 +1,34 @@
-# Welcome to the splunk-ansible documentation!
+# Welcome to the Splunk-Ansible documentation!
 
-Welcome to Splunk's official documentation regarding Ansible playbooks for configuring and managing Splunk Enterprise and Universal Forwarder deployments. This repository contains plays that target all Splunk roles and deployment topologies, and currently work on any Linux-based platform. It is currently being used by the [Splunk's official Docker image](https://github.com/splunk/docker-splunk) project. 
+Welcome to the official Splunk documentation on [Ansible](https://docs.ansible.com/ansible/latest/index.html) playbooks for configuring and managing Splunk Enterprise and Universal Forwarder deployments. This repository contains plays that target all Splunk Enterprise roles and deployment topologies that work on any Linux-based platform.
 
-Please refer to [Ansible documentation](http://docs.ansible.com/) for more details about Ansible concepts and how it works. 
+Splunk-Ansible is currently being used by [Docker-Splunk](https://github.com/splunk/docker-splunk), the official Splunk Docker image project.
 
-##### What is Splunk Enterprise?
-Splunk Enterprise is a platform for operational intelligence. Our software lets you collect, analyze, and act upon the untapped value of big data that your technology infrastructure, security systems, and business applications generate. It gives you insights to drive operational performance and business results.
+### What is Splunk Enterprise?
+[Splunk Enterprise](https://www.splunk.com/en_us/software/splunk-enterprise.html) is a platform for operational intelligence. Our software lets you collect, analyze, and act upon the untapped value of big data that your technology infrastructure, security systems, and business applications generate. It gives you insights to drive operational performance and business results.
 
-Please refer to [Splunk products](https://www.splunk.com/en_us/software.html) for more knowledge about the features and capabilities of Splunk, and how you can bring it into your organization.
+See [Splunk Products](https://www.splunk.com/en_us/software.html) for more information about the features and capabilities of Splunk products and how you can [bring them into your organization](https://www.splunk.com/en_us/enterprise-data-platform.html).
 
-##### What is splunk-ansible?
-This code in this repository is used for configuring Splunk Enterprise and Splunk Universal Forwarder instances based on a declarative configuration. The role of Ansible here enables managing Splunk in a manner consistent with industry standards such as infrastructure automation and infrastructure-as-code.
+### What is Splunk-Ansible?
+The [Splunk-Ansible project](https://github.com/splunk/splunk-ansible) is a collection of Splunk configuration best practices, written as Ansible scripts. These scripts, called playbooks, can be used for configuring Splunk Enterprise and Universal Forwarder instances based on a declarative configuration.
 
-This repository should be used by people interested in configuring Splunk according to recommended best practices. The playbooks in this codebase are internally-vetted procedures and operations that administer and manage Splunk as done within the company.
+The playbooks in this codebase are internally-vetted procedures and operations that administer and manage Splunk as done within the company. Use Splunk-Ansible to manage Splunk Enterprise and Universal Forwarder instances in a manner consistent with industry standards, such as infrastructure automation and infrastructure-as-code.
 
-##### How to use splunk-ansible?
-Splunk-Ansible project is a collection of Splunk configuration best practices written as Ansible scripts. The playbooks in this codebase are internally-vetted procedures and operations that administer and manage Splunk as done within the company. 
+### How to use Splunk-Ansible
+Although this project can be used independently as ordinary Ansible scripts, there are necessary environment settings. For example, Splunk-Ansible assumes you need different users with specific permissions in your local environment.
 
-Although this project can be used independently as ordinary Ansible scripts, there are necessary environmental settings to have. For example, Splunk-Ansible assumes that you need different users with specific permission in your local environment. If you need a reference point, please refer to [Splunk's official Docker image](https://github.com/splunk/docker-splunk) project since Splunk-Ansible is tightly integrated into our docker image as the docker image offers a complete configuration package along with Splunk-Ansible.
+For reference, see [Docker-Splunk](https://github.com/splunk/docker-splunk), the official Splunk Docker image project. Splunk-Ansible is tightly integrated into our Docker image, which offers a complete configuration package along with Splunk-Ansible.
+
+See the [Ansible User Guide](https://docs.ansible.com/ansible/latest/user_guide/index.html) for more details on Ansible concepts and how it works.
 
 ----
 
 ## Table of Contents
 
 * [Getting Started](SETUP.md)
-    * [Install](SETUP.md#install)
-    * [Configure](SETUP.md#configure)
-    * [Run](SETUP.md#run)
+    * [Install splunk-ansible](SETUP.md#install-splunk-ansible)
+    * [Configure parameters](SETUP.md#configure-parameters)
+    * [Execute playbooks](SETUP.md#execute-playbooks)
 * [Examples](EXAMPLES.md)
 * [Advanced Usage](ADVANCED.md)
 * [Architecture](ARCHITECTURE.md)

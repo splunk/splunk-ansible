@@ -32,12 +32,15 @@
 ## 8.0.3
 
 #### What's New?
+* Support for custom SSL certificates for the HEC endpoint
 * Support for Java installations on Red Hat and CentOS
 * Updated defaults for `service_name`
 
 #### Changes
-* In S2S configuration, revised Splunk restart trigger to occur only when splunktcp has changed and Splunk is running
+* Switched `splunk.conf` in `default.yml` from a dictionary mapping to an array-based scheme. The change is backwards compatible but moving to the new array-based type is highly recommended as the new standard.
+* In S2S configuration, revised Splunk restart trigger to occur only when `splunktcp` has changed and Splunk is running
 * Refactored how apps are copied and disabled
+* Bugfix for supporting empty stanzas in config files
 
 ---
 
@@ -64,7 +67,7 @@
 #### Changes
 * Created new environment variables to control indexer + search head clustering replication and search factor at run-time; error handling of these values are now moved into dynamic inventory script
 * Created new environment variable `SPLUNK_PASS4SYMMKEY` to allow users to change the default shipped with Splunk Enterprise. Additionally, consolidated naming so `SPLUNK_SHC_SECRET` and `SPLUNK_IDXC_SECRET` will now be replaced by `SPLUNK_SHC_PASS4SYMMKEY` and `SPLUNK_IDXC_PASS4SYMMKEY` respectively in the future (see documentation on [securing clusters](https://docs.splunk.com/Documentation/Splunk/latest/Security/Aboutsecuringclusters))
-* Added `SPLUNK_LAUNCH_CONF` that accepts key=value comma-separated pairs (ex: `SPLUNK_LAUNCH_CONF=OPTIMISTIC_ABOUT_FILE_LOCKING=1,HELLO=WORLLD`) that will get written to the Splunk Enterprise instance's `splunk-launch.conf`
+* Added `SPLUNK_LAUNCH_CONF` that accepts key=value comma-separated pairs (ex: `SPLUNK_LAUNCH_CONF=OPTIMISTIC_ABOUT_FILE_LOCKING=1,HELLO=WORLD`) that will get written to the Splunk Enterprise instance's `splunk-launch.conf`
 * Splunk-to-Splunk forwarding and receiving is now rewritten to support an optional SSL. To utilize encryption, you must bring your own certificates and make them available to both forwarders and receivers. For more information, see the documentation on [securing forwarder to indexer communication](https://docs.splunk.com/Documentation/Splunk/8.0.1/Security/ConfigureSplunkforwardingtousesignedcertificates)
 * Added `ansible_environment` variable to `default.yml` to set environment variables for task action contexts (see Ansible documentation on [setting environment](https://docs.ansible.com/ansible/latest/user_guide/playbooks_environment.html))
 * Added and renamed variables in `default.yml` to control retry/backoff logic at a more granular level
@@ -87,7 +90,7 @@
 #### Changes
 * Small adjustment in forwarding settings to send data to specific tiers
 * Bugfix in SHC readiness probe to properly handle membership list updates
-* Adding more advanced options for SmartStore, including cachemanager, per-index retention sizes, and hotlist recency settings
+* Adding more advanced options for SmartStore, including cache manager, per-index retention sizes, and hotlist recency settings
 **NOTE** If you are currently using SmartStore, this change does break backwards-compatibility with former versions of the `default.yml` schema. This was necessary to expose the additional features asked for by the community. Please regenerate the `default.yml` if you plan on upgrading to this version.
 
 ---
@@ -144,10 +147,10 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 
 #### Changes
 * Removing unnecessary apps in distributed ITSI installations
-* Partioning apps in serverclass.conf when using the deployment server
+* Partioning apps in `serverclass.conf` when using the deployment server
 * Adding support for activating Splunk Free license on boot
 * Support for cluster labels via environment variables
-* Bugfixes around app installation (through default.yml and pathing)
+* Bugfixes around app installation (through `default.yml` and pathing)
 
 ---
 
@@ -282,16 +285,16 @@ Nothing - releasing new images to support Splunk Enterprise maintenance patch.
 
 #### What's New?
 * Support for Java installation in standalones and search heads
-* Hardening of asyncronous SHC bootstrapping procedures
+* Hardening of asynchronous SHC bootstrapping procedures
 * App installation across all topologies
 * Adding CircleCI to support automated regression testing
 * Minor bugfixes
 
 #### Changes
 * Changing replication port from 4001 to 9887 for PS and field best practices
-* Adding support for multiple licenses via URL and filepath globs
+* Adding support for multiple licenses via URL and file path globs
 * Adding support for java installation
-* Hardening SHC-readiness during provisioning due to large-scale deployment syncronization issues
+* Hardening SHC-readiness during provisioning due to large-scale deployment synchronization issues
 * Extracting out `admin` username to be dynamic and flexible and enabling it to be user-defined
 * App installation support for distributed topologies (SHC, IDXC, etc.) and some primitive premium app support
 * Supporting Splunk restart only when required (via Splunk internal restart_required check)
@@ -322,7 +325,7 @@ Nothing - releasing new images to support Splunk Enterprise maintenance patch.
 * Support new permission model with `become/become_user` elevation/de-elevation when interacting with `splunkd`
 * Support for out-of-the-box SSL-enabled SplunkWeb
 * Adding ability to generate any configuration file in `$SPLUNK_HOME/etc/system/local`
-* Introducing user-defined pre- and post- playbook hooks that can run before and after (respectively) site.yml
+* Introducing user-defined pre- and post- playbook hooks that can run before and after `site.yml`, respectively
 * Minor documentation changes
 
 ---

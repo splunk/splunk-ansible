@@ -12,6 +12,8 @@
       disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
       enableSSL: "{% if ('hec' in splunk and 'ssl' in splunk.hec and splunk.hec.ssl | bool) or ('hec_enableSSL' in splunk and splunk.hec_enableSSL | bool) %}1{% else %}0{% endif %}"
       port: "{% if 'hec' in splunk and 'port' in splunk.hec and splunk.hec.port %}{{ splunk.hec.port }}{% elif 'hec_port' in splunk and splunk.hec_port %}{{ splunk.hec_port }}{% else %}8088{% endif %}"
+      serverCert: "{% if 'hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert %}{{ splunk.hec.cert }}{% endif %}"
+      sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
     body_format: "form-urlencoded"
     status_code: 200
     timeout: 10

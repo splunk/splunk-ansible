@@ -1,9 +1,10 @@
 ---
 - name: "Set stanza {{ stanza_name }}"
-  ini_file:
+  lineinfile:
     path: "{{ conf_directory }}/{{ conf_file }}"
-    section: "{{ stanza_name }}"
+    line: "[{{ stanza_name }}]"
     state: present
+    create: yes
     mode: 0660
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"

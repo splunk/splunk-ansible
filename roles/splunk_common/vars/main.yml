@@ -1,0 +1,19 @@
+---
+default_apps: [ "legacy", "splunk_gdi", "SplunkForwarder", "SplunkLightForwarder", "gettingstarted",
+                "alert_webhook", "splunk_httpinput", "introspection_generator_addon", "user-prefs",
+                "appsbrowser", "framework", "learned", "launcher", "alert_logevent", "sample_app",
+                "splunk_instrumentation", "search", "splunk_archiver", "splunk_monitoring_console",
+                "_splunk_config", "splunk_enterprise_on_docker", "splunk_forwarder_on_docker",
+                "splunk_metrics_workspace", "splunk_internal_metrics", "splunk_telemetry" ]
+itsi_apps: [ "DA-ITSI-APPSERVER", "DA-ITSI-DATABASE", "DA-ITSI-EUEM", "DA-ITSI-LB", "DA-ITSI-OS",
+              "DA-ITSI-STORAGE", "DA-ITSI-VIRTUALIZATION", "DA-ITSI-WEBSERVER", "SA-ITOA", "SA-ITSI-ATAD", "SA-UserAccess",
+            "SA-ITSI-CustomModuleViz", "SA-ITSI-MetricAD", "SA-ITSI-Licensechecker", "itsi", "splunk_app_infrastructure" ]
+ess_apps: [ "DA-ESS-AccessProtection", "DA-ESS-EndpointProtection", "DA-ESS-IdentityManagement", "DA-ESS-NetworkProtection",
+            "DA-ESS-ThreatIntelligence", "SA-AccessProtection", "SA-AuditAndDataProtection", "SA-EndpointProtection", "SA-IdentityManagement",
+            "SA-NetworkProtection", "SA-ThreatIntelligence", "SA-UEBA", "SA-Utils", "SplunkEnterpriseSecuritySuite", "Splunk_SA_CIM",
+            "Splunk_SA_ExtremeSearch", "Splunk_TA_bluecoat-proxysg", "Splunk_TA_bro", "Splunk_TA_flowfix", "Splunk_TA_juniper",
+            "Splunk_TA_mcafee", "Splunk_TA_nessus", "Splunk_TA_nix", "Splunk_TA_oracle", "Splunk_TA_ossec", "Splunk_TA_rsa-securid",
+            "Splunk_TA_sophos", "Splunk_TA_sourcefire", "Splunk_TA_symantec-ep", "Splunk_TA_ueba", "Splunk_TA_websense-cg", "Splunk_TA_windows",
+            "TA-airdefense", "TA-alcatel", "TA-cef", "TA-fortinet", "TA-ftp", "TA-nmap", "TA-tippingpoint", "TA-trendmicro",
+            "Splunk_ML_Toolkit", "Splunk_SA_Scientific_Python_linux_x86_64", "Splunk_SA_Scientific_Python_linux_x86",
+            "Splunk_SA_Scientific_Python_darwin_x86_64", "Splunk_SA_Scientific_Python_windows_x86_64" ]
