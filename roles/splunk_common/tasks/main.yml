@@ -87,11 +87,13 @@
     - "'svc_port' in splunk"
     - splunk.svc_port | int != 8089
 
-- include_tasks: enable_ssl_on_gui.yml
+- include_tasks: enable_splunkweb_ssl.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
     - splunk.http_enableSSL | bool
-    - first_run | bool
+
+- include_tasks: enable_splunkd_ssl.yml
+  when: "'ssl' in splunk and splunk.ssl"
 
 - include_tasks: set_config_file.yml
   vars:
@@ -109,7 +111,6 @@
   when:
     - splunk.root_endpoint is defined
     - splunk.root_endpoint != None
-    - first_run | bool
 
 - include_tasks: clean_user_seed.yml
   when:
