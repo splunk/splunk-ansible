@@ -13,6 +13,7 @@
     - forward_status.rc != 0
     - "'forwarded-server already present' not in forward_status.stderr"
   no_log: "{{ hide_password }}"
+  register: enable_forwarding
 
 - name: "Enable ssl-forwarding to {{ forward_servers }}"
   become: yes
@@ -31,10 +32,20 @@
     - '"s2s" in splunk and "ssl" in splunk.s2s and splunk.s2s.ssl | bool'
     - item.value | length > 0
   no_log: "{{ hide_password }}"
+  register: enable_ssl_forwarding
+
+- name: "Get Splunk status"
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  changed_when: False
+  failed_when: False
+  ignore_errors: yes
 
 # We want to restart only when Splunk is currently running and when any of the above have changed
 - name: Trigger restart
   command: ls
-  changed_when: splunk_status.rc == 0 and (splunktcp_enabled is changed or splunktcp_ssl_disabled is changed or splunktcp_ssl_reset is changed or splunktcp_ssl_ca_reset is changed)
+  changed_when: splunk_status.rc == 0 and (enable_forwarding is changed or enable_ssl_forwarding is changed)
   notify:
     - Restart the splunkd service

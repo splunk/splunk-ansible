@@ -16,6 +16,7 @@
     - splunk_indexer_cluster | bool
     - item.value | length > 0
   no_log: "{{ hide_password }}"
+  register: indexer_discovery
 
 - name: Setup tcpout group for index-clustering
   become: yes
@@ -34,6 +35,7 @@
     - splunk_indexer_cluster | bool
     - item.value | length > 0
   no_log: "{{ hide_password }}"
+  register: tcpout_group
 
 - name: Setup default tcpout group for index-clustering
   become: yes
@@ -50,6 +52,7 @@
     - splunk_indexer_cluster | bool
     - item.value | length > 0
   no_log: "{{ hide_password }}"
+  register: default_tcpout_group
 
 # set up forward servers set by get_facts
 - name: Add forward_servers
@@ -72,10 +75,20 @@
   with_items:
     - {key: "index", value: "false"}
   no_log: "{{ hide_password }}"
+  register: index_disabling
+
+- name: "Get Splunk status"
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  changed_when: False
+  failed_when: False
+  ignore_errors: yes
 
 # We want to restart only when Splunk is currently running and when any of the above have changed
 - name: Trigger restart
   command: ls
-  changed_when: splunk_status.rc == 0 and (splunktcp_enabled is changed or splunktcp_ssl_disabled is changed or splunktcp_ssl_reset is changed or splunktcp_ssl_ca_reset is changed)
+  changed_when: splunk_status.rc == 0 and (indexer_discovery is changed or tcpout_group is changed or default_tcpout_group is changed or index_disabling is changed)
   notify:
     - Restart the splunkd service
