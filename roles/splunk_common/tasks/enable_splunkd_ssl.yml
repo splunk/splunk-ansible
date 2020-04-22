@@ -4,11 +4,12 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: enableSplunkdSSL
-    value: "{{ splunk.ssl.enable }}"
+    value: "{{ splunk.ssl.enable | int }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    mode: 0660
-  when: "'enable' in splunk.ssl and splunk.ssl.enable"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: "'enable' in splunk.ssl"
 
 - name: Set Splunkd CA
   ini_file:
@@ -18,7 +19,8 @@
     value: "{{ splunk.ssl.ca }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    mode: 0660
+  become: yes
+  become_user: "{{ splunk.user }}"
   when: "'ca' in splunk.ssl and splunk.ssl.ca"
 
 - name: Set Splunkd cert
@@ -29,7 +31,8 @@
     value: "{{ splunk.ssl.cert }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    mode: 0660
+  become: yes
+  become_user: "{{ splunk.user }}"
   when: "'cert' in splunk.ssl and splunk.ssl.cert"
 
 - name: Set Splunkd SSL password
@@ -40,5 +43,7 @@
     value: "{{ splunk.ssl.password }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    mode: 0660
+  become: yes
+  become_user: "{{ splunk.user }}"
   when: "'password' in splunk.ssl and splunk.ssl.password"
+  changed_when: false
