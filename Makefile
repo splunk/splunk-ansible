@@ -12,7 +12,7 @@ py3k-test-setup:
 	pip3 install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 lint: test-setup
-	ansible-lint -v -c ./tests/lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml
+	ansible-lint -v -c ./tests/ansible-lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml
 
 py3k-lint: test-setup 
 	# We're treating each file separately here, because of their scarsity
