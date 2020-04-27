@@ -29,7 +29,7 @@
         verbosity: 2
 
     - name: Start Splunk-Ansible
-      command: ansible-playbook -i inventory/environ.py site.yml
+      command: ansible-playbook -i inventory/environ.py -l localhost site.yml
       environment:
         SPLUNK_BUILD_URL: https://download.splunk.com/products/splunk/releases/7.2.4/linux/splunk-7.2.4-8a94541dcfac-Linux-x86_64.tgz
         SPLUNK_ROLE: splunk_search_head
@@ -73,7 +73,7 @@
         verbosity: 2
 
     - name: Start Splunk-Ansible
-      command: ansible-playbook -i inventory/environ.py site.yml
+      command: ansible-playbook -i inventory/environ.py -l localhost site.yml
       environment:
         SPLUNK_BUILD_URL: https://download.splunk.com/products/splunk/releases/7.2.4/linux/splunk-7.2.4-8a94541dcfac-Linux-x86_64.tgz
         SPLUNK_ROLE: splunk_cluster_master
@@ -109,7 +109,7 @@
         group: ansible
 
     - name: Start Splunk-Ansible
-      command: ansible-playbook -i inventory/environ.py site.yml
+      command: ansible-playbook -i inventory/environ.py -l localhost site.yml
       environment:
         SPLUNK_BUILD_URL: https://download.splunk.com/products/splunk/releases/7.2.4/linux/splunk-7.2.4-8a94541dcfac-Linux-x86_64.tgz
         SPLUNK_ROLE: splunk_indexer
