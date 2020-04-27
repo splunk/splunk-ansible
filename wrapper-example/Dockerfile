@@ -2,7 +2,7 @@
 
 FROM debian:buster
 
-RUN apt update && apt install -y openssh-server
+RUN apt update && apt install -y openssh-server python-minimal
 RUN mkdir /var/run/sshd
 RUN echo 'root:screencast' | chpasswd
 RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
