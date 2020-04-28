@@ -3,10 +3,6 @@ dependency:
   name: galaxy
 driver:
   name: docker
-lint:
-  name: yamllint
-  options:
-    c: ../../.yamllint
 platforms:
   - name: centos7
     image: geerlingguy/docker-centos7-ansible:latest
@@ -25,19 +21,7 @@ platforms:
 provisioner:
   name: ansible
   log: true
-  lint:
-    name: ansible-lint
-    enabled: true
-    options:
-      x: ["204", "701"]
-      force-color: true
-scenario:
-  name: rpm
 verifier:
   name: testinfra
-  lint:
-    name: flake8
-    options:
-      ignore: E501
   options:
     junit-xml: ../../../../tests/results/uf-rpm-test-results.xml
