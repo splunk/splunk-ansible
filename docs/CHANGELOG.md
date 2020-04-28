@@ -14,6 +14,7 @@
 * [7.3.2](#732)
 * [7.3.1](#731)
 * [7.3.0](#730)
+* [7.2.10.1](#72101)
 * [7.2.10](#7210)
 * [7.2.9](#729)
 * [7.2.8](#728)
@@ -194,6 +195,16 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 * More multi-site functionality
 * Support for Cygwin-based Windows environments
 * Minor documentation changes
+
+---
+
+## 7.2.10.1
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.0.3.
+
+#### Changes
+* See [8.0.3](#803) changes.
 
 ---
 
