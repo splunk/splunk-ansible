@@ -3,10 +3,6 @@ dependency:
   name: galaxy
 driver:
   name: docker
-lint:
-  name: yamllint
-  options:
-    c: ../../.yamllint
 platforms:
   - name: debian10
     image: geerlingguy/docker-debian10-ansible:latest
@@ -25,19 +21,7 @@ platforms:
 provisioner:
   name: ansible
   log: true
-  lint:
-    name: ansible-lint
-    enabled: true
-    options:
-      x: ["204", "701"]
-      force-color: true
-scenario:
-  name: deb
 verifier:
   name: testinfra
-  lint:
-    name: flake8
-    options:
-      ignore: E501
   options:
     junit-xml: ../../../../tests/results/uf-deb-test-results.xml
