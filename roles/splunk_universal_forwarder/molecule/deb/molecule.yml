@@ -21,8 +21,6 @@ platforms:
 provisioner:
   name: ansible
   log: true
-scenario:
-  name: deb
 verifier:
   name: testinfra
   options:

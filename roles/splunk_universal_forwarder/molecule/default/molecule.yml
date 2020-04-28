@@ -9,8 +9,6 @@ platforms:
     command: no-provision
 provisioner:
   name: ansible
-scenario:
-  name: default
 verifier:
   name: testinfra
   options:

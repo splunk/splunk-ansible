@@ -21,8 +21,6 @@ platforms:
 provisioner:
   name: ansible
   log: true
-scenario:
-  name: rpm
 verifier:
   name: testinfra
   options:

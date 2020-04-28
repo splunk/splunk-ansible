@@ -20,8 +20,6 @@ platforms:
 provisioner:
   name: ansible
   log: true
-scenario:
-  name: systemd
 verifier:
   name: testinfra
   options:

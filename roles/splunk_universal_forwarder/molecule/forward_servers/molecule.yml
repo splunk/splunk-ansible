@@ -9,8 +9,6 @@ platforms:
     command: no-provision
 provisioner:
   name: ansible
-scenario:
-  name: forward_servers
 verifier:
   name: testinfra
   options:

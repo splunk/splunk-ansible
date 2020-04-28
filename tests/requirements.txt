@@ -8,3 +8,5 @@ coverage
 caniusepython3
 ansible==2.9.7
 ansible-lint>=4.2.0
+testinfra
+sh==1.12.14
