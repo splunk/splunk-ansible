@@ -107,10 +107,6 @@ splunk:
   * Splunk build location, either on the filesystem or a remote URL
   * Default: /tmp/splunk.tgz
 
-  build_remote_src: <bool>
-  * Boolean to determine whether the installer is local (false) or remote (true)
-  * Default: true
-
   license_master_url: <str>
   * Hostname of Splunk Enterprise license master instance. May be overridden using SPLUNK_LICENSE_MASTER_URL environment variable.
   * Default: null
@@ -230,6 +226,14 @@ splunk:
     * Determine a token to use for the HTTP event collector (HEC) endpoint
     * Default: null
 
+    cert: <str>
+    * Filepath to a custom SSL certificate for HEC
+    * Default: null
+
+    password: <str>
+    * SSL password used to create the SSL certificate for HEC
+    * Default: null
+
   http_enableSSL: <int|bool>
   * Determine whether or not to enable SSL on SplunkWeb
   * Default: 0
@@ -250,13 +254,30 @@ splunk:
   * Determine the port used for SplunkWeb
   * Default: 8000
 
-  s2s_enable: <int|bool>
-  * Determine whether or not to enable Splunk-to-Splunk communication. This is REQUIRED for any distributed topologies.
-  * Default: true
+  s2s:
+    enable: <bool>
+    * Determine whether or not to enable Splunk-to-Splunk communication. This is REQUIRED for any distributed topologies.
+    * Default: true
 
-  s2s_port: <int>
-  * Determine the port used for Splunk-to-Splunk communication
-  * Default: 9997
+    port: <int>
+    * Determine the port used for the Splunk-to-Splunk networking
+    * Default: 9997
+
+    ssl: <bool>
+    * When true, enables splunktcp input to use SSL
+    * Default: false
+
+    cert: <str>
+    * Coupled with the ssl parameter above, specify the path to the SSL certificate used for splunktcp-ssl
+    * Default: null
+
+    password: <str>
+    * Coupled with the ssl parameter above, specify the SSL password used for splunktcp-ssl
+    * Default: null
+
+    ca: <str>
+    * Coupled with the ssl parameter above, specify the path to the CA certificate used for splunktcp-ssl
+    * Default: null
 
   svc_port: <int>
   * Determine the port used for Splunk management/remote API calls
@@ -384,16 +405,18 @@ splunk:
   * Name of directory for the Splunk tar
   * Default: splunk
   
-  conf: <dict>
-    (filename):
-      directory: <str - filepath>
-      * Path in filesystem to create `.conf` file
-      * Default: /opt/splunk/etc/system/local
+  # NOTE: This is the updated schema for this entry - please refer to "Configuration files" section for more info
+  conf: <list>
+    - key: <sttr - filename without .conf suffix)
+      value:
+        directory: <str - filepath>
+        * Path in filesystem to create `.conf` file
+        * Default: /opt/splunk/etc/system/local
 
-      content: <dict>
-        (section name): <dict>
-          (name) : (value)
-            * Key-value pairs in configuration file
+        content: <dict>
+          (section name): <dict>
+            (name) : (value)
+              * Key-value pairs in configuration file
 ```
 
 ### Configuration files
@@ -402,10 +425,34 @@ splunk:
 
 The `default.yml` file can be used to specify multiple named configuration files.
 
-`conf` accepts a dictionary where keys are names of `.conf` files and values contain the `directory` and `contents`. Files will be created in the directory specified in `directory` or the default directory (`/opt/splunk/etc/system/local`) if none are provided. `content` accepts a dictionary where keys are section names and values are key-value pairs to be listed in the configuration file.
-  
+`conf` accepts an array of objects where each entry's key corresponds to the name of the `.conf` file and each entry's value contains a mapping of `directory` and `contents`. Files will be created in the directory specified in `directory` or the default directory (`/opt/splunk/etc/system/local`) if not provided. `content` accepts a dictionary where keys are section names and values are key-value pairs to be listed in the configuration file.
   
 The following example generates `user-prefs.conf` in `/opt/splunk/etc/users/admin/user-prefs/local`
+```
+splunk:
+  conf:
+    - key: user-prefs
+      value: 
+        directory: /opt/splunk/etc/users/admin/user-prefs/local
+        content:
+          general:
+            default_namespace : appboilerplate
+            search_use_advanced_editor : true
+            search_line_numbers : false
+            search_auto_format : false
+            search_syntax_highlighting : dark
+```
+
+```
+[general]
+default_namespace = appboilerplate
+search_use_advanced_editor = true
+search_line_numbers = false
+search_auto_format = false
+search_syntax_highlighting = dark
+```
+
+**NOTE:** The above `splunk.conf` was changed to accept an array data-type. This array input is only applicable for recent versions of `splunk-ansible`. If you are using any of the git-tagged versions `<= 8.0.2, <= 7.3.5, <= 7.2.9` (which directly map to any of the Docker-based `splunk/splunk` images), you must use the former dictionary data-type. An example of this is shown below:
 ```
 splunk:
   conf:
@@ -420,14 +467,7 @@ splunk:
           search_syntax_highlighting : dark
 ```
 
-```
-[general]
-default_namespace = appboilerplate
-search_use_advanced_editor = true
-search_line_numbers = false
-search_auto_format = false
-search_syntax_highlighting = dark
-```
+Any recent versions of `splunk-ansible` should still support this map type, however it is strongly recommended you move to the array type for future support.
 
 ---
 
@@ -465,7 +505,6 @@ splunk:
   role: splunk_standalone
   upgrade: false
   build_location: /tmp/splunk.tgz
-  build_remote_src: true
   apps_location: null
   license_uri: null
   admin_user: admin

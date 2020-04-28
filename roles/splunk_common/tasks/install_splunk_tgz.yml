@@ -1,29 +1,31 @@
-- name: Install Splunk (Linux) from network
-  unarchive:
-    src: "{{ splunk.build_location }}"
+- name: Download Splunk with an optional bearer token
+  get_url:
+    url: "{{ splunk.build_location }}"
     dest: "{{ splunk.opt }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    remote_src: "{{ splunk.build_remote_src }}"
-  environment:
-    http_proxy: "{{ lookup('env','http_proxy') | default('') }}"
-    https_proxy: "{{ lookup('env','https_proxy') | default('') }}"
-  when: splunk.build_remote_src
-  register: install_result
-  until: install_result is succeeded
-  retries: "{{ retry_num }}"
-  delay: "{{ retry_delay }}"
+    headers: '{% if splunk.build_url_bearer_token %}{"Authorization": "Bearer {{ splunk.build_url_bearer_token }}"}{% else %}{}{% endif %}'
+  when: splunk.build_location is match("^(https?)://.*")
+  register: download_result
   become: yes
   become_user: "{{ privileged_user }}"
 
-- name: Install Splunk (Linux) from local build
+- name: Define a path for the downloaded package
+  set_fact:
+    splunk_downloaded_build_location: "{{ download_result.dest }}"
+  when: splunk.build_location is match("^(https?)://.*")
+
+- name: Define a regex replacement for splunk.build_location
+  set_fact:
+    splunk_replaced_build_location: "{{ splunk.build_location | regex_replace('^file://(.*)$', '\\1') }}"
+
+- name: Install Splunk (Linux) from local build location
   unarchive:
-    src: "{{ splunk.build_location|regex_replace('^file://(.*)$', '\\1') }}"
+    src: "{% if splunk.build_location is match('^(https?)://.*') %}{{ splunk_downloaded_build_location }}{% else %}{{ splunk_replaced_build_location }}{% endif %}"
     dest: "{{ splunk.opt }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-    remote_src: "{{ splunk.build_remote_src }}"
-  when: not splunk.build_remote_src
+    remote_src: yes
   register: install_result
   until: install_result is succeeded
   retries: "{{ retry_num }}"

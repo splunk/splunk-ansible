@@ -3,29 +3,13 @@ dependency:
   name: galaxy
 driver:
   name: docker
-lint:
-  name: yamllint
-  options:
-    c: ../../.yamllint
 platforms:
   - name: instance-forward_servers
     image: splunk/universalforwarder
     command: no-provision
 provisioner:
   name: ansible
-  lint:
-    name: ansible-lint
-    enabled: true
-    options:
-      x: ["204", "701"]
-      force-color: true
-scenario:
-  name: forward_servers
 verifier:
   name: testinfra
-  lint:
-    name: flake8
-    options:
-      ignore: E501
   options:
     junit-xml: ../../../../tests/results/uf-forward_servers-results.xml

@@ -37,3 +37,4 @@
   with_items:
     - "{{ splunk.build_location }}"
     - "/tmp/splunk.msi"
+    - splunk_downloaded_build_location

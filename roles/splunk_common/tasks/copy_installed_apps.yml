@@ -1,0 +1,13 @@
+---
+# TODO: Might be better to use synchronize here, but we'll need rsync installed
+# ESS requires installation on the local node before distributing the bundle out, which contains local
+- name: "Copy installed apps to {{ dest }}"
+  shell:
+    cmd: "set -o pipefail && tar -c {% if item not in ess_apps %}--exclude=local{% endif %} {{ item }} | tar -x -C {{ dest }}"
+    chdir: "{{ splunk.app_paths.default }}"
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ apps }}"
+  register: copy_app
+  changed_when: copy_app.rc == 0

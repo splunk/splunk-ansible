@@ -20,14 +20,15 @@
     max_timeout: 1200
     hide_password: false
     retry_num: 5
-    retry_delay: 3
+    retry_delay: 6
+    delay_num: 3
     splunk:
       role: splunk_standalone
+      license_master_included: false
       license_uri: null
       preferred_captaincy: true
       wildcard_license: false
-      build_remote_src: true
-      build_location: https://download.splunk.com/products/splunk/releases/7.3.1.1/linux/splunk-7.3.1.1-7651b7244cf2-Linux-x86_64.tgz
+      build_location: https://download.splunk.com/products/splunk/releases/7.3.3/linux/splunk-7.3.3-7af3758d0d5e-linux-2.6-x86_64.rpm
       ignore_license: true
       apps_location: null
       app_paths:
@@ -42,7 +43,7 @@
             general:
               default_namespace: appboilerplate
               search_syntax_highlighting: dark
-      enable_service: false
+      enable_service: true
       exec: /opt/splunk/bin/splunk
       group: splunk
       hec_disabled: 0
@@ -57,6 +58,7 @@
       # http_port changed from 8000 to 8080 to test custom http port functionality
       http_port: 8080
       idxc:
+        enable: false
         label: idxc_label
         replication_factor: 3
         replication_port: 9887
@@ -70,6 +72,7 @@
       s2s_enable: true
       s2s_port: 9997
       shc:
+        enable: false
         label: shc_label
         replication_factor: 3
         replication_port: 9887
@@ -77,6 +80,8 @@
       smartstore: null
       svc_port: 8089
       user: splunk
+      launch:
+        OPTIMISTIC_ABOUT_FILE_LOCKING: "1"
     splunk_home_ownership_enforcement: true
   roles:
     - role: splunk_standalone

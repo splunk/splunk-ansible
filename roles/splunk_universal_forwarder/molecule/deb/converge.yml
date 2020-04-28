@@ -20,16 +20,14 @@
       max_timeout: 1200
     hide_password: false
     retry_num: 50
-    retry_delay: 6
+    retry_delay: 3
     splunk:
       role: splunk_universal_forwarder
-      indexer_cluster: false
-      license_master_included: false
       license_uri: null
       preferred_captaincy: true
-      build_remote_src: true
-      build_location: https://download.splunk.com/products/universalforwarder/releases/8.0.2/linux/splunkforwarder-8.0.2-a7f645ddaf91-linux-2.6-x86_64.rpm
+      build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.2/linux/splunkforwarder-7.3.2-c60db69f8e32-linux-2.6-amd64.deb
       apps_location: null
+      build_url_bearer_token: null
       admin_user: admin
       app_paths:
         default: /opt/splunkforwarder/etc/apps
@@ -44,7 +42,7 @@
             general:
               default_namespace: appboilerplate
               search_syntax_highlighting: dark
-      enable_service: true
+      enable_service: false
       exec: /opt/splunkforwarder/bin/splunk
       group: splunk
       hec_disabled: 0
@@ -59,7 +57,6 @@
       http_port: 8000
       ignore_license: false
       license_download_dest: /tmp/splunk.lic
-      nfr_license: /tmp/nfr_enterprise.lic
       opt: /opt
       password: helloworld
       pid: /opt/splunkforwarder/var/run/splunk/splunkd.pid

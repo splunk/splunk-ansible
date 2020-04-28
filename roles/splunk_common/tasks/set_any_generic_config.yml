@@ -1,9 +1,0 @@
----
-- include_tasks: set_config_file.yml
-  vars:
-    conf_file: "{{ item.key }}.conf"
-    conf_directory: "{{ item.value.directory | default(splunk.home + '/etc/system/local', true) }}"
-    conf_stanzas: "{{ item.value.content }}"
-  when:
-    - (item.value | length > 0)
-  with_dict: "{{ splunk.conf }}"

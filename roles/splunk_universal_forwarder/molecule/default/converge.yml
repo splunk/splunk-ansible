@@ -25,9 +25,9 @@
       role: splunk_universal_forwarder
       license_uri: null
       preferred_captaincy: true
-      build_remote_src: true
-      build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.2/linux/splunkforwarder-7.3.2-c60db69f8e32-linux-2.6-amd64.deb
+      build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.1.1/linux/splunkforwarder-7.3.1.1-7651b7244cf2-Linux-x86_64.tgz
       apps_location: null
+      build_url_bearer_token: null
       admin_user: admin
       app_paths:
         default: /opt/splunkforwarder/etc/apps
@@ -60,8 +60,9 @@
       opt: /opt
       password: helloworld
       pid: /opt/splunkforwarder/var/run/splunk/splunkd.pid
-      s2s_enable: true
-      s2s_port: 9997
+      s2s:
+        enable: true
+        port: 9997
       secret: null
       smartstore: null
       svc_port: 8089

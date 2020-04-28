@@ -90,7 +90,7 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     inventory["all"]["vars"] = getDefaultVars()
     inventory["all"]["vars"]["docker"] = False
 
-    if os.path.isfile("/.dockerenv"):
+    if os.path.isfile("/.dockerenv") or os.path.isfile("/run/.containerenv") or os.path.isdir("/var/run/secrets/kubernetes.io") or os.environ.get("KUBERNETES_SERVICE_HOST"):
         inventory["all"]["vars"]["docker"] = True
         if "localhost" not in inventory["all"]["children"]:
             inventory["all"]["hosts"].append("localhost")
@@ -263,14 +263,14 @@ def getLicenses(vars_scope):
     Determine the location of Splunk licenses to install at start-up time
     """
     # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
-    vars_scope["splunk"]["license_uri"] = os.environ.get("SPLUNK_LICENSE_URI", "splunk.lic")
+    vars_scope["splunk"]["license_uri"] = os.environ.get("SPLUNK_LICENSE_URI", vars_scope["splunk"].get("license_uri") or "splunk.lic")
     vars_scope["splunk"]["wildcard_license"] = False
     if vars_scope["splunk"]["license_uri"] and '*' in vars_scope["splunk"]["license_uri"]:
         vars_scope["splunk"]["wildcard_license"] = True
     vars_scope["splunk"]["ignore_license"] = False
     if os.environ.get("SPLUNK_IGNORE_LICENSE", "").lower() == "true":
         vars_scope["splunk"]["ignore_license"] = True
-    vars_scope["splunk"]["license_download_dest"] = os.environ.get("SPLUNK_LICENSE_INSTALL_PATH", "/tmp/splunk.lic")
+    vars_scope["splunk"]["license_download_dest"] = os.environ.get("SPLUNK_LICENSE_INSTALL_PATH", vars_scope["splunk"].get("license_download_dest") or "/tmp/splunk.lic")
 
 def getJava(vars_scope):
     """
@@ -304,10 +304,8 @@ def getSplunkBuild(vars_scope):
     """
     Determine the location of the Splunk build
     """
+    vars_scope["splunk"]["build_url_bearer_token"] = os.environ.get("SPLUNK_BUILD_URL_BEARER_TOKEN", vars_scope["splunk"].get("build_url_bearer_token"))
     vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"].get("build_location"))
-    vars_scope["splunk"]["build_remote_src"] = False
-    if vars_scope["splunk"]["build_location"] and vars_scope["splunk"]["build_location"].startswith("http"):
-        vars_scope["splunk"]["build_remote_src"] = True
 
 def getSplunkbaseToken(vars_scope):
     """
@@ -641,7 +639,6 @@ def prep_for_yaml_out(inventory):
                    "delay_num",
                    "apps_location",
                    "build_location",
-                   "build_remote_src",
                    "hostname",
                    "upgrade",
                    "role",
