@@ -2,64 +2,57 @@
 # Configure forwarding to indexer cluster master
 # See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/indexerdiscovery
 - name: Setup indexer discovery for index-clustering
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      name: "indexer_discovery:splunk-indexer"
-      pass4SymmKey: "{{ splunk.idxc.pass4SymmKey }}"
-      master_uri: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}"
-    body_format: "form-urlencoded"
-    status_code: 201,409
-    timeout: 10
-  when: splunk_indexer_cluster | bool
-  register: setup_indexer_discovery_stanza
-  changed_when: setup_indexer_discovery_stanza.status == 201
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "indexer_discovery:splunk-indexer"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - {key: "pass4SymmKey", value: "{{ splunk.idxc.pass4SymmKey }}"}
+    - {key: "master_uri", value: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}"}
+  when:
+    - splunk_indexer_cluster | bool
+    - item.value | length > 0
   no_log: "{{ hide_password }}"
-  notify:
-    - Restart the splunkd service
+  register: indexer_discovery
 
 - name: Setup tcpout group for index-clustering
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      name: "tcpout:group1"
-      indexerDiscovery: "splunk-indexer"
-      clientCert: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"
-      sslPassword: "{{ splunk.s2s.password if splunk.s2s is defined and splunk.s2s.password is defined }}"
-      useClientSSLCompression: "{{ 'true' if splunk.s2s is defined and splunk.s2s.ssl is defined and splunk.s2s.ssl else '' }}"
-    body_format: "form-urlencoded"
-    status_code: 201,409
-    timeout: 10
-  when: splunk_indexer_cluster | bool
-  register: setup_tcpoutgroup_stanza
-  changed_when: setup_tcpoutgroup_stanza.status == 201
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "tcpout:group1"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - {key: "indexerDiscovery", value: "splunk-indexer"}
+    - {key: "clientCert", value: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"}
+    - {key: "sslPassword", value: "{{ splunk.s2s.password if splunk.s2s is defined and splunk.s2s.password is defined }}"}
+    - {key: "useClientSSLCompression", value: "{{ 'true' if splunk.s2s is defined and splunk.s2s.ssl is defined and splunk.s2s.ssl else '' }}"}
+  when:
+    - splunk_indexer_cluster | bool
+    - item.value | length > 0
   no_log: "{{ hide_password }}"
+  register: tcpout_group
 
 - name: Setup default tcpout group for index-clustering
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs/tcpout"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      indexAndForward: "false"
-      defaultGroup: "group1"
-    body_format: "form-urlencoded"
-    status_code: 200
-    timeout: 10
-  when: splunk_indexer_cluster | bool
-  register: setup_tcpout_stanza
-  changed_when: setup_tcpout_stanza.status == 200
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "tcpout"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - {key: "indexAndForward", value: "false"}
+    - {key: "defaultGroup", value: "group1"}
+  when:
+    - splunk_indexer_cluster | bool
+    - item.value | length > 0
   no_log: "{{ hide_password }}"
+  register: default_tcpout_group
 
 # set up forward servers set by get_facts
 - name: Add forward_servers
@@ -72,18 +65,30 @@
 
 # NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-outputs"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      name: "indexAndForward"
-      index: "false"
-    body_format: "form-urlencoded"
-    status_code: 201,409
-    timeout: 10
-  register: disable_indexing_stanza
-  changed_when: disable_indexing_stanza.status == 201
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "indexAndForward"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - {key: "index", value: "false"}
   no_log: "{{ hide_password }}"
+  register: index_disabling
+
+- name: "Get Splunk status"
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  changed_when: False
+  failed_when: False
+  ignore_errors: yes
+
+# We want to restart only when Splunk is currently running and when any of the above have changed
+- name: Trigger restart
+  command: ls
+  changed_when: splunk_status.rc == 0 and (indexer_discovery is changed or tcpout_group is changed or default_tcpout_group is changed or index_disabling is changed)
+  notify:
+    - Restart the splunkd service

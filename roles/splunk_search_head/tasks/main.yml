@@ -33,10 +33,6 @@
     - splunk.set_search_peers | bool
     - "'splunk_indexer' in groups"
 
-- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
-  when:
-    - splunk_indexer_cluster | bool or splunk_forward_servers is defined
-
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when:
     - splunk.deployment_server is defined
