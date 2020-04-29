@@ -36,10 +36,8 @@ provisioner:
             role: splunk_indexer
             license_uri: null
             preferred_captaincy: true
-            wildcard_license: false
             build_location: https://download.splunk.com/products/splunk/releases/8.0.3/linux/splunk-8.0.3-a6754d8441bf-Linux-x86_64.tgz
             ignore_license: true
-            build_url_bearer_token: null
             apps_location: null
             admin_user: admin
             allow_upgrade: true
@@ -84,7 +82,6 @@ provisioner:
               replication_port: 9887
               search_factor: 3
               secret: Bh/lsn+CsqvmkXBhE9GtoXOWYNVbpTUV
-            ignore_license: false
             launch: {}
             license_download_dest: /tmp/splunk.lic
             license_master_url: null

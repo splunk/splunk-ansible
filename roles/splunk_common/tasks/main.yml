@@ -106,7 +106,7 @@
   when:
     # Indexers should never forward 
     - splunk.role != "splunk_indexer"
-    - (splunk.role != "splunk_standalone" and splunk.role != "splunk_search_head") or 
+    - (splunk.role != "splunk_standalone" and splunk.role != "splunk_search_head") or
         (splunk_indexer_cluster | bool or splunk_forward_servers is defined)
 
 - include_tasks: start_splunk.yml
