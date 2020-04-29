@@ -101,10 +101,13 @@
   with_items: "{% if splunk.conf is mapping %}{{ splunk.conf | dict2items }}{% else %}{{ splunk.conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
 
-#generate outputs.conf before splunk starts to prevent data being indexed locally
+# Generate outputs.conf before splunk starts to prevent data being indexed locally
 - include_tasks: enable_forwarding.yml
-  when: (splunk.role != "splunk_standalone" and splunk.role != "splunk_search_head") or
-        (splunk_indexer_cluster | bool or splunk_forward_servers is defined) #for standalone and searchhead
+  when:
+    # Indexers should never forward 
+    - splunk.role != "splunk_indexer"
+    - (splunk.role != "splunk_standalone" and splunk.role != "splunk_search_head") or 
+        (splunk_indexer_cluster | bool or splunk_forward_servers is defined)
 
 - include_tasks: start_splunk.yml
 
