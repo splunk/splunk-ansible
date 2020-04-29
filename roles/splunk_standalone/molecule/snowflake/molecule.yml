@@ -4,20 +4,8 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: splunk-standalone-centos8
-    image: geerlingguy/docker-centos8-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
   - name: splunk-standalone-debian10
     image: geerlingguy/docker-debian10-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
-  - name: splunk-standalone-debian9
-    image: geerlingguy/docker-debian9-ansible:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
@@ -38,19 +26,19 @@ provisioner:
           ansible_pre_tasks: null
           cert_prefix: https
           dmc_asset_interval: 3,18,33,48 * * * *
-          dmc_forwarder_monitoring: false
+          dmc_forwarder_monitoring: true
           hide_password: false
           java_download_url: null
           java_update_version: null
           java_version: null
           retry_delay: 6
-          retry_num: 60
+          retry_num: 3
           shc_sync_retry_num: 60
           splunk:
             role: splunk_standalone
             license_uri: null
             preferred_captaincy: true
-            build_location: https://download.splunk.com/products/splunk/releases/7.3.1.1/linux/splunk-7.3.1.1-7651b7244cf2-Linux-x86_64.tgz
+            build_location: https://download.splunk.com/products/splunk/releases/8.0.3/linux/splunk-8.0.3-a6754d8441bf-Linux-x86_64.tgz
             ignore_license: true
             apps_location: null
             admin_user: admin
@@ -63,6 +51,16 @@ provisioner:
               shc: /opt/splunk/etc/shcluster/apps
             asan: false
             build_url_bearer_token: null
+            conf:
+            - key: user-prefs
+              value:
+                 directory: /opt/splunk/etc/users/admin/user-prefs/local
+                 content:
+                   general:
+                     default_namespace: appboilerplate
+                     search_syntax_highlighting: dark
+                     search_assistant:
+                   "serverClass:secrets:app:test": {}
             cluster_master_url: null
             deployer_url: null
             dfs:
@@ -80,15 +78,15 @@ provisioner:
               cert: null
               enable: true
               password: null
-              port: 8088
-              ssl: true
-              token: abcd1234
+              port: 8099
+              ssl: false
+              token: qwerty789
             home: /opt/splunk
             http_enableSSL: false
             http_enableSSL_cert: null
             http_enableSSL_privKey: null
             http_enableSSL_privKey_password: null
-            http_port: 8000
+            http_port: 8080
             idxc:
               label: idxc_label
               pass4SymmKey: Bh/lsn+CsqvmkXBhE9GtoXOWYNVbpTUV
@@ -96,7 +94,9 @@ provisioner:
               replication_port: 9887
               search_factor: 3
               secret: Bh/lsn+CsqvmkXBhE9GtoXOWYNVbpTUV
-            launch: {}
+            launch:
+              OPTIMISTIC_ABOUT_FILE_LOCKING: 1
+              TEST: A=B
             license_download_dest: /tmp/splunk.lic
             license_master_url: null
             multisite_master_port: 8089
@@ -105,19 +105,19 @@ provisioner:
             multisite_search_factor_origin: 1
             multisite_search_factor_total: 3
             opt: /opt
-            pass4SymmKey: null
-            password: helloworld
+            pass4SymmKey: "omglasers"
+            password: helloworld2
             pid: /opt/splunk/var/run/splunk/splunkd.pid
-            root_endpoint: null
+            root_endpoint: /splunkui
             s2s:
               ca: null
               cert: null
               enable: true
               password: null
-              port: 9997
+              port: 9999
               ssl: false
             search_head_captain_url: null
-            secret: null
+            secret: "pewpewpew"
             service_name: null
             set_search_peers: true
             shc:
@@ -136,4 +136,4 @@ provisioner:
 verifier:
   name: testinfra
   options:
-    junit-xml: ../../../../tests/results/standalone-default-results.xml
+    junit-xml: ../../../../tests/results/standalone-snowflake-results.xml
