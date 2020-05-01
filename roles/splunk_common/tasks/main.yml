@@ -89,12 +89,12 @@
 
 - include_tasks: set_appserver_port.yml
   when:
-    - "'port' in splunk.appserver"
+    - "'appserver' in splunk and 'port' in splunk.appserver"
     - splunk.appserver.port | int != 8065
 
 - include_tasks: set_kvstore_port.yml
   when:
-    - "'port' in splunk.kvstore"
+    - "'kvstore' in splunk and 'port' in splunk.kvstore"
     - splunk.kvstore.port | int != 8191
 
 - include_tasks: enable_ssl_on_gui.yml
