@@ -89,7 +89,7 @@ def test_inputs_conf(host):
 def test_splunk_ports(host):
     output = host.run("netstat -tuln")
     assert "0.0.0.0:8080" in output.stdout
-    assert "0.0.0.0:8089" in output.stdout
+    assert "0.0.0.0:8090" in output.stdout
     assert "0.0.0.0:8099" in output.stdout
     assert "0.0.0.0:8191" in output.stdout
     assert "0.0.0.0:9999" in output.stdout
@@ -127,7 +127,7 @@ def test_splunk_hec(host):
     assert "Success" in output.stdout
 
 def test_splunkd(host):
-    output = host.run("curl -k https://localhost:8089/services/server/info \
+    output = host.run("curl -k https://localhost:8090/services/server/info \
         -u admin:helloworld2")
     assert "Splunk" in output.stdout
 
@@ -137,7 +137,6 @@ def test_web_conf(host):
     assert f.user == SPLUNK_USER
     assert f.group == SPLUNK_GROUP
     assert f.contains("[settings]")
-    assert f.contains("httpport = 8080")
     assert f.contains("root_endpoint = /splunkui")
 
 def test_splunkweb_root_endpoint(host):

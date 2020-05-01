@@ -26,13 +26,13 @@ provisioner:
           ansible_pre_tasks: null
           cert_prefix: https
           dmc_asset_interval: 3,18,33,48 * * * *
-          dmc_forwarder_monitoring: true
+          dmc_forwarder_monitoring: false
           hide_password: false
           java_download_url: null
           java_update_version: null
           java_version: null
           retry_delay: 6
-          retry_num: 3
+          retry_num: 60
           shc_sync_retry_num: 60
           splunk:
             role: splunk_standalone
@@ -51,17 +51,17 @@ provisioner:
               shc: /opt/splunk/etc/shcluster/apps
             asan: false
             build_url_bearer_token: null
+            cluster_master_url: null
             conf:
             - key: user-prefs
               value:
-                 directory: /opt/splunk/etc/users/admin/user-prefs/local
-                 content:
-                   general:
-                     default_namespace: appboilerplate
-                     search_syntax_highlighting: dark
-                     search_assistant:
-                   "serverClass:secrets:app:test": {}
-            cluster_master_url: null
+                directory: /opt/splunk/etc/users/admin/user-prefs/local
+                content:
+                  general:
+                    default_namespace: appboilerplate
+                    search_syntax_highlighting: dark
+                    search_assistant:
+                  "serverClass:secrets:app:test": {}
             deployer_url: null
             dfs:
               dfc_num_slots: 4
@@ -105,7 +105,7 @@ provisioner:
             multisite_search_factor_origin: 1
             multisite_search_factor_total: 3
             opt: /opt
-            pass4SymmKey: "omglasers"
+            pass4SymmKey: null
             password: helloworld2
             pid: /opt/splunk/var/run/splunk/splunkd.pid
             root_endpoint: /splunkui
@@ -127,7 +127,7 @@ provisioner:
               replication_port: 9887
               secret: g7DcnxHIA60dj86HWrh38VdaFYdXESw2
             smartstore: null
-            svc_port: 8089
+            svc_port: 8090
             tar_dir: splunk
             user: splunk
             wildcard_license: false
@@ -136,4 +136,4 @@ provisioner:
 verifier:
   name: testinfra
   options:
-    junit-xml: ../../../../tests/results/standalone-snowflake-results.xml
+    junit-xml: ../../../../tests/results/standalone-default-results.xml
