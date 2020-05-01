@@ -46,7 +46,11 @@ splunk:
         ssl: False
         cert:
         password:
-        ca:
+        ca: 
+    appserver:
+        port: 8065
+    kvstore:
+        port: 8191
     http_port: 8000
     http_enableSSL: 0
     http_enableSSL_cert:
