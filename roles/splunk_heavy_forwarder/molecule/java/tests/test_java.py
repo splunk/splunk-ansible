@@ -127,4 +127,4 @@ def test_splunk_launch(host):
 def test_java_version(host):
     output = host.run("java -version")
     assert "OpenJDK" in output.stderr
-    assert "11.0.2" in output.stderr
+    assert "11.0" in output.stderr
