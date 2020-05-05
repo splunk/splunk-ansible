@@ -407,23 +407,29 @@ def test_getLicenses(default_yml, os_env, license_uri, wildcard_license, ignore_
     assert vars_scope["splunk"]["ignore_license"] == ignore_license
     assert vars_scope["splunk"]["license_download_dest"] == license_download_dest
 
-@pytest.mark.parametrize(("os_env", "java_version", "java_download_url", "java_update_version"),
+@pytest.mark.parametrize(("default_yml", "os_env", "java_version", "java_download_url", "java_update_version"),
                          [
-                            ({}, None, None, None),
+                            ({}, {}, None, None, None),
                             # Check environment variable parameters
-                            ({"JAVA": "oracle:8"}, None, None, None),
-                            ({"JAVA_VERSION": "openjdk:8"}, "openjdk:8", None, None),
-                            ({"JAVA_VERSION": "openjdk:9"}, "openjdk:9", None, None),
-                            ({"JAVA_VERSION": "oracle:8"}, "oracle:8", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz", "141"),
-                            ({"JAVA_VERSION": "ORACLE:8"}, "oracle:8", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz", "141"),
-                            ({"JAVA_VERSION": "openjdk:11"}, "openjdk:11", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz", "11.0.2"),
-                            ({"JAVA_VERSION": "oPenJdK:11"}, "openjdk:11", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz", "11.0.2"),
-                            ({"JAVA_VERSION": "oracle:8", "JAVA_DOWNLOAD_URL": "https://java/jdk-8u9000-linux-x64.tar.gz"}, "oracle:8", "https://java/jdk-8u9000-linux-x64.tar.gz", "9000"),
-                            ({"JAVA_VERSION": "openjdk:11", "JAVA_DOWNLOAD_URL": "https://java/openjdk-11.11.11_linux-x64_bin.tar.gz"}, "openjdk:11", "https://java/openjdk-11.11.11_linux-x64_bin.tar.gz", "11.11.11"),
+                            ({}, {"JAVA": "oracle:8"}, None, None, None),
+                            ({}, {"JAVA_VERSION": "openjdk:8"}, "openjdk:8", None, None),
+                            ({}, {"JAVA_VERSION": "openjdk:9"}, "openjdk:9", None, None),
+                            ({}, {"JAVA_VERSION": "oracle:8"}, "oracle:8", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz", "141"),
+                            ({}, {"JAVA_VERSION": "ORACLE:8"}, "oracle:8", "https://download.oracle.com/otn-pub/java/jdk/8u141-b15/336fa29ff2bb4ef291e347e091f7f4a7/jdk-8u141-linux-x64.tar.gz", "141"),
+                            ({}, {"JAVA_VERSION": "openjdk:11"}, "openjdk:11", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz", "11.0.2"),
+                            ({}, {"JAVA_VERSION": "oPenJdK:11"}, "openjdk:11", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz", "11.0.2"),
+                            ({}, {"JAVA_VERSION": "oracle:8", "JAVA_DOWNLOAD_URL": "https://java/jdk-8u9000-linux-x64.tar.gz"}, "oracle:8", "https://java/jdk-8u9000-linux-x64.tar.gz", "9000"),
+                            ({}, {"JAVA_VERSION": "openjdk:11", "JAVA_DOWNLOAD_URL": "https://java/openjdk-11.11.11_linux-x64_bin.tar.gz"}, "openjdk:11", "https://java/openjdk-11.11.11_linux-x64_bin.tar.gz", "11.11.11"),
+                            # Check default.yml
+                            ({"java_version": "openjdk:11"}, {}, "openjdk:11", None, None),
+                            ({"java_download_url": "http://web/java.tgz"}, {}, None, "http://web/java.tgz", None),
+                            ({"java_update_version": "jdk11u141"}, {}, None, None, "jdk11u141"),
+                            # Check order of precedence
+                            ({"java_version": "openjdk:9", "java_download_url": "http://web/java.tgz", "java_update_version": "jdk11u141"}, {"JAVA_VERSION": "oPenJdK:11"}, "openjdk:11", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz", "11.0.2"),
                          ]
                         )
-def test_getJava(os_env, java_version, java_download_url, java_update_version):
-    vars_scope = {"splunk": {}}
+def test_getJava(default_yml, os_env, java_version, java_download_url, java_update_version):
+    vars_scope = default_yml
     with patch("os.environ", new=os_env):
         environ.getJava(vars_scope)
     assert vars_scope["java_version"] == java_version
@@ -431,13 +437,13 @@ def test_getJava(os_env, java_version, java_download_url, java_update_version):
     assert vars_scope["java_update_version"] == java_update_version
 
 @pytest.mark.parametrize(("os_env", "java_version", "java_download_url", "err_msg"),
-                         [
-                            ({"JAVA_VERSION": "oracle:3"}, None, None, "Invalid Java version supplied"),
-                            ({"JAVA_VERSION": "openjdk:20"}, None, None, "Invalid Java version supplied"),
-                            ({"JAVA_VERSION": "oracle:8", "JAVA_DOWNLOAD_URL": "https://java/jdk-8u9000.tar.gz"}, "oracle:8", "https://java/jdk-8u9000.tar.gz", "Invalid Java download URL format"),
-                            ({"JAVA_VERSION": "openjdk:11", "JAVA_DOWNLOAD_URL": "https://java/openjdk-11.tar.gz"}, "openjdk:11", "https://java/openjdk-11.tar.gz", "Invalid Java download URL format"),
-                         ]
-                        )
+    [
+        ({"JAVA_VERSION": "oracle:3"}, None, None, "Invalid Java version supplied"),
+        ({"JAVA_VERSION": "openjdk:20"}, None, None, "Invalid Java version supplied"),
+        ({"JAVA_VERSION": "oracle:8", "JAVA_DOWNLOAD_URL": "https://java/jdk-8u9000.tar.gz"}, "oracle:8", "https://java/jdk-8u9000.tar.gz", "Invalid Java download URL format"),
+        ({"JAVA_VERSION": "openjdk:11", "JAVA_DOWNLOAD_URL": "https://java/openjdk-11.tar.gz"}, "openjdk:11", "https://java/openjdk-11.tar.gz", "Invalid Java download URL format"),
+    ]
+)
 def test_getJava_exception(os_env, java_version, java_download_url, err_msg):
     vars_scope = {"splunk": {}}
     with patch("os.environ", new=os_env):
