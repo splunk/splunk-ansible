@@ -108,3 +108,11 @@ def test_splunkd(host):
     output = host.run("curl -k https://localhost:8089/services/server/info \
         -u admin:helloworld")
     assert "Splunk" in output.stdout
+
+def test_outputs_conf(host):
+    f = host.file("{}/etc/system/local/outputs.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("[indexAndForward]")
+    assert f.contains("index = false")

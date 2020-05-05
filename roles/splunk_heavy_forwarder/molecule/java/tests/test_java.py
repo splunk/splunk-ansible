@@ -109,6 +109,14 @@ def test_splunkd(host):
         -u admin:helloworld")
     assert "Splunk" in output.stdout
 
+def test_outputs_conf(host):
+    f = host.file("{}/etc/system/local/outputs.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("[indexAndForward]")
+    assert f.contains("index = false")
+
 def test_splunk_launch(host):
     f = host.file("{}/etc/splunk-launch.conf".format(SPLUNK_HOME))
     assert f.exists
