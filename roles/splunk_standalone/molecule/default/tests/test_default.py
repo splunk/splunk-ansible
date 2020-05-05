@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+#
+# These tests specifically exercise the following:
+# - Multiple platform support (centos, debian, redhat)
+# - Splunk version 8.0.3
+# - Normal standalone with minimal option set
+
 from __future__ import absolute_import
 import os
 
@@ -46,7 +52,7 @@ def test_splunk_version(host):
     assert f.exists
     assert f.user == SPLUNK_USER
     assert f.group == SPLUNK_GROUP
-    assert f.contains("VERSION=7.3.1.1")
+    assert f.contains("VERSION=8.0.3")
 
 def test_splunk_pid(host):
     f = host.file("{}/var/run/splunk/splunkd.pid".format(SPLUNK_HOME))
