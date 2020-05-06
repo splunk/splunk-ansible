@@ -283,6 +283,16 @@ splunk:
   * Determine the port used for Splunk management/remote API calls
   * Default: 8089
 
+  appserver:
+    port: <int>
+    * Determine the port used for Splunk Application Server
+    * Default: 8065
+
+  kvstore:
+    port: <int>
+    * Determine the port used for Splunk Key-Value store
+    * Default: 8191
+
   launch: null
   * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null

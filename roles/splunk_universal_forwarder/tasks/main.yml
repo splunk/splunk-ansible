@@ -6,8 +6,6 @@
     - splunk.deployment_server is defined
     - splunk.deployment_server
 
-- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
-
 - name: Flush restart handlers
   meta: flush_handlers
 
