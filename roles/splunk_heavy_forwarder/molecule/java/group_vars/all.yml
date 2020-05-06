@@ -1,0 +1,10 @@
+---
+java_download_url: https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
+java_update_version: 11.0.2
+java_version: openjdk:11
+splunk:
+  role: splunk_heavy_forwarder
+  build_location: https://download.splunk.com/products/splunk/releases/7.2.10/linux/splunk-7.2.10-a6dfcc62f450-Linux-x86_64.tgz
+  hec:
+    token: abcd1234
+  password: helloworld
