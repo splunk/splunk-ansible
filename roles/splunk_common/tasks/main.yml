@@ -87,6 +87,9 @@
     - "'svc_port' in splunk"
     - splunk.svc_port | int != 8089
 
+- include_tasks: set_root_endpoint.yml
+  when: "'root_endpoint' in splunk and splunk.root_endpoint"
+
 - include_tasks: set_appserver_port.yml
   when:
     - "'appserver' in splunk and 'port' in splunk.appserver"
@@ -122,12 +125,6 @@
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
-
-- include_tasks: set_root_endpoint.yml
-  when:
-    - splunk.root_endpoint is defined
-    - splunk.root_endpoint != None
-    - first_run | bool
 
 - include_tasks: clean_user_seed.yml
   when:
