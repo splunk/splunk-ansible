@@ -4,25 +4,19 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: splunk-standalone-centos8
+  - name: splunk-hf-centos8
     image: geerlingguy/docker-centos8-ansible:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
       - "/opt/splunk/var"
-  - name: splunk-standalone-debian10
+  - name: splunk-hf-debian10
     image: geerlingguy/docker-debian10-ansible:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
       - "/opt/splunk/var"
-  - name: splunk-standalone-debian9
-    image: geerlingguy/docker-debian9-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
-  - name: splunk-standalone-redhat8
+  - name: splunk-hf-redhat8
     image: geerlingguy/docker-ubi8-ansible:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
@@ -40,17 +34,17 @@ provisioner:
           dmc_asset_interval: 3,18,33,48 * * * *
           dmc_forwarder_monitoring: false
           hide_password: false
-          java_download_url: null
-          java_update_version: null
-          java_version: null
+          java_download_url: https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz
+          java_update_version: 11.0.2
+          java_version: openjdk:11
           retry_delay: 6
           retry_num: 60
           shc_sync_retry_num: 60
           splunk:
-            role: splunk_standalone
+            role: splunk_heavy_forwarder
             license_uri: null
             preferred_captaincy: true
-            build_location: https://download.splunk.com/products/splunk/releases/8.0.3/linux/splunk-8.0.3-a6754d8441bf-Linux-x86_64.tgz
+            build_location: https://download.splunk.com/products/splunk/releases/7.2.10/linux/splunk-7.2.10-a6dfcc62f450-Linux-x86_64.tgz
             ignore_license: true
             apps_location: null
             admin_user: admin
@@ -136,4 +130,4 @@ provisioner:
 verifier:
   name: testinfra
   options:
-    junit-xml: ../../../../tests/results/standalone-default-results.xml
+    junit-xml: ../../../../tests/results/hf-java-results.xml

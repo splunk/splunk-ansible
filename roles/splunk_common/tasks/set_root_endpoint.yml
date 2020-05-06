@@ -1,33 +1,26 @@
 ---
-- name: Get root endpoint
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-web/settings?output_mode=json"
-    method: GET
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    status_code: 200
-    timeout: 10
-  when: splunk.root_endpoint
-  register: current_root_endpoint
-  changed_when: false
-  no_log: "{{ hide_password }}"
-
 - name: Set root endpoint
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-web/settings"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      root_endpoint: "{{ splunk.root_endpoint }}"
-    body_format: "form-urlencoded"
-    status_code: 200
-    timeout: 10
-  when: splunk.root_endpoint != current_root_endpoint.json["entry"][0]["content"]["root_endpoint"]
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "root_endpoint"
+    value: "{{ splunk.root_endpoint }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   register: set_root_endpoint
-  changed_when: set_root_endpoint.status == 200
-  no_log: "{{ hide_password }}"
+
+- name: "Get Splunk status"
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  changed_when: False
+  failed_when: False
+  ignore_errors: yes
+
+# Restart only when Splunk is currently running and when any of the above have changed
+- name: Trigger restart
+  command: ls
+  changed_when: splunk_status.rc == 0 and set_root_endpoint is changed
   notify:
     - Restart the splunkd service

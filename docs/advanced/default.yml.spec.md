@@ -283,6 +283,16 @@ splunk:
   * Determine the port used for Splunk management/remote API calls
   * Default: 8089
 
+  appserver:
+    port: <int>
+    * Determine the port used for Splunk Application Server
+    * Default: 8065
+
+  kvstore:
+    port: <int>
+    * Determine the port used for Splunk Key-Value store
+    * Default: 8191
+
   launch: null
   * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null
@@ -405,6 +415,7 @@ splunk:
   * Name of directory for the Splunk tar
   * Default: splunk
   
+  # NOTE: This is the updated schema for this entry - please refer to "Configuration files" section for more info
   conf: <list>
     - key: <sttr - filename without .conf suffix)
       value:
@@ -425,7 +436,6 @@ splunk:
 The `default.yml` file can be used to specify multiple named configuration files.
 
 `conf` accepts an array of objects where each entry's key corresponds to the name of the `.conf` file and each entry's value contains a mapping of `directory` and `contents`. Files will be created in the directory specified in `directory` or the default directory (`/opt/splunk/etc/system/local`) if not provided. `content` accepts a dictionary where keys are section names and values are key-value pairs to be listed in the configuration file.
-  
   
 The following example generates `user-prefs.conf` in `/opt/splunk/etc/users/admin/user-prefs/local`
 ```
@@ -451,6 +461,23 @@ search_line_numbers = false
 search_auto_format = false
 search_syntax_highlighting = dark
 ```
+
+**NOTE:** The above `splunk.conf` was changed to accept an array data-type. This array input is only applicable for recent versions of `splunk-ansible`. If you are using any of the git-tagged versions `<= 8.0.2, <= 7.3.5, <= 7.2.9` (which directly map to any of the Docker-based `splunk/splunk` images), you must use the former dictionary data-type. An example of this is shown below:
+```
+splunk:
+  conf:
+    user-prefs:
+      directory: /opt/splunk/etc/users/admin/user-prefs/local
+      content:
+        general:
+          default_namespace : appboilerplate
+          search_use_advanced_editor : true
+          search_line_numbers : false
+          search_auto_format : false
+          search_syntax_highlighting : dark
+```
+
+Any recent versions of `splunk-ansible` should still support this map type, however it is strongly recommended you move to the array type for future support.
 
 ---
 

@@ -4,41 +4,27 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: splunk-standalone-centos8
-    image: geerlingguy/docker-centos8-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
-  - name: splunk-standalone-debian10
-    image: geerlingguy/docker-debian10-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
-  - name: splunk-standalone-debian9
-    image: geerlingguy/docker-debian9-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
-  - name: splunk-standalone-redhat8
-    image: geerlingguy/docker-ubi8-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
+  - name: instance
+    image: splunk/splunk
+    command: no-provision
+    env:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      no_proxy: "${no_proxy}"
 provisioner:
   name: ansible
   inventory:
     hosts:
       all:
         vars:
+          ansible_connection: local
+          ansible_environment: {}
           ansible_post_tasks: null
           ansible_pre_tasks: null
           cert_prefix: https
           dmc_asset_interval: 3,18,33,48 * * * *
           dmc_forwarder_monitoring: false
+          docker: true
           hide_password: false
           java_download_url: null
           java_update_version: null
@@ -47,7 +33,7 @@ provisioner:
           retry_num: 60
           shc_sync_retry_num: 60
           splunk:
-            role: splunk_standalone
+            role: splunk_indexer
             license_uri: null
             preferred_captaincy: true
             build_location: https://download.splunk.com/products/splunk/releases/8.0.3/linux/splunk-8.0.3-a6754d8441bf-Linux-x86_64.tgz
@@ -82,7 +68,7 @@ provisioner:
               password: null
               port: 8088
               ssl: true
-              token: abcd1234
+              token: c0c00823-a51d-4672-a48c-1b87dfcd11db
             home: /opt/splunk
             http_enableSSL: false
             http_enableSSL_cert: null
@@ -136,4 +122,4 @@ provisioner:
 verifier:
   name: testinfra
   options:
-    junit-xml: ../../../../tests/results/standalone-default-results.xml
+    junit-xml: ../../../../tests/results/indexer-default-results.xml

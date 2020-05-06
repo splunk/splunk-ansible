@@ -2,8 +2,8 @@
 #
 # These tests specifically exercise the following:
 # - Multiple platform support (centos, debian, redhat)
-# - Splunk version 8.0.3
-# - Normal standalone with minimal option set
+# - Splunk version 7.2.10
+# - Java installation using OpenJDK
 
 from __future__ import absolute_import
 import os
@@ -52,7 +52,7 @@ def test_splunk_version(host):
     assert f.exists
     assert f.user == SPLUNK_USER
     assert f.group == SPLUNK_GROUP
-    assert f.contains("VERSION=8.0.3")
+    assert f.contains("VERSION=7.2.10")
 
 def test_splunk_pid(host):
     f = host.file("{}/var/run/splunk/splunkd.pid".format(SPLUNK_HOME))
@@ -108,3 +108,23 @@ def test_splunkd(host):
     output = host.run("curl -k https://localhost:8089/services/server/info \
         -u admin:helloworld")
     assert "Splunk" in output.stdout
+
+def test_outputs_conf(host):
+    f = host.file("{}/etc/system/local/outputs.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("[indexAndForward]")
+    assert f.contains("index = false")
+
+def test_splunk_launch(host):
+    f = host.file("{}/etc/splunk-launch.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("JAVA_HOME=/opt/container_artifact/jdk-11.0.2")
+
+def test_java_version(host):
+    output = host.run("java -version")
+    assert "OpenJDK" in output.stderr
+    assert "11.0" in output.stderr
