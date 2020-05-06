@@ -276,9 +276,9 @@ def getJava(vars_scope):
     """
     Parse and set Java installation parameters
     """
-    vars_scope["java_version"] = None
-    vars_scope["java_download_url"] = None
-    vars_scope["java_update_version"] = None
+    vars_scope["java_version"] = vars_scope.get("java_version")
+    vars_scope["java_download_url"] = vars_scope.get("java_download_url")
+    vars_scope["java_update_version"] = vars_scope.get("java_update_version")
     java_version = os.environ.get("JAVA_VERSION")
     if not java_version:
         return

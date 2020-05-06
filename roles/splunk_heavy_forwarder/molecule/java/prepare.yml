@@ -1,0 +1,24 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: Check splunk user
+      user:
+        name: splunk
+        password: "*"
+        state: present
+      become: true
+
+    - name: Check packages
+      package:
+        name:
+          - procps
+          - curl
+          - net-tools
+        state: latest
+
+    - name: Make container_artifact dir
+      file:
+        path: /opt/container_artifact
+        state: directory
+        mode: 0777
