@@ -4,20 +4,8 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: splunk-standalone-centos8
-    image: geerlingguy/docker-centos8-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
   - name: splunk-standalone-debian10
     image: geerlingguy/docker-debian10-ansible:latest
-    pre_build_image: true
-    command: "/lib/systemd/systemd"
-    volumes:
-      - "/opt/splunk/var"
-  - name: splunk-standalone-debian9
-    image: geerlingguy/docker-debian9-ansible:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
@@ -50,7 +38,7 @@ provisioner:
             role: splunk_standalone
             license_uri: null
             preferred_captaincy: true
-            build_location: https://download.splunk.com/products/splunk/releases/8.0.3/linux/splunk-8.0.3-a6754d8441bf-Linux-x86_64.tgz
+            build_location: https://download.splunk.com/products/splunk/releases/7.3.5/linux/splunk-7.3.5-86fd62efc3d7-Linux-x86_64.tgz
             ignore_license: true
             apps_location: null
             admin_user: admin
@@ -64,6 +52,16 @@ provisioner:
             asan: false
             build_url_bearer_token: null
             cluster_master_url: null
+            conf:
+            - key: user-prefs
+              value:
+                directory: /opt/splunk/etc/users/admin/user-prefs/local
+                content:
+                  general:
+                    default_namespace: appboilerplate
+                    search_syntax_highlighting: dark
+                    search_assistant:
+                  "serverClass:secrets:app:test": {}
             deployer_url: null
             dfs:
               dfc_num_slots: 4
@@ -80,15 +78,15 @@ provisioner:
               cert: null
               enable: true
               password: null
-              port: 8088
-              ssl: true
-              token: abcd1234
+              port: 8099
+              ssl: false
+              token: qwerty789
             home: /opt/splunk
             http_enableSSL: false
             http_enableSSL_cert: null
             http_enableSSL_privKey: null
             http_enableSSL_privKey_password: null
-            http_port: 8000
+            http_port: 8080
             idxc:
               label: idxc_label
               pass4SymmKey: Bh/lsn+CsqvmkXBhE9GtoXOWYNVbpTUV
@@ -96,7 +94,9 @@ provisioner:
               replication_port: 9887
               search_factor: 3
               secret: Bh/lsn+CsqvmkXBhE9GtoXOWYNVbpTUV
-            launch: {}
+            launch:
+              OPTIMISTIC_ABOUT_FILE_LOCKING: 1
+              TEST: A=B
             license_download_dest: /tmp/splunk.lic
             license_master_url: null
             multisite_master_port: 8089
@@ -106,18 +106,18 @@ provisioner:
             multisite_search_factor_total: 3
             opt: /opt
             pass4SymmKey: null
-            password: helloworld
+            password: helloworld2
             pid: /opt/splunk/var/run/splunk/splunkd.pid
-            root_endpoint: null
+            root_endpoint: /splunkui
             s2s:
               ca: null
               cert: null
               enable: true
               password: null
-              port: 9997
+              port: 9999
               ssl: false
             search_head_captain_url: null
-            secret: null
+            secret: "pewpewpew"
             service_name: null
             set_search_peers: true
             shc:
@@ -127,7 +127,7 @@ provisioner:
               replication_port: 9887
               secret: g7DcnxHIA60dj86HWrh38VdaFYdXESw2
             smartstore: null
-            svc_port: 8089
+            svc_port: 8090
             tar_dir: splunk
             user: splunk
             wildcard_license: false
