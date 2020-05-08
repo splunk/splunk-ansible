@@ -29,14 +29,6 @@
   become: yes
   become_user: "{{ privileged_user }}"
 
-- name: Create splunk-launch.conf
-  become: yes
-  become_user: "{{ privileged_user }}"
-  command: cp {{ splunk.home }}/etc/splunk-launch.conf.default {{ splunk.home }}/etc/splunk-launch.conf
-  ignore_errors: true
-  when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'
-
 - name: Create symlinks for java/javac
   file:
     src: "{{ item.src }}"
@@ -58,5 +50,8 @@
     path: "{{ splunk.home }}/etc/splunk-launch.conf"
     regexp: '^JAVA_HOME'
     line: "JAVA_HOME=/opt/container_artifact/jdk-{{ java_update_version }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    create: yes
   when:
     - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'

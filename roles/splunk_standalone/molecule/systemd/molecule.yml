@@ -4,7 +4,7 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: splunk_standalone-systemd-centos8
+  - name: splunk-standalone-systemd-centos8
     image: geerlingguy/docker-centos8-ansible:latest
     pre_build_image: true
     tmpfs:
