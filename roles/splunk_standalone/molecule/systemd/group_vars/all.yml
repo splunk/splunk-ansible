@@ -1,0 +1,17 @@
+---
+splunk:
+  role: splunk_standalone
+  build_location: https://download.splunk.com/products/splunk/releases/7.3.3/linux/splunk-7.3.3-7af3758d0d5e-linux-2.6-x86_64.rpm
+  conf:
+    user-prefs:
+      directory: /opt/splunk/etc/users/admin/user-prefs/local
+      content:
+        general:
+          default_namespace: appboilerplate
+          search_syntax_highlighting: dark
+          search_assistant:
+        "serverClass:secrets:app:test": {}
+  enable_service: true
+  hec:
+    token: abcd1234
+  password: helloworld

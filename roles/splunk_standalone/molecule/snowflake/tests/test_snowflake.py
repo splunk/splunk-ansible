@@ -45,6 +45,10 @@ def test_user_seed(host):
     f = host.file("{}/etc/system/local/user-seed.conf".format(SPLUNK_HOME))
     assert not f.exists
 
+def test_outputs_conf(host):
+    f = host.file('/opt/splunk/etc/system/local/outputs.conf')
+    assert not f.exists
+
 def test_ui_login(host):
     f = host.file("{}/etc/.ui_login".format(SPLUNK_HOME))
     assert f.exists
