@@ -4,7 +4,7 @@ This folder provides guidance in how to use `splunk-ansible` from a controller n
 ![diagram](./remote-diagram.png)
 
 ## Configure hosts
-First, we'll need a few hosts to run these Ansible plays against. For convenience, we can use a set of containers to mimic a baremetal hosts running `sshd`. These hosts are also setup to pre-install the `splunk` user. For more information, please see the [Dockerfile](./Dockerfile) in used.
+First, we'll need a few hosts to run these Ansible plays against. These can be bare-metal machines in a datacenter, cloud-provisioned VMs, or for demonstration purposes a set of containers running `sshd` locally. For more information on what's in the container image used, please see the [Dockerfile](./Dockerfile) in this directory.
 
 Additionally, see the [docker-compose.yml](./docker-compose.yml) file included for how the multiple containers are defined to assume the roles in the Splunk deployment.
 ```bash

@@ -1,8 +1,6 @@
 # Execution
 
-The Ansible plays in the `splunk-ansible` project are intended to be run locally on each instance/host of the Splunk Enterprise deployment. This means that each host asyncronously sets itself up using Ansible roles to form the final desired topology which is most clearly displayed through the [docker-splunk](https://github.com/splunk/docker-splunk) project. 
-
-However, it's also possible to use these plays through other, more traditional means of running Ansible. See the following examples on how to execute Ansible using other execution patterns.
+The Ansible plays in the `splunk-ansible` project can be run in two ways: separately on each instance/host of the Splunk Enterprise deployment, or through more traditional separation of control nodes and managed nodes. In the first method each host asynchronously sets itself up using Ansible roles to form the final desired topology which is most clearly displayed through the [docker-splunk](https://github.com/splunk/docker-splunk) project. All execution methods are listed below.
 
 --- 
 
@@ -21,7 +19,7 @@ In order to bring up the most basic Splunk standalone instance on a local host, 
 
 ```bash
 export SPLUNK_PASSWORD=helloworld
-export SPLUNK_BUILD_URL=https://download.splunk.com/products/splunk/releases/8.0.2.1/linux/splunk-8.0.2.1-f002026bad55-Linux-x86_64.tgz
+export SPLUNK_BUILD_URL=https://download.splunk.com/products/splunk/releases/8.0.3/linux/splunk-8.0.3-a6754d8441bf-Linux-x86_64.tgz
 export SPLUNK_USER=$(whoami)
 export SPLUNK_GROUP=$(id -gn)
 
