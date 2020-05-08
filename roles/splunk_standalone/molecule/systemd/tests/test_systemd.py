@@ -3,7 +3,6 @@
 # These tests specifically exercise the following:
 # - Splunk version 7.3.3 through rpm installation
 # - Systemd-enabled, Splunk started via `enable bootstrap` command
-# - Older schema of HEC settings (flatted keys)
 # - Older schema of custom configs (dict)
 
 from __future__ import absolute_import
@@ -113,6 +112,17 @@ def test_splunkd(host):
     output = host.run("curl -k https://localhost:8089/services/server/info \
         -u admin:helloworld")
     assert "Splunk" in output.stdout
+
+def test_custom_user_prefs(host):
+    f = host.file("{}/etc/users/admin/user-prefs/local/user-prefs.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("[general]")
+    assert f.contains("default_namespace = appboilerplate")
+    assert f.contains("search_syntax_highlighting = dark")
+    assert f.contains("search_assistant")
+    assert f.contains("[serverClass:secrets:app:test]")
 
 def test_service(host):
     s = host.service('Splunkd')
