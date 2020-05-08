@@ -55,6 +55,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_PREFERRED_CAPTAINCY | Set up search head clustering with preferred captaincy, typically pinned to the instance designated as `splunk_search_head_captain` | no | no | no |
 | SPLUNK_IDXC_SECRET | Indexer Clustering shared Secret (deprecated in favor of `SPLUNK_SHC_PASS4SYMMKEY`) | no | no | no |
 | SPLUNK_IDXC_PASS4SYMMKEY | Password for the Indexer Clustering shared Secret | no | no | yes |
+| SPLUNK_IDXC_DISCOVERYPASS4SYMMKEY | Password for the indexer discovery shared secret | no | no | yes |
 | SPLUNK_IDXC_LABEL | Indexer clustering label | no | no | yes |
 | SPLUNK_IDXC_REPLICATION_FACTOR | Configure indexer clustering data replication factor | no | no | no |
 | SPLUNK_IDXC_SEARCH_FACTOR | Configure indexer clustering search factor | no | no | no |

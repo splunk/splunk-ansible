@@ -172,6 +172,10 @@ def getIndexerClustering(vars_scope):
     else:
         idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
         idxc_vars["pass4SymmKey"] = idxc_vars["secret"]
+    # Support separate pass4SymmKey for indexer discovery
+    idxc_vars["discoveryPass4SymmKey"] = os.environ.get("SPLUNK_IDXC_DISCOVERYPASS4SYMMKEY", idxc_vars.get("discoveryPass4SymmKey"))
+    if not idxc_vars["discoveryPass4SymmKey"]:
+        idxc_vars["discoveryPass4SymmKey"] = idxc_vars["pass4SymmKey"]
     # Rectify replication factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thereplicationfactor)
     # Make sure default repl/search factor>0 else Splunk doesn't start unless user-defined
     if inventory.get("splunk_indexer"):

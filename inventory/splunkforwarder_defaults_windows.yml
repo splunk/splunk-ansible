@@ -74,6 +74,7 @@ splunk:
         enable: False
         secret:
         pass4SymmKey:
+        discoveryPass4SymmKey:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3
