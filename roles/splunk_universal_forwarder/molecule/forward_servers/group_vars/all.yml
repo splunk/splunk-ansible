@@ -1,0 +1,17 @@
+---
+splunk:
+  role: splunk_universal_forwarder
+  build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.1.1/linux/splunkforwarder-7.3.1.1-7651b7244cf2-linux-2.6-amd64.deb
+  conf:
+    user-prefs:
+      directory: /opt/splunkforwarder/etc/users/admin/user-prefs/local
+      content:
+        general:
+          default_namespace: appboilerplate
+          search_syntax_highlighting: dark
+  hec:
+    token: abcd1234
+  forward_servers:
+    - splunk-indexer1.test.local
+    - splunk-indexer2.test.local
+  password: helloworld

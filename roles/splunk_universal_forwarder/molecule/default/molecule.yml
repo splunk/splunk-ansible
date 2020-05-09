@@ -9,25 +9,25 @@ platforms:
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
-      - "/opt/splunk/var"
+      - "/opt/splunkforwarder/var"
   - name: splunk-uf-debian10
     image: geerlingguy/docker-debian10-ansible:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
-      - "/opt/splunk/var"
+      - "/opt/splunkforwarder/var"
   - name: splunk-uf-debian9
     image: geerlingguy/docker-debian9-ansible:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
-      - "/opt/splunk/var"
+      - "/opt/splunkforwarder/var"
   - name: splunk-uf-redhat8
     image: geerlingguy/docker-ubi8-ansible:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
-      - "/opt/splunk/var"
+      - "/opt/splunkforwarder/var"
 provisioner:
   name: ansible
   env:
