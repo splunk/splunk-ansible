@@ -45,6 +45,10 @@ def test_user_seed(host):
     f = host.file("{}/etc/system/local/user-seed.conf".format(SPLUNK_HOME))
     assert not f.exists
 
+def test_outputs_conf(host):
+    f = host.file('/opt/splunk/etc/system/local/outputs.conf')
+    assert not f.exists
+
 def test_ui_login(host):
     f = host.file("{}/etc/.ui_login".format(SPLUNK_HOME))
     assert f.exists
@@ -99,9 +103,25 @@ def test_splunk_ports(host):
     assert "0.0.0.0:8080" in output.stdout
     assert "0.0.0.0:8090" in output.stdout
     assert "0.0.0.0:8099" in output.stdout
-    assert "0.0.0.0:8191" in output.stdout
+    assert "0.0.0.0:18191" in output.stdout
     assert "0.0.0.0:9999" in output.stdout
-    assert "127.0.0.1:8065" in output.stdout
+    assert "127.0.0.1:8066" in output.stdout
+
+def test_appserver_port(host):
+    f = host.file("{}/etc/system/local/web.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("[settings]")
+    assert f.contains("appServerPorts = 8066")
+
+def test_kvstore_port(host):
+    f = host.file("{}/etc/system/local/server.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("[kvstore]")
+    assert f.contains("port = 18191")
 
 def test_splunk_secret(host):
     f = host.file("{}/etc/auth/splunk.secret".format(SPLUNK_HOME))
