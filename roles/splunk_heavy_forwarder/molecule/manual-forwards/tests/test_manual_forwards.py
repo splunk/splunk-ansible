@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
 # These tests specifically exercise the following:
-# - Splunk version 7.3.3 through rpm installation
-# - Systemd-enabled, Splunk started via `enable bootstrap` command
-# - Older schema of custom configs (dict)
+# - Multiple platform support (centos, debian, redhat)
+# - Splunk version 7.3.1.1
+# - splunk.forward_servers allows for manually inserting forwarding destinations
 
 from __future__ import absolute_import
 import os
@@ -41,10 +41,6 @@ def test_user_seed(host):
     f = host.file("{}/etc/system/local/user-seed.conf".format(SPLUNK_HOME))
     assert not f.exists
 
-def test_outputs_conf(host):
-    f = host.file('/opt/splunk/etc/system/local/outputs.conf')
-    assert not f.exists
-
 def test_ui_login(host):
     f = host.file("{}/etc/.ui_login".format(SPLUNK_HOME))
     assert f.exists
@@ -56,7 +52,7 @@ def test_splunk_version(host):
     assert f.exists
     assert f.user == SPLUNK_USER
     assert f.group == SPLUNK_GROUP
-    assert f.contains("VERSION=7.3.3")
+    assert f.contains("VERSION=7.3.1.1")
 
 def test_splunk_pid(host):
     f = host.file("{}/var/run/splunk/splunkd.pid".format(SPLUNK_HOME))
@@ -113,26 +109,20 @@ def test_splunkd(host):
         -u admin:helloworld")
     assert "Splunk" in output.stdout
 
-def test_custom_user_prefs(host):
-    f = host.file("{}/etc/users/admin/user-prefs/local/user-prefs.conf".format(SPLUNK_HOME))
+def test_outputs_conf(host):
+    f = host.file("{}/etc/system/local/outputs.conf".format(SPLUNK_HOME))
     assert f.exists
     assert f.user == SPLUNK_USER
     assert f.group == SPLUNK_GROUP
-    assert f.contains("[general]")
-    assert f.contains("default_namespace = appboilerplate")
-    assert f.contains("search_syntax_highlighting = dark")
-    assert f.contains("search_assistant")
-    assert f.contains("[serverClass:secrets:app:test]")
+    assert f.contains("[indexAndForward]")
+    assert f.contains("index = false")
 
-def test_service(host):
-    s = host.service('Splunkd')
-    assert s.is_running
-    assert s.is_enabled
-
-def test_splunkd_systemd_file(host):
-    f = host.file('/etc/systemd/system/Splunkd.service')
-    assert f.is_file
-    assert f.user == "root"
-    assert f.group == "root"
-    assert f.contains('ExecStartPost=/bin/bash -c "chown -R splunk:splunk /sys/fs/cgroup/cpu/system.slice/%n"')
-    assert f.contains('ExecStartPost=/bin/bash -c "chown -R splunk:splunk /sys/fs/cgroup/memory/system.slice/%n"')
+def test_forward_servers(host):
+    f = host.file("{}/etc/system/local/outputs.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("\\[tcpout-server://forwarder1.test.com:9997\\]")
+    assert f.contains("\\[tcpout-server://forwarder2.test.com:9997\\]")
+    assert f.contains("\\[tcpout:default-autolb-group\\]")
+    assert f.contains("server = forwarder1.test.com:9997,forwarder2.test.com:9997")
