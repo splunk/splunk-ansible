@@ -1,12 +1,14 @@
 ---
+# By default, splunkd responds on SSL - only update 'enableSplunkdSSL' if purposely disabled 
 - name: Enable Splunkd SSL
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: enableSplunkdSSL
-    value: "{{ splunk.ssl.enable | int }}"
+    value: "false"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    state: "{{ 'absent' if splunk.ssl.enable else 'present' }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when: "'enable' in splunk.ssl"
