@@ -7,6 +7,7 @@
     value: "{{ splunk.ssl.enable | int }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0644
   become: yes
   become_user: "{{ splunk.user }}"
   when: "'enable' in splunk.ssl"
@@ -19,6 +20,7 @@
     value: "{{ splunk.ssl.ca }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0644
   become: yes
   become_user: "{{ splunk.user }}"
   when: "'ca' in splunk.ssl and splunk.ssl.ca"
@@ -31,6 +33,7 @@
     value: "{{ splunk.ssl.cert }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0644
   become: yes
   become_user: "{{ splunk.user }}"
   when: "'cert' in splunk.ssl and splunk.ssl.cert"
@@ -43,6 +46,7 @@
     value: "{{ splunk.ssl.password }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0644
   become: yes
   become_user: "{{ splunk.user }}"
   when: "'password' in splunk.ssl and splunk.ssl.password"
