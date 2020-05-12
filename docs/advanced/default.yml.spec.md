@@ -306,6 +306,25 @@ splunk:
   * Password for Symmetric Key used to encrypt Splunk's sensitive information on disk. When not set, Splunk will encrypt a default value (`changeme`) with `splunk.secret` and set it as `pass4SymmKey` in the `[general]` stanza of `/opt/splunk/etc/system/local/server.conf`.
   * Default: null
 
+  ssl:
+  * Configure the default certificates used by Splunk Enterprise
+  
+    enable: <bool>
+    * Enable SSL on the Splunkd management API (typically port 8089)
+    * Default: True
+
+    cert: <str>
+    * Specify the path to the SSL certificate used for the Splunkd management API
+    * Default: null
+
+    password <str>
+    * Specify the path to the SSL password used by the certificate above
+    * Default: null
+
+    ca: <str>
+    * Specify the path to the CA certificate used for the Splunkd management API
+    * Default: null
+
   idxc:
     label: <str>
     * Provide a label for indexer clustering configuration
