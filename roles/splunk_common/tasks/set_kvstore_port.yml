@@ -10,6 +10,8 @@
 
 - name: Adjust server.conf permissions (Windows)
   file:
+    owner: "SYSTEM"
+    group: "SYSTEM"
     path: "{{ splunk.home }}/etc/system/local/server.conf"
     mode: 0644
   when:
