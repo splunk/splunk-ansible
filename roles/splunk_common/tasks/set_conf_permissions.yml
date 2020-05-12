@@ -1,8 +1,0 @@
----
-- name: Adjust conf permissions (Windows)
-  file:
-    path: "{{ splunk.home }}/etc/system/local/{{ item }}"
-    mode: 0644
-  with_items:
-    - "server.conf"
-    - "inputs.conf"
