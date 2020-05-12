@@ -4,13 +4,31 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: splunk_universal_forwarder-systemd-centos8
+  - name: splunk-uf-803-systemd-centos8
     image: geerlingguy/docker-centos8-ansible:latest
     pre_build_image: true
     tmpfs:
       - /run
       - /tmp
     volumes:
+      - "/opt/splunkforwarder/var"
+      - "/sys/fs/cgroup:/sys/fs/cgroup:rw"
+    command: "/lib/systemd/systemd"
+    env:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      no_proxy: "${no_proxy}"
+  # 7.3.2 uses older system file which requires access to /sys/fs/cgroup/{memory,cpu} for WLM
+  - name: splunk-uf-732-systemd-centos8
+    image: geerlingguy/docker-centos8-ansible:latest
+    pre_build_image: true
+    tmpfs:
+      - /run
+      - /tmp
+      - /sys/fs/cgroup/memory/system.slice/SplunkForwarder.service
+      - /sys/fs/cgroup/cpu/system.slice/SplunkForwarder.service
+    volumes:
+      - "/opt/splunkforwarder/var"
       - "/sys/fs/cgroup:/sys/fs/cgroup:rw"
     command: "/lib/systemd/systemd"
     env:
@@ -19,8 +37,14 @@ platforms:
       no_proxy: "${no_proxy}"
 provisioner:
   name: ansible
-  log: true
+  env:
+    ANSIBLE_HASH_BEHAVIOUR: merge
+  inventory:
+    links:
+      hosts: ../hosts.yml
+      group_vars: ./group_vars/
+      host_vars: ./host_vars/
 verifier:
   name: testinfra
   options:
-    junit-xml: ../../../../tests/results/uf-rpm-test-results.xml
+    junit-xml: ../../../../tests/results/uf-systemd-results.xml
