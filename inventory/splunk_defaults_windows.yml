@@ -28,8 +28,8 @@ splunk:
     tar_dir: "splunk"
     opt: &opt "/opt"
     home: &home !!python/object/apply:os.path.join [*opt, "splunk"]
-    user: "splunk"
-    group: "Administrators"
+    user: "SYSTEM"
+    group: "SYSTEM"
     exec: !!python/object/apply:os.path.join [*home, "bin", "splunk.exe"]
     pid: !!python/object/apply:os.path.join [*home, "var", "run", "splunk", "splunkd.pid"]
     admin_user: "admin"
