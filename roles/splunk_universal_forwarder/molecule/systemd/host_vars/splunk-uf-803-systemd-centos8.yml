@@ -1,0 +1,3 @@
+---
+splunk:
+  build_location: https://download.splunk.com/products/universalforwarder/releases/8.0.3/linux/splunkforwarder-8.0.3-a6754d8441bf-linux-2.6-x86_64.rpm

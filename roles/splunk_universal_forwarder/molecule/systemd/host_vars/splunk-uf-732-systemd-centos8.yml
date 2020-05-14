@@ -1,0 +1,3 @@
+---
+splunk:
+  build_location: https://download.splunk.com/products/universalforwarder/releases/7.3.2/linux/splunkforwarder-7.3.2-c60db69f8e32-linux-2.6-x86_64.rpm

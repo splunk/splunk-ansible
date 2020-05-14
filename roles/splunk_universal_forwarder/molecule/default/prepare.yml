@@ -9,15 +9,6 @@
         state: present
       become: true
 
-    - name: Setup yum proxy
-      lineinfile:
-        path: /etc/yum.conf
-        regexp: '^proxy='
-        line: "proxy={{ lookup('env','http_proxy') }}"
-      when:
-        - "lookup('env','http_proxy') is defined"
-        - "lookup('env','http_proxy')  | length > 0"
-
     - name: Check packages
       package:
         name:

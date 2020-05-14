@@ -6,6 +6,7 @@
     section: shclustering
     option: "{{ item.opt }}"
     value: "{{ item.val }}"
+    mode: 0644
   with_items:
     - { opt: 'pass4SymmKey', val: '{{ splunk.shc.pass4SymmKey }}' }
     - { opt: 'shcluster_label', val: '{{ splunk.shc.label }}' }
