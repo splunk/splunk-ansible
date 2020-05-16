@@ -351,6 +351,10 @@ splunk:
     * Determine the secret used to configure indexer clustering. This is REQUIRED when setting up indexer clustering. This is pass4SymmKey in the `[clustering]` stanza of server.conf.
     * Default: null
 
+    discoveryPass4SymmKey: <str>
+    * Determine the secret used to enable indexer discovery (for any forwarding clients connecting to the cluster master). This is pass4SymmKey in the `[indexer_discovery]` stanza of server.conf.
+    * Default: null
+
   shc:
     label: <str>
     * Provide a label for search head clustering configuration

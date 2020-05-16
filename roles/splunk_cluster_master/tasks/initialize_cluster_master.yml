@@ -8,7 +8,7 @@
     validate_certs: False
     body:
       name: "indexer_discovery"
-      pass4SymmKey: "{{ splunk.idxc.pass4SymmKey }}"
+      pass4SymmKey: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
