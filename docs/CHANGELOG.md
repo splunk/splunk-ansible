@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [8.0.4](#804)
 * [8.0.3](#803)
 * [8.0.2.1](#8021)
 * [8.0.2](#802)
@@ -27,6 +28,27 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.0.4
+
+#### What's New?
+* Support for custom SSL certificates for the Splunkd management endpoint
+* Support for custom ports for [Splunk Application Server](https://docs.splunk.com/Documentation/ITSI/latest/IModules/AboutApplicationServerModule) and [App KV Store](https://docs.splunk.com/Documentation/Splunk/8.0.0/Admin/AboutKVstore) using:
+    * `splunk.appserver.port`, `splunk.kvstore.port` in `default.yml`
+    * `SPLUNK_APPSERVER_PORT`, `SPLUNK_KVSTORE_PORT` environment variables
+* Java installation through `default.yml` with `java_download_url`, `java_update_version`, and `java_version`
+* Support for Windows+AWS deployments for Splunk v7.2 and v7.3
+
+
+#### Changes
+* Set pass4SymmKey for indexer discovery separately from pass4SymmKey for indexer clustering with:
+    * `splunk.idxc.discoveryPass4SymmKey` in `default.yml`
+    * `SPLUNK_IDXC_DISCOVERYPASS4SYMMKEY` environment variable
+* `outputs.conf` is configured without REST calls to ensure forwarding is enabled before Splunk starts
+* Splunk Deployer can be used as a deployment client
+* Refactored molecule test structure
 
 ---
 
@@ -61,13 +83,13 @@
 ## 8.0.2
 
 #### What's New?
-* Revised Splunk forwarding/receiving plays to optionally support SSL (see documentation on [securing data from forwarders](https://docs.splunk.com/Documentation/Splunk/latest/Security/Aboutsecuringdatafromforwarders))
+* Revised Splunk forwarding/receiving plays to optionally support SSL. See [About securing data from forwarders](https://docs.splunk.com/Documentation/Splunk/latest/Security/Aboutsecuringdatafromforwarders).
 * Initial support for forwarder management using [Splunk Monitoring Console](https://docs.splunk.com/Documentation/Splunk/latest/DMC/DMCoverview)
 * New environment variables exposed to control replication/search factor for clusters, key/value pairs written to `splunk-launch.conf`, and replacing default security key (pass4SymmKey)
 
 #### Changes
 * Created new environment variables to control indexer + search head clustering replication and search factor at run-time; error handling of these values are now moved into dynamic inventory script
-* Created new environment variable `SPLUNK_PASS4SYMMKEY` to allow users to change the default shipped with Splunk Enterprise. Additionally, consolidated naming so `SPLUNK_SHC_SECRET` and `SPLUNK_IDXC_SECRET` will now be replaced by `SPLUNK_SHC_PASS4SYMMKEY` and `SPLUNK_IDXC_PASS4SYMMKEY` respectively in the future (see documentation on [securing clusters](https://docs.splunk.com/Documentation/Splunk/latest/Security/Aboutsecuringclusters))
+* Created new environment variable `SPLUNK_PASS4SYMMKEY` to allow users to change the default shipped with Splunk Enterprise. Additionally, consolidated naming, so `SPLUNK_SHC_SECRET` and `SPLUNK_IDXC_SECRET` will now be replaced by `SPLUNK_SHC_PASS4SYMMKEY` and `SPLUNK_IDXC_PASS4SYMMKEY` respectively in the future (see documentation on [securing clusters](https://docs.splunk.com/Documentation/Splunk/latest/Security/Aboutsecuringclusters))
 * Added `SPLUNK_LAUNCH_CONF` that accepts key=value comma-separated pairs (ex: `SPLUNK_LAUNCH_CONF=OPTIMISTIC_ABOUT_FILE_LOCKING=1,HELLO=WORLD`) that will get written to the Splunk Enterprise instance's `splunk-launch.conf`
 * Splunk-to-Splunk forwarding and receiving is now rewritten to support an optional SSL. To utilize encryption, you must bring your own certificates and make them available to both forwarders and receivers. For more information, see the documentation on [securing forwarder to indexer communication](https://docs.splunk.com/Documentation/Splunk/8.0.1/Security/ConfigureSplunkforwardingtousesignedcertificates)
 * Added `ansible_environment` variable to `default.yml` to set environment variables for task action contexts (see Ansible documentation on [setting environment](https://docs.ansible.com/ansible/latest/user_guide/playbooks_environment.html))
