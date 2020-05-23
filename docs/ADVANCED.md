@@ -55,6 +55,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_PREFERRED_CAPTAINCY | Set up search head clustering with preferred captaincy, typically pinned to the instance designated as `splunk_search_head_captain` | no | no | no |
 | SPLUNK_IDXC_SECRET | Indexer Clustering shared Secret (deprecated in favor of `SPLUNK_SHC_PASS4SYMMKEY`) | no | no | no |
 | SPLUNK_IDXC_PASS4SYMMKEY | Password for the Indexer Clustering shared Secret | no | no | yes |
+| SPLUNK_IDXC_DISCOVERYPASS4SYMMKEY | Password for the indexer discovery shared secret | no | no | yes |
 | SPLUNK_IDXC_LABEL | Indexer clustering label | no | no | yes |
 | SPLUNK_IDXC_REPLICATION_FACTOR | Configure indexer clustering data replication factor | no | no | no |
 | SPLUNK_IDXC_SEARCH_FACTOR | Configure indexer clustering search factor | no | no | no |
@@ -207,6 +208,8 @@ $ ansible-playbook -i inventory/environ.py ...
 If SplunkBase apps are not specified or needed, the `splunkbase_username` and `splunkbase_password` variables should be omitted entirely.
 
 When deploying distributed Splunk Enterprise environments, apps should be installed on the deployer, cluster master, and deployment server instances. Each of these roles will take care of bundling and pushing the apps to their respective downstream peers. Note that any configuration files in any custom app's `local` directory will *not* be sent to peers - this is in alignment with Splunk best practices around configuration management.
+
+To install an app from elsewhere, provide a path to a compressed `splunkApp.spl` file (either through a filesystem or URL) as seen above. For proper installation, apps should be compressed using `tar` in a GNU/Linux environment, as apps compressed on OSX or other BSD-variant operating systems have been known to cause issues.
 
 ---
 

@@ -1,0 +1,51 @@
+---
+# By default, splunkd responds on SSL - only update 'enableSplunkdSSL' if purposely disabled 
+- name: Enable Splunkd SSL
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: enableSplunkdSSL
+    value: "false"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    state: "{{ 'absent' if splunk.ssl.enable else 'present' }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: "'enable' in splunk.ssl"
+
+- name: Set Splunkd CA
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: sslRootCAPath
+    value: "{{ splunk.ssl.ca }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: "'ca' in splunk.ssl and splunk.ssl.ca"
+
+- name: Set Splunkd cert
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: serverCert
+    value: "{{ splunk.ssl.cert }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: "'cert' in splunk.ssl and splunk.ssl.cert"
+
+- name: Set Splunkd SSL password
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: sslPassword
+    value: "{{ splunk.ssl.password }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: "'password' in splunk.ssl and splunk.ssl.password"
+  changed_when: false

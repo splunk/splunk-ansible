@@ -3,29 +3,40 @@ dependency:
   name: galaxy
 driver:
   name: docker
-lint:
-  name: yamllint
-  options:
-    c: ../../.yamllint
 platforms:
-  - name: instance
-    image: splunk/universalforwarder
-    command: no-provision
+  - name: splunk-uf-centos8
+    image: geerlingguy/docker-centos8-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunkforwarder/var"
+  - name: splunk-uf-debian10
+    image: geerlingguy/docker-debian10-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunkforwarder/var"
+  - name: splunk-uf-debian9
+    image: geerlingguy/docker-debian9-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunkforwarder/var"
+  - name: splunk-uf-redhat8
+    image: geerlingguy/docker-ubi8-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunkforwarder/var"
 provisioner:
   name: ansible
-  lint:
-    name: ansible-lint
-    enabled: true
-    options:
-      x: ["204", "701"]
-      force-color: true
-scenario:
-  name: default
+  env:
+    ANSIBLE_HASH_BEHAVIOUR: merge
+  inventory:
+    links:
+      hosts: ../hosts.yml
+      group_vars: ./group_vars/
 verifier:
   name: testinfra
-  lint:
-    name: flake8
-    options:
-      ignore: E501
   options:
     junit-xml: ../../../../tests/results/uf-default-results.xml

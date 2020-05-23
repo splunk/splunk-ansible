@@ -2,13 +2,22 @@
 - name: Prepare
   hosts: all
   tasks:
-    - name: check splunk user
+    - name: Check splunk user
       user:
         name: splunk
         password: "*"
         state: present
       become: true
-    - name: setup yum proxy
+
+    - name: Check packages
+      package:
+        name:
+          - procps
+          - curl
+          - net-tools
+        state: latest
+
+    - name: Setup yum proxy
       lineinfile:
         path: /etc/yum.conf
         regexp: '^proxy='

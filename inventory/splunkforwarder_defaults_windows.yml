@@ -28,8 +28,8 @@ splunk:
     tar_dir: "splunkforwarder"
     opt: &opt "/opt"
     home: &home !!python/object/apply:os.path.join [*opt, "splunkforwarder"]
-    user: "splunk"
-    group: "Administrators"
+    user: "SYSTEM"
+    group: "SYSTEM"
     exec: !!python/object/apply:os.path.join [*home, "bin", "splunk.exe"]
     pid: !!python/object/apply:os.path.join [*home, "var", "run", "splunk", "splunkd.pid"]
     admin_user: "admin"
@@ -38,6 +38,11 @@ splunk:
     secret:
     pass4SymmKey:
     svc_port: 8089
+    ssl:
+        enable: True
+        cert:
+        password:
+        ca:
     launch:
     set_search_peers: True
     s2s:
@@ -46,7 +51,11 @@ splunk:
         ssl: False
         cert:
         password:
-        ca:
+        ca: 
+    appserver:
+        port: 8065
+    kvstore:
+        port: 8191
     http_port: 8000
     http_enableSSL: 0
     http_enableSSL_cert:
@@ -70,6 +79,7 @@ splunk:
         enable: False
         secret:
         pass4SymmKey:
+        discoveryPass4SymmKey:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3

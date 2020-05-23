@@ -1,0 +1,9 @@
+---
+- name: Set appserver port
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "appServerPorts"
+    value: "{{ splunk.appserver.port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"

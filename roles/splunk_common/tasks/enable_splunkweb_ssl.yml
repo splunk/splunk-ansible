@@ -1,0 +1,49 @@
+---
+- name: Enable Web SSL
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "enableSplunkWebSSL"
+    value: "True"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: 0660
+
+- name: Set Web certificate path
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "serverCert"
+    value: "{{ splunk.http_enableSSL_cert }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: 0660
+  when:
+    - splunk.http_enableSSL_cert is defined
+    - splunk.http_enableSSL_cert
+
+- name: Set Web private key path
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "privKeyPath"
+    value: "{{ splunk.http_enableSSL_privKey }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: 0660
+  when:
+    - splunk.http_enableSSL_privKey is defined
+    - splunk.http_enableSSL_privKey
+
+- name: Set Web private key password
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "sslPassword"
+    value: "{{ splunk.http_enableSSL_privKey_password }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: 0660
+  when:
+    - splunk.http_enableSSL_privKey_password is defined
+    - splunk.http_enableSSL_privKey_password

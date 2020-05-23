@@ -90,7 +90,7 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     inventory["all"]["vars"] = getDefaultVars()
     inventory["all"]["vars"]["docker"] = False
 
-    if os.path.isfile("/.dockerenv") or os.path.isdir("/var/run/secrets/kubernetes.io") or os.environ.get("KUBERNETES_SERVICE_HOST"):
+    if os.path.isfile("/.dockerenv") or os.path.isfile("/run/.containerenv") or os.path.isdir("/var/run/secrets/kubernetes.io") or os.environ.get("KUBERNETES_SERVICE_HOST"):
         inventory["all"]["vars"]["docker"] = True
         if "localhost" not in inventory["all"]["children"]:
             inventory["all"]["hosts"].append("localhost")
@@ -172,6 +172,10 @@ def getIndexerClustering(vars_scope):
     else:
         idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
         idxc_vars["pass4SymmKey"] = idxc_vars["secret"]
+    # Support separate pass4SymmKey for indexer discovery
+    idxc_vars["discoveryPass4SymmKey"] = os.environ.get("SPLUNK_IDXC_DISCOVERYPASS4SYMMKEY", idxc_vars.get("discoveryPass4SymmKey"))
+    if not idxc_vars["discoveryPass4SymmKey"]:
+        idxc_vars["discoveryPass4SymmKey"] = idxc_vars["pass4SymmKey"]
     # Rectify replication factor (https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Thereplicationfactor)
     # Make sure default repl/search factor>0 else Splunk doesn't start unless user-defined
     if inventory.get("splunk_indexer"):
@@ -263,22 +267,22 @@ def getLicenses(vars_scope):
     Determine the location of Splunk licenses to install at start-up time
     """
     # Need to provide some file value (does not have to exist). The task will automatically skip over if the file is not found. Otherwise, will throw an error if no file is specified.
-    vars_scope["splunk"]["license_uri"] = os.environ.get("SPLUNK_LICENSE_URI", "splunk.lic")
+    vars_scope["splunk"]["license_uri"] = os.environ.get("SPLUNK_LICENSE_URI", vars_scope["splunk"].get("license_uri") or "splunk.lic")
     vars_scope["splunk"]["wildcard_license"] = False
     if vars_scope["splunk"]["license_uri"] and '*' in vars_scope["splunk"]["license_uri"]:
         vars_scope["splunk"]["wildcard_license"] = True
     vars_scope["splunk"]["ignore_license"] = False
     if os.environ.get("SPLUNK_IGNORE_LICENSE", "").lower() == "true":
         vars_scope["splunk"]["ignore_license"] = True
-    vars_scope["splunk"]["license_download_dest"] = os.environ.get("SPLUNK_LICENSE_INSTALL_PATH", "/tmp/splunk.lic")
+    vars_scope["splunk"]["license_download_dest"] = os.environ.get("SPLUNK_LICENSE_INSTALL_PATH", vars_scope["splunk"].get("license_download_dest") or "/tmp/splunk.lic")
 
 def getJava(vars_scope):
     """
     Parse and set Java installation parameters
     """
-    vars_scope["java_version"] = None
-    vars_scope["java_download_url"] = None
-    vars_scope["java_update_version"] = None
+    vars_scope["java_version"] = vars_scope.get("java_version")
+    vars_scope["java_download_url"] = vars_scope.get("java_download_url")
+    vars_scope["java_update_version"] = vars_scope.get("java_update_version")
     java_version = os.environ.get("JAVA_VERSION")
     if not java_version:
         return
@@ -412,6 +416,8 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
+    vars_scope["splunk"]["appserver"]["port"] = os.environ.get('SPLUNK_APPSERVER_PORT', vars_scope["splunk"]["appserver"]["port"])
+    vars_scope["splunk"]["kvstore"]["port"] = os.environ.get('SPLUNK_KVSTORE_PORT', vars_scope["splunk"]["kvstore"]["port"])
 
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":

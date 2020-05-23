@@ -38,6 +38,11 @@ splunk:
     secret:
     pass4SymmKey:
     svc_port: 8089
+    ssl:
+        enable: True
+        cert:
+        password:
+        ca:
     launch:
     set_search_peers: True
     s2s:
@@ -47,6 +52,10 @@ splunk:
         cert:
         password:
         ca:
+    appserver:
+        port: 8065
+    kvstore:
+        port: 8191
     http_port: 8000
     http_enableSSL: 0
     http_enableSSL_cert:
@@ -70,6 +79,7 @@ splunk:
         enable: False
         secret:
         pass4SymmKey:
+        discoveryPass4SymmKey:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3

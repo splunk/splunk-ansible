@@ -87,11 +87,26 @@
     - "'svc_port' in splunk"
     - splunk.svc_port | int != 8089
 
-- include_tasks: enable_ssl_on_gui.yml
+- include_tasks: set_root_endpoint.yml
+  when: "'root_endpoint' in splunk and splunk.root_endpoint"
+
+- include_tasks: set_appserver_port.yml
+  when:
+    - "'appserver' in splunk and 'port' in splunk.appserver"
+    - splunk.appserver.port | int != 8065
+
+- include_tasks: set_kvstore_port.yml
+  when:
+    - "'kvstore' in splunk and 'port' in splunk.kvstore"
+    - splunk.kvstore.port | int != 8191
+
+- include_tasks: enable_splunkweb_ssl.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
     - splunk.http_enableSSL | bool
-    - first_run | bool
+
+- include_tasks: enable_splunkd_ssl.yml
+  when: "'ssl' in splunk and splunk.ssl"
 
 - include_tasks: set_config_file.yml
   vars:
@@ -101,15 +116,17 @@
   with_items: "{% if splunk.conf is mapping %}{{ splunk.conf | dict2items }}{% else %}{{ splunk.conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
 
+# Generate outputs.conf before splunk starts to prevent data being indexed locally
+- include_tasks: enable_forwarding.yml
+  when:
+    # Indexers should never forward 
+    - splunk.role != "splunk_indexer"
+    - (splunk.role != "splunk_standalone" and splunk.role != "splunk_search_head") or
+        (splunk_indexer_cluster | bool or splunk_forward_servers is defined)
+
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
-
-- include_tasks: set_root_endpoint.yml
-  when:
-    - splunk.root_endpoint is defined
-    - splunk.root_endpoint != None
-    - first_run | bool
 
 - include_tasks: clean_user_seed.yml
   when:

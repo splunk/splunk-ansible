@@ -1,0 +1,9 @@
+---
+- name: Set KeyValueStore Port
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: "port"
+    value: "{{ splunk.kvstore.port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"

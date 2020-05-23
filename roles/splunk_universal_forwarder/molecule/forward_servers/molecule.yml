@@ -3,29 +3,34 @@ dependency:
   name: galaxy
 driver:
   name: docker
-lint:
-  name: yamllint
-  options:
-    c: ../../.yamllint
 platforms:
-  - name: instance-forward_servers
-    image: splunk/universalforwarder
-    command: no-provision
+  - name: splunk-uf-debian10
+    image: geerlingguy/docker-debian10-ansible:latest
+    pre_build_image: true
+    env:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      no_proxy: "${no_proxy}"
+    volumes:
+      - "/opt/splunkforwarder/var"
+  - name: splunk-uf-ubuntu1804
+    image: geerlingguy/docker-ubuntu1804-ansible:latest
+    pre_build_image: true
+    env:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      no_proxy: "${no_proxy}"
+    volumes:
+      - "/opt/splunkforwarder/var"
 provisioner:
   name: ansible
-  lint:
-    name: ansible-lint
-    enabled: true
-    options:
-      x: ["204", "701"]
-      force-color: true
-scenario:
-  name: forward_servers
+  env:
+    ANSIBLE_HASH_BEHAVIOUR: merge
+  inventory:
+    links:
+      hosts: ../hosts.yml
+      group_vars: ./group_vars/
 verifier:
   name: testinfra
-  lint:
-    name: flake8
-    options:
-      ignore: E501
   options:
-    junit-xml: ../../../../tests/results/uf-forward_servers-results.xml
+    junit-xml: ../../../../tests/results/uf-forwardservers-results.xml

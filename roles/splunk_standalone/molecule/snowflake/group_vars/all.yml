@@ -1,0 +1,32 @@
+---
+splunk:
+  role: splunk_standalone
+  appserver:
+    port: 8066
+  kvstore:
+    port: 18191
+  build_location: https://download.splunk.com/products/splunk/releases/7.3.5/linux/splunk-7.3.5-86fd62efc3d7-Linux-x86_64.tgz
+  conf:
+  - key: user-prefs
+    value:
+      directory: /opt/splunk/etc/users/admin/user-prefs/local
+      content:
+        general:
+          default_namespace: appboilerplate
+          search_syntax_highlighting: dark
+          search_assistant:
+        "serverClass:secrets:app:test": {}
+  hec:
+    port: 8099
+    ssl: false
+    token: qwerty789
+  http_port: 8080
+  launch:
+    OPTIMISTIC_ABOUT_FILE_LOCKING: 1
+    TEST: A=B
+  password: helloworld2
+  root_endpoint: /splunkui
+  s2s:
+    port: 9999
+  secret: "pewpewpew"
+  svc_port: 8090

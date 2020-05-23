@@ -12,7 +12,7 @@ py3k-test-setup:
 	pip3 install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 lint: test-setup
-	ansible-lint -v -c ./tests/lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml
+	ansible-lint -v -c ./tests/ansible-lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml
 
 py3k-lint: test-setup 
 	# We're treating each file separately here, because of their scarsity
@@ -34,7 +34,7 @@ py3k-small-tests: py3k-test-setup
 	
 large-tests: test-setup
 	@echo 'Running the super awesome large tests'
-	cd roles/splunk_standalone && molecule test
+	cd roles/splunk_standalone && molecule test --all
 	cd roles/splunk_universal_forwarder && molecule test --all
 	cd roles/splunk_heavy_forwarder && molecule test --all
 
