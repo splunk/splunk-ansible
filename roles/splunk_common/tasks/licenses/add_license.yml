@@ -19,7 +19,7 @@
 - name: Apply license
   command: "{{ splunk.exec }} add licenses {{ lic_dest.stat.path }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   register: add_lic_cmd
-  changed_when: add_lic_cmd.rc == 0 
+  changed_when: add_lic_cmd.rc == 0
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
