@@ -28,8 +28,8 @@ splunk:
     tar_dir: "splunkforwarder"
     opt: &opt "/opt"
     home: &home !!python/object/apply:os.path.join [*opt, "splunkforwarder"]
-    user: "splunk"
-    group: "Administrators"
+    user: "SYSTEM"
+    group: "SYSTEM"
     exec: !!python/object/apply:os.path.join [*home, "bin", "splunk.exe"]
     pid: !!python/object/apply:os.path.join [*home, "var", "run", "splunk", "splunkd.pid"]
     admin_user: "admin"
@@ -79,6 +79,7 @@ splunk:
         enable: False
         secret:
         pass4SymmKey:
+        discoveryPass4SymmKey:
         label: "idxc_label"
         search_factor: 3
         replication_factor: 3

@@ -10,7 +10,7 @@
     option: "{{ item.key }}"
     value: "{{ item.value }}"
   with_items:
-    - {key: "pass4SymmKey", value: "{{ splunk.idxc.pass4SymmKey }}"}
+    - {key: "pass4SymmKey", value: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"}
     - {key: "master_uri", value: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}"}
   when:
     - splunk_indexer_cluster | bool

@@ -6,6 +6,7 @@
     section: shclustering
     option: "{{ item.opt }}"
     value: "{{ item.val }}"
+    mode: 0644
   with_items:
     - { opt: 'pass4SymmKey', val: '{{ splunk.shc.pass4SymmKey }}' }
     - { opt: 'shcluster_label', val: '{{ splunk.shc.label }}' }
@@ -38,6 +39,10 @@
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
+    - splunk.deployment_server is not defined or not splunk.deployment_server
+
+- include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
+  when: splunk.deployment_server is defined and splunk.deployment_server
 
 - include_tasks: push_apps_to_search_heads.yml
   when:
