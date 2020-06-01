@@ -98,7 +98,7 @@ splunk:
     cluster_master_url:
     search_head_captain_url:
     deployer_url:
-    connection_timeout:
+    connection_timeout: 0
 
     enable_service: False
     service_name:
