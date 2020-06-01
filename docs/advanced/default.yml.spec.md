@@ -131,6 +131,9 @@ dmc_asset_interval: <str>
 * Cron-formatted string of the frequency and recurrence of the query that builds the forwarding assets table
 * Default: "3,18,33,48 * * * *"
 
+docker: <bool>
+* DEPRECATED - this was used to signal whether or not the instance being provisioned was running in Docker. This does not affect playbook execution at all, but the dynamic inventory script environ.py will set this to setup host::vars mapping as needed.
+
 splunk:
   role: <str>
   * Role to assume when setting up Splunk
