@@ -610,6 +610,9 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 # Check splunk.kvstore.port	
                 ({"splunk": {"kvstore" :{"port": "9165"}}}, {}, "splunk.kvstore.port", "9165"),	
                 ({}, {"SPLUNK_KVSTORE_PORT": "9265"}, "splunk.kvstore.port", "9265"),
+                # Check splunk.connection_timeout
+                ({"splunk": {"connection_timeout": 60}}, {}, "splunk.connection_timeout", 60),
+                ({}, {"SPLUNK_CONNECTION_TIMEOUT": 200}, "splunk.connection_timeout", 200),
             ]
         )
 def test_overrideEnvironmentVars(default_yml, os_env, key, value):
@@ -631,6 +634,7 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "allow_upgrade": True,
                                 "asan": None,
                                 "set_search_peers": True,
+                                "connection_timeout": 0,
                             }
                 }
     # TODO: Possibly remove the dependency on merge_dict() in this test
