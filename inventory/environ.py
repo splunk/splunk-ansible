@@ -250,7 +250,7 @@ def getSplunkWebSSL(vars_scope):
     splunk_vars["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', splunk_vars.get("http_enableSSL_privKey"))
     splunk_vars["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', splunk_vars.get("http_enableSSL_privKey_password"))
     splunk_vars["http_port"] = int(os.environ.get('SPLUNK_HTTP_PORT', splunk_vars.get("http_port")))
-    splunk_vars["connection_timeout"] = int(os.environ.get('SPLUNK_CONNECTION_TIMEOUT', splunk_vars.get("connection_timeout")))
+    splunk_vars["connection_timeout"] = int(os.environ.get('SPLUNK_CONNECTION_TIMEOUT', splunk_vars.get("connection_timeout", 0)))
 
 def getDistributedTopology(vars_scope):
     """

@@ -84,6 +84,7 @@ splunk:
         search_factor: 3
         replication_factor: 3
         replication_port: 9887
+    connection_timeout:
     enable_service: False
     service_name:
     smartstore:
