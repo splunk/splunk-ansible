@@ -508,6 +508,9 @@ def test_getSplunkbaseToken(default_yml, trigger_splunkbase):
         with patch("os.environ", new=dict()):
             environ.getSplunkbaseToken(vars_scope)
         # Make sure Splunkbase token is populated when appropriate
+        assert "splunkbase_token" in vars_scope
+        assert "splunkbase_username" in vars_scope
+        assert "splunkbase_password" in vars_scope
         if trigger_splunkbase:
             mock_post.assert_called_with("https://splunkbase.splunk.com/api/account:login/", data={"username": "ocho", "password": "cinco"})
             assert vars_scope.get("splunkbase_token") == "123abc"

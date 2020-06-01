@@ -315,11 +315,12 @@ def getSplunkbaseToken(vars_scope):
     """
     Authenticate to SplunkBase and modify the variable scope in-place to utilize temporary session token
     """
-    splunkbase_username = os.environ.get("SPLUNKBASE_USERNAME", vars_scope.get("splunkbase_username"))
-    splunkbase_password = os.environ.get("SPLUNKBASE_PASSWORD", vars_scope.get("splunkbase_password"))
-    if splunkbase_username and splunkbase_password:
+    vars_scope["splunkbase_token"] = None
+    vars_scope["splunkbase_username"] = os.environ.get("SPLUNKBASE_USERNAME", vars_scope.get("splunkbase_username"))
+    vars_scope["splunkbase_password"] = os.environ.get("SPLUNKBASE_PASSWORD", vars_scope.get("splunkbase_password"))
+    if vars_scope["splunkbase_username"] and vars_scope["splunkbase_password"]:
         resp = requests.post("https://splunkbase.splunk.com/api/account:login/",
-                             data={"username": splunkbase_username, "password": splunkbase_password})
+                             data={"username": vars_scope["splunkbase_username"], "password": vars_scope["splunkbase_password"]})
         if resp.status_code != 200:
             raise Exception("Invalid Splunkbase credentials - will not download apps from Splunkbase")
         output = resp.content
@@ -640,13 +641,10 @@ def prep_for_yaml_out(inventory):
     """
     inventory_to_dump = inventory["all"]["vars"]
 
-    keys_to_del = ["docker_version",
-                   "ansible_ssh_user",
-                   "delay_num",
+    keys_to_del = ["ansible_ssh_user",
                    "apps_location",
                    "build_location",
                    "hostname",
-                   "upgrade",
                    "role",
                    "preferred_captaincy",
                    "license_uri"]
