@@ -1,15 +1,4 @@
 ---
-- name: Check license source
-  stat:
-    path: "{{ lic }}"
-  register: lic_source
-
-- name: Copy license
-  command: "cp {{ lic }} {{ splunk.license_download_dest }}"
-  when:
-    - lic_source.stat.exists
-    - lic != splunk.license_download_dest
-
 - name: Download license
   get_url:
     url: "{{ lic }}"
@@ -22,13 +11,15 @@
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
-- name: Ensure license exists
+- name: Ensure license path
   stat:
-    path: "{{ splunk.license_download_dest }}"
+    path: "{{ splunk.license_download_dest if lic is match('^(https?|file)://.*') else lic }}"
   register: lic_dest
 
 - name: Apply license
-  command: "{{ splunk.exec }} add licenses {{ splunk.license_download_dest }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add licenses {{ lic_dest.stat.path }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  register: add_lic_cmd
+  changed_when: add_lic_cmd.rc == 0
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
@@ -39,9 +30,3 @@
     - splunk.role != "splunk_universal_forwarder"
   notify:
     - Restart the splunkd service
-
-- name: Remove artifacts
-  file:
-    dest: "{{ splunk.license_download_dest }}"
-    state: absent
-  ignore_errors: true

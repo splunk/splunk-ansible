@@ -134,9 +134,5 @@
 - include_tasks: set_certificate_prefix.yml
 
 - include_tasks: clean_user_seed.yml
-  when:
-    - first_run | bool
 
 - include_tasks: add_splunk_license.yml
-  when:
-    - first_run | bool
