@@ -88,6 +88,7 @@ splunk:
     multisite_replication_factor_total: 3
     multisite_search_factor_origin: 3
     multisite_search_factor_total: 3
+    connection_timeout: 180
     enable_service: False
     service_name:
     smartstore:
