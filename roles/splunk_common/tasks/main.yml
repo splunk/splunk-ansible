@@ -108,6 +108,11 @@
 - include_tasks: enable_splunkd_ssl.yml
   when: "'ssl' in splunk and splunk.ssl"
 
+- include_tasks: set_splunk_connection_timeout.yml
+  when:
+    - "'connection_timeout' in splunk and splunk.connection_timeout"
+    - splunk.connection_timeout | int > 0
+
 - include_tasks: set_config_file.yml
   vars:
     conf_file: "{{ item.key }}.conf"

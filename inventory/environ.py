@@ -419,6 +419,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
     vars_scope["splunk"]["appserver"]["port"] = os.environ.get('SPLUNK_APPSERVER_PORT', vars_scope["splunk"]["appserver"]["port"])
     vars_scope["splunk"]["kvstore"]["port"] = os.environ.get('SPLUNK_KVSTORE_PORT', vars_scope["splunk"]["kvstore"]["port"])
+    vars_scope["splunk"]["connection_timeout"] = int(os.environ.get('SPLUNK_CONNECTION_TIMEOUT', vars_scope["splunk"]["connection_timeout"]))
 
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
