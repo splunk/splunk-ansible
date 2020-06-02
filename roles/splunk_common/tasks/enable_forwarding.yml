@@ -2,13 +2,13 @@
 # Configure forwarding to indexer cluster master
 # See: https://docs.splunk.com/Documentation/Splunk/latest/Indexer/indexerdiscovery
 - name: Setup indexer discovery for index-clustering
-  become: yes
-  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "indexer_discovery:splunk-indexer"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   with_items:
     - {key: "pass4SymmKey", value: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"}
     - {key: "master_uri", value: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}"}
@@ -19,13 +19,13 @@
   register: indexer_discovery
 
 - name: Setup tcpout group for index-clustering
-  become: yes
-  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "tcpout:group1"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   with_items:
     - {key: "indexerDiscovery", value: "splunk-indexer"}
     - {key: "clientCert", value: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"}
@@ -38,13 +38,13 @@
   register: tcpout_group
 
 - name: Setup default tcpout group for index-clustering
-  become: yes
-  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "tcpout"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   with_items:
     - {key: "indexAndForward", value: "false"}
     - {key: "defaultGroup", value: "group1"}
@@ -65,13 +65,13 @@
 
 # NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node
-  become: yes
-  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "indexAndForward"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   with_items:
     - {key: "index", value: "false"}
   no_log: "{{ hide_password }}"
