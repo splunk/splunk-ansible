@@ -110,6 +110,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_ANSIBLE_PRE_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed before `site.yml` | no | no | no |
 | SPLUNK_ANSIBLE_POST_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed after `site.yml` | no | no | no |
 | SPLUNK_ANSIBLE_ENV | Pass in a comma-separated list of "key=value" pairs that will be mapped to environment variables used during `site.yml` execution | no | no | no |
+| SPLUNK_CONNECTION_TIMEOUT | Configures splunkdConnectionTimeout in `web.conf` with passed integer value (in seconds) | no | no | no |
 
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 
