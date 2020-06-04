@@ -353,6 +353,10 @@ splunk:
   * Feature-flag to enable special configurations when using debug, address-sanitized builds. This is not used externally and not recommended to change.
   * Default: false
 
+  connection_timeout: <int>
+  * Change timeout value (in seconds) for the setting `splunkdConnectionTimeout` in web.conf. This triggers a change only when the value is non-zero.
+  * Default: 0
+
   secret: <str>
   * Secret passcode used to encrypt all of Splunk's sensitive information on disk. When not set, Splunk will autogenerate a unique secret local to each installation. This is NOT required for any standalone or distributed Splunk topology
   * NOTE: This may be set once at the start of provisioning any deployment. Any changes made to this splunk.secret after the deployment has been created must be resolved manually, otherwise there is a severe risk of bricking the capabilities of your Splunk environment.
