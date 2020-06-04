@@ -1,0 +1,67 @@
+version: '3'
+
+networks:
+  splunknet:
+    driver: bridge
+
+services:
+  sh1:
+    build: .
+    image: opensshd-server
+    container_name: sh1
+    hostname: sh1
+    networks:
+      - splunknet
+    volumes:
+      - "/opt/splunk/var"
+    ports:
+      - "8000"
+      - "2222:2222"
+
+  cm1:
+    image: opensshd-server
+    container_name: cm1
+    hostname: cm1
+    networks:
+      - splunknet
+    volumes:
+      - "/opt/splunk/var"
+    ports:
+      - "8000"
+      - "2223:2222"
+
+  idx1:
+    image: opensshd-server
+    container_name: idx1
+    hostname: idx1
+    networks:
+      - splunknet
+    volumes:
+      - "/opt/splunk/var"
+    ports:
+      - "8000"
+      - "2224:2222"
+  
+  idx2:
+    image: opensshd-server
+    container_name: idx2
+    hostname: idx2
+    networks:
+      - splunknet
+    volumes:
+      - "/opt/splunk/var"
+    ports:
+      - "8000"
+      - "2225:2222"
+    
+  idx3:
+    image: opensshd-server
+    container_name: idx3
+    hostname: idx3
+    networks:
+      - splunknet
+    volumes:
+      - "/opt/splunk/var"
+    ports:
+      - "8000"
+      - "2226:2222"
