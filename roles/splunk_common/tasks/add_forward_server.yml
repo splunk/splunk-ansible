@@ -14,6 +14,12 @@
     - "'forwarded-server already present' not in forward_status.stderr"
   no_log: "{{ hide_password }}"
 
+- name: "Adjust outputs.conf permissions"
+  file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+
 - name: "Enable ssl-forwarding to {{ forward_servers }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
