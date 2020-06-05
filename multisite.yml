@@ -1,6 +1,6 @@
 ---
 - name: Run multisite provisioning
-  hosts: all
+  hosts: localhost
   gather_facts: true
   environment: "{{ ansible_environment | default({}) }}"
   tasks:
