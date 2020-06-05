@@ -136,3 +136,5 @@
 - include_tasks: clean_user_seed.yml
 
 - include_tasks: add_splunk_license.yml
+
+- include_tasks: run_dmc.yml
