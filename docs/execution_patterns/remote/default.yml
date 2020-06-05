@@ -1,0 +1,65 @@
+---
+retry_delay: 6
+retry_num: 60
+shc_sync_retry_num: 60
+
+splunk:
+  build_location: https://download.splunk.com/products/splunk/releases/8.0.2.1/linux/splunk-8.0.2.1-f002026bad55-Linux-x86_64.tgz
+  build_remote_src: true
+  admin_user: admin
+  allow_upgrade: true
+  app_paths:
+    default: /opt/splunk/etc/apps
+    deployment: /opt/splunk/etc/deployment-apps
+    httpinput: /opt/splunk/etc/apps/splunk_httpinput
+    idxc: /opt/splunk/etc/master-apps
+    shc: /opt/splunk/etc/shcluster/apps
+  cluster_master_url: null
+  enable_service: false
+  exec: /opt/splunk/bin/splunk
+  hec:
+    enable: true
+    port: 8088
+    ssl: true
+    token: 2c8cc23d-c523-4e78-a937-ecc02ea74884
+  home: /opt/splunk
+  http_enableSSL: false
+  http_enableSSL_cert: null
+  http_enableSSL_privKey: null
+  http_enableSSL_privKey_password: null
+  http_port: 8000
+  idxc:
+    label: idxc_label
+    pass4SymmKey: Dt0HeTXc8/u956lRqSLO8Rry1Gx00zQ/
+    replication_factor: 3
+    replication_port: 9887
+    search_factor: 3
+    secret: Dt0HeTXc8/u956lRqSLO8Rry1Gx00zQ/
+  opt: /opt
+  pass4SymmKey: null
+  password: helloworld
+  pid: /opt/splunk/var/run/splunk/splunkd.pid
+  root_endpoint: null
+  s2s:
+    ca: null
+    cert: null
+    enable: true
+    password: null
+    port: 9997
+    ssl: false
+  search_head_captain_url: null
+  secret: null
+  service_name: splunk
+  shc:
+    label: shc_label
+    pass4SymmKey: KRvL065Q8cfU39wnk57EtdQQQrT9Zf1M
+    replication_factor: 3
+    replication_port: 9887
+    secret: KRvL065Q8cfU39wnk57EtdQQQrT9Zf1M
+  svc_port: 8089
+  tar_dir: splunk
+  user: root
+  group: root
+  wildcard_license: false
+splunk_home_ownership_enforcement: true
+wait_for_splunk_retry_num: 60
