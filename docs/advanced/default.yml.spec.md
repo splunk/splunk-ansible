@@ -461,6 +461,11 @@ splunk:
     * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in the `[shclustering]` stanza of server.conf.
     * Default: null
 
+    deployer_push_mode: <str>
+    * Change the strategy used by the deployer when bundling apps and distributing them across the search head cluster. The acceptable modes are: full, local_only, default_only, and merge_to_default (merge_to_default is the default unless otherwise specified).
+    * For more information, please see: https://docs.splunk.com/Documentation/Splunk/latest/DistSearch/PropagateSHCconfigurationchanges#Set_the_deployer_push_mode
+    * Default: null
+
   dfs:
     enable: <bool>
     * Enable Data Fabric Search (DFS)
