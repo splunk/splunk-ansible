@@ -4,13 +4,14 @@
     splunk_instance_address: "{{ splunk.cluster_master_url }}"
 
 # http://docs.splunk.com/Documentation/Splunk/latest/DistSearch/SHCandindexercluster#Integrate_with_a_single-site_indexer_cluster
-- name: Set cluster master as a search peer
+- name: Peer cluster master
   command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
-  register: set_cluster_master_as_peer
-  until: set_cluster_master_as_peer.rc == 0
-  changed_when: set_cluster_master_as_peer.rc == 0
+  register: peer_cluster_master
+  until: peer_cluster_master.rc == 0 or "Cannot edit this searchhead" in peer_cluster_master.stderr
+  changed_when: peer_cluster_master.rc == 0
+  failed_when: peer_cluster_master.rc != 0 and "Cannot edit this searchhead" not in peer_cluster_master.stderr
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
   ignore_errors: yes
@@ -18,17 +19,7 @@
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
-# https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremulti-clustersearch
-- name: Set auxiliary cluster master peer
-  command: "{{ splunk.exec }} add cluster-master {{ item.url }} -secret '{{ item.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: set_aux_cluster_master_peer
-  until: set_aux_cluster_master_peer.rc == 0
-  changed_when: set_aux_cluster_master_peer.rc == 0
-  with_items: "{{ splunk.auxiliary_cluster_masters }}"
-  when: "'auxiliary_cluster_masters' in splunk and splunk.auxiliary_cluster_masters and splunk.auxiliary_cluster_masters | length > 0"
-  ignore_errors: yes
-  notify:
-    - Restart the splunkd service
-  no_log: "{{ hide_password }}"
+- include_tasks: peer_aux_cluster_masters.yml
+  when:
+    - "'auxiliary_cluster_masters' in splunk"
+    - splunk.auxiliary_cluster_masters and splunk.auxiliary_cluster_masters | length > 0
