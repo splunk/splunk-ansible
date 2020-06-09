@@ -74,6 +74,7 @@ splunk:
         label: "shc_label"
         replication_factor: 3
         replication_port: 9887
+        deployer_push_mode:
     idxc:
         secret:
         pass4SymmKey:
