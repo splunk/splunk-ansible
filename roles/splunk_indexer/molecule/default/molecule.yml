@@ -50,6 +50,7 @@ provisioner:
             asan: false
             build_url_bearer_token: null
             cluster_master_url: null
+            auxiliary_cluster_masters: []
             deployer_url: null
             dfs:
               dfc_num_slots: 4
