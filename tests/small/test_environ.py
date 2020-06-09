@@ -221,12 +221,22 @@ worldneversayshiback
                     mopen.assert_called_once()
     assert vars_scope["splunk"]["password"] == "worldneversayshiback"
 
-@pytest.mark.xfail(raises=KeyError)
-def test_noSplunkPassword():
-    vars_scope = {"splunk": {}}
-    with patch("environ.inventory") as mock_inven:
-        with patch("os.environ", new={}):
-            environ.getSecrets(vars_scope)
+
+@pytest.mark.parametrize(("default_yml"),
+            [
+                # Check null parameters
+                ({}),
+                ({"password": None}),
+                ({"password": ""})
+            ]
+        )
+def test_noSplunkPassword(default_yml):
+    vars_scope = {"splunk": default_yml}
+    with pytest.raises(Exception) as exc:
+        with patch("environ.inventory") as mock_inven:
+            with patch("os.environ", new={}):
+                environ.getSecrets(vars_scope)
+    assert "Splunk password must be supplied!" in str(exc.value)
 
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
