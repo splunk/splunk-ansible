@@ -97,10 +97,10 @@ splunk:
     multisite_search_factor_total: 2
     license_master_url:
     cluster_master_url:
+    auxiliary_cluster_masters: []
     search_head_captain_url:
     deployer_url:
     connection_timeout: 0
-
     enable_service: False
     service_name:
     smartstore:

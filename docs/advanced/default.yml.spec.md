@@ -158,6 +158,16 @@ splunk:
   cluster_master_url: <str>
   * Hostname of Splunk Enterprise cluster master instance. May be overridden using SPLUNK_CLUSTER_MASTER_URL environment variable.
   * Default: null
+
+  auxiliary_cluster_masters: <list>
+  * Array of other cluster masters to support multi-cluster distributed search. The node must be a search head configured to peer an initial cluster master before the masters listed here are added. For more information, see https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremulti-clustersearch. 
+  * Default: []
+  * Example:
+  *   auxiliary_cluster_masters:
+  *   - url: https://master.us-west.corp.net:8089
+  *     pass4SymmKey: thisisasecret
+  *   - url: https://master.us-east.corp.net:8089
+  *     pass4SymmKey: thisisanothersecret
   
   deployer_url: null
   * Hostname of Splunk Enterprise deployer instance. May be overridden using SPLUNK_DEPLOYER_URL environment variable.

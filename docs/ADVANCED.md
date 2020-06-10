@@ -10,6 +10,7 @@
 * [Apps](#apps)
 * [SmartStore](#smartstore)
 * [Custom splunk-launch.conf](#custom-splunk-launchconf)
+* [Multi-cluster Search](#multi-cluster-search)
 
 ---
 
@@ -246,3 +247,9 @@ splunk:
     OPTIMISTIC_ABOUT_FILE_LOCKING: 1
   ...
 ```
+
+---
+
+## Multi-cluster Search
+
+See the [documentation on how multi-cluster search](advanced/MULTICLUSTERSEARCH.md) can be configured.
