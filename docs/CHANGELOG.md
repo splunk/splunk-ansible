@@ -2,12 +2,14 @@
 
 ## Navigation
 
+* [8.0.4.1](#8041)
 * [8.0.4](#804)
 * [8.0.3](#803)
 * [8.0.2.1](#8021)
 * [8.0.2](#802)
 * [8.0.1](#801)
 * [8.0.0](#800)
+* [7.3.6](#736)
 * [7.3.5](#735)
 * [7.3.4.2](#7342)
 * [7.3.4](#734)
@@ -31,11 +33,28 @@
 
 ---
 
+## 8.0.4.1
+
+#### What's New?
+* Support for setting the [deployer push mode](https://docs.splunk.com/Documentation/Splunk/latest/DistSearch/PropagateSHCconfigurationchanges#Choose_a_deployer_push_mode) to control how apps are bundled and distributed to cluster members:
+    * `shc.deployer_push_mode` in `default.yml`
+* Added the config variable `auxiliary_cluster_masters` to support enabling a search head to search across multiple indexer clusters. See [Multi-Cluster Search](advanced/MULTICLUSTERSEARCH.md) for details on configuration.
+* Documentation on executing `splunk-ansible` remotely, through a controller node such as Ansible Tower/AWX
+
+
+#### Changes
+* Apps copied from `etc/apps` now include the `local` directory, ignoring `local/app.conf`
+* Set custom Splunkd connection timeout using either:
+    * `splunk.connection_timeout` in `default.yml`
+    * `SPLUNK_CONNECTION_TIMEOUT` environment variable
+
+---
+
 ## 8.0.4
 
 #### What's New?
 * Support for custom SSL certificates for the Splunkd management endpoint
-* Support for custom ports for [Splunk Application Server](https://docs.splunk.com/Documentation/ITSI/latest/IModules/AboutApplicationServerModule) and [App KV Store](https://docs.splunk.com/Documentation/Splunk/8.0.0/Admin/AboutKVstore) using:
+* Support for custom ports for [Splunk Application Server](https://docs.splunk.com/Documentation/ITSI/latest/IModules/AboutApplicationServerModule) and [App KV Store](https://docs.splunk.com/Documentation/Splunk/8.0.0/Admin/AboutKVstore) using either:
     * `splunk.appserver.port`, `splunk.kvstore.port` in `default.yml`
     * `SPLUNK_APPSERVER_PORT`, `SPLUNK_KVSTORE_PORT` environment variables
 * Java installation through `default.yml` with `java_download_url`, `java_update_version`, and `java_version`
@@ -43,7 +62,7 @@
 
 
 #### Changes
-* Set pass4SymmKey for indexer discovery separately from pass4SymmKey for indexer clustering with:
+* Set pass4SymmKey for indexer discovery separately from pass4SymmKey for indexer clustering with either:
     * `splunk.idxc.discoveryPass4SymmKey` in `default.yml`
     * `SPLUNK_IDXC_DISCOVERYPASS4SYMMKEY` environment variable
 * `outputs.conf` is configured without REST calls to ensure forwarding is enabled before Splunk starts
@@ -75,7 +94,7 @@
 * Added support for auto-detecting the `service_name` for SplunkForwarder and allowing manual configuration with `splunk.service_name`
 
 #### Changes
-* All HEC related variables were revised to follow a nested dict format in `default.yml`, i.e. `splunk.hec_enableSSL` is now `splunk.hec.ssl`. See the [Provision HEC](https://github.com/splunk/splunk-ansible/blob/develop/docs/EXAMPLES.md#provision-hec) example in the docs.
+* All HEC related variables were revised to follow a nested dict format in `default.yml`, i.e. `splunk.hec_enableSSL` is now `splunk.hec.ssl`. See the [Provision HEC](EXAMPLES.md#provision-hec) example in the docs.
 * Fixed HEC-related API calls to be idempotent. This supports changing anything in `splunk.hec.*` and having the change be reflected upon next container restart.
 
 ---
@@ -131,6 +150,16 @@
 
 ---
 
+## 7.3.6
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.0.4.1.
+
+#### Changes
+* See [8.0.4.1](#8041) changes.
+
+---
+
 ## 7.3.5
 
 #### What's New?
@@ -170,7 +199,7 @@ Syncing with latest codebase - currently up to sync with 8.0.2.1.
 
 #### Changes
 * Removing unnecessary apps in distributed ITSI installations
-* Partioning apps in `serverclass.conf` when using the deployment server
+* Partitioning apps in `serverclass.conf` when using the deployment server
 * Adding support for activating Splunk Free license on boot
 * Support for cluster labels via environment variables
 * Bugfixes around app installation (through `default.yml` and pathing)
