@@ -315,11 +315,12 @@ def getSplunkbaseToken(vars_scope):
     """
     Authenticate to SplunkBase and modify the variable scope in-place to utilize temporary session token
     """
-    splunkbase_username = os.environ.get("SPLUNKBASE_USERNAME", vars_scope.get("splunkbase_username"))
-    splunkbase_password = os.environ.get("SPLUNKBASE_PASSWORD", vars_scope.get("splunkbase_password"))
-    if splunkbase_username and splunkbase_password:
+    vars_scope["splunkbase_token"] = None
+    vars_scope["splunkbase_username"] = os.environ.get("SPLUNKBASE_USERNAME", vars_scope.get("splunkbase_username"))
+    vars_scope["splunkbase_password"] = os.environ.get("SPLUNKBASE_PASSWORD", vars_scope.get("splunkbase_password"))
+    if vars_scope["splunkbase_username"] and vars_scope["splunkbase_password"]:
         resp = requests.post("https://splunkbase.splunk.com/api/account:login/",
-                             data={"username": splunkbase_username, "password": splunkbase_password})
+                             data={"username": vars_scope["splunkbase_username"], "password": vars_scope["splunkbase_password"]})
         if resp.status_code != 200:
             raise Exception("Invalid Splunkbase credentials - will not download apps from Splunkbase")
         output = resp.content
@@ -348,7 +349,9 @@ def getSecrets(vars_scope):
     """
     Parse sensitive passphrases
     """
-    vars_scope["splunk"]["password"] = os.environ.get("SPLUNK_PASSWORD", vars_scope["splunk"]["password"])
+    vars_scope["splunk"]["password"] = os.environ.get("SPLUNK_PASSWORD", vars_scope["splunk"].get("password"))
+    if not vars_scope["splunk"]["password"]:
+        raise Exception("Splunk password must be supplied!")
     if os.path.isfile(vars_scope["splunk"]["password"]):
         with open(vars_scope["splunk"]["password"], "r") as f:
             vars_scope["splunk"]["password"] = f.read().strip()
@@ -418,6 +421,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
     vars_scope["splunk"]["appserver"]["port"] = os.environ.get('SPLUNK_APPSERVER_PORT', vars_scope["splunk"]["appserver"]["port"])
     vars_scope["splunk"]["kvstore"]["port"] = os.environ.get('SPLUNK_KVSTORE_PORT', vars_scope["splunk"]["kvstore"]["port"])
+    vars_scope["splunk"]["connection_timeout"] = int(os.environ.get('SPLUNK_CONNECTION_TIMEOUT', vars_scope["splunk"]["connection_timeout"]))
 
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
@@ -640,13 +644,10 @@ def prep_for_yaml_out(inventory):
     """
     inventory_to_dump = inventory["all"]["vars"]
 
-    keys_to_del = ["docker_version",
-                   "ansible_ssh_user",
-                   "delay_num",
+    keys_to_del = ["ansible_ssh_user",
                    "apps_location",
                    "build_location",
                    "hostname",
-                   "upgrade",
                    "role",
                    "preferred_captaincy",
                    "license_uri"]

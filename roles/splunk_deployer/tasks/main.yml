@@ -18,6 +18,22 @@
   notify:
     - Restart the splunkd service
 
+# https://docs.splunk.com/Documentation/Splunk/latest/DistSearch/PropagateSHCconfigurationchanges#Set_the_deployer_push_mode
+- name: Set deployer push mode
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-app/shclustering"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    body:
+      deployer_push_mode: "{{ splunk.shc.deployer_push_mode }}"
+    body_format: "form-urlencoded"
+    status_code: 200
+    timeout: 10
+  when: "'deployer_push_mode' in splunk.shc and splunk.shc.deployer_push_mode"
+  no_log: "{{ hide_password }}"
+
 - name: Flush restart handlers
   meta: flush_handlers
 

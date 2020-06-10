@@ -221,12 +221,22 @@ worldneversayshiback
                     mopen.assert_called_once()
     assert vars_scope["splunk"]["password"] == "worldneversayshiback"
 
-@pytest.mark.xfail(raises=KeyError)
-def test_noSplunkPassword():
-    vars_scope = {"splunk": {}}
-    with patch("environ.inventory") as mock_inven:
-        with patch("os.environ", new={}):
-            environ.getSecrets(vars_scope)
+
+@pytest.mark.parametrize(("default_yml"),
+            [
+                # Check null parameters
+                ({}),
+                ({"password": None}),
+                ({"password": ""})
+            ]
+        )
+def test_noSplunkPassword(default_yml):
+    vars_scope = {"splunk": default_yml}
+    with pytest.raises(Exception) as exc:
+        with patch("environ.inventory") as mock_inven:
+            with patch("os.environ", new={}):
+                environ.getSecrets(vars_scope)
+    assert "Splunk password must be supplied!" in str(exc.value)
 
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
@@ -508,6 +518,9 @@ def test_getSplunkbaseToken(default_yml, trigger_splunkbase):
         with patch("os.environ", new=dict()):
             environ.getSplunkbaseToken(vars_scope)
         # Make sure Splunkbase token is populated when appropriate
+        assert "splunkbase_token" in vars_scope
+        assert "splunkbase_username" in vars_scope
+        assert "splunkbase_password" in vars_scope
         if trigger_splunkbase:
             mock_post.assert_called_with("https://splunkbase.splunk.com/api/account:login/", data={"username": "ocho", "password": "cinco"})
             assert vars_scope.get("splunkbase_token") == "123abc"
@@ -610,6 +623,9 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 # Check splunk.kvstore.port	
                 ({"splunk": {"kvstore" :{"port": "9165"}}}, {}, "splunk.kvstore.port", "9165"),	
                 ({}, {"SPLUNK_KVSTORE_PORT": "9265"}, "splunk.kvstore.port", "9265"),
+                # Check splunk.connection_timeout
+                ({"splunk": {"connection_timeout": 60}}, {}, "splunk.connection_timeout", 60),
+                ({}, {"SPLUNK_CONNECTION_TIMEOUT": 200}, "splunk.connection_timeout", 200),
             ]
         )
 def test_overrideEnvironmentVars(default_yml, os_env, key, value):
@@ -631,6 +647,7 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "allow_upgrade": True,
                                 "asan": None,
                                 "set_search_peers": True,
+                                "connection_timeout": 0,
                             }
                 }
     # TODO: Possibly remove the dependency on merge_dict() in this test

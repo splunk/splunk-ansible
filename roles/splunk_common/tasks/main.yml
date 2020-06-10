@@ -58,6 +58,10 @@
   when:
     - first_run | bool
 
+- include_tasks: set_launch_conf.yml
+  when:
+    - "'launch' in splunk and splunk.launch"
+
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
   when:
@@ -67,10 +71,6 @@
   when:
     - "('s2s_enable' in splunk) or ('s2s' in splunk and 'enable' in splunk.s2s)"
     - "('s2s_port' in splunk and splunk.s2s_port) or ('s2s' in splunk and 'port' in splunk.s2s and splunk.s2s.port)"
-
-- include_tasks: set_launch_conf.yml
-  when:
-    - "'launch' in splunk and splunk.launch"
 
 - include_tasks: enable_service.yml
   when:
@@ -108,6 +108,11 @@
 - include_tasks: enable_splunkd_ssl.yml
   when: "'ssl' in splunk and splunk.ssl"
 
+- include_tasks: set_splunk_connection_timeout.yml
+  when:
+    - "'connection_timeout' in splunk and splunk.connection_timeout"
+    - splunk.connection_timeout | int > 0
+
 - include_tasks: set_config_file.yml
   vars:
     conf_file: "{{ item.key }}.conf"
@@ -129,9 +134,5 @@
 - include_tasks: set_certificate_prefix.yml
 
 - include_tasks: clean_user_seed.yml
-  when:
-    - first_run | bool
 
 - include_tasks: add_splunk_license.yml
-  when:
-    - first_run | bool

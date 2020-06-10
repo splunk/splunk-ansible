@@ -18,6 +18,10 @@ ansible_pre_tasks: <str>
 * Comma-separated list of paths or URLs to custom Ansible playbooks to run BEFORE Splunk sets up using the provided site.yml
 * Default: null
 
+ansible_environment: <dict>
+* Map of environment variables used only during the execution context of all the Ansible tasks. For more information, see https://docs.ansible.com/ansible/latest/user_guide/playbooks_environment.html
+* Default: {}
+
 hide_password: <bool>
 * Boolean that determines whether or not to output Splunk admin passwords through Ansible
 * Default: false
@@ -33,6 +37,10 @@ wait_for_splunk_retry_num: <int>
 shc_sync_retry_num: <int>
 * Number of retries to make when waiting for sync up with a search head cluster
 * Default: 60
+
+retry_delay: <int>
+* Duration of waits between each of the aforementioned retries (in seconds)
+* Default: 6
 
 splunk_home_ownership_enforcement: true
 * Boolean that to control and enable UAC on $SPLUNK_HOME (recommended to be enabled)
@@ -94,18 +102,54 @@ splunkbase_password: <str>
 * NOTE: Use this in combination with splunkbase_username. You will also need to run Ansible using the dynamic inventory script (environ.py) for this to register and work properly.
 * Default: null
 
+splunkbase_token: <str>
+* Used for authentication when downloading apps from https://splunkbase.splunk.com/ (this is NOT required to even be specified, unless you have SplunkBase apps defined in your splunk.apps_location)
+* NOTE: This is ordinarily generated using the dynamic inventory script (environ.py) using the aforementioned `splunkbase_username` and `splunkbase_password` variables above, and every token has an expiry.
+* Default: null
+
+cert_prefix: <str>
+* Specify the scheme used for the SplunkD management endpoint (typically port 8089). If you plan on running SplunkD over HTTP, you should set this to "http" so the Ansible plays are aware of the intended scheme.
+* Default: https
+
+java_download_url: <str>
+* Java JDK URL that is dynamically fetched and installed at container run-time. For example: "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz"
+* Default: null
+
+java_update_version: <str>
+* Name of the Java JDK file used for installation. For example: "openjdk-11.0.2_linux-x64_bin.tar.gz"
+* Default: null
+
+java_version: <str>
+* String notifying the Ansible plays which version of Java is being installed so variables can be parsed properly. For example: "openjdk:11"
+* Default: null
+
+dmc_forwarder_monitoring: <bool>
+* Feature-flag to enable forwarder asset monitoring through the Distributed Management Console (DMC). This is disabled by default.
+* Default: false
+
+dmc_asset_interval: <str>
+* Cron-formatted string of the frequency and recurrence of the query that builds the forwarding assets table
+* Default: "3,18,33,48 * * * *"
+
+docker: <bool>
+* DEPRECATED - this was used to signal whether or not the instance being provisioned was running in Docker. This does not affect playbook execution at all, but the dynamic inventory script environ.py will set this to setup host::vars mapping as needed.
+
 splunk:
   role: <str>
   * Role to assume when setting up Splunk
   * Default: splunk_standalone
 
-  upgrade: <bool>
+  allow_upgrade:
   * Determines whether or not to perform an upgrade (to the splunk.build_location)
-  * Default: false
+  * Default: true
 
   build_location: <str>
   * Splunk build location, either on the filesystem or a remote URL
-  * Default: /tmp/splunk.tgz
+  * Default: null
+
+  build_url_bearer_token: <str>
+  * Bearer token used to provide authorization when fetching a Splunk build from a remote URL. 
+  * Default: null
 
   license_master_url: <str>
   * Hostname of Splunk Enterprise license master instance. May be overridden using SPLUNK_LICENSE_MASTER_URL environment variable.
@@ -114,6 +158,16 @@ splunk:
   cluster_master_url: <str>
   * Hostname of Splunk Enterprise cluster master instance. May be overridden using SPLUNK_CLUSTER_MASTER_URL environment variable.
   * Default: null
+
+  auxiliary_cluster_masters: <list>
+  * Array of other cluster masters to support multi-cluster distributed search. The node must be a search head configured to peer an initial cluster master before the masters listed here are added. For more information, see https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremulti-clustersearch. 
+  * Default: []
+  * Example:
+  *   auxiliary_cluster_masters:
+  *   - url: https://master.us-west.corp.net:8089
+  *     pass4SymmKey: thisisasecret
+  *   - url: https://master.us-east.corp.net:8089
+  *     pass4SymmKey: thisisanothersecret
   
   deployer_url: null
   * Hostname of Splunk Enterprise deployer instance. May be overridden using SPLUNK_DEPLOYER_URL environment variable.
@@ -153,11 +207,11 @@ splunk:
   * Default: false
 
   admin_user: <str>
-  * Default admin-level user to run provisioning commands under
+  * Default admin-level user to run provisioning commands under. It is only possible to change the admin user name at the first-time execution of Splunk Enterprise.
   * Default: admin
 
   password: <str>
-  * Default Splunk admin user password. This is REQUIRED when starting Splunk
+  * Default Splunk admin user password. This is REQUIRED when starting Splunk, and can only be set during the first-time run of the playbooks. If changes are required to the admin password, they should be done through SplunkWeb/CLI and the new value should be re-entered here.
   * Default: null
 
   user: <str>
@@ -171,6 +225,10 @@ splunk:
   enable_service: <bool>
   * Determine whether or not to enable Splunk for boot-start (start via sysinitv or systemd, etc.)
   * Default: false
+
+  service_name: <str>
+  * Specify the service name of splunkd when running through sysinitv, systemd, etc.
+  * Default: null
 
   opt: <str - filepath>
   * Path in filesystem where Splunk will be installed
@@ -254,6 +312,10 @@ splunk:
   * Determine the port used for SplunkWeb
   * Default: 8000
 
+  root_endpoint: <str>
+  * Root endpoint used when serving SplunkWeb over a different path
+  * Default: null
+
   s2s:
     enable: <bool>
     * Determine whether or not to enable Splunk-to-Splunk communication. This is REQUIRED for any distributed topologies.
@@ -296,6 +358,14 @@ splunk:
   launch: null
   * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null
+
+  asan: <bool>
+  * Feature-flag to enable special configurations when using debug, address-sanitized builds. This is not used externally and not recommended to change.
+  * Default: false
+
+  connection_timeout: <int>
+  * Change timeout value (in seconds) for the setting `splunkdConnectionTimeout` in web.conf. This triggers a change only when the value is non-zero.
+  * Default: 0
 
   secret: <str>
   * Secret passcode used to encrypt all of Splunk's sensitive information on disk. When not set, Splunk will autogenerate a unique secret local to each installation. This is NOT required for any standalone or distributed Splunk topology
@@ -355,6 +425,30 @@ splunk:
     * Determine the secret used to enable indexer discovery (for any forwarding clients connecting to the cluster master). This is pass4SymmKey in the `[indexer_discovery]` stanza of server.conf.
     * Default: null
 
+  multisite_master_port:
+  * Specify the management port of the multisite cluster master
+  * Default: 8089
+
+  multisite_replication_factor_origin:
+  * Determine origin-level knowledge object replication factor when in a multisite environment
+  * Default: 2
+
+  multisite_replication_factor_total:
+  * Determine site-level knowledge object replication factor when in a multisite environment
+  * Default: 3
+
+  multisite_search_factor_origin:
+  * Determine origin-level search replication factor when in a multisite environment
+  * Default: 1
+
+  multisite_search_factor_total:
+  * Determine site-level search replication factor when in a multisite environment
+  * Default: 3
+
+  set_search_peers: <bool>
+  * Feature-flag to disable the automatic peering from the search tier to the indexer tier (cluster master or indexers directly). It is discouraged to change this to false, but it is exposed for the purposes of testing and isolating the groups.
+  * Default: true
+
   shc:
     label: <str>
     * Provide a label for search head clustering configuration
@@ -375,6 +469,11 @@ splunk:
 
     pass4SymmKey: <str>
     * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in the `[shclustering]` stanza of server.conf.
+    * Default: null
+
+    deployer_push_mode: <str>
+    * Change the strategy used by the deployer when bundling apps and distributing them across the search head cluster. The acceptable modes are: full, local_only, default_only, and merge_to_default (merge_to_default is the default unless otherwise specified).
+    * For more information, please see: https://docs.splunk.com/Documentation/Splunk/latest/DistSearch/PropagateSHCconfigurationchanges#Set_the_deployer_push_mode
     * Default: null
 
   dfs:

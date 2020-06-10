@@ -14,14 +14,20 @@
     - "'forwarded-server already present' not in forward_status.stderr"
   no_log: "{{ hide_password }}"
 
+- name: "Adjust outputs.conf permissions"
+  file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+
 - name: "Enable ssl-forwarding to {{ forward_servers }}"
-  become: yes
-  become_user: "{{ splunk.user }}"
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "tcpout:group1"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
   with_items:
     - {key: "server", value: "{% for fwd in forward_servers %}{{ fwd }}:{{ splunk.s2s.port }}{{ ',' if not loop.last else '' }}{% endfor %}"}
     - {key: "clientCert", value: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined else ''}}"}
