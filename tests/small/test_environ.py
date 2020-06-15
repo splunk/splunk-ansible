@@ -367,7 +367,7 @@ def test_getHEC(default_yml, os_env, result):
                          [
                             ({}, "", "", "", ""),
                             # Check individual environment variables
-                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, "something", "", "", ""),
+                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, "https://something:8089", "", "", ""),
                             ({"SPLUNK_DEPLOYER_URL": "something"}, "", "something", "", ""),
                             ({"SPLUNK_CLUSTER_MASTER_URL": "something"}, "", "", "something", ""),
                             ({"SPLUNK_SEARCH_HEAD_CAPTAIN_URL": "something"}, "", "", "", "something"),
@@ -747,9 +747,18 @@ def test_getRandomString():
                 ("licmaster", {"splunk": {}}, "https://licmaster:8089"),
                 ("http://licmaster", {"splunk": {}}, "http://licmaster:8089"),
                 ("licmaster:8081", {"splunk": {}}, "https://licmaster:8081"),
+                ("http://licmaster:80", {"splunk": {}}, "http://licmaster:80"),
+                ("ftp://licmaster.corp.net:3333", {"splunk": {}}, "ftp://licmaster.corp.net:3333"),
+                ("username:password@lm.internal.net", {"splunk": {}}, "https://lm.internal.net:8089"),
+                ("http://username:password@lm.internal.net:3333", {"splunk": {}}, "http://lm.internal.net:3333"),
                 # Check null input
-                ("", {"splunk": {}}, None),
-                (None, {"splunk": {}}, None)
+                ("", {"splunk": {}}, ""),
+                (None, {"splunk": {}}, ""),
+                # Check vars_scope overrides
+                ("licmaster", {"cert_prefix": "http", "splunk": {"svc_port": 18089}}, "http://licmaster:18089"),
+                ("https://licmaster", {"cert_prefix": "http", "splunk": {"svc_port": 18089}}, "https://licmaster:18089"),
+                ("licmaster:28089", {"cert_prefix": "http", "splunk": {"svc_port": 18089}}, "http://licmaster:28089"),
+                ("https://licmaster:38089", {"cert_prefix": "http", "splunk": {"svc_port": 18089}}, "https://licmaster:38089"),
             ]
         )
 def test_parseUrl(url, vars_scope, output):
