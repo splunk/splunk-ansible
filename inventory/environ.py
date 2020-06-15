@@ -255,7 +255,7 @@ def getDistributedTopology(vars_scope):
     """
     Parse and set parameters to define topology if this is a distributed environment
     """
-    vars_scope["splunk"]["license_master_url"] = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", ""))
+    vars_scope["splunk"]["license_master_url"] = parseUrl(os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", "")))
     vars_scope["splunk"]["deployer_url"] = os.environ.get("SPLUNK_DEPLOYER_URL", vars_scope["splunk"].get("deployer_url", ""))
     vars_scope["splunk"]["cluster_master_url"] = os.environ.get("SPLUNK_CLUSTER_MASTER_URL", vars_scope["splunk"].get("cluster_master_url", ""))
     vars_scope["splunk"]["search_head_captain_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL", vars_scope["splunk"].get("search_head_captain_url", ""))
@@ -460,6 +460,26 @@ def getRandomString():
     """
     char_set = string.ascii_uppercase + string.digits
     return ''.join(random.sample(char_set * 6, 6))
+
+def parseUrl(url, vars_scope):
+    """
+    Parses role URL to handle non-default schemes, ports, etc. 
+    """
+    if not url:
+        return None
+    scheme, url = url.split("://", 1)
+    if not scheme:
+        scheme = vars_scope.get("cert_prefix", "https")
+    netloc, url = url.split(":", 1)
+    port, path = url.split("/", 1)
+    parsed = urllib3.util.parse_url(url)
+    if not url or not parsed.host:
+        return None
+    if not parsed.scheme:
+        parsed = parsed._replace(scheme=vars_scope.get("cert_prefix", "https"))
+    if not parsed.port:
+        parsed = parsed._replace(port=vars_scope["splunk"].get("svc_port", 8089))
+    return "{}://{}:{}".format(parsed.scheme, parsed.hostname, parsed.port)
 
 def merge_dict(dict1, dict2, path=None):
     """

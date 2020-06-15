@@ -741,6 +741,21 @@ def test_getRandomString():
     word = environ.getRandomString()
     assert len(word) == 6
 
+
+@pytest.mark.parametrize(("url", "vars_scope", "output"),
+            [
+                ("licmaster", {"splunk": {}}, "https://licmaster:8089"),
+                ("http://licmaster", {"splunk": {}}, "http://licmaster:8089"),
+                ("licmaster:8081", {"splunk": {}}, "https://licmaster:8081"),
+                # Check null input
+                ("", {"splunk": {}}, None),
+                (None, {"splunk": {}}, None)
+            ]
+        )
+def test_parseUrl(url, vars_scope, output):
+    result = environ.parseUrl(url, vars_scope)
+    assert result == output
+
 @pytest.mark.skip(reason="TODO")
 def test_merge_dict():
     pass
