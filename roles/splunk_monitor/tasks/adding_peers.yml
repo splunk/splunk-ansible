@@ -1,0 +1,28 @@
+---
+- name: Create group list
+  set_fact:
+    group_list: "{{ groups['splunk_indexer'] | default([]) }} + {{ groups['splunk_search_head'] | default([]) }} + {{ groups['splunk_search_head_captain'] | default([]) }} + {{ groups['splunk_cluster_master'] | default([]) }} + {{ groups['splunk_deployment_server']| default([]) }} + {{ groups['splunk_license_master'] | default([]) }}"
+
+- name: Group list
+  debug:
+    var: group_list
+
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
+  vars:
+    splunk_instance_address: "{{ item }}"
+  with_items: "{{ group_list }}"
+
+- name: Set search peers
+  command: "{{ splunk.exec }} add search-server {{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -remoteUsername {{ splunk.admin_user }} -remotePassword {{ splunk.password }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: set_as_peer
+  until: set_as_peer.rc == 0
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+  changed_when: set_as_peer.rc == 0
+  failed_when: set_as_peer.rc != 0 and 'already exists' not in set_as_peer.stderr
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+  with_items: "{{ group_list }}"

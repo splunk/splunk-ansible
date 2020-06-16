@@ -1,0 +1,44 @@
+---
+  # Initialize search head
+  - name: Set default captaincy
+    set_fact:
+      splunk_search_head_captain: false
+  
+  - name: Determine captaincy
+    set_fact:
+      splunk_search_head_captain: true
+    when: ansible_hostname == splunk.search_head_captain_url or
+          ansible_fqdn == splunk.search_head_captain_url or
+          splunk.hostname == splunk.search_head_captain_url or
+          splunk.role == "splunk_search_head_captain"
+
+  - include_tasks: ../../../roles/splunk_monitor/tasks/adding_peers.yml
+
+  - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
+    when:
+      - splunk.deployment_server is defined
+      - splunk.deployment_server
+      - not splunk_search_head_cluster | bool
+  
+  - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+    when:
+      - splunk.apps_location
+      - not splunk_search_head_cluster | bool
+      - splunk.deployment_server is not defined or not splunk.deployment_server
+  
+  - include_tasks: setup_multisite.yml
+    when:
+      - splunk.site is defined
+      - splunk.multisite_master is defined
+  
+  - include_tasks: ../../splunk_common/tasks/enable_forwarder_monitoring.yml
+    when:
+      - dmc_forwarder_monitoring is defined
+      - dmc_forwarder_monitoring | bool
+  
+  - include_tasks: ../../../roles/splunk_common/tasks/enable_dfs.yml
+    when:
+      - "'dfs' in splunk and 'enable' in splunk.dfs and splunk.dfs.enable is not none"
+      - splunk.dfs.enable | bool
+  
+  - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
