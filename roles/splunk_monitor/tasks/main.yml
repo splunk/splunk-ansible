@@ -28,7 +28,7 @@
     - name: Create search strings
       set_fact:
         index_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'indexer') | map(attribute='name') | list | join('&member=') }}"
-        search_head_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'search_head') | map(attribute='name') | list | join('&member=') }}"
+        search_head_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'regex', '(?:shc_member|search_head|shc_captain)') | map(attribute='name') | list | join('&member=') }}"
         cluster_master_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'cluster_master') | map(attribute='name') | list | join('&member=') }}"
         deployment_server_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'deployment_server') | map(attribute='name') | list | join('&member=') }}"
         license_master_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'license_master') | map(attribute='name') | list | join('&member=') }}"
