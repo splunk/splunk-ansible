@@ -6,7 +6,7 @@
     dmc_group_deployment_server: "{% if deployment_server_string != '' %}member={{ deployment_server_string }}&default=true&name=dmc_group_deployment_server{% else %}default=false&name=dmc_group_deployment_server{% endif %}"
     dmc_group_kv_store: "default=false&name=dmc_group_kv_store"
     dmc_group_license_master: "{% if license_master_string != '' %}member={{ license_master_string }}&default=false&name=dmc_group_license_master{% else %}default=false&name=dmc_group_license_master{% endif %}"
-    dmc_group_search_head: "{% if 'dmc_group_search_head' in groups %}member={{ search_head_string }}&default=false&name=dmc_group_search_head{% else %}default=false&name=dmc_group_search_head{% endif %}"
+    dmc_group_search_head: "{% if search_head_string != '' %}member={{ search_head_string }}&default=false&name=dmc_group_search_head{% else %}default=false&name=dmc_group_search_head{% endif %}"
     dmc_group_shc_deployer: "default=false&name=dmc_group_shc_deployer"
 
 - name: POST Requests
