@@ -36,4 +36,4 @@
     body: "member={{ cluster_master_string }}&default=false&name=dmc_indexerclustergroup_idxc_label"
     validate_certs: false
     status_code: 201
-  when: "'cluster_master_string' != ''"
+  when: "cluster_master_string != ''"
