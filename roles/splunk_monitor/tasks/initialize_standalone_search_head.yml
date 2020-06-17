@@ -1,5 +1,4 @@
 ---
-  # Initialize search head
   - name: Set default captaincy
     set_fact:
       splunk_search_head_captain: false
