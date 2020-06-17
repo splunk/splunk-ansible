@@ -5,16 +5,8 @@
 
     - include_tasks: ../../../roles/splunk_monitor/tasks/initialize_standalone_search_head.yml
 
-    - name: sleep
-      wait_for:
-        timeout: 30
-
     - name: Flush restart handlers
       meta: flush_handlers
-
-    - name: sleep
-      wait_for:
-        timeout: 30
 
     - name: Fetch distributed peers
       uri:
