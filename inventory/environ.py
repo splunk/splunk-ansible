@@ -414,12 +414,14 @@ def getESSplunkVariables(vars_scope):
     """
     Get any special Enterprise Security configuration variables
     """
-    if not "es" in vars_scope["splunk"] or not "ssl_enablement" in vars_scope["splunk"]["es"]:
+    ssl_enablement_env = os.environ.get("SPLUNK_ES_SSL_ENABLEMENT")
+    if not ssl_enablement_env and (not "es" in vars_scope["splunk"] or not "ssl_enablement" in vars_scope["splunk"]["es"]):
         # This feature is only for specific versions of ES.
         # if it is missing, don't pass any value in.
         vars_scope["es_ssl_enablement"] = ""
     else:
-        ssl_enablement = vars_scope["splunk"]["es"]["ssl_enablement"]
+        # Use the environment variable unless the ssl enablement value is present
+        ssl_enablement = ssl_enablement_env or vars_scope["splunk"]["es"]["ssl_enablement"]
         # Build the flag in it's entirety here
         if ssl_enablement not in ["auto", "strict", "ignore"]:
             raise Exception("Invalid ssl_enablement flag {0}".format(ssl_enablement))

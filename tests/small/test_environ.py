@@ -363,25 +363,28 @@ def test_getHEC(default_yml, os_env, result):
             environ.getHEC(vars_scope)
     assert vars_scope["splunk"]["hec"] == result
 
-@pytest.mark.parametrize(("es_enablement", "result"),
+@pytest.mark.parametrize(("es_enablement", "os_env", "result"),
             [
-                (None, ""),
-                ({"ssl_enablement":"auto"}, "--ssl-enablement auto"),
-                ({"ssl_enablement":"strict"}, "--ssl-enablement strict"),
-                ({"ssl_enablement":"ignore"}, "--ssl-enablement ignore"),
-                ({"ssl_enablement":"invalid"}, "Exception")
+                (None, {}, ""),
+                (None, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl-enablement strict"),
+                ({"ssl_enablement":"auto"}, {}, "--ssl-enablement auto"),
+                ({"ssl_enablement":"strict"}, {}, "--ssl-enablement strict"),
+                ({"ssl_enablement":"ignore"}, {}, "--ssl-enablement ignore"),
+                ({"ssl_enablement":"ignore"}, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl-enablement strict"),
+                ({"ssl_enablement":"invalid"}, {}, "Exception")
             ]
         )
-def test_getESSplunkVariables(es_enablement, result):
+def test_getESSplunkVariables(es_enablement, os_env, result):
     vars_scope = {"splunk": {}}
     if es_enablement is not None:
         vars_scope["splunk"]["es"] = es_enablement
     with patch("environ.inventory") as mock_inven:
-        try:
-            environ.getESSplunkVariables(vars_scope)
-            assert vars_scope["es_ssl_enablement"] == result
-        except Exception:
-            assert result == "Exception"
+        with patch("os.environ", new=os_env):
+            try:
+                environ.getESSplunkVariables(vars_scope)
+                assert vars_scope["es_ssl_enablement"] == result
+            except Exception:
+                assert result == "Exception"
 
 
 
