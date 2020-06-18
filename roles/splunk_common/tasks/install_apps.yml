@@ -42,7 +42,7 @@
 
   - name: Infer app filepath
     set_fact:
-      app_filepath: "{% if 'http' in app_url %}{{ app_remote.dest }}{% else %}{{ app_local.stat.path }}{% endif %}"
+      app_filepath: "{% if app_url | regex_search('^(https?|file)://.*') %}{{ app_remote.dest }}{% else %}{{ app_local.stat.path }}{% endif %}"
 
   # ITSI require installation via extraction - others can be installed normally.
   # Verify the contents of the package and check for ITSI
@@ -51,6 +51,7 @@
     args:
       executable: /bin/bash
     register: app_contents
+    changed_when: false
     when: "'splunkbase.splunk.com' not in app_url"
 
   - name: Install app via extraction
