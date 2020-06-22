@@ -1,11 +1,7 @@
 ---
-- name: Create group list
+- name: Create list of peers
   set_fact:
-    group_list: "{{ groups['splunk_indexer'] | default([]) }} + {{ groups['splunk_search_head'] | default([]) }} + {{ groups['splunk_search_head_captain'] | default([]) }} + {{ groups['splunk_cluster_master'] | default([]) }} + {{ groups['splunk_deployment_server']| default([]) }} + {{ groups['splunk_license_master'] | default([]) }}"
-
-- name: Group list
-  debug:
-    var: group_list
+    group_list: "{{ groups['splunk_indexer'] | default([]) }} + {{ groups['splunk_search_head'] | default([]) }} + {{ groups['splunk_search_head_captain'] | default([]) }} + {{ groups['splunk_cluster_master'] | default([]) }} + {{ groups['splunk_deployment_server']| default([]) }} + {{ groups['splunk_license_master'] | default([]) }} + {{ groups['splunk_standalone'] | default([]) }}"
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:

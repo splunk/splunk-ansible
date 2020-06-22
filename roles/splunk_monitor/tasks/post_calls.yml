@@ -27,7 +27,7 @@
     - "{{ dmc_group_search_head }}"
     - "{{ dmc_group_shc_deployer }}"
 
-- name: POST Requests - Cluster Master
+- name: POST Request - dmc_indexerclustergroup_idxc_label
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/groups"
     method: POST
