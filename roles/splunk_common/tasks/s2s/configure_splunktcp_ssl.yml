@@ -42,7 +42,7 @@
 - name: Configure SSL root CA
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
-    section: sslConfig
+    section: SSL
     option: rootCA
     value: "{{ splunk.s2s.ca if splunk.s2s.ca else '$SPLUNK_HOME/etc/auth/cacert.pem' }}"
     owner: "{{ splunk.user }}"

@@ -1,6 +1,6 @@
 ---
 - name: Run ESS post-install setup
-  command: "{{ splunk.exec }} search '| essinstall' -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  command: "{{ splunk.exec }} search '| essinstall' -auth {{ splunk.admin_user }}:{{ splunk.password }} {{ es_ssl_enablement }}"
   no_log: "{{ hide_password }}"
   become: yes
   become_user: "{{ splunk.user }}"

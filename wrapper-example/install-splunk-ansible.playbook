@@ -35,8 +35,11 @@
         - python-yaml
         - python-pip
 
-    - pip:
-        name: requests
+    - name: Install splunk-ansible pip requirements
+      pip:
+        name: 
+          - requests
+          - ansible
 
     - name: Wait for splunk-ansible updates to finish
       shell: "while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done;"
