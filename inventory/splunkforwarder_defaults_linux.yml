@@ -69,14 +69,13 @@ splunk:
         cert:
         password:
     shc:
-        enable: False
         secret:
         pass4SymmKey:
         label: "shc_label"
         replication_factor: 3
         replication_port: 9887
+        deployer_push_mode:
     idxc:
-        enable: False
         secret:
         pass4SymmKey:
         discoveryPass4SymmKey:
@@ -84,6 +83,15 @@ splunk:
         search_factor: 3
         replication_factor: 3
         replication_port: 9887
+    multisite_replication_factor_origin: 2
+    multisite_replication_factor_total: 3
+    multisite_search_factor_origin: 1
+    multisite_search_factor_total: 2
+    license_master_url:
+    cluster_master_url:
+    auxiliary_cluster_masters: []
+    search_head_captain_url:
+    deployer_url:
     connection_timeout: 0
     enable_service: False
     service_name:
@@ -94,3 +102,5 @@ splunk:
         idxc: !!python/object/apply:os.path.join [*home, "etc", "master-apps"]
         deployment: !!python/object/apply:os.path.join [*home, "etc", "deployment-apps"]
         httpinput: !!python/object/apply:os.path.join [*home, "etc", "apps", "splunk_httpinput"]
+    es:
+      ssl_enablement: "auto"

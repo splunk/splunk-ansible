@@ -221,12 +221,22 @@ worldneversayshiback
                     mopen.assert_called_once()
     assert vars_scope["splunk"]["password"] == "worldneversayshiback"
 
-@pytest.mark.xfail(raises=KeyError)
-def test_noSplunkPassword():
-    vars_scope = {"splunk": {}}
-    with patch("environ.inventory") as mock_inven:
-        with patch("os.environ", new={}):
-            environ.getSecrets(vars_scope)
+
+@pytest.mark.parametrize(("default_yml"),
+            [
+                # Check null parameters
+                ({}),
+                ({"password": None}),
+                ({"password": ""})
+            ]
+        )
+def test_noSplunkPassword(default_yml):
+    vars_scope = {"splunk": default_yml}
+    with pytest.raises(Exception) as exc:
+        with patch("environ.inventory") as mock_inven:
+            with patch("os.environ", new={}):
+                environ.getSecrets(vars_scope)
+    assert "Splunk password must be supplied!" in str(exc.value)
 
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
@@ -352,6 +362,31 @@ def test_getHEC(default_yml, os_env, result):
         with patch("os.environ", new=os_env):
             environ.getHEC(vars_scope)
     assert vars_scope["splunk"]["hec"] == result
+
+@pytest.mark.parametrize(("es_enablement", "os_env", "result"),
+            [
+                (None, {}, ""),
+                (None, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl-enablement strict"),
+                ({"ssl_enablement":"auto"}, {}, "--ssl-enablement auto"),
+                ({"ssl_enablement":"strict"}, {}, "--ssl-enablement strict"),
+                ({"ssl_enablement":"ignore"}, {}, "--ssl-enablement ignore"),
+                ({"ssl_enablement":"ignore"}, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl-enablement strict"),
+                ({"ssl_enablement":"invalid"}, {}, "Exception")
+            ]
+        )
+def test_getESSplunkVariables(es_enablement, os_env, result):
+    vars_scope = {"splunk": {}}
+    if es_enablement is not None:
+        vars_scope["splunk"]["es"] = es_enablement
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            try:
+                environ.getESSplunkVariables(vars_scope)
+                assert vars_scope["es_ssl_enablement"] == result
+            except Exception:
+                assert result == "Exception"
+
+
 
 @pytest.mark.parametrize(("os_env", "license_master_url", "deployer_url", "cluster_master_url", "search_head_captain_url"),
                          [
@@ -607,11 +642,11 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 ({"splunk": {"set_search_peers": False}}, {}, "splunk.set_search_peers", False),
                 ({}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
                 ({"splunk": {"set_search_peers": True}}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
-                # Check splunk.appserver.port	
-                ({"splunk": {"appserver": {"port": "9291"}}}, {}, "splunk.appserver.port", "9291"),	
-                ({}, {"SPLUNK_APPSERVER_PORT": "9391"}, "splunk.appserver.port", "9391"),	
-                # Check splunk.kvstore.port	
-                ({"splunk": {"kvstore" :{"port": "9165"}}}, {}, "splunk.kvstore.port", "9165"),	
+                # Check splunk.appserver.port
+                ({"splunk": {"appserver": {"port": "9291"}}}, {}, "splunk.appserver.port", "9291"),
+                ({}, {"SPLUNK_APPSERVER_PORT": "9391"}, "splunk.appserver.port", "9391"),
+                # Check splunk.kvstore.port
+                ({"splunk": {"kvstore" :{"port": "9165"}}}, {}, "splunk.kvstore.port", "9165"),
                 ({}, {"SPLUNK_KVSTORE_PORT": "9265"}, "splunk.kvstore.port", "9265"),
                 # Check splunk.connection_timeout
                 ({"splunk": {"connection_timeout": 60}}, {}, "splunk.connection_timeout", 60),
@@ -630,7 +665,7 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "svc_port": 8089,
                                 "s2s": {"port": 9997},
                                 "appserver": {"port": 8065},
-                                "kvstore": {"port": 8191},  
+                                "kvstore": {"port": 8191},
                                 "hec_token": "abcd1234",
                                 "enable_service": False,
                                 "service_name": "Splunkd",
@@ -867,7 +902,7 @@ def test_loadDefaults(mock_base, mock_baked, mock_env, mock_host, merge_call_cou
 def test_loadBaseDefaults(os_env, filename):
     sample_yml = """
 this: file
-is: 
+is:
     a: yaml
 """
     mo = mock_open(read_data=sample_yml)

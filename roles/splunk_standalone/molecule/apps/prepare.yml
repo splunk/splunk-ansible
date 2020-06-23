@@ -1,0 +1,41 @@
+---
+- name: Prepare
+  hosts: splunk
+  tasks:
+    - name: Check splunk user
+      user:
+        name: splunk
+        password: "*"
+        state: present
+      become: true
+
+    - name: Check packages
+      package:
+        name:
+          - procps
+          - curl
+          - net-tools
+        state: latest
+
+    - name: Copy splunk_app_httpexample
+      copy:
+        src: "{{ playbook_dir }}/../../../../tests/fixtures/splunk_app_httpexample"
+        dest: /tmp/
+
+    - name: Archive splunk_app_httpexample
+      archive:
+        path: /tmp/splunk_app_httpexample
+        dest: /tmp/splunk_app_httpexample.tgz
+
+- name: Prepare
+  hosts: nginx-apps-server
+  tasks:
+    - name: Copy splunk_app_simple
+      copy:
+        src: "{{ playbook_dir }}/../../../../tests/fixtures/splunk_app_simple"
+        dest: /usr/share/nginx/html/
+
+    - name: Archive splunk_app_simple
+      archive:
+        path: /usr/share/nginx/html/splunk_app_simple
+        dest: /usr/share/nginx/html/splunk_app_simple.tgz
