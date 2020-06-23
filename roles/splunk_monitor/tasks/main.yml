@@ -1,8 +1,4 @@
 ---
-    - name: RUN DMC
-      debug:
-        msg: "Hard times spreading just like the flu / Watch out homeboy, don't let it catch you"
-
     - include_tasks: ../../../roles/splunk_monitor/tasks/initialize_standalone_search_head.yml
 
     - name: Flush restart handlers
@@ -48,11 +44,11 @@
 
     - name: Add DMC server roles to search strings
       set_fact:
-        index_string: "{% if 'indexer' in server_info['json']['entry'][0]['content']['server_roles'] and index_string != '' %}localhost:localhost&member={{ index_string }}{% elif 'indexer' in server_info['json']['entry'][0]['content']['server_roles'] and index_string == ''%}localhost:localhost{% else %}{{ index_string }}{% endif %}"
-        search_head_string: "{% if server_info['json']['entry'][0]['content']['server_roles'] | select('regex', '(?:shc_member|search_head|shc_captain)') | list | length > 0 and search_head_string != '' %}localhost:localhost&member={{ search_head_string }}{% elif server_info['json']['entry'][0]['content']['server_roles'] | select('regex', '(?:shc_member|search_head|shc_captain)') | list | length > 0 and search_head_string == '' %}localhost:localhost{% else %}{{ search_head_string }}{% endif %}"
-        cluster_master_string: "{% if 'cluster_master' in server_info['json']['entry'][0]['content']['server_roles'] and cluster_master_string != '' %}localhost:localhost&member={{ cluster_master_string }}{% elif 'cluster_master' in server_info['json']['entry'][0]['content']['server_roles'] and cluster_master_string == ''%}localhost:localhost{% else %}{{ cluster_master_string }}{% endif %}"
-        deployment_server_string: "{% if 'deployment_server' in server_info['json']['entry'][0]['content']['server_roles'] and deployment_server_string != '' %}localhost:localhost&member={{ deployment_server_string }}{% elif 'deployment_server' in server_info['json']['entry'][0]['content']['server_roles'] and deployment_server_string == ''%}localhost:localhost{% else %}{{ deployment_server_string }}{% endif %}"
-        license_master_string: "{% if 'license_master' in server_info['json']['entry'][0]['content']['server_roles'] and license_master_string != '' %}localhost:localhost&member={{ license_master_string }}{% elif 'license_master' in server_info['json']['entry'][0]['content']['server_roles'] and license_master_string == ''%}localhost:localhost{% else %}{{ license_master_string }}{% endif %}"
+        index_string: "{% if 'indexer' in server_info['json']['entry'][0]['content']['server_roles'] and index_string | length > 0 %}localhost:localhost&member={{ index_string }}{% elif 'indexer' in server_info['json']['entry'][0]['content']['server_roles'] and index_string | length == 0 %}localhost:localhost{% else %}{{ index_string }}{% endif %}"
+        search_head_string: "{% if server_info['json']['entry'][0]['content']['server_roles'] | select('regex', '(?:shc_member|search_head|shc_captain)') | list | length > 0 and search_head_string | length > 0 %}localhost:localhost&member={{ search_head_string }}{% elif server_info['json']['entry'][0]['content']['server_roles'] | select('regex', '(?:shc_member|search_head|shc_captain)') | list | length > 0 and search_head_string | length == 0 %}localhost:localhost{% else %}{{ search_head_string }}{% endif %}"
+        cluster_master_string: "{% if 'cluster_master' in server_info['json']['entry'][0]['content']['server_roles'] and cluster_master_string | length > 0 %}localhost:localhost&member={{ cluster_master_string }}{% elif 'cluster_master' in server_info['json']['entry'][0]['content']['server_roles'] and cluster_master_string | length == 0 %}localhost:localhost{% else %}{{ cluster_master_string }}{% endif %}"
+        deployment_server_string: "{% if 'deployment_server' in server_info['json']['entry'][0]['content']['server_roles'] and deployment_server_string | length > 0 %}localhost:localhost&member={{ deployment_server_string }}{% elif 'deployment_server' in server_info['json']['entry'][0]['content']['server_roles'] and deployment_server_string | length == 0 %}localhost:localhost{% else %}{{ deployment_server_string }}{% endif %}"
+        license_master_string: "{% if 'license_master' in server_info['json']['entry'][0]['content']['server_roles'] and license_master_string | length > 0 %}localhost:localhost&member={{ license_master_string }}{% elif 'license_master' in server_info['json']['entry'][0]['content']['server_roles'] and license_master_string | length == 0 %}localhost:localhost{% else %}{{ license_master_string }}{% endif %}"
 
     - include_tasks: ../../../roles/splunk_monitor/tasks/post_calls.yml
 
