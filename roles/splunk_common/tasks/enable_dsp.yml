@@ -19,7 +19,7 @@
 
 - name: Find DSP auto-generated cert
   stat:
-    path: "{{ splunk.home }}/etc/auth/dsp-forwarder.pem"
+    path: "{{ splunk.home }}/etc/auth/dsp-fwd-chain.pem"
   become: yes
   become_user: "{{ splunk.user }}"
   register: existing_dsp_cert
@@ -29,25 +29,24 @@
   when: 
     - splunk.dsp.cert is defined and splunk.dsp.cert == "auto"
     - not existing_dsp_cert.stat.exists
+  become: yes
+  become_user: "{{ splunk.user }}"
   block:
   - name: Generate DSP key
-    command: "{{ splunk.exec }} cmd openssl genrsa -out {{ splunk.home }}/etc/auth/dsp-forwarder.key 2048"
-    become: yes
-    become_user: "{{ splunk.user }}"
+    command: "{{ splunk.exec }} cmd openssl genrsa -out {{ splunk.home }}/etc/auth/dsp-fwd.key 2048"
 
   - name: Generate DSP csr
-    command: "{{ splunk.exec }} cmd openssl req -new -key '{{ splunk.home }}/etc/auth/dsp-forwarder.key' -out '{{ splunk.home }}/etc/auth/dsp-forwarder.csr' -subj '/C=US/ST=CA/O=myOrg/CN=dspForwarder/emailAddress=email@example.com'"
-    become: yes
-    become_user: "{{ splunk.user }}"
+    command: "{{ splunk.exec }} cmd openssl req -new -key '{{ splunk.home }}/etc/auth/dsp-fwd.key' -out '{{ splunk.home }}/etc/auth/dsp-fwd.csr' -subj '/C=US/ST=CA/O=myOrg/CN=dspForwarder/emailAddress=email@example.com'"
   
   - name: Generate DSP cert
-    command: "{{ splunk.exec }} cmd openssl x509 -req -days 730 -in '{{ splunk.home }}/etc/auth/dsp-forwarder.csr' -signkey '{{ splunk.home }}/etc/auth/dsp-forwarder.key' -out '{{ splunk.home }}/etc/auth/dsp-forwarder.pem' -sha256"
-    become: yes
-    become_user: "{{ splunk.user }}"
+    command: "{{ splunk.exec }} cmd openssl x509 -req -days 730 -in '{{ splunk.home }}/etc/auth/dsp-fwd.csr' -signkey '{{ splunk.home }}/etc/auth/dsp-fwd.key' -out '{{ splunk.home }}/etc/auth/dsp-fwd.pem' -sha256"
+  
+  - name: Create DSP cert chain
+    command: "cat {{ splunk.home }}/etc/auth/dsp-fwd.pem {{ splunk.home }}/etc/auth/dsp-fwd.key > {{ splunk.home }}/etc/auth/dsp-fwd-chain.pem"
   
   - name: Display cert to upload
     debug:
-      var: "{{ lookup('file', '{{ splunk.home }}/etc/auth/dsp-forwarder.pem') }} "
+      msg: "Upload the following cert into Splunk Cloud Services to enable forwarding:\n{{ lookup('file', '{{ splunk.home }}/etc/auth/dsp-fwd.pem') }} "
 
 - name: Configure DSP output
   ini_file:
@@ -59,7 +58,7 @@
     group: "{{ splunk.group }}"
   with_items:
     - {key: "server", value: "{{ splunk.dsp.server }}"}
-    - {key: "clientCert", value: "{{ '{{ splunk.home }}/etc/auth/dsp-forwarder.pem' if splunk.dsp.cert == 'auto' else splunk.dsp.cert }}"}
+    - {key: "clientCert", value: "{{ '{{ splunk.home }}/etc/auth/dsp-fwd-chain.pem' if splunk.dsp.cert == 'auto' else splunk.dsp.cert }}"}
     - {key: "sslVerifyServerCert", value: "{{ splunk.s2s.verify | default('false') }}"}
   when:
     - splunk.dsp.server is defined and splunk.dsp.server

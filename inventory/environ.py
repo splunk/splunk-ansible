@@ -143,6 +143,7 @@ def getDefaultVars():
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
     getESSplunkVariables(defaultVars)
+    getDSP(defaultVars)
     return defaultVars
 
 def getSplunkPaths(vars_scope):
@@ -422,6 +423,10 @@ def getDSP(vars_scope):
     verify = os.environ.get("SPLUNK_DSP_VERIFY", "")
     if verify.lower() == "true":
         vars_scope["splunk"]["dsp"]["verify"] = True
+    vars_scope["splunk"]["dsp"]["enable"] = bool(vars_scope["splunk"]["dsp"].get("enable"))
+    enable = os.environ.get("SPLUNK_DSP_ENABLE", "")
+    if enable.lower() == "true":
+        vars_scope["splunk"]["dsp"]["enable"] = True
 
 def getESSplunkVariables(vars_scope):
     """
