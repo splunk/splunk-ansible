@@ -42,7 +42,7 @@
     command: "{{ splunk.exec }} cmd openssl x509 -req -days 730 -in '{{ splunk.home }}/etc/auth/dsp-fwd.csr' -signkey '{{ splunk.home }}/etc/auth/dsp-fwd.key' -out '{{ splunk.home }}/etc/auth/dsp-fwd.pem' -sha256"
   
   - name: Create DSP cert chain
-    command: "cat {{ splunk.home }}/etc/auth/dsp-fwd.pem {{ splunk.home }}/etc/auth/dsp-fwd.key > {{ splunk.home }}/etc/auth/dsp-fwd-chain.pem"
+    shell: "cat {{ splunk.home }}/etc/auth/dsp-fwd.pem {{ splunk.home }}/etc/auth/dsp-fwd.key > {{ splunk.home }}/etc/auth/dsp-fwd-chain.pem"
   
   - name: Display cert to upload
     debug:
