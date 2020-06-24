@@ -52,6 +52,11 @@ splunk:
         cert:
         password:
         ca:
+    dsp:
+        enable: False
+        server: forwarders.scp.splunk.com:9997
+        cert:
+        verify:
     appserver:
         port: 8065
     kvstore:
