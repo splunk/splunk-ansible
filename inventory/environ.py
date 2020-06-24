@@ -410,6 +410,19 @@ def getHEC(vars_scope):
     else:
         vars_scope["splunk"]["hec"]["ssl"] = bool(vars_scope["splunk"]["hec"].get("ssl"))
 
+def getDSP(vars_scope):
+    """
+    Configure DSP settings
+    """
+    if not "dsp" in vars_scope["splunk"]:
+        vars_scope["splunk"]["dsp"] = {}
+    vars_scope["splunk"]["dsp"]["server"] = os.environ.get("SPLUNK_DSP_SERVER", vars_scope["splunk"]["dsp"].get("server"))
+    vars_scope["splunk"]["dsp"]["cert"] = os.environ.get("SPLUNK_DSP_CERT", vars_scope["splunk"]["dsp"].get("cert"))
+    vars_scope["splunk"]["dsp"]["verify"] = bool(vars_scope["splunk"]["dsp"].get("verify"))
+    verify = os.environ.get("SPLUNK_DSP_VERIFY", "")
+    if verify.lower() == "true":
+        vars_scope["splunk"]["dsp"]["verify"] = True
+
 def getESSplunkVariables(vars_scope):
     """
     Get any special Enterprise Security configuration variables

@@ -17,6 +17,38 @@
     group: "{{ splunk.group }}"
   register: dsp_ca
 
+- name: Find DSP auto-generated cert
+  stat:
+    path: "{{ splunk.home }}/etc/auth/dsp-forwarder.pem"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: existing_dsp_cert
+  when: splunk.dsp.cert is defined and splunk.dsp.cert == "auto"
+
+- name: Generate DSP cert
+  when: 
+    - splunk.dsp.cert is defined and splunk.dsp.cert == "auto"
+    - not existing_dsp_cert.stat.exists
+  block:
+  - name: Generate DSP key
+    command: "{{ splunk.exec }} cmd openssl genrsa -out {{ splunk.home }}/etc/auth/dsp-forwarder.key 2048"
+    become: yes
+    become_user: "{{ splunk.user }}"
+
+  - name: Generate DSP csr
+    command: "{{ splunk.exec }} cmd openssl req -new -key '{{ splunk.home }}/etc/auth/dsp-forwarder.key' -out '{{ splunk.home }}/etc/auth/dsp-forwarder.csr' -subj '/C=US/ST=CA/O=myOrg/CN=dspForwarder/emailAddress=email@example.com'"
+    become: yes
+    become_user: "{{ splunk.user }}"
+  
+  - name: Generate DSP cert
+    command: "{{ splunk.exec }} cmd openssl x509 -req -days 730 -in '{{ splunk.home }}/etc/auth/dsp-forwarder.csr' -signkey '{{ splunk.home }}/etc/auth/dsp-forwarder.key' -out '{{ splunk.home }}/etc/auth/dsp-forwarder.pem' -sha256"
+    become: yes
+    become_user: "{{ splunk.user }}"
+  
+  - name: Display cert to upload
+    debug:
+      var: "{{ lookup('file', '{{ splunk.home }}/etc/auth/dsp-forwarder.pem') }} "
+
 - name: Configure DSP output
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
@@ -27,7 +59,7 @@
     group: "{{ splunk.group }}"
   with_items:
     - {key: "server", value: "{{ splunk.dsp.server }}"}
-    - {key: "clientCert", value: "{{ splunk.dsp.cert }}"}
+    - {key: "clientCert", value: "{{ '{{ splunk.home }}/etc/auth/dsp-forwarder.pem' if splunk.dsp.cert == 'auto' else splunk.dsp.cert }}"}
     - {key: "sslVerifyServerCert", value: "{{ splunk.s2s.verify | default('false') }}"}
   when:
     - splunk.dsp.server is defined and splunk.dsp.server

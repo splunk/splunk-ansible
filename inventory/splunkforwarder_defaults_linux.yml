@@ -56,7 +56,7 @@ splunk:
         enable: False
         server: forwarders.scp.splunk.com:9997
         cert:
-        verify:
+        verify: False
     appserver:
         port: 8065
     kvstore:
