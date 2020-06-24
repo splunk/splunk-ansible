@@ -65,7 +65,17 @@
     - splunk.dsp.cert is defined and splunk.dsp.cert
   register: dsp_group
 
-- name: "Get Splunk status"
+- name: Enable DSP output
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: tcpout
+    option: defaultGroup
+    value: datastreamprocessor
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: dsp_default
+
+- name: Get Splunk status
   command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
@@ -77,6 +87,6 @@
 # We want to restart only when Splunk is currently running and when any of the above have changed
 - name: Trigger restart
   command: ls
-  changed_when: splunk_status.rc == 0 and (dsp_ca is changed or dsp_group is changed)
+  changed_when: splunk_status.rc == 0 and (dsp_ca is changed or dsp_group is changed or dsp_default is changed)
   notify:
     - Restart the splunkd service
