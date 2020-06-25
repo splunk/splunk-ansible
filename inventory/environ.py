@@ -24,6 +24,10 @@ import re
 import random
 import string
 from time import sleep
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 import socket
 import requests
 import urllib3
@@ -486,28 +490,23 @@ def parseUrl(url, vars_scope):
     """
     if not url:
         return ""
-    parsed = url.split("://", 1)
-    # Extract scheme
     scheme = vars_scope.get("cert_prefix", "https")
-    url = parsed[0]
-    if len(parsed) == 2:
-        scheme = parsed[0]
-        url = parsed[1]
-    # Extract netloc
-    netloc = url.split("/", 1)[0]
-    # Extract auth information if available
-    parsed = netloc.split("@", 1)
-    auth = None
-    url = parsed[0]
-    if len(parsed) == 2:
-        auth = parsed[0]
-        url = parsed[1]
-    if not url:
-        return None
-    # Extract hostname and port
-    parsed = url.split(":", 1)
-    hostname = parsed[0]
     port = vars_scope["splunk"].get("svc_port", 8089)
+    parsed = urlparse(url)
+    # If netloc exists, we should consider the url provided well-formatted w/ scheme provided
+    if parsed.netloc:
+        # Strip auth info, if it exists
+        netloc = parsed.netloc.split("@", 1)[-1]
+        if ":" not in netloc:
+            return "{}://{}:{}".format(parsed.scheme, netloc, port)
+        return "{}://{}".format(parsed.scheme, netloc)
+    # Strip auth info, if it exists
+    parsed = url.split("@", 1)[-1]
+    # Strip path, if it exists
+    parsed = parsed.split("/", 1)[0]
+    # Extract hostname and port
+    parsed = parsed.split(":", 1)
+    hostname = parsed[0]
     if len(parsed) == 2:
         port = parsed[1]
     return "{}://{}:{}".format(scheme, hostname, port)
