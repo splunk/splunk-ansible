@@ -18,9 +18,14 @@
       path: "{{ stream_pipeline_spec_file }}"
     register: pipe_spec
 
+  - name: Create spec file
+    file:
+      path: "{{ stream_pipeline_spec_file }}"
+      state: touch
+    when: not pipe_spec.stat.exists
+
   - name: Read existing spec
     command: "cat {{ stream_pipeline_spec_file }}"
-    when: pipe_spec.stat.exists
     register: pipe_spec_def
 
   - name: Generate new spec
@@ -30,10 +35,10 @@
   - name: Overwrite spec
     blockinfile:
       path: "{{ splunk.home }}/etc/{{ stream_pipeline_name }}-spec.json"
-      block: "{{ gen_pipe_spec.stdout }}"
+      block: "{{ gen_pipe_spec.stdout | to_json }}"
       owner: "{{ splunk.user }}"
       group: "{{ splunk.group }}"
-    when: not pipe_spec.stat.exists or gen_pipe_spec.stdout != pipe_spec_def.stdout
+    when: gen_pipe_spec.stdout != pipe_spec_def.stdout
     register: write_pipe_spec
 
 - name: Get pipeline
