@@ -79,6 +79,8 @@
     group: "{{ splunk.group }}"
   register: dsp_default
 
+- include_tasks: scloud/construct_stream.yml
+
 - name: Get Splunk status
   command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
   become: yes
