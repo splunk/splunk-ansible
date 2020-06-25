@@ -436,13 +436,13 @@ def getSCS(vars_scope):
         vars_scope["scs"] = {}
     vars_scope["scs"]["tenant"] = os.environ.get("SCS_TENANT", vars_scope["scs"].get("tenant"))
     vars_scope["scs"]["env"] = os.environ.get("SCS_ENV", vars_scope["scs"].get("env"))
-    if "scloud_context" in vars_scope["scs"]:
-        vars_scope["scs"]["access_token"] = "" # parse this from the toml file
-        vars_scope["scs"]["id_token"] = "" # parse this from the toml file
+    vars_scope["scs"]["scloud_context"] = os.environ.get("SCS_SCLOUD_CONTEXT", vars_scope["scs"].get("scloud_context"))
+    if vars_scope["scs"]["scloud_context"]:
+        vars_scope["scs"]["access_token"] , vars_scope["scs"]["id_token"] = parseSCSContext(vars_scope)
     else:
         vars_scope["scs"]["username"] = os.environ.get("SCS_USERNAME", vars_scope["scs"].get("username"))
         vars_scope["scs"]["password"] = os.environ.get("SCS_PASSWORD", vars_scope["scs"].get("password"))
-        getSCSToken(vars_scope)
+        vars_scope["scs"]["access_token"] , vars_scope["scs"]["id_token"] = getSCSToken(vars_scope)
 
 def getSCSToken(vars_scope):
     """
@@ -451,6 +451,11 @@ def getSCSToken(vars_scope):
     vars_scope["scs"]["access_token"] = None
     vars_scope["scs"]["id_token"] = None
     # Complete scloud auth steps and set these variables
+    return "", ""
+
+def parseSCSContext(vars_scope):
+    # parse this from the toml file
+    return "", ""
 
 def getESSplunkVariables(vars_scope):
     """
