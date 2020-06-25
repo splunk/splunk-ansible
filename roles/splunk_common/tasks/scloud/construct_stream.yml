@@ -18,31 +18,31 @@
       path: "{{ stream_pipeline_spec_file }}"
     register: pipe_spec
 
-  - name: Create spec file
-    file:
-      path: "{{ stream_pipeline_spec_file }}"
-      state: touch
-    when: not pipe_spec.stat.exists
-
   - name: Read existing spec
     command: "cat {{ stream_pipeline_spec_file }}"
+    changed_when: false
+    when: pipe_spec.stat.exists
     register: pipe_spec_def
 
   - name: Generate new spec
     command: "scloud streams compile --spl '{{ stream_pipeline_spl2 }}' --validate true"
+    changed_when: false
     register: gen_pipe_spec
 
   - name: Overwrite spec
-    blockinfile:
+    lineinfile:
       path: "{{ splunk.home }}/etc/{{ stream_pipeline_name }}-spec.json"
-      block: "{{ gen_pipe_spec.stdout | to_json }}"
+      regexp: "^.*"
+      line: "{{ gen_pipe_spec.stdout | trim | from_json | to_json }}"
       owner: "{{ splunk.user }}"
       group: "{{ splunk.group }}"
-    when: gen_pipe_spec.stdout != pipe_spec_def.stdout
+      create: yes
+    when: not pipe_spec.stat.exists or gen_pipe_spec.stdout | trim | from_json | to_json != pipe_spec_def.stdout | trim | from_json | to_json
     register: write_pipe_spec
 
 - name: Get pipeline
   command: "scloud streams list-pipelines --name {{ stream_pipeline_name }}"
+  changed_when: false
   register: get_pipe
 
 - name: Create pipeline
@@ -61,4 +61,10 @@
 
 - name: Activate pipeline
   command: "scloud streams activate-pipeline --id {{ stream_pipeline_id }}"
+  register: activate_pipe
+  changed_when: activate_pipe.rc == 0
+  failed_when: "activate_pipe.rc != 0 and 'pipeline-already-active' not in activate_pipe.stderr"
   when: create_pipe is changed or update_pipe is changed
+  until: "activate_pipe.rc == 0 or (activate_pipe.rc != 0 and 'pipeline-already-active' in activate_pipe.stderr)"
+  retries: 5
+  delay: 10
