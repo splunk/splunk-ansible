@@ -428,6 +428,30 @@ def getDSP(vars_scope):
     if enable.lower() == "true":
         vars_scope["splunk"]["dsp"]["enable"] = True
 
+def getSCS(vars_scope):
+    """
+    Configure SCS settings
+    """
+    if not "scs" in vars_scope:
+        vars_scope["scs"] = {}
+    vars_scope["scs"]["tenant"] = os.environ.get("SCS_TENANT", vars_scope["scs"].get("tenant"))
+    vars_scope["scs"]["env"] = os.environ.get("SCS_ENV", vars_scope["scs"].get("env"))
+    if "scloud_context" in vars_scope["scs"]:
+        vars_scope["scs"]["access_token"] = "" # parse this from the toml file
+        vars_scope["scs"]["id_token"] = "" # parse this from the toml file
+    else:
+        vars_scope["scs"]["username"] = os.environ.get("SCS_USERNAME", vars_scope["scs"].get("username"))
+        vars_scope["scs"]["password"] = os.environ.get("SCS_PASSWORD", vars_scope["scs"].get("password"))
+        getSCSToken(vars_scope)
+
+def getSCSToken(vars_scope):
+    """
+    Authenticate to the Splunk Developer Cloud with the `scloud` CLI, or with a provided `.scloud_context` file .
+    """
+    vars_scope["scs"]["access_token"] = None
+    vars_scope["scs"]["id_token"] = None
+    # Complete scloud auth steps and set these variables
+
 def getESSplunkVariables(vars_scope):
     """
     Get any special Enterprise Security configuration variables
