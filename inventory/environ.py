@@ -142,6 +142,7 @@ def getDefaultVars():
     getLaunchConf(defaultVars)
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
+    getESSplunkVariables(defaultVars)
     return defaultVars
 
 def getSplunkPaths(vars_scope):
@@ -409,6 +410,23 @@ def getHEC(vars_scope):
         vars_scope["splunk"]["hec"]["ssl"] = False
     else:
         vars_scope["splunk"]["hec"]["ssl"] = bool(vars_scope["splunk"]["hec"].get("ssl"))
+
+def getESSplunkVariables(vars_scope):
+    """
+    Get any special Enterprise Security configuration variables
+    """
+    ssl_enablement_env = os.environ.get("SPLUNK_ES_SSL_ENABLEMENT")
+    if not ssl_enablement_env and (not "es" in vars_scope["splunk"] or not "ssl_enablement" in vars_scope["splunk"]["es"]):
+        # This feature is only for specific versions of ES.
+        # if it is missing, don't pass any value in.
+        vars_scope["es_ssl_enablement"] = ""
+    else:
+        # Use the environment variable unless the ssl enablement value is present
+        ssl_enablement = ssl_enablement_env or vars_scope["splunk"]["es"]["ssl_enablement"]
+        # Build the flag in it's entirety here
+        if ssl_enablement not in ["auto", "strict", "ignore"]:
+            raise Exception("Invalid ssl_enablement flag {0}".format(ssl_enablement))
+        vars_scope["es_ssl_enablement"] = "--ssl-enablement {0}".format(ssl_enablement)
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
