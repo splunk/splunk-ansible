@@ -28,6 +28,7 @@ import socket
 import requests
 import urllib3
 import yaml
+import toml
 
 urllib3.disable_warnings()
 
@@ -434,28 +435,38 @@ def getSCS(vars_scope):
     """
     if not "scs" in vars_scope:
         vars_scope["scs"] = {}
-    vars_scope["scs"]["tenant"] = os.environ.get("SCS_TENANT", vars_scope["scs"].get("tenant"))
     vars_scope["scs"]["env"] = os.environ.get("SCS_ENV", vars_scope["scs"].get("env"))
+    vars_scope["scs"]["username"] = os.environ.get("SCS_USERNAME", vars_scope["scs"].get("username"))
+    vars_scope["scs"]["password"] = os.environ.get("SCS_PASSWORD", vars_scope["scs"].get("password"))
+    vars_scope["scs"]["tenant"] = os.environ.get("SCS_TENANT", vars_scope["scs"].get("tenant"))
+    if not vars_scope["scs"]["tenant"]:
+        vars_scope["scs"]["tenant"] = "{}{}".format(vars_scope["scs"]["username"], random.choices(string.ascii_uppercase + string.digits, k=5)) )
+    setSCloudConfig(vars_scope)
+
     vars_scope["scs"]["scloud_context"] = os.environ.get("SCS_SCLOUD_CONTEXT", vars_scope["scs"].get("scloud_context"))
-    if vars_scope["scs"]["scloud_context"]:
-        vars_scope["scs"]["access_token"] , vars_scope["scs"]["id_token"] = parseSCSContext(vars_scope)
+    if not vars_scope["scs"]["scloud_context"]:
+        generateSCloudContext(vars_scope["scs"]["username"], vars_scope["scs"]["password"])
     else:
-        vars_scope["scs"]["username"] = os.environ.get("SCS_USERNAME", vars_scope["scs"].get("username"))
-        vars_scope["scs"]["password"] = os.environ.get("SCS_PASSWORD", vars_scope["scs"].get("password"))
-        vars_scope["scs"]["access_token"] , vars_scope["scs"]["id_token"] = getSCSToken(vars_scope)
+        pass # set ~/.scloud_context to provided local file
 
-def getSCSToken(vars_scope):
-    """
-    Authenticate to the Splunk Developer Cloud with the `scloud` CLI, or with a provided `.scloud_context` file .
-    """
-    vars_scope["scs"]["access_token"] = None
-    vars_scope["scs"]["id_token"] = None
-    # Complete scloud auth steps and set these variables
-    return "", ""
+    createSCSTenant(vars_scope)
 
-def parseSCSContext(vars_scope):
-    # parse this from the toml file
-    return "", ""
+def setSCloudConfig(vars_scope):
+    os.system('su splunk -c "scloud config set -k username -p {0}@splunk.com"'.format(vars_scope["scs"]["username"])) #su splunk -c for all
+    os.system('su splunk -c "scloud config set -k env -p {0}"'.format(vars_scope["scs"]["env"]))
+
+def generateSCloudContext(username, password):
+    """
+    Authenticate to the Splunk Developer Cloud with the `scloud` CLI.
+    """
+    os.system('su splunk -c "scloud login -u {0} -p {1}"'.format(username, password))
+
+def createSCSTenant(vars_scope):
+    """
+    Creates a tenant - will error with code 409 if one already exists.
+    """
+    os.system('su splunk -c "scloud provisioner create-provision-job --tenant {0}"'.format(vars_scope["scs"]["tenant"]))
+    os.system('su splunk -c "scloud config set -k tenant -p ${0}"'.format(vars_scope["scs"]["tenant"]))
 
 def getESSplunkVariables(vars_scope):
     """
