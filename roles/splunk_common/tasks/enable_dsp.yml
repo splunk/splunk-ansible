@@ -52,10 +52,10 @@
     debug:
       msg: "Upload the following cert into Splunk Cloud Services to enable forwarding:\n{{ cert_body.stdout }} "
 
-  - name: Configure forwarding service
-    become: yes
-    become_user: "{{ splunk.user }}"
-    command: "scloud forwarders add-certificate --pem {{ cert_body.stdout }}
+- name: Configure forwarding service
+  become: yes
+  become_user: "{{ splunk.user }}"
+  command: "scloud forwarders add-certificate --pem {{ cert_body.stdout }}
 
 - name: Configure DSP output
   ini_file:
