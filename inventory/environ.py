@@ -442,7 +442,7 @@ def getSCS(vars_scope):
     vars_scope["scs"]["password"] = os.environ.get("SCS_PASSWORD", vars_scope["scs"].get("password"))
     vars_scope["scs"]["tenant"] = os.environ.get("SCS_TENANT", vars_scope["scs"].get("tenant"))
     if not vars_scope["scs"]["tenant"]:
-        vars_scope["scs"]["tenant"] = "{}{}".format(vars_scope["scs"]["username"], random.choices(string.ascii_uppercase + string.digits, k=5)) )
+        vars_scope["scs"]["tenant"] = "{}{}".format(vars_scope["scs"]["username"], random.choices(string.ascii_uppercase + string.digits, k=5))
     setSCloudConfig(vars_scope)
 
     vars_scope["scs"]["scloud_context"] = os.environ.get("SCS_SCLOUD_CONTEXT", vars_scope["scs"].get("scloud_context"))
