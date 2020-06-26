@@ -85,6 +85,9 @@
   register: dsp_default
 
 - include_tasks: scloud/construct_stream.yml
+  when: 
+    - splunk.dsp.pipeline_name is defined and splunk.dsp.pipeline_name
+    - splunk.dsp.pipeline_spec is defined and splunk.dsp.pipeline_spec
 
 - name: Get Splunk status
   command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
