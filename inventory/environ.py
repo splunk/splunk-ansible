@@ -427,6 +427,9 @@ def getDSP(vars_scope):
     enable = os.environ.get("SPLUNK_DSP_ENABLE", "")
     if enable.lower() == "true":
         vars_scope["splunk"]["dsp"]["enable"] = True
+    vars_scope["splunk"]["dsp"]["pipeline_name"] = os.environ.get("SPLUNK_DSP_PIPELINE_NAME", vars_scope["splunk"]["dsp"].get("pipeline_name"))
+    vars_scope["splunk"]["dsp"]["pipeline_desc"] = os.environ.get("SPLUNK_DSP_PIPELINE_DESC", vars_scope["splunk"]["dsp"].get("pipeline_desc"))
+    vars_scope["splunk"]["dsp"]["pipeline_spec"] = os.environ.get("SPLUNK_DSP_PIPELINE_SPEC", vars_scope["splunk"]["dsp"].get("pipeline_spec"))
 
 def getESSplunkVariables(vars_scope):
     """
