@@ -28,7 +28,6 @@ import socket
 import requests
 import urllib3
 import yaml
-import toml
 
 urllib3.disable_warnings()
 
