@@ -1,4 +1,4 @@
 ---
-    galaxy_info:
-    dependencies:
-      - role: splunk_common
+galaxy_info:
+dependencies:
+  - role: splunk_common
