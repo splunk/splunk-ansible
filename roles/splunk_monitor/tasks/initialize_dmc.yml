@@ -23,7 +23,7 @@
       dispatch.enablePreview: true
     body_format: "form-urlencoded"
     validate_certs: false
-    status_code: 200,201
+    status_code: 200,201,409
 
 - name: UI - GET
   uri:
@@ -46,7 +46,7 @@
       eai:data: "{{ settings.json['entry'][0]['content']['eai:data'] }}"
     body_format: "form-urlencoded"
     validate_certs: false
-    status_code: 200,201
+    status_code: 200,201,409
 
 - name: DMC Conf - POST
   uri:
@@ -62,7 +62,7 @@
       eai:userName: "{{ settings.json['entry'][0]['content']['eai:userName'] }}"
     body_format: "form-urlencoded"
     validate_certs: false
-    status_code: 200,201
+    status_code: 200,201,409
 
 - name: DMC Settings - POST
   uri:
@@ -72,4 +72,4 @@
     password: "{{ splunk.password }}"
     body: "author=Splunk&check_for_updates=1&configured=1&label=Monitoring+Console&version={{ settings.json['generator']['version'] }}&visible=1"
     validate_certs: false
-    status_code: 200,201
+    status_code: 200,201,409

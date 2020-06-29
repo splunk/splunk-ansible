@@ -36,21 +36,6 @@ provisioner:
     links:
       hosts: ../hosts.yml
       group_vars: ./group_vars/
-scenario:
-  name: default
-  test_sequence:
-    - dependency
-    - lint
-    - cleanup
-    - destroy
-    - syntax
-    - create
-    - prepare
-    - converge
-    - side_effect
-    - verify
-    - cleanup
-    - destroy
 verifier:
   name: testinfra
   options:
