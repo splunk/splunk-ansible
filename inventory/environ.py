@@ -426,7 +426,7 @@ def getESSplunkVariables(vars_scope):
         # Build the flag in it's entirety here
         if ssl_enablement not in ["auto", "strict", "ignore"]:
             raise Exception("Invalid ssl_enablement flag {0}".format(ssl_enablement))
-        vars_scope["es_ssl_enablement"] = "--ssl-enablement {0}".format(ssl_enablement)
+        vars_scope["es_ssl_enablement"] = "--ssl_enablement {0}".format(ssl_enablement)
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
