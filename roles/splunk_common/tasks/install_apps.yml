@@ -47,7 +47,7 @@
   # ITSI require installation via extraction - others can be installed normally.
   # Verify the contents of the package and check for ITSI
   - name: Check app contents
-    shell: "set -o pipefail && tar --exclude='*/*/*' --exclude='*.*' --exclude='*.pyc' --exclude=local -tf {{ app_filepath }} | awk -F'/' '{ print$1 }' | uniq"
+    shell: "set -o pipefail && tar --exclude='*/*/*' --exclude='*.*' -tf {{ app_filepath }} | awk -F'/' '{ print$1 }' | uniq"
     args:
       executable: /bin/bash
     register: app_contents
