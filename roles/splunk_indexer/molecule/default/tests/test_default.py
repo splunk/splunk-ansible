@@ -56,7 +56,7 @@ def test_splunk_version(host):
     assert f.exists
     assert f.user == SPLUNK_USER
     assert f.group == SPLUNK_GROUP
-    assert f.contains("VERSION=8.0.3")
+    assert f.contains("VERSION=8.0.4.1")
 
 def test_splunk_pid(host):
     f = host.file("{}/var/run/splunk/splunkd.pid".format(SPLUNK_HOME))
