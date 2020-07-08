@@ -1,0 +1,18 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: Check splunk user
+      user:
+        name: splunk
+        password: "*"
+        state: present
+      become: true
+
+    - name: Check packages
+      package:
+        name:
+          - procps
+          - curl
+          - net-tools
+        state: latest

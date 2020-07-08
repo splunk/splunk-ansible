@@ -32,3 +32,4 @@
     - splunk.multisite_search_factor_total is defined
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
+

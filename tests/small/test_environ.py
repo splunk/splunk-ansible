@@ -366,11 +366,11 @@ def test_getHEC(default_yml, os_env, result):
 @pytest.mark.parametrize(("es_enablement", "os_env", "result"),
             [
                 (None, {}, ""),
-                (None, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl-enablement strict"),
-                ({"ssl_enablement":"auto"}, {}, "--ssl-enablement auto"),
-                ({"ssl_enablement":"strict"}, {}, "--ssl-enablement strict"),
-                ({"ssl_enablement":"ignore"}, {}, "--ssl-enablement ignore"),
-                ({"ssl_enablement":"ignore"}, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl-enablement strict"),
+                (None, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl_enablement strict"),
+                ({"ssl_enablement":"auto"}, {}, "--ssl_enablement auto"),
+                ({"ssl_enablement":"strict"}, {}, "--ssl_enablement strict"),
+                ({"ssl_enablement":"ignore"}, {}, "--ssl_enablement ignore"),
+                ({"ssl_enablement":"ignore"}, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl_enablement strict"),
                 ({"ssl_enablement":"invalid"}, {}, "Exception")
             ]
         )
