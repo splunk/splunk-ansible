@@ -47,7 +47,8 @@ roleNames = [
     'splunk_license_master', # (if it exists, run adding license with a license master)
     'splunk_search_head_captain', # TODO: remove this as we deprecate this role
     'splunk_universal_forwarder',
-    'splunk_deployment_server'
+    'splunk_deployment_server',
+    'splunk_monitor'
 ]
 
 varPrefix = "SPLUNK_VAR_"
@@ -446,7 +447,7 @@ def getESSplunkVariables(vars_scope):
         # Build the flag in it's entirety here
         if ssl_enablement not in ["auto", "strict", "ignore"]:
             raise Exception("Invalid ssl_enablement flag {0}".format(ssl_enablement))
-        vars_scope["es_ssl_enablement"] = "--ssl-enablement {0}".format(ssl_enablement)
+        vars_scope["es_ssl_enablement"] = "--ssl_enablement {0}".format(ssl_enablement)
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])

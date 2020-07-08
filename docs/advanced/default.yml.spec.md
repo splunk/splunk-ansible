@@ -136,7 +136,7 @@ docker: <bool>
 
 splunk:
   role: <str>
-  * Role to assume when setting up Splunk. Accepted values include: splunk_standalone, splunk_search_head, splunk_search_head_captain, splunk_indexer, splunk_deployer, splunk_cluster_master, splunk_indexer, splunk_deployment_server, splunk_heavy_forwarder, splunk_license_master, and splunk_universal_forwarder.
+  * Role to assume when setting up Splunk. Accepted values include: splunk_standalone, splunk_search_head, splunk_search_head_captain, splunk_indexer, splunk_deployer, splunk_cluster_master, splunk_deployment_server, splunk_heavy_forwarder, splunk_license_master, splunk_universal_forwarder, and splunk_monitor.
   * Default: splunk_standalone
 
   allow_upgrade:

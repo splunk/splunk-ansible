@@ -3,7 +3,7 @@
 # Copy everything over except local/app.conf because some apps are disabled after installation
 - name: "Copy installed apps to {{ dest }}"
   shell:
-    cmd: "set -o pipefail && tar -c --exclude=local/app.conf {{ item }} | tar -x -C {{ dest }}"
+    cmd: "set -o pipefail && tar -c --exclude=local/app.conf --exclude='*.pyc' --exclude='*__pycache__*' {{ item }} | tar -x -C {{ dest }}"
     chdir: "{{ splunk.app_paths.default }}"
     executable: /bin/bash
   become: yes
