@@ -26,7 +26,7 @@
   when: splunk.dsp.cert is defined and splunk.dsp.cert == "auto"
 
 - name: Generate DSP cert
-  when: 
+  when:
     - splunk.dsp.cert is defined and splunk.dsp.cert == "auto"
     - not existing_dsp_cert.stat.exists
   become: yes
@@ -37,13 +37,13 @@
 
   - name: Generate DSP csr
     command: "{{ splunk.exec }} cmd openssl req -new -key '{{ splunk.home }}/etc/auth/dsp-fwd.key' -out '{{ splunk.home }}/etc/auth/dsp-fwd.csr' -subj '/C=US/ST=CA/O=myOrg/CN=dspForwarder/emailAddress=email@example.com'"
-  
+
   - name: Generate DSP cert
     command: "{{ splunk.exec }} cmd openssl x509 -req -days 730 -in '{{ splunk.home }}/etc/auth/dsp-fwd.csr' -signkey '{{ splunk.home }}/etc/auth/dsp-fwd.key' -out '{{ splunk.home }}/etc/auth/dsp-fwd.pem' -sha256"
-  
+
   - name: Create DSP cert chain
     shell: "cat {{ splunk.home }}/etc/auth/dsp-fwd.pem {{ splunk.home }}/etc/auth/dsp-fwd.key > {{ splunk.home }}/etc/auth/dsp-fwd-chain.pem"
-  
+
   - name: Read SCS cert
     command: "cat {{ splunk.home }}/etc/auth/dsp-fwd.pem"
     register: cert_body
@@ -80,7 +80,8 @@
   register: dsp_default
 
 - include_tasks: scloud/construct_stream.yml
-  when: 
+  when:
+    - scloudcli is defined and scloudcli.stat.exists
     - splunk.dsp.pipeline_name is defined and splunk.dsp.pipeline_name
     - splunk.dsp.pipeline_spec is defined and splunk.dsp.pipeline_spec
 
