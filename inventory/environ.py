@@ -24,6 +24,10 @@ import re
 import random
 import string
 from time import sleep
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 import socket
 import requests
 import urllib3
@@ -257,7 +261,8 @@ def getDistributedTopology(vars_scope):
     """
     Parse and set parameters to define topology if this is a distributed environment
     """
-    vars_scope["splunk"]["license_master_url"] = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", ""))
+    license_master_url = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", ""))
+    vars_scope["splunk"]["license_master_url"] = parseUrl(license_master_url, vars_scope)
     vars_scope["splunk"]["deployer_url"] = os.environ.get("SPLUNK_DEPLOYER_URL", vars_scope["splunk"].get("deployer_url", ""))
     vars_scope["splunk"]["cluster_master_url"] = os.environ.get("SPLUNK_CLUSTER_MASTER_URL", vars_scope["splunk"].get("cluster_master_url", ""))
     vars_scope["splunk"]["search_head_captain_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL", vars_scope["splunk"].get("search_head_captain_url", ""))
@@ -479,6 +484,33 @@ def getRandomString():
     """
     char_set = string.ascii_uppercase + string.digits
     return ''.join(random.sample(char_set * 6, 6))
+
+def parseUrl(url, vars_scope):
+    """
+    Parses role URL to handle non-default schemes, ports, etc. 
+    """
+    if not url:
+        return ""
+    scheme = vars_scope.get("cert_prefix", "https")
+    port = vars_scope["splunk"].get("svc_port", 8089)
+    parsed = urlparse(url)
+    # If netloc exists, we should consider the url provided well-formatted w/ scheme provided
+    if parsed.netloc:
+        # Strip auth info, if it exists
+        netloc = parsed.netloc.split("@", 1)[-1]
+        if ":" not in netloc:
+            return "{}://{}:{}".format(parsed.scheme, netloc, port)
+        return "{}://{}".format(parsed.scheme, netloc)
+    # Strip auth info, if it exists
+    parsed = url.split("@", 1)[-1]
+    # Strip path, if it exists
+    parsed = parsed.split("/", 1)[0]
+    # Extract hostname and port
+    parsed = parsed.split(":", 1)
+    hostname = parsed[0]
+    if len(parsed) == 2:
+        port = parsed[1]
+    return "{}://{}:{}".format(scheme, hostname, port)
 
 def merge_dict(dict1, dict2, path=None):
     """
