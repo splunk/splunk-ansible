@@ -12,7 +12,8 @@
   ignore_errors: true
   delay: "{{ retry_delay }}"
   retries: "{{ retry_num }}"
-  until: ssl_enabled.status == 200 or ssl_enabled.status == 404
+  failed_when: 'ssl_enabled.status == -1 and "SSL: WRONG_VERSION_NUMBER" not in ssl_enabled.msg'
+  until: 'ssl_enabled.status == 200 or ssl_enabled.status == 404 or "SSL: WRONG_VERSION_NUMBER" in ssl_enabled.msg'
 
 # If the https call failed, we will revert to http and continue REST with normal error handling
 - name: "Set url prefix for future REST calls"
