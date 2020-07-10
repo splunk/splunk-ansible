@@ -148,6 +148,7 @@ def getDefaultVars():
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
     getESSplunkVariables(defaultVars)
+    getDSP(defaultVars)
     return defaultVars
 
 def getSplunkPaths(vars_scope):
@@ -415,6 +416,26 @@ def getHEC(vars_scope):
         vars_scope["splunk"]["hec"]["ssl"] = False
     else:
         vars_scope["splunk"]["hec"]["ssl"] = bool(vars_scope["splunk"]["hec"].get("ssl"))
+
+def getDSP(vars_scope):
+    """
+    Configure DSP settings
+    """
+    if not "dsp" in vars_scope["splunk"]:
+        vars_scope["splunk"]["dsp"] = {}
+    vars_scope["splunk"]["dsp"]["server"] = os.environ.get("SPLUNK_DSP_SERVER", vars_scope["splunk"]["dsp"].get("server"))
+    vars_scope["splunk"]["dsp"]["cert"] = os.environ.get("SPLUNK_DSP_CERT", vars_scope["splunk"]["dsp"].get("cert"))
+    vars_scope["splunk"]["dsp"]["verify"] = bool(vars_scope["splunk"]["dsp"].get("verify"))
+    verify = os.environ.get("SPLUNK_DSP_VERIFY", "")
+    if verify.lower() == "true":
+        vars_scope["splunk"]["dsp"]["verify"] = True
+    vars_scope["splunk"]["dsp"]["enable"] = bool(vars_scope["splunk"]["dsp"].get("enable"))
+    enable = os.environ.get("SPLUNK_DSP_ENABLE", "")
+    if enable.lower() == "true":
+        vars_scope["splunk"]["dsp"]["enable"] = True
+    vars_scope["splunk"]["dsp"]["pipeline_name"] = os.environ.get("SPLUNK_DSP_PIPELINE_NAME", vars_scope["splunk"]["dsp"].get("pipeline_name"))
+    vars_scope["splunk"]["dsp"]["pipeline_desc"] = os.environ.get("SPLUNK_DSP_PIPELINE_DESC", vars_scope["splunk"]["dsp"].get("pipeline_desc"))
+    vars_scope["splunk"]["dsp"]["pipeline_spec"] = os.environ.get("SPLUNK_DSP_PIPELINE_SPEC", vars_scope["splunk"]["dsp"].get("pipeline_spec"))
 
 def getESSplunkVariables(vars_scope):
     """

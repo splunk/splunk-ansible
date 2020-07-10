@@ -51,7 +51,15 @@ splunk:
         ssl: False
         cert:
         password:
-        ca: 
+        ca:
+    dsp:
+        enable: False
+        server: forwarders.scp.splunk.com:9997
+        cert:
+        verify: False
+        pipeline_name:
+        pipeline_desc:
+        pipeline_spec:
     appserver:
         port: 8065
     kvstore:
