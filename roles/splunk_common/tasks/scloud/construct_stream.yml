@@ -1,0 +1,74 @@
+---
+- name: Define spec file
+  set_fact:
+    stream_pipeline_spec_file: "{{ splunk.home }}/etc/{{ splunk.dsp.pipeline_name }}-spec.json"
+
+- name: Generate data stream pipeline specification
+  become: yes
+  become_user: "{{ splunk.user }}"
+  block:
+  - name: Find existing spec
+    stat:
+      path: "{{ stream_pipeline_spec_file }}"
+    register: pipe_spec
+
+  - name: Read existing spec
+    command: "cat {{ stream_pipeline_spec_file }}"
+    changed_when: false
+    when: pipe_spec.stat.exists
+    register: pipe_spec_def
+
+  - name: Generate new spec
+    command: "scloud streams compile --spl '{{ splunk.dsp.pipeline_spec }}' --validate true"
+    changed_when: false
+    register: gen_pipe_spec
+
+  - name: Overwrite spec
+    lineinfile:
+      path: "{{ stream_pipeline_spec_file }}"
+      regexp: "^.*"
+      line: "{{ gen_pipe_spec.stdout | trim | from_json | to_json }}"
+      owner: "{{ splunk.user }}"
+      group: "{{ splunk.group }}"
+      create: yes
+    when: not pipe_spec.stat.exists or gen_pipe_spec.stdout | trim | from_json | to_json != pipe_spec_def.stdout | trim | from_json | to_json
+    register: write_pipe_spec
+
+- name: Get pipeline
+  command: "scloud streams list-pipelines --name {{ splunk.dsp.pipeline_name }}"
+  changed_when: false
+  register: get_pipe
+
+- name: Create pipeline
+  command: "scloud streams create-pipeline --name '{{ splunk.dsp.pipeline_name }}' --description '{{ splunk.dsp.pipeline_desc }}' --input-datafile '{{ stream_pipeline_spec_file }}'"
+  when: get_pipe.stdout | from_json | json_query("total") | int == 0
+  register: create_pipe
+
+- name: Find pipeline ID
+  set_fact:
+    stream_pipeline_id: "{{ create_pipe.stdout | from_json | json_query('id') if create_pipe is defined and create_pipe.stdout is defined else get_pipe.stdout | from_json | json_query('items[0].id') }}"
+
+- name: Update pipeline
+  command: "scloud streams update-pipeline --name '{{ splunk.dsp.pipeline_name }}' --id {{ stream_pipeline_id }} --description '{{ splunk.dsp.pipeline_desc }}' --input-datafile {{ stream_pipeline_spec_file }}"
+  when: get_pipe.stdout | from_json | json_query("total") | int > 0 and write_pipe_spec is changed
+  register: update_pipe
+
+- name: Deactivate pipeline
+  command: "scloud streams deactivate-pipeline --id {{ stream_pipeline_id }}"
+  register: deactivate_pipe
+  changed_when: deactivate_pipe.rc == 0
+  failed_when: "deactivate_pipe.rc != 0 and 'pipeline-already-inactive' not in deactivate_pipe.stderr"
+  when:  update_pipe is changed
+  until: "deactivate_pipe.rc == 0 or (deactivate_pipe.rc != 0 and 'pipeline-already-inactive' in deactivate_pipe.stderr)"
+  retries: 5
+  delay: 10
+
+- name: Activate pipeline
+  command: "scloud streams activate-pipeline --id {{ stream_pipeline_id }}"
+  register: activate_pipe
+  changed_when: activate_pipe.rc == 0
+  failed_when: "activate_pipe.rc != 0 and 'pipeline-already-active' not in activate_pipe.stderr"
+  when: create_pipe is changed or update_pipe is changed
+  until: "activate_pipe.rc == 0 or (activate_pipe.rc != 0 and 'pipeline-already-active' in activate_pipe.stderr)"
+  retries: 5
+  delay: 10
