@@ -83,6 +83,9 @@
       status_code: [ 200, 201 ]
       timeout: 90
     register: post_apps_local
+    until: post_apps_local is succeeded
+    retries: 5
+    delay: "{{ retry_delay }}"
     changed_when: post_apps_local.status == 201
     when:
       - "'itsi' not in app_contents.stdout_lines"
