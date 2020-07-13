@@ -3,7 +3,7 @@
   vars:
     splunk_instance_address: "{{ idx }}"
 
-- name: Set all indexers as search peers
+- name: "Add {{ idx }} as search peer"
   command: "{{ splunk.exec }} add search-server {{ cert_prefix }}://{{ idx }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -remoteUsername {{ splunk.admin_user }} -remotePassword {{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
