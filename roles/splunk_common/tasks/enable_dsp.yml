@@ -1,0 +1,102 @@
+---
+# Forwarding traffic to Data Stream Processor: https://docs.splunk.com/Documentation/DSP/latest/Data/Forwarder
+- name: Fetch DigiCert CA
+  get_url:
+    url: https://cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+    dest: "{{ splunk.home }}/etc/auth/DigiCertGlobalRootCA.pem"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+
+- name: Set root CA
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: sslRootCAPath
+    value: "{{ splunk.home }}/etc/auth/DigiCertGlobalRootCA.pem"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: dsp_ca
+
+- name: Find DSP auto-generated cert
+  stat:
+    path: "{{ splunk.home }}/etc/auth/dsp-fwd-chain.pem"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: existing_dsp_cert
+  when: splunk.dsp.cert is defined and splunk.dsp.cert == "auto"
+
+- name: Generate DSP cert
+  when:
+    - splunk.dsp.cert is defined and splunk.dsp.cert == "auto"
+    - not existing_dsp_cert.stat.exists
+  become: yes
+  become_user: "{{ splunk.user }}"
+  block:
+  - name: Generate DSP key
+    command: "{{ splunk.exec }} cmd openssl genrsa -out {{ splunk.home }}/etc/auth/dsp-fwd.key 2048"
+
+  - name: Generate DSP csr
+    command: "{{ splunk.exec }} cmd openssl req -new -key '{{ splunk.home }}/etc/auth/dsp-fwd.key' -out '{{ splunk.home }}/etc/auth/dsp-fwd.csr' -subj '/C=US/ST=CA/O=myOrg/CN=dspForwarder/emailAddress=email@example.com'"
+
+  - name: Generate DSP cert
+    command: "{{ splunk.exec }} cmd openssl x509 -req -days 730 -in '{{ splunk.home }}/etc/auth/dsp-fwd.csr' -signkey '{{ splunk.home }}/etc/auth/dsp-fwd.key' -out '{{ splunk.home }}/etc/auth/dsp-fwd.pem' -sha256"
+
+  - name: Create DSP cert chain
+    shell: "cat {{ splunk.home }}/etc/auth/dsp-fwd.pem {{ splunk.home }}/etc/auth/dsp-fwd.key > {{ splunk.home }}/etc/auth/dsp-fwd-chain.pem"
+
+  - name: Read SCS cert
+    command: "cat {{ splunk.home }}/etc/auth/dsp-fwd.pem"
+    register: cert_body
+
+  - name: Display cert for SCS forwarding
+    debug:
+      msg: "Upload the following cert into Splunk Cloud Services to enable forwarding:\n{{ cert_body.stdout }} "
+
+- name: Configure DSP output
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "tcpout:datastreamprocessor"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  with_items:
+    - {key: "server", value: "{{ splunk.dsp.server }}"}
+    - {key: "clientCert", value: "{{ '{{ splunk.home }}/etc/auth/dsp-fwd-chain.pem' if splunk.dsp.cert == 'auto' else splunk.dsp.cert }}"}
+    - {key: "sslVerifyServerCert", value: "{{ splunk.s2s.verify | default('false') }}"}
+  when:
+    - splunk.dsp.server is defined and splunk.dsp.server
+    - splunk.dsp.cert is defined and splunk.dsp.cert
+  register: dsp_group
+
+- name: Enable DSP output
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: tcpout
+    option: defaultGroup
+    value: datastreamprocessor
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: dsp_default
+
+- include_tasks: scloud/construct_stream.yml
+  when:
+    - scloudcli is defined and scloudcli.stat.exists
+    - splunk.dsp.pipeline_name is defined and splunk.dsp.pipeline_name
+    - splunk.dsp.pipeline_spec is defined and splunk.dsp.pipeline_spec
+
+- name: Get Splunk status
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_status
+  changed_when: False
+  failed_when: False
+  ignore_errors: yes
+
+# We want to restart only when Splunk is currently running and when any of the above have changed
+- name: Trigger restart
+  command: ls
+  changed_when: splunk_status.rc == 0 and (dsp_ca is changed or dsp_group is changed or dsp_default is changed)
+  notify:
+    - Restart the splunkd service

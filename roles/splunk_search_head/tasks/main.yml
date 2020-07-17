@@ -26,6 +26,9 @@
 
 ## Non Indexer Clustering Scenario
 - include_tasks: ../../splunk_common/tasks/peer_indexers.yml
+  vars:
+    idx: "{{ item }}"
+  with_items: "{{ groups['splunk_indexer'] }}"
   when:
     - not splunk_indexer_cluster | bool
     - splunk.multisite_master is not defined

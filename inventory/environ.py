@@ -24,6 +24,10 @@ import re
 import random
 import string
 from time import sleep
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 import socket
 import requests
 import urllib3
@@ -144,6 +148,7 @@ def getDefaultVars():
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
     getESSplunkVariables(defaultVars)
+    getDSP(defaultVars)
     return defaultVars
 
 def getSplunkPaths(vars_scope):
@@ -257,7 +262,8 @@ def getDistributedTopology(vars_scope):
     """
     Parse and set parameters to define topology if this is a distributed environment
     """
-    vars_scope["splunk"]["license_master_url"] = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", ""))
+    license_master_url = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", ""))
+    vars_scope["splunk"]["license_master_url"] = parseUrl(license_master_url, vars_scope)
     vars_scope["splunk"]["deployer_url"] = os.environ.get("SPLUNK_DEPLOYER_URL", vars_scope["splunk"].get("deployer_url", ""))
     vars_scope["splunk"]["cluster_master_url"] = os.environ.get("SPLUNK_CLUSTER_MASTER_URL", vars_scope["splunk"].get("cluster_master_url", ""))
     vars_scope["splunk"]["search_head_captain_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL", vars_scope["splunk"].get("search_head_captain_url", ""))
@@ -411,6 +417,26 @@ def getHEC(vars_scope):
     else:
         vars_scope["splunk"]["hec"]["ssl"] = bool(vars_scope["splunk"]["hec"].get("ssl"))
 
+def getDSP(vars_scope):
+    """
+    Configure DSP settings
+    """
+    if not "dsp" in vars_scope["splunk"]:
+        vars_scope["splunk"]["dsp"] = {}
+    vars_scope["splunk"]["dsp"]["server"] = os.environ.get("SPLUNK_DSP_SERVER", vars_scope["splunk"]["dsp"].get("server"))
+    vars_scope["splunk"]["dsp"]["cert"] = os.environ.get("SPLUNK_DSP_CERT", vars_scope["splunk"]["dsp"].get("cert"))
+    vars_scope["splunk"]["dsp"]["verify"] = bool(vars_scope["splunk"]["dsp"].get("verify"))
+    verify = os.environ.get("SPLUNK_DSP_VERIFY", "")
+    if verify.lower() == "true":
+        vars_scope["splunk"]["dsp"]["verify"] = True
+    vars_scope["splunk"]["dsp"]["enable"] = bool(vars_scope["splunk"]["dsp"].get("enable"))
+    enable = os.environ.get("SPLUNK_DSP_ENABLE", "")
+    if enable.lower() == "true":
+        vars_scope["splunk"]["dsp"]["enable"] = True
+    vars_scope["splunk"]["dsp"]["pipeline_name"] = os.environ.get("SPLUNK_DSP_PIPELINE_NAME", vars_scope["splunk"]["dsp"].get("pipeline_name"))
+    vars_scope["splunk"]["dsp"]["pipeline_desc"] = os.environ.get("SPLUNK_DSP_PIPELINE_DESC", vars_scope["splunk"]["dsp"].get("pipeline_desc"))
+    vars_scope["splunk"]["dsp"]["pipeline_spec"] = os.environ.get("SPLUNK_DSP_PIPELINE_SPEC", vars_scope["splunk"]["dsp"].get("pipeline_spec"))
+
 def getESSplunkVariables(vars_scope):
     """
     Get any special Enterprise Security configuration variables
@@ -426,7 +452,7 @@ def getESSplunkVariables(vars_scope):
         # Build the flag in it's entirety here
         if ssl_enablement not in ["auto", "strict", "ignore"]:
             raise Exception("Invalid ssl_enablement flag {0}".format(ssl_enablement))
-        vars_scope["es_ssl_enablement"] = "--ssl-enablement {0}".format(ssl_enablement)
+        vars_scope["es_ssl_enablement"] = "--ssl_enablement {0}".format(ssl_enablement)
 
 def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
@@ -479,6 +505,33 @@ def getRandomString():
     """
     char_set = string.ascii_uppercase + string.digits
     return ''.join(random.sample(char_set * 6, 6))
+
+def parseUrl(url, vars_scope):
+    """
+    Parses role URL to handle non-default schemes, ports, etc. 
+    """
+    if not url:
+        return ""
+    scheme = vars_scope.get("cert_prefix", "https")
+    port = vars_scope["splunk"].get("svc_port", 8089)
+    parsed = urlparse(url)
+    # If netloc exists, we should consider the url provided well-formatted w/ scheme provided
+    if parsed.netloc:
+        # Strip auth info, if it exists
+        netloc = parsed.netloc.split("@", 1)[-1]
+        if ":" not in netloc:
+            return "{}://{}:{}".format(parsed.scheme, netloc, port)
+        return "{}://{}".format(parsed.scheme, netloc)
+    # Strip auth info, if it exists
+    parsed = url.split("@", 1)[-1]
+    # Strip path, if it exists
+    parsed = parsed.split("/", 1)[0]
+    # Extract hostname and port
+    parsed = parsed.split(":", 1)
+    hostname = parsed[0]
+    if len(parsed) == 2:
+        port = parsed[1]
+    return "{}://{}:{}".format(scheme, hostname, port)
 
 def merge_dict(dict1, dict2, path=None):
     """
