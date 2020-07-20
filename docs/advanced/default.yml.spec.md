@@ -214,6 +214,10 @@ splunk:
   * Default Splunk admin user password. This is REQUIRED when starting Splunk, and can only be set during the first-time run of the playbooks. If changes are required to the admin password, they should be done through SplunkWeb/CLI and the new value should be re-entered here.
   * Default: null
 
+  declarative_admin_password: <bool>
+  * When set to true, the playbooks will always enforce that the admin password is set to the value of `password` above. Any changes to the admin password outside of splunk-ansible will be reverted.
+  * Default: false
+
   user: <str>
   * Host user under which Splunk will run
   * Default: splunk

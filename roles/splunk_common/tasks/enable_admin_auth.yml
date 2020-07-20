@@ -41,15 +41,16 @@
     no_log: "{{ hide_password }}"
 
 - name: Establish declarative admin access
-  when: 
-    - declarative_admin_password in splunk and splunk.declarative_admin_password | bool
+  when:
+    - "'declarative_admin_password' in splunk and splunk.declarative_admin_password | bool"
+    - not first_run | bool
   block:
   - name: Apply admin password
-    command: "{{ splunk.exec }} cmd splunkd rest --noauth POST /services/{{ splunk.admin_user }}/users/{{ splunk.admin_user }} 'password={{ splunk.password }}'"
+    command: "{{ splunk.exec }} cmd splunkd rest --noauth POST /services/admin/users/{{ splunk.admin_user }} 'password={{ splunk.password }}'"
     register: declarative_pw
     changed_when: False
     become: yes
     become_user: "{{ splunk.user }}"
     no_log: "{{ hide_password }}"
-  
+
   - include_tasks: trigger_restart.yml
