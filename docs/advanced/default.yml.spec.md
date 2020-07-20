@@ -505,6 +505,35 @@ splunk:
     * Identifies the port for the Spark master web UI.
     * Default: 8080
 
+  dsp:
+    enable: <bool>
+    * Enable Data Stream Procesor forwarding (DSP)
+    * Default: false
+
+    server: <str>
+    * DSP forwarding service endpoint
+    * Default: forwarders.scp.splunk.com:9997
+
+    cert: <str>
+    * Filepath to DSP forwarding client certificate - if set to 'auto', a new cert will be generated
+    * Default: null
+
+    verify: <bool>
+    * Enable server verification when forwarding
+    * Default: false
+
+    pipeline_name: <str>
+    * When configuring a new/existing DSP pipeline, the name of the pipeline
+    * Default: null
+
+    pipeline_desc: <str>
+    * When configuring a new/existing DSP pipeline, the description of the pipeline
+    * Default: null
+
+    pipeline_spec: <str>
+    * When configuring a new/existing DSP pipeline, the specification of the pipeline in SPL2 syntax
+    * Default: null
+
   smartstore: <dict>
   * Nested dict obj to enable automatic SmartStore provisioning
   * Default: null
