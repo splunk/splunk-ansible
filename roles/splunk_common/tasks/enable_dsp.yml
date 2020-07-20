@@ -55,7 +55,7 @@
 - name: Configure forwarding service
   become: yes
   become_user: "{{ splunk.user }}"
-  command: "scloud forwarders add-certificate --pem $(cat {{ splunk.home }}/etc/auth/dsp-fwd.pem)"
+  command: "scloud forwarders add-certificate --pem '$(cat {{ splunk.home }}/etc/auth/dsp-fwd.pem)''"
 
 - name: Configure DSP output
   ini_file:
