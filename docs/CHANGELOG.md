@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [8.0.5](#805)
 * [8.0.4.1](#8041)
 * [8.0.4](#804)
 * [8.0.3](#803)
@@ -30,6 +31,19 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.0.5
+
+#### What's New?
+* Support for Splunk Enterprise Security (ES)
+* Added a role for the Distributed Monitoring Console (DMC)
+* Support for forwarding from the Splunk Data Stream Processor (DSP)
+
+#### Changes
+* `splunk.license_master_url` now allows scheme and port to be set along with the protocol
+* Updates to tests and documentation
 
 ---
 
