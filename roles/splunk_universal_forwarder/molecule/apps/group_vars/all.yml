@@ -1,0 +1,10 @@
+---
+splunk:
+  role: splunk_universal_forwarder
+  build_location: https://download.splunk.com/products/universalforwarder/releases/8.0.4.1/linux/splunkforwarder-8.0.4.1-ab7a85abaa98-Linux-x86_64.tgz
+  apps_location:
+    - http://nginx/splunk_app_simple.tgz
+    - /tmp/splunk_app_httpexample.tgz
+  hec:
+    token: abcd1234
+  password: helloworld

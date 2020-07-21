@@ -136,7 +136,7 @@ docker: <bool>
 
 splunk:
   role: <str>
-  * Role to assume when setting up Splunk
+  * Role to assume when setting up Splunk. Accepted values include: splunk_standalone, splunk_search_head, splunk_search_head_captain, splunk_indexer, splunk_deployer, splunk_cluster_master, splunk_deployment_server, splunk_heavy_forwarder, splunk_license_master, splunk_universal_forwarder, and splunk_monitor.
   * Default: splunk_standalone
 
   allow_upgrade:
@@ -504,6 +504,35 @@ splunk:
     spark_master_webui_port: <int>
     * Identifies the port for the Spark master web UI.
     * Default: 8080
+
+  dsp:
+    enable: <bool>
+    * Enable Data Stream Procesor forwarding (DSP)
+    * Default: false
+
+    server: <str>
+    * DSP forwarding service endpoint
+    * Default: forwarders.scp.splunk.com:9997
+
+    cert: <str>
+    * Filepath to DSP forwarding client certificate - if set to 'auto', a new cert will be generated
+    * Default: null
+
+    verify: <bool>
+    * Enable server verification when forwarding
+    * Default: false
+
+    pipeline_name: <str>
+    * When configuring a new/existing DSP pipeline, the name of the pipeline
+    * Default: null
+
+    pipeline_desc: <str>
+    * When configuring a new/existing DSP pipeline, the description of the pipeline
+    * Default: null
+
+    pipeline_spec: <str>
+    * When configuring a new/existing DSP pipeline, the specification of the pipeline in SPL2 syntax
+    * Default: null
 
   smartstore: <dict>
   * Nested dict obj to enable automatic SmartStore provisioning

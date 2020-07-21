@@ -1,0 +1,55 @@
+---
+- include_tasks: ../../../roles/splunk_monitor/tasks/initialize_standalone_search_head.yml
+
+- name: Flush restart handlers
+  meta: flush_handlers
+
+- name: Fetch server info
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/server/info/server-info?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200
+    timeout: 10
+    return_content: yes
+  register: server_info
+  no_log: "{{ hide_password }}"
+
+- name: Fetch distributed peers
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200
+    timeout: 10
+    return_content: yes
+  register: distributed_info
+  no_log: "{{ hide_password }}"
+  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+
+- name: Create search strings
+  set_fact:
+    index_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'indexer') | map(attribute='name') | list | join('&member=') }}"
+    search_head_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'regex', '(?:shc_member|search_head|shc_captain)') | map(attribute='name') | list | join('&member=') }}"
+    cluster_master_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'cluster_master') | map(attribute='name') | list | join('&member=') }}"
+    deployment_server_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'deployment_server') | map(attribute='name') | list | join('&member=') }}"
+    license_master_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'license_master') | map(attribute='name') | list | join('&member=') }}"
+    configured_peers: "{% if splunk.role == 'splunk_search_head' and splunk.role == 'splunk_cluster_master' %}distributed_info['json']['entry'] | map(attribute='name') | list | join(','){% else %}{% endif %}"
+
+- name: Add DMC server roles to search strings
+  set_fact:
+    index_string: "{% if 'indexer' in server_info['json']['entry'][0]['content']['server_roles'] and index_string | length > 0 %}localhost:localhost&member={{ index_string }}{% elif 'indexer' in server_info['json']['entry'][0]['content']['server_roles'] and index_string | length == 0 %}localhost:localhost{% else %}{{ index_string }}{% endif %}"
+    search_head_string: "{% if server_info['json']['entry'][0]['content']['server_roles'] | select('regex', '(?:shc_member|search_head|shc_captain)') | list | length > 0 and search_head_string | length > 0 %}localhost:localhost&member={{ search_head_string }}{% elif server_info['json']['entry'][0]['content']['server_roles'] | select('regex', '(?:shc_member|search_head|shc_captain)') | list | length > 0 and search_head_string | length == 0 %}localhost:localhost{% else %}{{ search_head_string }}{% endif %}"
+    cluster_master_string: "{% if 'cluster_master' in server_info['json']['entry'][0]['content']['server_roles'] and cluster_master_string | length > 0 %}localhost:localhost&member={{ cluster_master_string }}{% elif 'cluster_master' in server_info['json']['entry'][0]['content']['server_roles'] and cluster_master_string | length == 0 %}localhost:localhost{% else %}{{ cluster_master_string }}{% endif %}"
+    deployment_server_string: "{% if 'deployment_server' in server_info['json']['entry'][0]['content']['server_roles'] and deployment_server_string | length > 0 %}localhost:localhost&member={{ deployment_server_string }}{% elif 'deployment_server' in server_info['json']['entry'][0]['content']['server_roles'] and deployment_server_string | length == 0 %}localhost:localhost{% else %}{{ deployment_server_string }}{% endif %}"
+    license_master_string: "{% if 'license_master' in server_info['json']['entry'][0]['content']['server_roles'] and license_master_string | length > 0 %}localhost:localhost&member={{ license_master_string }}{% elif 'license_master' in server_info['json']['entry'][0]['content']['server_roles'] and license_master_string | length == 0 %}localhost:localhost{% else %}{{ license_master_string }}{% endif %}"
+
+- include_tasks: ../../../roles/splunk_monitor/tasks/post_calls.yml
+
+- include_tasks: ../../../roles/splunk_monitor/tasks/initialize_dmc.yml

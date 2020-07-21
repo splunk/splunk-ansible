@@ -1,0 +1,5 @@
+---
+- name: Converge
+  hosts: splunk
+  roles:
+    - role: splunk_standalone

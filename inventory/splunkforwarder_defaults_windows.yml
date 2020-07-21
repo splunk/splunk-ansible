@@ -51,7 +51,15 @@ splunk:
         ssl: False
         cert:
         password:
-        ca: 
+        ca:
+    dsp:
+        enable: False
+        server: forwarders.scp.splunk.com:9997
+        cert:
+        verify: False
+        pipeline_name:
+        pipeline_desc:
+        pipeline_spec:
     appserver:
         port: 8065
     kvstore:
@@ -102,3 +110,6 @@ splunk:
         idxc: !!python/object/apply:os.path.join [*home, "etc", "master-apps"]
         deployment: !!python/object/apply:os.path.join [*home, "etc", "deployment-apps"]
         httpinput: !!python/object/apply:os.path.join [*home, "etc", "apps", "splunk_httpinput"]
+
+    es:
+      ssl_enablement: "auto"

@@ -363,11 +363,89 @@ def test_getHEC(default_yml, os_env, result):
             environ.getHEC(vars_scope)
     assert vars_scope["splunk"]["hec"] == result
 
+@pytest.mark.parametrize(("default_yml", "os_env", "result"),
+            [
+                # Check null parameters
+                ({}, {}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                # Check default.yml parameters
+                ({"enable": True}, {}, {"enable": True, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"server": "fwd.dsp.com:8888"}, {}, {"enable": False, "server": "fwd.dsp.com:8888", "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"cert": "path/to/cert.pem"}, {}, {"enable": False, "server": None, "cert": "path/to/cert.pem", "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"verify": True}, {}, {"enable": False, "server": None, "cert": None, "verify": True, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"pipeline_name": "abcd"}, {}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": "abcd", "pipeline_desc": None, "pipeline_spec": None}),
+                ({"pipeline_desc": "abcd"}, {}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": "abcd", "pipeline_spec": None}),
+                ({"pipeline_spec": "abcd"}, {}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": "abcd"}),
+                # Check env var parameters
+                ({}, {"SPLUNK_DSP_SERVER": "fwd.dsp.com:9999"}, {"enable": False, "server": "fwd.dsp.com:9999", "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_CERT": "crt.pem"}, {"enable": False, "server": None, "cert": "crt.pem", "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_VERIFY": "yes"}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_VERIFY": "true"}, {"enable": False, "server": None, "cert": None, "verify": True, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_VERIFY": "TRUE"}, {"enable": False, "server": None, "cert": None, "verify": True, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_ENABLE": "yes"}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_ENABLE": "true"}, {"enable": True, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_ENABLE": "TRUE"}, {"enable": True, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_PIPELINE_NAME": "do"}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": "do", "pipeline_desc": None, "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_PIPELINE_DESC": "re"}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": "re", "pipeline_spec": None}),
+                ({}, {"SPLUNK_DSP_PIPELINE_SPEC": "mi"}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": "mi"}),
+                # Check both
+                ({"enable": True}, {"SPLUNK_DSP_ENABLE": "false"}, {"enable": True, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"enable": False}, {"SPLUNK_DSP_ENABLE": "true"}, {"enable": True, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"server": "fwd.dsp.com:8888"}, {"SPLUNK_DSP_SERVER": "fwd.dsp.com:9999"}, {"enable": False, "server": "fwd.dsp.com:9999", "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"cert": "path1/crt.pem"}, {"SPLUNK_DSP_CERT": "path2/cert.pem"}, {"enable": False, "server": None, "cert": "path2/cert.pem", "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"verify": True}, {"SPLUNK_DSP_VERIFY": "false"}, {"enable": False, "server": None, "cert": None, "verify": True, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"verify": False}, {"SPLUNK_DSP_VERIFY": "TRUE"}, {"enable": False, "server": None, "cert": None, "verify": True, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
+                ({"pipeline_name": "abcd"}, {"SPLUNK_DSP_PIPELINE_NAME": "xyz"}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": "xyz", "pipeline_desc": None, "pipeline_spec": None}),
+                ({"pipeline_desc": "abcd"}, {"SPLUNK_DSP_PIPELINE_DESC": "xyz"}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": "xyz", "pipeline_spec": None}),
+                ({"pipeline_spec": "abcd"}, {"SPLUNK_DSP_PIPELINE_SPEC": "xyz"}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": "xyz"}),
+            ]
+        )
+def test_getDSP(default_yml, os_env, result):
+    vars_scope = {"splunk": {}}
+    vars_scope["splunk"] = {
+        "dsp": {
+            "enable": False,
+            "server": None,
+            "cert": None,
+            "verify": False,
+            "pipeline_name": None,
+            "pipeline_desc": None,
+            "pipeline_spec": None,
+        }
+    }
+    vars_scope["splunk"]["dsp"].update(default_yml)
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getDSP(vars_scope)
+    assert vars_scope["splunk"]["dsp"] == result
+
+@pytest.mark.parametrize(("es_enablement", "os_env", "result"),
+            [
+                (None, {}, ""),
+                (None, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl_enablement strict"),
+                ({"ssl_enablement":"auto"}, {}, "--ssl_enablement auto"),
+                ({"ssl_enablement":"strict"}, {}, "--ssl_enablement strict"),
+                ({"ssl_enablement":"ignore"}, {}, "--ssl_enablement ignore"),
+                ({"ssl_enablement":"ignore"}, {"SPLUNK_ES_SSL_ENABLEMENT":"strict"}, "--ssl_enablement strict"),
+                ({"ssl_enablement":"invalid"}, {}, "Exception")
+            ]
+        )
+def test_getESSplunkVariables(es_enablement, os_env, result):
+    vars_scope = {"splunk": {}}
+    if es_enablement is not None:
+        vars_scope["splunk"]["es"] = es_enablement
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            try:
+                environ.getESSplunkVariables(vars_scope)
+                assert vars_scope["es_ssl_enablement"] == result
+            except Exception:
+                assert result == "Exception"
+
 @pytest.mark.parametrize(("os_env", "license_master_url", "deployer_url", "cluster_master_url", "search_head_captain_url"),
                          [
                             ({}, "", "", "", ""),
                             # Check individual environment variables
-                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, "something", "", "", ""),
+                            ({"SPLUNK_LICENSE_MASTER_URL": "something"}, "https://something:8089", "", "", ""),
                             ({"SPLUNK_DEPLOYER_URL": "something"}, "", "something", "", ""),
                             ({"SPLUNK_CLUSTER_MASTER_URL": "something"}, "", "", "something", ""),
                             ({"SPLUNK_SEARCH_HEAD_CAPTAIN_URL": "something"}, "", "", "", "something"),
@@ -617,11 +695,11 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
                 ({"splunk": {"set_search_peers": False}}, {}, "splunk.set_search_peers", False),
                 ({}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
                 ({"splunk": {"set_search_peers": True}}, {"SPLUNK_SET_SEARCH_PEERS": "False"}, "splunk.set_search_peers", False),
-                # Check splunk.appserver.port	
-                ({"splunk": {"appserver": {"port": "9291"}}}, {}, "splunk.appserver.port", "9291"),	
-                ({}, {"SPLUNK_APPSERVER_PORT": "9391"}, "splunk.appserver.port", "9391"),	
-                # Check splunk.kvstore.port	
-                ({"splunk": {"kvstore" :{"port": "9165"}}}, {}, "splunk.kvstore.port", "9165"),	
+                # Check splunk.appserver.port
+                ({"splunk": {"appserver": {"port": "9291"}}}, {}, "splunk.appserver.port", "9291"),
+                ({}, {"SPLUNK_APPSERVER_PORT": "9391"}, "splunk.appserver.port", "9391"),
+                # Check splunk.kvstore.port
+                ({"splunk": {"kvstore" :{"port": "9165"}}}, {}, "splunk.kvstore.port", "9165"),
                 ({}, {"SPLUNK_KVSTORE_PORT": "9265"}, "splunk.kvstore.port", "9265"),
                 # Check splunk.connection_timeout
                 ({"splunk": {"connection_timeout": 60}}, {}, "splunk.connection_timeout", 60),
@@ -640,7 +718,7 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "svc_port": 8089,
                                 "s2s": {"port": 9997},
                                 "appserver": {"port": 8065},
-                                "kvstore": {"port": 8191},  
+                                "kvstore": {"port": 8191},
                                 "hec_token": "abcd1234",
                                 "enable_service": False,
                                 "service_name": "Splunkd",
@@ -740,6 +818,30 @@ def test_getUFSplunkVariables(os_env, deployment_server, add, before_start_cmd, 
 def test_getRandomString():
     word = environ.getRandomString()
     assert len(word) == 6
+
+
+@pytest.mark.parametrize(("url", "vars_scope", "output"),
+            [
+                ("licmaster", {"splunk": {}}, "https://licmaster:8089"),
+                ("http://licmaster", {"splunk": {}}, "http://licmaster:8089"),
+                ("licmaster:8081", {"splunk": {}}, "https://licmaster:8081"),
+                ("http://licmaster:80", {"splunk": {}}, "http://licmaster:80"),
+                ("ftp://licmaster.corp.net:3333", {"splunk": {}}, "ftp://licmaster.corp.net:3333"),
+                ("username:password@lm.internal.net", {"splunk": {}}, "https://lm.internal.net:8089"),
+                ("http://username:password@lm.internal.net:3333", {"splunk": {}}, "http://lm.internal.net:3333"),
+                # Check null input
+                ("", {"splunk": {}}, ""),
+                (None, {"splunk": {}}, ""),
+                # Check vars_scope overrides
+                ("licmaster", {"cert_prefix": "http", "splunk": {"svc_port": 18089}}, "http://licmaster:18089"),
+                ("https://licmaster", {"cert_prefix": "http", "splunk": {"svc_port": 18089}}, "https://licmaster:18089"),
+                ("licmaster:28089", {"cert_prefix": "http", "splunk": {"svc_port": 18089}}, "http://licmaster:28089"),
+                ("https://licmaster:38089", {"cert_prefix": "http", "splunk": {"svc_port": 18089}}, "https://licmaster:38089"),
+            ]
+        )
+def test_parseUrl(url, vars_scope, output):
+    result = environ.parseUrl(url, vars_scope)
+    assert result == output
 
 @pytest.mark.skip(reason="TODO")
 def test_merge_dict():
@@ -877,7 +979,7 @@ def test_loadDefaults(mock_base, mock_baked, mock_env, mock_host, merge_call_cou
 def test_loadBaseDefaults(os_env, filename):
     sample_yml = """
 this: file
-is: 
+is:
     a: yaml
 """
     mo = mock_open(read_data=sample_yml)
