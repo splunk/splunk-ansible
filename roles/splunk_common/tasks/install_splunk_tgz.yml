@@ -5,6 +5,7 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     headers: '{% if splunk.build_url_bearer_token %}{"Authorization": "Bearer {{ splunk.build_url_bearer_token }}"}{% else %}{}{% endif %}'
+    validate_certs: no
   when: splunk.build_location is match("^(https?)://.*")
   register: download_result
   become: yes

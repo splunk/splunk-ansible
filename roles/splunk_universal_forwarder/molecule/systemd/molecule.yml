@@ -41,7 +41,7 @@ provisioner:
     ANSIBLE_HASH_BEHAVIOUR: merge
   inventory:
     links:
-      hosts: ../hosts.yml
+      hosts: ../../../../tests/fixtures/molecule-uf-hosts.yml
       group_vars: ./group_vars/
       host_vars: ./host_vars/
 verifier:
