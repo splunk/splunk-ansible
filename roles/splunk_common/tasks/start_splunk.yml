@@ -6,8 +6,6 @@
 
 - name: "Start Splunk"
   when: splunk_status.rc != 0
-  become: yes
-  become_user: "{{ splunk.user }}"
   block:
   - name: Cleanup Splunk runtime files
     file:
@@ -16,6 +14,8 @@
     with_items:
       - "{{ splunk.home }}/var/run/splunk/splunkd.pid"
       - "{{ splunk.home }}/var/lib/splunk/kvstore/mongo/mongod.lock"
+    become: yes
+    become_user: "{{ splunk.user }}"
 
   - name: "Restrict permissions on splunk.key"
     include_tasks: restrict_permissions.yml
@@ -29,11 +29,14 @@
     register: start_splunk
     changed_when: start_splunk.rc == 0 and 'already running' not in start_splunk.stdout
     when: not splunk.enable_service
+    become: yes
+    become_user: "{{ splunk.user }}"
 
   - name: "Start Splunk via service"
     service:
       name: "{{ splunk_service_name }}"
       state: started
+    become: yes
     become_user: "{{ privileged_user }}"
     when:
       - splunk.enable_service
