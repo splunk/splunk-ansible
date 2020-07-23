@@ -1,10 +1,8 @@
 ---
 - name: "Test basic https endpoint"
   uri:
-    url: "https://127.0.0.1:{{ splunk.svc_port }}/services/properties"
+    url: "https://127.0.0.1:{{ splunk.svc_port }}"
     method: GET
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
     validate_certs: false
     status_code: 200,404
     timeout: 10
