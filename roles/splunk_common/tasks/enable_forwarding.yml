@@ -54,15 +54,6 @@
   no_log: "{{ hide_password }}"
   register: default_tcpout_group
 
-# set up forward servers set by get_facts
-- name: Add forward_servers
-  include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
-  vars:
-    forward_servers: "{{ splunk_forward_servers }}"
-  when:
-    - not splunk_indexer_cluster | bool
-    - splunk_forward_servers is defined
-
 # NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node
   ini_file:
@@ -76,6 +67,15 @@
     - {key: "index", value: "false"}
   no_log: "{{ hide_password }}"
   register: index_disabling
+
+# set up forward servers set by get_facts
+- name: Add forward_servers
+  include_tasks: ../../../roles/splunk_common/tasks/add_forward_server.yml
+  vars:
+    forward_servers: "{{ splunk_forward_servers }}"
+  when:
+    - not splunk_indexer_cluster | bool
+    - splunk_forward_servers is defined
 
 - name: "Get Splunk status"
   command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"

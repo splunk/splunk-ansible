@@ -1,6 +1,18 @@
 ---
+- name: Get ESS version
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local/SplunkEnterpriseSecuritySuite?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200
+    timeout: 10
+  register: ess_info
+  no_log: "{{ hide_password }}"
+
 - name: Run ESS post-install setup
-  command: "{{ splunk.exec }} search '| essinstall' -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  command: "{{ splunk.exec }} search '| essinstall {% if ess_info.json.entry[0].content.version is version('6.3', '>=') %}{{ es_ssl_enablement }}{% endif %}' -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   no_log: "{{ hide_password }}"
   become: yes
   become_user: "{{ splunk.user }}"

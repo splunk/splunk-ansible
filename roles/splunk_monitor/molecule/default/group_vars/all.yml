@@ -1,0 +1,7 @@
+---
+splunk:
+  role: splunk_monitor
+  build_location: https://download.splunk.com/products/splunk/releases/8.0.3/linux/splunk-8.0.3-a6754d8441bf-Linux-x86_64.tgz
+  hec:
+    token: abcd1234
+  password: helloworld

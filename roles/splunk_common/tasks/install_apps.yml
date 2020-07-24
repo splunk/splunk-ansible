@@ -20,72 +20,74 @@
     - splunkbase_token != None
   no_log: "{{ hide_password }}"
 
-- name: Check app source
-  stat:
-    path: "{{ app_url }}"
-  register: app_source
-
-- name: Move generic app
-  command: "cp {{ app_url }} /tmp/app.spl"
-  when: app_source.stat.exists
-
-- name: Download generic app
-  get_url:
-    url: "{{ app_url }}"
-    dest: /tmp/app.spl
-    mode: 0777
-    timeout: 120
-    validate_certs: no
-    force: yes
-  when:
-    - "'splunkbase.splunk.com' not in app_url"
-    - app_url is match("^(https?|file)://.*")
-
-# Some premium apps require installation via untar command, while others can be installed normally.
-# We'll need to verify the contents of the package to see if it's a premium app
-
-- name: Check app contents
-  shell: "set -o pipefail && tar --exclude='*/*/*' --exclude='*.*' -tf /tmp/app.spl | awk -F'/' '{ print$1 }' | uniq"
-  args:
-    executable: /bin/bash
-  register: app_contents
+- name: Install generic app
   when: "'splunkbase.splunk.com' not in app_url"
+  block:
+  - name: Check local app
+    stat:
+      path: "{{ app_url }}"
+    register: app_local
 
-- name: Install app via extraction
-  unarchive:
-    src: "{% if 'http' in app_url %}/tmp/app.spl{% else %}{{ app_url }}{% endif %}"
-    dest: "{{ splunk.app_paths.default }}"
-    remote_src: true
-  become: yes
-  become_user: "{{ splunk.user }}"
-  no_log: "{{ hide_password }}"
-  when:
-    - "'splunkbase.splunk.com' not in app_url"
-    - "'itsi' in app_contents.stdout_lines"
-  notify:
-    - Restart the splunkd service
+  - name: Download remote app
+    get_url:
+      url: "{{ app_url }}"
+      dest: /tmp/
+      mode: 0777
+      timeout: 120
+      validate_certs: no
+      force: yes
+    register: app_remote
+    when:
+      - app_url is match("^(https?|file)://.*")
 
-- name: Install app via REST
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
-    method: POST
-    user: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    validate_certs: false
-    body:
-      name: "/tmp/app.spl"
-      update: "true"
-      filename: "true"
-    body_format: "form-urlencoded"
-    status_code: [ 200, 201 ]
-    timeout: 90
-  when:
-    - "'splunkbase.splunk.com' not in app_url"
-    - "'itsi' not in app_contents.stdout_lines"
-  no_log: "{{ hide_password }}"
+  - name: Infer app filepath
+    set_fact:
+      app_filepath: "{% if app_url | regex_search('^(https?|file)://.*') %}{{ app_remote.dest }}{% else %}{{ app_local.stat.path }}{% endif %}"
 
-- name: Remove downloaded app
-  file:
-    dest: /tmp/app.spl
-    state: absent
-  ignore_errors: true
+  # ITSI require installation via extraction - others can be installed normally.
+  # Verify the contents of the package and check for ITSI
+  - name: Check app contents
+    shell: "set -o pipefail && tar --exclude='*/*/*' --exclude='*.*' -tf {{ app_filepath }} | awk -F'/' '{ print$1 }' | uniq"
+    args:
+      executable: /bin/bash
+    register: app_contents
+    changed_when: false
+    when: "'splunkbase.splunk.com' not in app_url"
+
+  - name: Install app via extraction
+    unarchive:
+      src: "{{ app_filepath }}"
+      dest: "{{ splunk.app_paths.default }}"
+      remote_src: true
+    become: yes
+    become_user: "{{ splunk.user }}"
+    no_log: "{{ hide_password }}"
+    when:
+      - "'itsi' in app_contents.stdout_lines"
+      - app_remote is changed or app_local.stat.exists
+    notify:
+      - Restart the splunkd service
+
+  - name: Install app via REST
+    uri:
+      url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
+      method: POST
+      user: "{{ splunk.admin_user }}"
+      password: "{{ splunk.password }}"
+      validate_certs: false
+      body:
+        name: "{{ app_filepath }}"
+        update: "true"
+        filename: "true"
+      body_format: "form-urlencoded"
+      status_code: [ 200, 201 ]
+      timeout: 90
+    register: post_apps_local
+    until: post_apps_local is succeeded
+    retries: 5
+    delay: "{{ retry_delay }}"
+    changed_when: post_apps_local.status == 201
+    when:
+      - "'itsi' not in app_contents.stdout_lines"
+      - app_remote is changed or app_local.stat.exists
+    no_log: "{{ hide_password }}"

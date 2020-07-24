@@ -4,122 +4,39 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: instance
-    image: splunk/splunk
-    command: no-provision
-    env:
-      http_proxy: "${http_proxy}"
-      https_proxy: "${https_proxy}"
-      no_proxy: "${no_proxy}"
+  - name: splunk-standalone-centos8
+    image: geerlingguy/docker-centos8-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+  - name: splunk-standalone-debian10
+    image: geerlingguy/docker-debian10-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+  - name: splunk-standalone-debian9
+    image: geerlingguy/docker-debian9-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+  - name: splunk-standalone-redhat8
+    image: geerlingguy/docker-ubi8-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
 provisioner:
   name: ansible
+  env:
+    ANSIBLE_HASH_BEHAVIOUR: merge
   inventory:
-    hosts:
-      all:
-        vars:
-          ansible_connection: local
-          ansible_environment: {}
-          ansible_post_tasks: null
-          ansible_pre_tasks: null
-          cert_prefix: https
-          dmc_asset_interval: 3,18,33,48 * * * *
-          dmc_forwarder_monitoring: false
-          docker: true
-          hide_password: false
-          java_download_url: null
-          java_update_version: null
-          java_version: null
-          retry_delay: 6
-          retry_num: 60
-          shc_sync_retry_num: 60
-          splunk:
-            role: splunk_indexer
-            license_uri: null
-            preferred_captaincy: true
-            build_location: https://download.splunk.com/products/splunk/releases/8.0.3/linux/splunk-8.0.3-a6754d8441bf-Linux-x86_64.tgz
-            ignore_license: true
-            apps_location: null
-            admin_user: admin
-            allow_upgrade: true
-            app_paths:
-              default: /opt/splunk/etc/apps
-              deployment: /opt/splunk/etc/deployment-apps
-              httpinput: /opt/splunk/etc/apps/splunk_httpinput
-              idxc: /opt/splunk/etc/master-apps
-              shc: /opt/splunk/etc/shcluster/apps
-            asan: false
-            build_url_bearer_token: null
-            cluster_master_url: null
-            deployer_url: null
-            dfs:
-              dfc_num_slots: 4
-              dfw_num_slots: 10
-              dfw_num_slots_enabled: false
-              enable: false
-              port: 9000
-              spark_master_host: 127.0.0.1
-              spark_master_webui_port: 8080
-            enable_service: false
-            exec: /opt/splunk/bin/splunk
-            group: splunk
-            hec:
-              cert: null
-              enable: true
-              password: null
-              port: 8088
-              ssl: true
-              token: c0c00823-a51d-4672-a48c-1b87dfcd11db
-            home: /opt/splunk
-            http_enableSSL: false
-            http_enableSSL_cert: null
-            http_enableSSL_privKey: null
-            http_enableSSL_privKey_password: null
-            http_port: 8000
-            idxc:
-              label: idxc_label
-              pass4SymmKey: Bh/lsn+CsqvmkXBhE9GtoXOWYNVbpTUV
-              replication_factor: 3
-              replication_port: 9887
-              search_factor: 3
-              secret: Bh/lsn+CsqvmkXBhE9GtoXOWYNVbpTUV
-            launch: {}
-            license_download_dest: /tmp/splunk.lic
-            license_master_url: null
-            multisite_master_port: 8089
-            multisite_replication_factor_origin: 2
-            multisite_replication_factor_total: 3
-            multisite_search_factor_origin: 1
-            multisite_search_factor_total: 3
-            opt: /opt
-            pass4SymmKey: null
-            password: helloworld
-            pid: /opt/splunk/var/run/splunk/splunkd.pid
-            root_endpoint: null
-            s2s:
-              ca: null
-              cert: null
-              enable: true
-              password: null
-              port: 9997
-              ssl: false
-            search_head_captain_url: null
-            secret: null
-            service_name: null
-            set_search_peers: true
-            shc:
-              label: shc_label
-              pass4SymmKey: g7DcnxHIA60dj86HWrh38VdaFYdXESw2
-              replication_factor: 3
-              replication_port: 9887
-              secret: g7DcnxHIA60dj86HWrh38VdaFYdXESw2
-            smartstore: null
-            svc_port: 8089
-            tar_dir: splunk
-            user: splunk
-            wildcard_license: false
-          splunk_home_ownership_enforcement: true
-          wait_for_splunk_retry_num: 60
+    links:
+      hosts: ../../../../tests/fixtures/molecule-splunk-hosts.yml
+      group_vars: ./group_vars/
 verifier:
   name: testinfra
   options:
-    junit-xml: ../../../../tests/results/indexer-default-results.xml
+    junit-xml: ../../../../tests/results/standalone-default-results.xml

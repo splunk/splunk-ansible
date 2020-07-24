@@ -1,0 +1,42 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: splunk-monitor-centos8
+    image: geerlingguy/docker-centos8-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+  - name: splunk-monitor-debian10
+    image: geerlingguy/docker-debian10-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+  - name: splunk-monitor-debian9
+    image: geerlingguy/docker-debian9-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+  - name: splunk-monitor-redhat8
+    image: geerlingguy/docker-ubi8-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_HASH_BEHAVIOUR: merge
+  inventory:
+    links:
+      hosts: ../../../../tests/fixtures/molecule-splunk-hosts.yml
+      group_vars: ./group_vars/
+verifier:
+  name: testinfra
+  options:
+    junit-xml: ../../../../tests/results/monitor-default-results.xml

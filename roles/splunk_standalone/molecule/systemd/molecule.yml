@@ -27,7 +27,7 @@ provisioner:
     ANSIBLE_HASH_BEHAVIOUR: merge
   inventory:
     links:
-      hosts: ../hosts.yml
+      hosts: ../../../../tests/fixtures/molecule-splunk-hosts.yml
       group_vars: ./group_vars/
 verifier:
   name: testinfra

@@ -1,0 +1,45 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: splunk-uf-debian10
+    image: geerlingguy/docker-debian10-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+    groups: [ splunk ]
+    networks:
+      - name: molecule
+  - name: splunk-uf-redhat8
+    image: geerlingguy/docker-ubi8-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+    groups: [ splunk ]
+    networks:
+      - name: molecule
+  - name: nginx
+    image: nginx
+    groups: [ nginx-apps-server ]
+    command: nginx -g "daemon off;"
+    exposed_ports:
+      - 80/tcp
+    networks:
+      - name: molecule
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_HASH_BEHAVIOUR: merge
+  inventory:
+    links:
+      hosts: ../../../../tests/fixtures/molecule-uf-hosts.yml
+      group_vars: ./group_vars/
+verifier:
+  name: testinfra
+  options:
+    hosts: splunk*
+    junit-xml: ../../../../tests/results/uf-apps-results.xml

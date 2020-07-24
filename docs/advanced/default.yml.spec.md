@@ -136,7 +136,7 @@ docker: <bool>
 
 splunk:
   role: <str>
-  * Role to assume when setting up Splunk
+  * Role to assume when setting up Splunk. Accepted values include: splunk_standalone, splunk_search_head, splunk_search_head_captain, splunk_indexer, splunk_deployer, splunk_cluster_master, splunk_deployment_server, splunk_heavy_forwarder, splunk_license_master, splunk_universal_forwarder, and splunk_monitor.
   * Default: splunk_standalone
 
   allow_upgrade:
@@ -158,6 +158,16 @@ splunk:
   cluster_master_url: <str>
   * Hostname of Splunk Enterprise cluster master instance. May be overridden using SPLUNK_CLUSTER_MASTER_URL environment variable.
   * Default: null
+
+  auxiliary_cluster_masters: <list>
+  * Array of other cluster masters to support multi-cluster distributed search. The node must be a search head configured to peer an initial cluster master before the masters listed here are added. For more information, see https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremulti-clustersearch. 
+  * Default: []
+  * Example:
+  *   auxiliary_cluster_masters:
+  *   - url: https://master.us-west.corp.net:8089
+  *     pass4SymmKey: thisisasecret
+  *   - url: https://master.us-east.corp.net:8089
+  *     pass4SymmKey: thisisanothersecret
   
   deployer_url: null
   * Hostname of Splunk Enterprise deployer instance. May be overridden using SPLUNK_DEPLOYER_URL environment variable.
@@ -353,6 +363,10 @@ splunk:
   * Feature-flag to enable special configurations when using debug, address-sanitized builds. This is not used externally and not recommended to change.
   * Default: false
 
+  connection_timeout: <int>
+  * Change timeout value (in seconds) for the setting `splunkdConnectionTimeout` in web.conf. This triggers a change only when the value is non-zero.
+  * Default: 0
+
   secret: <str>
   * Secret passcode used to encrypt all of Splunk's sensitive information on disk. When not set, Splunk will autogenerate a unique secret local to each installation. This is NOT required for any standalone or distributed Splunk topology
   * NOTE: This may be set once at the start of provisioning any deployment. Any changes made to this splunk.secret after the deployment has been created must be resolved manually, otherwise there is a severe risk of bricking the capabilities of your Splunk environment.
@@ -457,6 +471,11 @@ splunk:
     * Determine the secret used to configure search head clustering. This is REQUIRED when setting up search head clustering. This is pass4SymmKey in the `[shclustering]` stanza of server.conf.
     * Default: null
 
+    deployer_push_mode: <str>
+    * Change the strategy used by the deployer when bundling apps and distributing them across the search head cluster. The acceptable modes are: full, local_only, default_only, and merge_to_default (merge_to_default is the default unless otherwise specified).
+    * For more information, please see: https://docs.splunk.com/Documentation/Splunk/latest/DistSearch/PropagateSHCconfigurationchanges#Set_the_deployer_push_mode
+    * Default: null
+
   dfs:
     enable: <bool>
     * Enable Data Fabric Search (DFS)
@@ -485,6 +504,35 @@ splunk:
     spark_master_webui_port: <int>
     * Identifies the port for the Spark master web UI.
     * Default: 8080
+
+  dsp:
+    enable: <bool>
+    * Enable Data Stream Procesor forwarding (DSP)
+    * Default: false
+
+    server: <str>
+    * DSP forwarding service endpoint
+    * Default: forwarders.scp.splunk.com:9997
+
+    cert: <str>
+    * Filepath to DSP forwarding client certificate - if set to 'auto', a new cert will be generated
+    * Default: null
+
+    verify: <bool>
+    * Enable server verification when forwarding
+    * Default: false
+
+    pipeline_name: <str>
+    * When configuring a new/existing DSP pipeline, the name of the pipeline
+    * Default: null
+
+    pipeline_desc: <str>
+    * When configuring a new/existing DSP pipeline, the description of the pipeline
+    * Default: null
+
+    pipeline_spec: <str>
+    * When configuring a new/existing DSP pipeline, the specification of the pipeline in SPL2 syntax
+    * Default: null
 
   smartstore: <dict>
   * Nested dict obj to enable automatic SmartStore provisioning
