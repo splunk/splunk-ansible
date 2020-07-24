@@ -1,0 +1,147 @@
+---
+ansible_connection: local
+ansible_environment: # added value insead of {}
+  ASAN_OPTIONS: detect_leaks=0
+ansible_post_tasks: null
+ansible_pre_tasks: null
+cert_prefix: https
+config:
+  baked: default.yml
+  defaults_dir: /tmp/defaults
+  env:
+    headers: null
+    var: SPLUNK_DEFAULTS_URL
+    verify: true
+  host:
+    headers: null
+    url: null
+    verify: true
+  max_delay: 60
+  max_retries: 3
+  max_timeout: 1200
+dmc_asset_interval: 3,18,33,48 * * * *
+dmc_forwarder_monitoring: false
+docker: true
+es_ssl_enablement: --ssl_enablement auto
+hide_password: false
+java_download_url: null
+java_update_version: null
+java_version: null
+retry_delay: 6
+retry_num: 3 # easier for testing
+shc_sync_retry_num: 60
+splunk:
+  role: splunk_standalone
+  build_location: https://releases.splunk.com/dl/manual-build_builds/8.1.0-20200721-1414/debug/splunkasan-unstripped-8.1.0-0960d117fe34-Linux-x86_64.tgz
+  build_remote_src: true
+  password: helloworld
+  admin_user: admin
+  allow_upgrade: true
+  apps_location: null #test: added this to silence "The conditional check 'splunk.apps_location' failed" error
+  app_paths:
+    default: /opt/splunk/etc/apps
+    deployment: /opt/splunk/etc/deployment-apps
+    httpinput: /opt/splunk/etc/apps/splunk_httpinput
+    idxc: /opt/splunk/etc/master-apps
+    shc: /opt/splunk/etc/shcluster/apps
+  appserver:
+    port: 8065
+  asan: true # set this on own
+  auxiliary_cluster_masters: []
+  build_url_bearer_token: null
+  cluster_master_url: null
+  connection_timeout: 0
+  deployer_url: null
+  dfs:
+    dfc_num_slots: 4
+    dfw_num_slots: 10
+    dfw_num_slots_enabled: false
+    enable: false
+    port: 9000
+    spark_master_host: 127.0.0.1
+    spark_master_webui_port: 8080
+  dsp:
+    cert: null
+    enable: false
+    pipeline_desc: null
+    pipeline_name: null
+    pipeline_spec: null
+    server: forwarders.scp.splunk.com:9997
+    verify: false
+  enable_service: false
+  es:
+    ssl_enablement: auto
+  exec: /opt/splunk/bin/splunk
+  group: splunk
+  hec:
+    cert: null
+    enable: true
+    password: null
+    port: 8088
+    ssl: true
+    token: c9c1033f-3868-4cfe-93a4-c52c52421d56
+  home: /opt/splunk
+  http_enableSSL: false
+  http_enableSSL_cert: null
+  http_enableSSL_privKey: null
+  http_enableSSL_privKey_password: null
+  http_port: 8000
+  idxc:
+    discoveryPass4SymmKey: 8wNeteNUcovSCbM7jsh1ZACK9e7lWEXZ
+    label: idxc_label
+    pass4SymmKey: 8wNeteNUcovSCbM7jsh1ZACK9e7lWEXZ
+    replication_factor: 3
+    replication_port: 9887
+    search_factor: 3
+    secret: 8wNeteNUcovSCbM7jsh1ZACK9e7lWEXZ
+  ignore_license: false
+  kvstore:
+    port: 8191
+  launch: # added values in place of {}
+    LSAN_OPTIONS: exitcode=0:report_objects=1
+    ASAN_OPTIONS: detect_leaks=1:log_path=/opt/splunk/_asanoutput/splunk:halt_on_error=false:atexit=true:print_stats=true:detect_stack_use_after_return=true:debug=true
+  license_download_dest: /tmp/splunk.lic
+  license_master_url: ''
+  multisite_master_port: 8089
+  multisite_replication_factor_origin: 2
+  multisite_replication_factor_total: 3
+  multisite_search_factor_origin: 1
+  multisite_search_factor_total: 3
+  opt: /opt
+  pass4SymmKey: null
+  password: idkA0uNylVObzzxAl1oo6ssOFn2jkCtW
+  pid: /opt/splunk/var/run/splunk/splunkd.pid
+  root_endpoint: null
+  s2s:
+    ca: null
+    cert: null
+    enable: true
+    password: null
+    port: 9997
+    ssl: false
+  search_head_captain_url: null
+  secret: null
+  service_name: null
+  set_search_peers: true
+  shc:
+    deployer_push_mode: null
+    label: shc_label
+    pass4SymmKey: R0DqTYh3vjwYZ0OCz0BVgYgKtV7tLyB7
+    replication_factor: 3
+    replication_port: 9887
+    secret: R0DqTYh3vjwYZ0OCz0BVgYgKtV7tLyB7
+  smartstore: null
+  ssl:
+    ca: null
+    cert: null
+    enable: true
+    password: null
+  svc_port: 8089
+  tar_dir: splunk
+  user: splunk
+  wildcard_license: false
+splunk_home_ownership_enforcement: true
+splunkbase_password: null
+splunkbase_token: null
+splunkbase_username: null
+wait_for_splunk_retry_num: 60

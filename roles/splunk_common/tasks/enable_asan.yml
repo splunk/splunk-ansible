@@ -6,11 +6,11 @@
     remote_src: yes
     mode: 0755
   with_items:
-    - libssp.so.0
+    # - libssp.so.0
     - libasan.so
+    # - libasan.so.2
+    # - libasan.so.2.0.0
     - libasan.so.5
-    - libasan.so.2
-    - libasan.so.2.0.0
     - libasan.so.5.0.0
   become: yes
   become_user: "{{ privileged_user }}"
