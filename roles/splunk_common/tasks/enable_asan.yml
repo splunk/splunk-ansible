@@ -1,17 +1,35 @@
 ---
-- name: Copy ASan libraries
+- name: Check version of ASan
+  stat:
+    path: "{{ splunk.home }}/lib/libasan.so.5.0.0"
+  register: result
+
+- name: Copy new ASan libraries
   copy:
     src: "{{ splunk.home }}/lib/{{ item }}"
-    dest: "/lib64/{{ item }}"
+    dest: "{{'/lib' if ansible_facts['os_family'] == 'Debian' else '/lib64'}}/{{ item }}"
     remote_src: yes
     mode: 0755
+  when: result.stat.exists == true
   with_items:
-    # - libssp.so.0
     - libasan.so
-    # - libasan.so.2
-    # - libasan.so.2.0.0
     - libasan.so.5
     - libasan.so.5.0.0
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Copy old ASan libraries
+  copy:
+    src: "{{ splunk.home }}/lib/{{ item }}"
+    dest: "{{'/lib' if ansible_facts['os_family'] == 'Debian' else '/lib64'}}/{{ item }}"
+    remote_src: yes
+    mode: 0755
+  when: result.stat.exists == false
+  with_items: 
+    - libasan.so
+    - libssp.so.0
+    - libasan.so.2
+    - libasan.so.2.0.0
   become: yes
   become_user: "{{ privileged_user }}"
 
