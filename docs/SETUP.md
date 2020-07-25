@@ -57,7 +57,7 @@ Alternatively, you can download the example `default.yml` supplied [here](advanc
 * `splunk.build_remote_src`: this wll be `true` when `splunk.build_location` above is a URL
 * `splunk.password`: default `admin` user password that Splunk will be provisioned with on first-time run
 
-3. Inspect your newly-created `default.yml` and tweak options as you see fit. For a full list of parameters, please see the [`default.yml.spec`](advanced/default.yml.spec.md#spec).
+4. Inspect your newly-created `default.yml` and tweak options as you see fit. For a full list of parameters, please see the [`default.yml.spec`](advanced/default.yml.spec.md#spec).
 
 ## Execute playbooks
 In order to get your container to run Ansible, it needs a copy of all the playbooks. 
