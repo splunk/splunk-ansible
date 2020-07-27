@@ -10,7 +10,7 @@
     dest: "{{'/lib' if ansible_facts['os_family'] == 'Debian' else '/lib64'}}/{{ item }}"
     remote_src: yes
     mode: 0755
-  when: result.stat.exists == true
+  when: result.stat.exists
   with_items:
     - libasan.so
     - libasan.so.5
@@ -24,8 +24,8 @@
     dest: "{{'/lib' if ansible_facts['os_family'] == 'Debian' else '/lib64'}}/{{ item }}"
     remote_src: yes
     mode: 0755
-  when: result.stat.exists == false
-  with_items: 
+  when: not result.stat.exists
+  with_items:
     - libasan.so
     - libssp.so.0
     - libasan.so.2
