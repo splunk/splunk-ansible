@@ -37,4 +37,4 @@
     validate_certs: false
     status_code: 201,409
   loop: "{{ cluster_label_list_of_dicts }}"
-  when: item.cluster_label | length > 0
+  when: cluster_label_list_of_dicts is defined and item.cluster_label | length > 0

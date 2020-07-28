@@ -58,6 +58,7 @@
             {%- endfor %}
         {%- endfor %}
         {{ res }}
+  when: cluster_label_dict is defined
 
 - name: Add DMC server roles to search strings
   set_fact:
