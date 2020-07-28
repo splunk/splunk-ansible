@@ -179,10 +179,12 @@ def test_getSplunkWebSSL():
                 ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}),
                 ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
                 ({"password": "helloworld", "secret": "1234"}, {}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"}),
+                ({"password": "helloworld", "secret": "1234", "disable_popups": True}, {}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234", "disable_popups": True}),
                 # Check environment variable parameters
                 ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}),
                 ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
-                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"})
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_SECRET": "1234", "SPLUNK_DISABLE_POPUPS": "True"}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234", "disable_popups": True})
             ]
         )
 def test_getSecrets(default_yml, os_env, output):
