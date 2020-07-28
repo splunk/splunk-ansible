@@ -51,7 +51,13 @@ $ docker run -it splunk/splunk:latest create-defaults > default.yml
 ```
 Alternatively, you can download the example `default.yml` supplied [here](advanced/default.yml.spec.md#sample).
 
-3. Inspect your newly-created `default.yml` and tweak options as you see fit. For a full list of parameters, please see the [`default.yml.spec`](advanced/default.yml.spec.md#spec).
+3. Define a few key variables in your `default.yml`:
+* `splunk.role`: the role this instance will play in the Splunk Enterprise deployment
+* `splunk.build_location`: URL to dynamically fetch the Splunk Enterprise build and install it at run time
+* `splunk.build_remote_src`: this wll be `true` when `splunk.build_location` above is a URL
+* `splunk.password`: default `admin` user password that Splunk will be provisioned with on first-time run
+
+4. Inspect your newly-created `default.yml` and tweak options as you see fit. For a full list of parameters, please see the [`default.yml.spec`](advanced/default.yml.spec.md#spec).
 
 ## Execute playbooks
 In order to get your container to run Ansible, it needs a copy of all the playbooks. 
