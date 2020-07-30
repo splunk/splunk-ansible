@@ -11,5 +11,4 @@
     with_items:
       - { key: "servicesNS/admin/user-prefs/data/user-prefs/general", value: "hideInstrumentationOptInModal=1&notification_python_3_impact=false&showWhatsNew=0&dismissedInstrumentationOptInVersion=4" }
       - { key: "servicesNS/nobody/splunk_instrumentation/admin/telemetry/general", value: "showOptInModal=0&optInVersionAcknowledged=4" }
-      - { key: "servicesNS/admin/search/data/ui/ui-tour", value: "name=search-tour&tourPage=search&viewed=1" }
       - { key: "servicesNS/admin/search/data/ui/ui-tour/search-tour", value: "tourPage=search&viewed=1" }

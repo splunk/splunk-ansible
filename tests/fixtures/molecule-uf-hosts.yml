@@ -41,6 +41,7 @@ all:
         port: 9000
         spark_master_host: 127.0.0.1
         spark_master_webui_port: 8080
+      disable_popups: false
       enable_service: false
       exec: /opt/splunkforwarder/bin/splunk
       group: splunk
