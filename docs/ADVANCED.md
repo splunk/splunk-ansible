@@ -47,6 +47,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_CERT_PREFIX | HTTP scheme used when making API requests to Splunk management endpoint. Default: `https` | no | no | no |
 | SPLUNK_ROOT_ENDPOINT | Allow SplunkWeb to be accessed behind a given route (ex. reverse proxy usage) | no | no | no |
 | SPLUNK_PASSWORD* | Default password of the admin user | yes | yes | yes |
+| SPLUNK_DECLARATVE_ADMIN_PASSWORD | When `true`, admin password will be fixed to the value defined through Ansible | no | no | no |
 | SPLUNK_PASS4SYMMKEY | Used to overwrite default `pass4SymmKey` for Splunk secrets | no | no | no |
 | SPLUNK_HEC_TOKEN | HEC (HTTP Event Collector) token when enabled | no | no | no |
 | SPLUNK_SHC_SECRET | Search Head Clustering shared secret (deprecated in favor of `SPLUNK_SHC_PASS4SYMMKEY`) | no | no | no |
@@ -79,6 +80,8 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_HTTP_ENABLESSL_CERT | Path to SSL certificate used for SplunkWeb, if HTTPS is enabled | no | no | no |
 | SPLUNK_HTTP_ENABLESSL_PRIVKEY | Path to SSL private key used for SplunkWeb, if HTTPS is enabled | no | no | no |
 | SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD | SSL certificate private key password used with SplunkWeb, if HTTPS is enabled | no | no | no |
+| SPLUNK_KVSTORE_PORT | Port to run Splunk KVStore. Default: `8191` | no | no | no |
+| SPLUNK_APPSERVER_PORT | Port to run Splunk appserver. Default: `8065` | no | no | no |
 | SPLUNK_SET_SEARCH_PEERS | Boolean to configure whether search heads should connect to search peers. Default: `True`. Not recommended to change | no | no | no |
 | SPLUNK_SITE | For multisite topologies, define the site of this particular Splunk Enterprise instance | no | no | no |
 | SPLUNK_ALL_SITES | For multisite topologies, define all sites of the topology | no | no | no |
@@ -96,6 +99,14 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | JAVA_VERSION | Supply `"oracle:8"`, `"openjdk:8"`, or `"openjdk:11"` to install a respective Java distribution. | no | no | no |
 | JAVA_DOWNLOAD_URL | Provide a custom URL where the Java installation will be fetched| no | no | no |
 | SPLUNK_TAIL_FILE | Determine which file gets written to the container's stdout (default: `splunkd_stderr.log`) | no | no | no |
+| SPLUNK_ES_SSL_ENABLEMENT | When running Enterprise Security version >= 6.3.0, define ssl_enablement installation option | no | no | no |
+| SPLUNK_DSP_ENABLE | Enable DSP forwarding. Default: `false` | no | no | no |
+| SPLUNK_DSP_SERVER | DSP S2S forwarding endpoint | no | no | no |
+| SPLUNK_DSP_CERT | DSP certificate used when forwarding | no | no | no |
+| SPLUNK_DSP_VERIFY | Enable cert verification when forwarding to DSP. Default: `false` | no | no | no |
+| SPLUNK_DSP_PIPELINE_NAME | Name of DSP pipeline to create/update | no | no | no |
+| SPLUNK_DSP_PIPELINE_DESC | Description of DSP pipeline to create/update | no | no | no |
+| SPLUNK_DSP_PIPELINE_SPEC | SPL2 specification of DSP pipeline to create/update | no | no | no |
 | SPLUNK_ENABLE_DFS | Enable [Data Fabric Search (DFS)](https://docs.splunk.com/Documentation/DFS/latest/DFS/Overview) | no | no | no |
 | SPLUNK_DFW_NUM_SLOTS | Maximum number of concurrent DFS searches that run on a search head cluster | no | no | no |
 | SPLUNK_DFC_NUM_SLOTS | Maximum number of concurrent DFS searches that run on each search head | no | no | no |

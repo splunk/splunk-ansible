@@ -35,6 +35,7 @@ splunk:
     admin_user: "admin"
     root_endpoint:
     password:
+    declarative_admin_password: False
     secret:
     pass4SymmKey:
     svc_port: 8089
