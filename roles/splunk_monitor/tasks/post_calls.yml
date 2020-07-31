@@ -26,3 +26,15 @@
     - "{{ dmc_group_license_master }}"
     - "{{ dmc_group_search_head }}"
     - "{{ dmc_group_shc_deployer }}"
+
+- name: Cluster Label POST Requests
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/groups"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    body: "member={{ item.name }}&default=false&name=dmc_indexerclustergroup_{{ item.cluster_label }}"
+    validate_certs: false
+    status_code: 201,409
+  loop: "{{ cluster_label_list_of_dicts }}"
+  when: cluster_label_list_of_dicts is defined and item.cluster_label | length > 0
