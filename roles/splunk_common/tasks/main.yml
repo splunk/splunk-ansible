@@ -37,8 +37,6 @@
     - "'asan' in splunk and splunk.asan | bool"
 
 - include_tasks: remove_first_login.yml
-  when:
-    - first_run | bool
 
 - include_tasks: install_java.yml
   when:
@@ -54,9 +52,7 @@
   when:
     - first_run | bool
 
-- include_tasks: set_user_seed.yml
-  when:
-    - first_run | bool
+- include_tasks: enable_admin_auth.yml
 
 - include_tasks: set_launch_conf.yml
   when:
@@ -64,8 +60,6 @@
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
-  when:
-    - first_run | bool
 
 - include_tasks: enable_s2s.yml
   when:
