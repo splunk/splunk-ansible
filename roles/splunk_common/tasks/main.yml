@@ -133,3 +133,6 @@
 - include_tasks: clean_user_seed.yml
 
 - include_tasks: add_splunk_license.yml
+
+- include_tasks: disable_popups.yml
+  when: "'disable_popups' in splunk and splunk.disable_popups | bool"

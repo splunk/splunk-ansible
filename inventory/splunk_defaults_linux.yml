@@ -111,6 +111,7 @@ splunk:
     deployer_url:
     connection_timeout: 0
     enable_service: False
+    disable_popups: False
     service_name:
     smartstore:
     app_paths:

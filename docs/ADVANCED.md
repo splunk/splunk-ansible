@@ -94,6 +94,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | NO_HEALTHCHECK | Disable the Splunk health check script | no | no | yes |
 | STEPDOWN_ANSIBLE_USER | Removes Ansible user from the sudo group when set to true. This means that no other users than root will have root access. | no | no | no |
 | SPLUNK_HOME_OWNERSHIP_ENFORCEMENT | Recursively enforces `${SPLUNK_HOME}` to be owned by the user "splunk". Default: `True` | no | no | no |
+| SPLUNK_DISABLE_POPUPS | Disable pop-ups from login on home page and search app. Default: `False` | no | no | no |
 | HIDE_PASSWORD | Hide all Ansible task logs containing Splunk password to secure output to `stdout`. | no | no | no |
 | JAVA_VERSION | Supply `"oracle:8"`, `"openjdk:8"`, or `"openjdk:11"` to install a respective Java distribution. | no | no | no |
 | JAVA_DOWNLOAD_URL | Provide a custom URL where the Java installation will be fetched| no | no | no |

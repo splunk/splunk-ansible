@@ -182,6 +182,10 @@ splunk:
   * NOTE: This is being deprecated in favor of `splunk.search_head_captain_url`.
   * Default: null
 
+  disable_popups: <bool>
+  * When set to true, pop-ups/modals will be disabled from login on the homescreen and search app.
+  * Default: false
+
   preferred_captaincy: <bool>
   * Boolean to determine whether splunk should set a preferred captain.  This can have an effect on day 2 operations if the search heads need to be restarted 
   * Default: true

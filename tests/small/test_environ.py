@@ -373,6 +373,35 @@ def test_getHEC(default_yml, os_env, result):
 @pytest.mark.parametrize(("default_yml", "os_env", "result"),
             [
                 # Check null parameters
+                ({}, {}, False),
+                # # Check default.yml parameters
+                ({"disable_popups": False}, {}, False),
+                ({"disable_popups": True}, {}, True),
+                # # Check env var parameters
+                ({}, {"SPLUNK_DISABLE_POPUPS": "TRUE"}, True),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "true"}, True),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "True"}, True),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "false"}, False),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "False"}, False),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "FALSE"}, False),
+                # # Check both
+                ({"disable_popups": False}, {"SPLUNK_DISABLE_POPUPS": "TRUE"}, True),
+                ({"disable_popups": False}, {"SPLUNK_DISABLE_POPUPS": "True"}, True),
+                ({"disable_popups": True}, {"SPLUNK_DISABLE_POPUPS": "False"}, False),
+                ({"disable_popups": True}, {"SPLUNK_DISABLE_POPUPS": "FALSE"}, False),
+            ]
+        )
+def test_getDisablePopups(default_yml, os_env, result):
+    vars_scope = {}
+    vars_scope["splunk"] = default_yml
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getDisablePopups(vars_scope)
+    assert vars_scope["splunk"]["disable_popups"] == result
+
+@pytest.mark.parametrize(("default_yml", "os_env", "result"),
+            [
+                # Check null parameters
                 ({}, {}, {"enable": False, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),
                 # Check default.yml parameters
                 ({"enable": True}, {}, {"enable": True, "server": None, "cert": None, "verify": False, "pipeline_name": None, "pipeline_desc": None, "pipeline_spec": None}),

@@ -111,6 +111,7 @@ def getDefaultVars():
     overrideEnvironmentVars(defaultVars)
     getAnsibleContext(defaultVars)
     getASan(defaultVars)
+    getDisablePopups(defaultVars)
     getHEC(defaultVars)
     getSecrets(defaultVars)
     getSplunkPaths(defaultVars)
@@ -407,6 +408,17 @@ def getASan(vars_scope):
     vars_scope["splunk"]["asan"] = bool(os.environ.get("SPLUNK_ENABLE_ASAN", vars_scope["splunk"].get("asan")))
     if vars_scope["splunk"]["asan"]:
         vars_scope["ansible_environment"].update({"ASAN_OPTIONS": "detect_leaks=0"})
+
+def getDisablePopups(vars_scope):
+    """
+    Configure pop-up settings
+    """
+    vars_scope["splunk"]["disable_popups"] = bool(vars_scope["splunk"].get("disable_popups"))
+    popups_disabled = os.environ.get("SPLUNK_DISABLE_POPUPS", "")
+    if popups_disabled.lower() == "true":
+        vars_scope["splunk"]["disable_popups"] = True
+    elif popups_disabled.lower() == "false":
+        vars_scope["splunk"]["disable_popups"] = False
 
 def getHEC(vars_scope):
     """
