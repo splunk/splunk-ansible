@@ -413,10 +413,11 @@ def getDisablePopups(vars_scope):
     """
     Configure pop-up settings
     """
+    vars_scope["splunk"]["disable_popups"] = bool(vars_scope["splunk"].get("disable_popups"))
     popups_disabled = os.environ.get("SPLUNK_DISABLE_POPUPS", "")
     if popups_disabled.lower() == "true":
         vars_scope["splunk"]["disable_popups"] = True
-    else:
+    elif popups_disabled.lower() == "false":
         vars_scope["splunk"]["disable_popups"] = False
 
 def getHEC(vars_scope):
