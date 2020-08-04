@@ -1,9 +1,6 @@
 ---
 - include_tasks: get_splunk_status.yml
 
-- name: Flush restart handlers
-  meta: flush_handlers
-
 - name: "Start Splunk"
   when: splunk_status.rc != 0
   block:
@@ -53,3 +50,6 @@
 - name: "Wait for splunkd management port"
   wait_for:
     port: "{{ splunk.svc_port }}"
+
+- name: Flush restart handlers
+  meta: flush_handlers
