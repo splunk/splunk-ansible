@@ -7,7 +7,7 @@
     dest: "{{ splunk.app_paths.shc }}"
 
 - name: Apply shcluster bundle
-  command: "{{ splunk.exec }} apply shcluster-bundle -target {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --answer-yes"
+  command: "{{ splunk.exec }} apply shcluster-bundle -target {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --answer-yes -push-default-apps true"
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
