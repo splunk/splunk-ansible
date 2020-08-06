@@ -13,7 +13,7 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_as_peer
-  until: set_as_peer.rc == 0
+  until: set_as_peer.rc == 0 or 'already exists' in set_as_peer.stderr
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
   changed_when: set_as_peer.rc == 0

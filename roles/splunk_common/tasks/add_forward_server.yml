@@ -1,6 +1,6 @@
 ---
 - name: "Enable forwarding to {{ forward_servers }}"
-  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s.port if splunk.s2s.port is defined else splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s.port if splunk.s2s.port is defined else splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --accept-license --answer-yes --no-prompt"
   become: yes
   become_user: "{{ splunk.user }}"
   with_items: "{{ forward_servers }}"
