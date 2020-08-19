@@ -6,6 +6,7 @@
     dest: "{{ splunk.home }}/etc/auth/DigiCertGlobalRootCA.pem"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0666
 
 - name: Set root CA
   ini_file:
