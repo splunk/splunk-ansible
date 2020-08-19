@@ -11,6 +11,7 @@
       update: "true"
       filename: "true"
       auth: "{{ splunkbase_token }}"
+      mode: 0666
     body_format: "form-urlencoded"
     status_code: [ 200, 201 ]
     timeout: 300

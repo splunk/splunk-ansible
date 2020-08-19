@@ -4,6 +4,7 @@
     url: "{{ playbook }}"
     dest: "{{ '/opt/container_artifact/' + playbook|basename }}"
     force: yes
+    mode: 0666
   ignore_errors: yes
   register: downloaded_plays
   when:
