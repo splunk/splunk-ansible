@@ -127,3 +127,16 @@ def test_splunk_app_httpexample(host):
     output = json.loads(output.stdout)
     assert output["entry"][0]["content"]["eai:appName"] == "splunk_app_httpexample"
     assert output["entry"][0]["content"]["version"] == "0.0.1"
+
+def test_disabled_popups_homescreen(host):
+    output = host.run("curl -k https://localhost:8089/servicesNS/admin/user-prefs/data/user-prefs/general \
+        -u admin:helloworld -d output_mode=json")
+    output = json.loads(output.stdout)
+    assert int(output["entry"][0]["content"]["hideInstrumentationOptInModal"]) == 1
+    assert output["entry"][0]["content"]["notification_python_3_impact"] == 'false'
+
+def test_disabled_popups_search(host): 
+    output = host.run("curl -k https://localhost:8089/servicesNS/admin/search/data/ui/ui-tour/search-tour \
+        -u admin:helloworld -d output_mode=json")
+    output = json.loads(output.stdout)
+    assert int(output["entry"][0]["content"]["viewed"]) == 1

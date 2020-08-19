@@ -42,6 +42,24 @@
     license_master_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'license_master') | map(attribute='name') | list | join('&member=') }}"
     configured_peers: "{% if splunk.role == 'splunk_search_head' and splunk.role == 'splunk_cluster_master' %}distributed_info['json']['entry'] | map(attribute='name') | list | join(','){% else %}{% endif %}"
 
+- name: Define Cluster Label
+  set_fact:
+    cluster_label_dict: "{{ cluster_label_dict|default({}) | combine( {item.name: item.content.cluster_label} ) }}"
+  with_items:
+    - "{{ distributed_info['json']['entry'] }}"
+
+- name: Create cluster_label key value pairing
+  set_fact:
+    cluster_label_list_of_dicts: |
+        {% set res = [] -%}
+        {% for key in cluster_label_dict.keys() -%}
+            {% for value in cluster_label_dict[key] -%}
+            {% set ignored = res.extend([{'name': key, 'cluster_label':value}]) -%}
+            {%- endfor %}
+        {%- endfor %}
+        {{ res }}
+  when: cluster_label_dict is defined
+
 - name: Add DMC server roles to search strings
   set_fact:
     index_string: "{% if 'indexer' in server_info['json']['entry'][0]['content']['server_roles'] and index_string | length > 0 %}localhost:localhost&member={{ index_string }}{% elif 'indexer' in server_info['json']['entry'][0]['content']['server_roles'] and index_string | length == 0 %}localhost:localhost{% else %}{{ index_string }}{% endif %}"

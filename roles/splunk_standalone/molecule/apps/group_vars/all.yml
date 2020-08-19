@@ -8,3 +8,4 @@ splunk:
   hec:
     token: abcd1234
   password: helloworld
+  disable_popups: true
