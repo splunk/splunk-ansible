@@ -630,19 +630,16 @@ def loadDefaults():
     """
     # Load base defaults from splunk-ansible repository
     base = loadBaseDefaults()
-    # Build an array of new defaults to override the base
-    ymls = []
-    config = base.get("config")
-    if not config:
+    if not base.get("config"):
         return base
     # Add "baked" files to array
-    ymls.extend(loadBakedDefaults(config))
-    # Add "env" URLs to array
-    ymls.extend(loadEnvDefaults(config))
-    # Add "host" URLs to array
-    ymls.extend(loadHostDefaults(config))
-    # For each new YAML discovered, merge them with base in order so values get superseded
-    for yml in ymls:
+    for yml in loadBakedDefaults(base.get("config")):
+        base = mergeDefaults(base, yml["key"], yml["src"])
+    # Add "env" files to array
+    for yml in loadEnvDefaults(base.get("config")):
+        base = mergeDefaults(base, yml["key"], yml["src"])
+    # Add "host" files to array
+    for yml in loadHostDefaults(base.get("config")):
         base = mergeDefaults(base, yml["key"], yml["src"])
     return base
 
