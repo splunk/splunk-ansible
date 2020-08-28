@@ -69,7 +69,7 @@ $ docker cp . splcontainer:/tmp/splunk-ansible/
 
 2. Run the following command
 ```
-$ docker exec -it splcontainer bash -c 'cd /tmp/splunk-ansible; ansible-playbook --connection local site.yml --extra-vars "@default.yml"'
+$ docker exec -it splcontainer bash -c 'cd /tmp/splunk-ansible; ansible-playbook --inventory localhost, --connection local site.yml --extra-vars "@default.yml"'
 ```
 You should see streaming Ansible output in your terminal. Here is what is happening when you run the above command:
 * `ansible-playbook` command is invoked using the playbook `site.yml`
