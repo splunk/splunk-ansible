@@ -1,0 +1,12 @@
+---
+- debug:
+    msg: 'ARJUN in remove_idx_peer removing entries from server.conf'
+
+- name: Remove indexer as peer in order to reconfigure
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "clustering"
+    state: absent
+    owner: "{{ splunk.user }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
