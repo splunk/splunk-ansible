@@ -2,6 +2,8 @@
 
 ## Navigation
 
+* [8.0.6](#806)
+* [8.0.5.1](#8051)
 * [8.0.5](#805)
 * [8.0.4.1](#8041)
 * [8.0.4](#804)
@@ -32,6 +34,33 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.0.6
+
+#### What's New?
+* Support for declarative admin password, enabling password updates and rotations. `splunk.password` will always be the password for the admin user and changes to `splunk.password` will drive password reconciliation.
+    * `splunk.declarative_admin_password` in `default.yml`
+    * `SPLUNK_DECLARATVE_ADMIN_PASSWORD` environment variable
+* Added flag to disable pop-ups and new user tour
+    * `splunk.disable_popups` in `default.yml`
+    * `SPLUNK_DISABLE_POPUPS` environment variable
+
+#### Changes
+* Fixed default variable propagation order 
+* ASan v5 is dynamically linked to builds
+* Bugfixes and security updates
+
+---
+
+## 8.0.5.1
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.0.6.
+
+#### Changes
+* See [8.0.6](#806) changes above.
 
 ---
 

@@ -4,6 +4,7 @@
     url: "{{ lic }}"
     dest: "{{ splunk.license_download_dest }}"
     timeout: 20
+    mode: 0666
   when: lic is match("^(https?|file)://.*")
   register: downloaded_license_path
   ignore_errors: yes

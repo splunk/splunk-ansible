@@ -4,6 +4,7 @@
     url: "https://download.java.net/openjdk/jdk9/ri/jdk-9+181_windows-x64_ri.zip"
     dest: /home/splunk/
     timeout: 30
+    mode: 0666
   register: download_result
   until: download_result.status_code == 200
   retries: "{{ retry_num }}"

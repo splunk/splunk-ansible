@@ -35,6 +35,7 @@ splunk:
     admin_user: "admin"
     root_endpoint:
     password:
+    declarative_admin_password: False
     secret:
     pass4SymmKey:
     svc_port: 8089
@@ -102,6 +103,7 @@ splunk:
     deployer_url:
     connection_timeout: 180
     enable_service: False
+    disable_popups: False
     service_name:
     smartstore:
     app_paths:

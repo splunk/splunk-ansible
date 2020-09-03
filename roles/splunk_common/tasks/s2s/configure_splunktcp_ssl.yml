@@ -50,18 +50,6 @@
   when: ansible_system is not match("CYGWIN*|Win32NT")
   register: splunktcp_ssl_ca_configured
 
-- name: "Get Splunk status"
-  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: splunk_status
-  changed_when: False
-  failed_when: False
-  ignore_errors: yes
-
-# We want to restart only when Splunk is currently running and when any of the above have changed
-- name: Trigger restart
-  command: ls
-  changed_when: splunk_status.rc == 0 and (splunktcp_disabled is changed or splunktcp_ssl_cert_configured is changed or splunktcp_ssl_pass_configured is changed or splunktcp_ssl_ca_configured is changed)
-  notify:
-    - Restart the splunkd service
+# Restart only when Splunk is running and when any of the above have changed
+- include_tasks: trigger_restart.yml
+  when: splunktcp_disabled is changed or splunktcp_ssl_cert_configured is changed or splunktcp_ssl_pass_configured is changed or splunktcp_ssl_ca_configured is changed

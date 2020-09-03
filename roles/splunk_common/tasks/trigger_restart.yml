@@ -1,0 +1,9 @@
+---
+# Trigger restart only when Splunk is currently running; add add'l when clauses during include_tasks invocation as needed
+- include_tasks: get_splunk_status.yml
+
+- name: Trigger restart
+  command: ls
+  changed_when: splunk_status.rc == 0
+  notify:
+    - Restart the splunkd service

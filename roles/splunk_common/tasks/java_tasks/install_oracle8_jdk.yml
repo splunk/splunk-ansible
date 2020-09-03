@@ -6,6 +6,7 @@
       Cookie: oraclelicense=accept-securebackup-cookie
     dest: /opt/container_artifact
     timeout: 90
+    mode: 0666
   register: download_result
   until: download_result.status_code == 200
   retries: "{{ retry_num }}"

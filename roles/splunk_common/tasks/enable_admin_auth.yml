@@ -1,0 +1,56 @@
+---
+- name: Set admin access via seed
+  when: first_run | bool
+  block:
+  - name: "Hash the password"
+    command: "{{ splunk.exec }} hash-passwd {{ splunk.password }}"
+    register: hashed_pwd
+    changed_when: hashed_pwd.rc == 0
+    become: yes
+    become_user: "{{ splunk.user }}"
+    no_log: "{{ hide_password }}"
+
+  - name: "Generate user-seed.conf (Linux)"
+    ini_file:
+      owner: "{{ splunk.user }}"
+      group: "{{ splunk.group }}"
+      dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
+      section: user_info
+      option: "{{ item.opt }}"
+      value: "{{ item.val }}"
+    with_items:
+      - { opt: 'USERNAME', val: '{{ splunk.admin_user }}' }
+      - { opt: 'HASHED_PASSWORD', val: '{{ hashed_pwd.stdout }}' }
+    loop_control:
+      label: "{{ item.opt }}"
+    when: ansible_system is match("Linux")
+    no_log: "{{ hide_password }}"
+
+  - name: "Generate user-seed.conf (Windows)"
+    ini_file:
+      dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
+      section: user_info
+      option: "{{ item.opt }}"
+      value: "{{ item.val }}"
+    with_items:
+      - { opt: 'USERNAME', val: '{{ splunk.admin_user }}' }
+      - { opt: 'HASHED_PASSWORD', val: '{{ hashed_pwd.stdout }}' }
+    loop_control:
+      label: "{{ item.opt }}"
+    when: ansible_system is match("CYGWIN*|Win32NT")
+    no_log: "{{ hide_password }}"
+
+- name: Establish declarative admin access
+  when:
+    - "'declarative_admin_password' in splunk and splunk.declarative_admin_password | bool"
+    - not first_run | bool
+  block:
+  - name: Apply admin password
+    command: "{{ splunk.exec }} cmd splunkd rest --noauth POST /services/admin/users/{{ splunk.admin_user }} 'password={{ splunk.password }}'"
+    register: declarative_pw
+    changed_when: False
+    become: yes
+    become_user: "{{ splunk.user }}"
+    no_log: "{{ hide_password }}"
+
+  - include_tasks: trigger_restart.yml

@@ -37,26 +37,18 @@
     - "'asan' in splunk and splunk.asan | bool"
 
 - include_tasks: remove_first_login.yml
-  when:
-    - first_run | bool
 
 - include_tasks: install_java.yml
   when:
     - java_version is defined and java_version
 
 - include_tasks: set_general_symmkey_password.yml
-  when:
-    - "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
-    - first_run | bool
+  when: "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
 
 # This needs to be done before any encrypted passkeys are generated
 - include_tasks: set_splunk_secret.yml
-  when:
-    - first_run | bool
 
-- include_tasks: set_user_seed.yml
-  when:
-    - first_run | bool
+- include_tasks: enable_admin_auth.yml
 
 - include_tasks: set_launch_conf.yml
   when:
@@ -64,8 +56,6 @@
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
-  when:
-    - first_run | bool
 
 - include_tasks: enable_s2s.yml
   when:
@@ -139,3 +129,6 @@
 - include_tasks: clean_user_seed.yml
 
 - include_tasks: add_splunk_license.yml
+
+- include_tasks: disable_popups.yml
+  when: "'disable_popups' in splunk and splunk.disable_popups | bool"

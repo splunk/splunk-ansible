@@ -174,15 +174,22 @@ def test_getSplunkWebSSL():
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters - Splunk password is required
-                ({"password": "helloworld"}, {}, {"password": "helloworld", "pass4SymmKey": None, "secret": None}),
+                ({"password": "helloworld"}, {}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": None, "secret": None}),
                 # Check default.yml parameters
-                ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}),
-                ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
-                ({"password": "helloworld", "secret": "1234"}, {}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"}),
+                ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": "helloworld", "secret": "1234"}, {}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": None, "secret": "1234"}),
+                ({"password": "helloworld", "declarative_admin_password": True, "pass4SymmKey": "you-will-never-guess", "secret": None}, {}, {"password": "helloworld", "declarative_admin_password": True, "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": "helloworld", "declarative_admin_password": True, "pass4SymmKey": "you-will-never-guess", "secret": "1234"}, {}, {"password": "helloworld", "declarative_admin_password": True, "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": "helloworld", "declarative_admin_password": True, "secret": "1234"}, {}, {"password": "helloworld", "declarative_admin_password": True, "pass4SymmKey": None, "secret": "1234"}),
                 # Check environment variable parameters
-                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": None}),
-                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
-                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "pass4SymmKey": None, "secret": "1234"})
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": None, "secret": "1234"}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_DECLARATIVE_ADMIN_PASSWORD": "true", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess"}, {"password": "helloworld", "declarative_admin_password": True, "pass4SymmKey": "you-will-never-guess", "secret": None}),
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_DECLARATIVE_ADMIN_PASSWORD": "TRUE", "SPLUNK_PASS4SYMMKEY": "you-will-never-guess", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "declarative_admin_password": True, "pass4SymmKey": "you-will-never-guess", "secret": "1234"}),
+                # We currently don't support 'yes' as a valid boolean
+                ({"password": None}, {"SPLUNK_PASSWORD": "helloworld", "SPLUNK_DECLARATIVE_ADMIN_PASSWORD": "yes", "SPLUNK_SECRET": "1234"}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": None, "secret": "1234"})
             ]
         )
 def test_getSecrets(default_yml, os_env, output):
@@ -362,6 +369,35 @@ def test_getHEC(default_yml, os_env, result):
         with patch("os.environ", new=os_env):
             environ.getHEC(vars_scope)
     assert vars_scope["splunk"]["hec"] == result
+
+@pytest.mark.parametrize(("default_yml", "os_env", "result"),
+            [
+                # Check null parameters
+                ({}, {}, False),
+                # # Check default.yml parameters
+                ({"disable_popups": False}, {}, False),
+                ({"disable_popups": True}, {}, True),
+                # # Check env var parameters
+                ({}, {"SPLUNK_DISABLE_POPUPS": "TRUE"}, True),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "true"}, True),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "True"}, True),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "false"}, False),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "False"}, False),
+                ({}, {"SPLUNK_DISABLE_POPUPS": "FALSE"}, False),
+                # # Check both
+                ({"disable_popups": False}, {"SPLUNK_DISABLE_POPUPS": "TRUE"}, True),
+                ({"disable_popups": False}, {"SPLUNK_DISABLE_POPUPS": "True"}, True),
+                ({"disable_popups": True}, {"SPLUNK_DISABLE_POPUPS": "False"}, False),
+                ({"disable_popups": True}, {"SPLUNK_DISABLE_POPUPS": "FALSE"}, False),
+            ]
+        )
+def test_getDisablePopups(default_yml, os_env, result):
+    vars_scope = {}
+    vars_scope["splunk"] = default_yml
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getDisablePopups(vars_scope)
+    assert vars_scope["splunk"]["disable_popups"] == result
 
 @pytest.mark.parametrize(("default_yml", "os_env", "result"),
             [
