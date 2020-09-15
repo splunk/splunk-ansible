@@ -40,7 +40,7 @@
     cluster_master_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'cluster_master') | map(attribute='name') | list | join('&member=') }}"
     deployment_server_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'deployment_server') | map(attribute='name') | list | join('&member=') }}"
     license_master_string: "{{ distributed_info['json']['entry'] | selectattr('content.server_roles','defined') | selectattr('content.server_roles', 'search', 'license_master') | map(attribute='name') | list | join('&member=') }}"
-    configured_peers: "{% if splunk.role == 'splunk_search_head' and splunk.role == 'splunk_cluster_master' %}distributed_info['json']['entry'] | map(attribute='name') | list | join(','){% else %}{% endif %}"
+    configured_peers: "{{ distributed_info['json']['entry'] | map(attribute='name') | list | join(',') }}"
 
 - name: Define Cluster Label
   set_fact:
