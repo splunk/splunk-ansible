@@ -52,9 +52,9 @@ $ docker run -it splunk/splunk:latest create-defaults > default.yml
 Alternatively, you can download the example `default.yml` supplied [here](advanced/default.yml.spec.md#sample).
 
 3. Define a few key variables in your `default.yml`:
-* `splunk.role`: the role this instance will play in the Splunk Enterprise deployment
+* `splunk.role`: the role this instance will play in the Splunk Enterprise deployment. (e.g. `splunk_standalone`)
 * `splunk.build_location`: URL to dynamically fetch the Splunk Enterprise build and install it at run time
-* `splunk.build_remote_src`: this wll be `true` when `splunk.build_location` above is a URL
+* `splunk.build_remote_src`: this wll be `true` when `splunk.build_location` above is a URL (e.g. `http://`, `https://`, or `file://`), and `false` if it is a path. Note: if a path is provided, the tgz, msi, deb, or rpm file that it points to must exist in the container.
 * `splunk.password`: default `admin` user password that Splunk will be provisioned with on first-time run
 
 4. Inspect your newly-created `default.yml` and tweak options as you see fit. For a full list of parameters, please see the [`default.yml.spec`](advanced/default.yml.spec.md#spec).
