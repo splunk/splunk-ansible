@@ -16,7 +16,7 @@
       sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
     body_format: "form-urlencoded"
     status_code: 200
-    timeout: 10
+    timeout: 60
   no_log: "{{ hide_password }}"
 
 - name: Get existing HEC token
@@ -27,7 +27,7 @@
     password: "{{ splunk.password }}"
     validate_certs: false
     status_code: 200,404
-    timeout: 10
+    timeout: 60
   register: hec_token
   when: ('hec' in splunk and 'token' in splunk.hec) or ('hec_token' in splunk)
   no_log: "{{ hide_password }}"
@@ -41,7 +41,7 @@
     password: "{{ splunk.password }}"
     validate_certs: false
     status_code: 200,404
-    timeout: 10
+    timeout: 60
   register: delete_hec_token
   changed_when: delete_hec_token.status == 200
   when:
@@ -61,7 +61,7 @@
       token: "{% if 'hec' in splunk and 'token' in splunk.hec and splunk.hec.token %}{{ splunk.hec.token }}{% else %}{{ splunk.hec_token }}{% endif %}"
     body_format: "form-urlencoded"
     status_code: 201,409
-    timeout: 10
+    timeout: 60
   register: create_hec_token
   changed_when: create_hec_token.status == 201
   when: ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
