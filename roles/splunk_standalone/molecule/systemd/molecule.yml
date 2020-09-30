@@ -5,8 +5,8 @@ driver:
   name: docker
 platforms:
   # 7.3.2 uses older system file which requires access to /sys/fs/cgroup/{memory,cpu} for WLM
-  - name: splunk-standalone-systemd-centos8
-    image: geerlingguy/docker-centos8-ansible:latest
+  - name: splunk-standalone-systemd-centos7
+    image: geerlingguy/docker-centos7-ansible:latest
     pre_build_image: true
     tmpfs:
       - /run
