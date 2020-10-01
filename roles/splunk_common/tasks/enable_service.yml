@@ -53,14 +53,14 @@
       path: "/etc/systemd/system/{{ splunk_service_name }}"
       regexp: '^ExecStartPost=.*/sys/fs/cgroup/cpu.*$'
       replace: 'ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/cpu/system.slice/%n"'
-    when: installed_splunk_version[0] is version("7.3.0", "<")
+    when: installed_splunk_version[0] is version("8.0.0", "<")
 
   - name: Update memory cgroup
     replace:
       path: "/etc/systemd/system/{{ splunk_service_name }}"
       regexp: '^ExecStartPost=.*/sys/fs/cgroup/memory.*$'
       replace: 'ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/memory/system.slice/%n"'
-    when: installed_splunk_version[0] is version("7.3.0", "<")
+    when: installed_splunk_version[0] is version("8.0.0", "<")
 
   - name: Disable cgroup per Splunk version
     replace:
