@@ -18,7 +18,7 @@
     - splunk_indexer_cluster or splunk.multisite_master is defined
     - splunk.set_search_peers is defined
     - splunk.set_search_peers | bool
-    
+
 - include_tasks: setup_multisite.yml
   when:
     - splunk.site is defined
