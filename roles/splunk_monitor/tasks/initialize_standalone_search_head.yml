@@ -13,6 +13,12 @@
     - not splunk_search_head_cluster | bool
     - splunk.deployment_server is not defined or not splunk.deployment_server
 
+- include_tasks: ../../splunk_common/tasks/peer_cluster_master.yml
+  when:
+    - splunk_indexer_cluster or splunk.multisite_master is defined
+    - splunk.set_search_peers is defined
+    - splunk.set_search_peers | bool
+    
 - include_tasks: setup_multisite.yml
   when:
     - splunk.site is defined
