@@ -879,9 +879,39 @@ def test_parseUrl(url, vars_scope, output):
     result = environ.parseUrl(url, vars_scope)
     assert result == output
 
-@pytest.mark.skip(reason="TODO")
-def test_merge_dict():
-    pass
+@pytest.mark.parametrize(("dict1", "dict2", "result"),
+    [
+        # Check dicts
+        ({}, {"a": 2}, {"a": 2}),
+        ({"b": 2}, {"a": 2}, {"a": 2, "b": 2}),
+        ({"a": 1, "b": 2}, {"a": 2}, {"a": 2, "b": 2}),
+        ({"a": 0}, {"a": 1}, {"a": 1}),
+        ({"a": 1}, {"b": 2, "c": 3}, {"a": 1, "b": 2, "c": 3}),
+        # Check arrays
+        ({}, {"a": []}, {"a": []}),
+        ({}, {"a": [1, 2]}, {"a": [1, 2]}),
+        ({"b": [0]}, {"a": [1]}, {"a": [1], "b": [0]}),
+        ({"a": [0]}, {"a": [1]}, {"a": [0, 1]}),
+        # Check nested dict output
+        ({"nested": {}}, {"nested": {"a": 1}}, {"nested": {"a": 1}}),
+        ({"nested": {"a": 1}}, {"nested": {"b": 2}}, {"nested": {"a": 1, "b": 2}}),
+        ({"nested": {"a": 1, "c": 3}}, {"nested": {"b": 2}}, {"nested": {"a": 1, "b": 2, "c": 3}}),
+        ({"nested": {"a": 1, "b": 3}}, {"nested": {"b": 2}}, {"nested": {"a": 1, "b": 2}}),
+        # Check nested with diff value types
+        ({"nested": {"x": 1}}, {"nested": {"x": {"a": 1}}}, {"nested": {"x": {"a": 1}}}),
+        ({"nested": {"x": {"a": 1}}}, {"nested": {"x": 1}}, {"nested": {"x": 1}}),
+        # Check nested arrays
+        ({"nested": {"array": []}}, {"nested": {"array": [1]}}, {"nested": {"array": [1]}}),
+        ({"nested": {"array": [1, 2, 3]}}, {"nested": {"array": []}}, {"nested": {"array": [1, 2, 3]}}),
+        ({"nested": {"array": [1, 2]}}, {"nested": {"array": [3, 4, 5]}}, {"nested": {"array": [1, 2, 3, 4, 5]}}),
+        ({"nested": {"x": 10, "array": [1, 2]}}, {"nested": {"y": 20, "array": [3, 4, 5]}}, {"nested": {"x": 10, "y": 20, "array": [1, 2, 3, 4, 5]}}),
+        # Targeted github bug
+        ({"splunk": {"conf": [{"key": "fileA", "content": {"a": "b", "c": "d"}}]}}, {"splunk": {"conf": [{"key": "fileB", "content": {"e": "f", "g": "h"}}]}}, {"splunk": {"conf": [{"key": "fileA", "content": {"a": "b", "c": "d"}}, {"key": "fileB", "content": {"e": "f", "g": "h"}}]}}),
+    ]
+)
+def test_merge_dict(dict1, dict2, result):
+    output = environ.merge_dict(dict1, dict2)
+    assert output == result
 
 @pytest.mark.parametrize(("source", "merge_url_called", "merge_file_called"),
             [

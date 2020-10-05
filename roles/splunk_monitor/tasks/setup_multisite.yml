@@ -1,0 +1,43 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
+  vars:
+    splunk_instance_address: "{{ splunk.multisite_master }}"
+
+- name: Convert Extrenal Cluster Master Name into Internal URI
+  set_fact:
+      multisite_master_uri: "{{ cert_prefix }}://{{ splunk.multisite_master }}:{{ splunk.svc_port }}"
+
+- name: Setup SH - Multisite
+  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ multisite_master_uri }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.idxc.pass4SymmKey }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: set_new_master
+  until: set_new_master.rc == 0 or (set_new_master.rc != 0 and "Cannot edit this searchhead. Use 'splunk edit cluster-master' to edit information for this searchhead." in set_new_master.stderr)
+  failed_when: set_new_master.rc != 0 and "Cannot edit this searchhead. Use 'splunk edit cluster-master' to edit information for this searchhead." not in set_new_master.stderr
+  changed_when: set_new_master.rc == 0
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+  ignore_errors: yes
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+
+- name: Flush restart handlers
+  meta: flush_handlers
+
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_process.yml
+
+- name: Setup SH with Associated Site
+  command: "{{ splunk.exec }} edit cluster-master -old_master_uri {{ multisite_master_uri }} -site {{ splunk.site }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.idxc.pass4SymmKey }} -multisite True"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: set_associated_site
+  until: set_associated_site.rc == 0 or (set_associated_site.rc == 22 and 'No change in master or secret or site' in set_associated_site.stderr)
+  changed_when: set_associated_site.rc == 0
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+  ignore_errors: yes
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+  failed_when: set_associated_site.rc != 0 and 'No change in master or secret or site' not in set_associated_site.stderr
