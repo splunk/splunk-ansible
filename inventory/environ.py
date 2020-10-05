@@ -562,6 +562,8 @@ def merge_dict(dict1, dict2, path=None):
         if key in dict1:
             if isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
                 merge_dict(dict1[key], dict2[key], path + [str(key)])
+            elif isinstance(dict1[key], list) and isinstance(dict2[key], list):
+                dict1[key] += dict2[key]
             else:
                 dict1[key] = dict2[key]
         else:
