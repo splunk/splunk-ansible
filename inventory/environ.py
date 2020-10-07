@@ -340,19 +340,22 @@ def getSplunkApps(vars_scope):
     """
     Determine the set of Splunk apps to install as union of defaults.yml and environment variables
     """
-    appSet = set()
+    appList = []
     if not "apps_location" in vars_scope["splunk"]:
         vars_scope["splunk"]["apps_location"] = []
     # From default.yml
     elif type(vars_scope["splunk"]["apps_location"]) == str:
-        appSet.update(vars_scope["splunk"]["apps_location"].split(","))
+        appList = vars_scope["splunk"]["apps_location"].split(",")
     elif type(vars_scope["splunk"]["apps_location"]) == list:
-        appSet.update(vars_scope["splunk"]["apps_location"])
+        appList = vars_scope["splunk"]["apps_location"]
     # From environment variables
     apps = os.environ.get("SPLUNK_APPS_URL")
     if apps:
-        appSet.update(apps.split(","))
-    vars_scope["splunk"]["apps_location"] = list(appSet)
+        apps = apps.split(",")
+        for app in apps:
+            if app not in appList:
+                appList.append(app)
+    vars_scope["splunk"]["apps_location"] = appList
 
 def getSecrets(vars_scope):
     """
