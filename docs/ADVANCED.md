@@ -80,6 +80,10 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_HTTP_ENABLESSL_CERT | Path to SSL certificate used for SplunkWeb, if HTTPS is enabled | no | no | no |
 | SPLUNK_HTTP_ENABLESSL_PRIVKEY | Path to SSL private key used for SplunkWeb, if HTTPS is enabled | no | no | no |
 | SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD | SSL certificate private key password used with SplunkWeb, if HTTPS is enabled | no | no | no |
+| SPLUNKD_SSL_ENABLE | Enable HTTPS on Splunkd. By default, this is enabled out-of-the-box. To disable, set this to "false" | no | no | no |
+| SPLUNKD_SSL_CERT | Path to custom SSL certificate used for Splunkd when HTTPS is enabled | no | no | no |
+| SPLUNKD_SSL_CA | Path to custom CA certificate used for Splunkd when HTTPS is enabled | no | no | no |
+| SPLUNKD_SSL_PASSWORD | Custom SSL password used with Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNK_KVSTORE_PORT | Port to run Splunk KVStore. Default: `8191` | no | no | no |
 | SPLUNK_APPSERVER_PORT | Port to run Splunk appserver. Default: `8065` | no | no | no |
 | SPLUNK_SET_SEARCH_PEERS | Boolean to configure whether search heads should connect to search peers. Default: `True`. Not recommended to change | no | no | no |

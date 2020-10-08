@@ -172,6 +172,43 @@ def test_getSplunkWebSSL():
     pass
 
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
+    [
+        # Check null parameters
+        ({}, {}, {"ca": None, "cert": None, "password": None, "enable": True}),
+        ({"does-not-exist": True}, {}, {"ca": None, "cert": None, "password": None, "enable": True}),
+        # Check default.yml parameters
+        ({"ssl": {"enable": False}}, {}, {"ca": None, "cert": None, "password": None, "enable": False}),
+        ({"ssl": {"ca": "hi"}}, {}, {"ca": "hi", "cert": None, "password": None, "enable": True}),
+        ({"ssl": {"cert": "hi"}}, {}, {"ca": None, "cert": "hi", "password": None, "enable": True}),
+        ({"ssl": {"password": "hi"}}, {}, {"ca": None, "cert": None, "password": "hi", "enable": True}),
+        ({"ssl": {"ca": "aaa", "cert": "bbb", "password": "ccc", "enable": False}}, {}, {"ca": "aaa", "cert": "bbb", "password": "ccc", "enable": False}),
+        # Check environment variable parameters
+        ({}, {"SPLUNKD_SSL_CA": "hi"}, {"ca": "hi", "cert": None, "password": None, "enable": True}),
+        ({}, {"SPLUNKD_SSL_CERT": "hi"}, {"ca": None, "cert": "hi", "password": None, "enable": True}),
+        ({}, {"SPLUNKD_SSL_PASSWORD": "hi"}, {"ca": None, "cert": None, "password": "hi", "enable": True}),
+        ({}, {"SPLUNKD_SSL_ENABLE": "true"}, {"ca": None, "cert": None, "password": None, "enable": True}),
+        ({}, {"SPLUNKD_SSL_ENABLE": "false"}, {"ca": None, "cert": None, "password": None, "enable": False}),
+        ({}, {"SPLUNKD_SSL_ENABLE": "False"}, {"ca": None, "cert": None, "password": None, "enable": False}),
+        # Check the union combination of default.yml + environment variables and order of precedence when overwriting
+        ({"ssl": {"ca": "value1"}}, {"SPLUNKD_SSL_CA": "value2"}, {"ca": "value2", "cert": None, "password": None, "enable": True}),
+        ({"ssl": {"cert": "value1"}}, {"SPLUNKD_SSL_CERT": "value2"}, {"ca": None, "cert": "value2", "password": None, "enable": True}),
+        ({"ssl": {"password": "value1"}}, {"SPLUNKD_SSL_PASSWORD": "value2"}, {"ca": None, "cert": None, "password": "value2", "enable": True}),
+        ({}, {"SPLUNKD_SSL_ENABLE": "true"}, {"ca": None, "cert": None, "password": None, "enable": True}),
+        ({}, {"SPLUNKD_SSL_ENABLE": "false"}, {"ca": None, "cert": None, "password": None, "enable": False}),
+        ({"ssl": {"enable": True}}, {"SPLUNKD_SSL_ENABLE": "FALSE"}, {"ca": None, "cert": None, "password": None, "enable": False}),
+        ({"ssl": {"enable": True}}, {"SPLUNKD_SSL_ENABLE": "FaLsE"}, {"ca": None, "cert": None, "password": None, "enable": False}),
+        ({"ssl": {"enable": False}}, {"SPLUNKD_SSL_ENABLE": ""}, {"ca": None, "cert": None, "password": None, "enable": False}),
+    ]
+)
+def test_getSplunkdSSL(default_yml, os_env, output):
+    vars_scope = {"splunk": default_yml}
+    with patch("os.environ", new=os_env):
+        environ.getSplunkdSSL(vars_scope)
+    assert type(vars_scope["splunk"]) == dict
+    assert type(vars_scope["splunk"]["ssl"]) == dict
+    assert vars_scope["splunk"]["ssl"] == output
+
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters - Splunk password is required
                 ({"password": "helloworld"}, {}, {"password": "helloworld", "declarative_admin_password": False, "pass4SymmKey": None, "secret": None}),
