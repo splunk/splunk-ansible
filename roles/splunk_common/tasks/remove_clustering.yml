@@ -1,0 +1,18 @@
+---
+- name: Remove indexer clustering stanza in order to reconfigure
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "clustering"
+    state: absent
+    owner: "{{ splunk.user }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Remove search head clustering stanza in order to reconfigure
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shclustering"
+    state: absent
+    owner: "{{ splunk.user }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
