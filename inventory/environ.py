@@ -259,6 +259,21 @@ def getSplunkWebSSL(vars_scope):
     splunk_vars["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', splunk_vars.get("http_enableSSL_privKey_password"))
     splunk_vars["http_port"] = int(os.environ.get('SPLUNK_HTTP_PORT', splunk_vars.get("http_port")))
 
+def getSplunkdSSL(vars_scope):
+    """
+    Parse and set parameters to define Splunkd
+    """
+    if "ssl" not in vars_scope["splunk"]:
+        vars_scope["splunk"]["ssl"] = {}
+    ssl_vars = vars_scope["splunk"]["ssl"]
+    ssl_vars["cert"] = os.environ.get("SPLUNKD_SSL_CERT", ssl_vars.get("cert"))
+    ssl_vars["ca"] = os.environ.get("SPLUNKD_SSL_CA", ssl_vars.get("ca"))
+    ssl_vars["password"] = os.environ.get("SPLUNKD_SSL_PASSWORD", ssl_vars.get("password"))
+    ssl_vars["enable"] = ssl_vars.get("enable", True)
+    enable = os.environ.get("SPLUNKD_SSL_ENABLE", "")
+    if enable.lower() == "false":
+        ssl_vars["enable"] = False
+
 def getDistributedTopology(vars_scope):
     """
     Parse and set parameters to define topology if this is a distributed environment
@@ -340,19 +355,22 @@ def getSplunkApps(vars_scope):
     """
     Determine the set of Splunk apps to install as union of defaults.yml and environment variables
     """
-    appSet = set()
+    appList = []
     if not "apps_location" in vars_scope["splunk"]:
         vars_scope["splunk"]["apps_location"] = []
     # From default.yml
     elif type(vars_scope["splunk"]["apps_location"]) == str:
-        appSet.update(vars_scope["splunk"]["apps_location"].split(","))
+        appList = vars_scope["splunk"]["apps_location"].split(",")
     elif type(vars_scope["splunk"]["apps_location"]) == list:
-        appSet.update(vars_scope["splunk"]["apps_location"])
+        appList = vars_scope["splunk"]["apps_location"]
     # From environment variables
     apps = os.environ.get("SPLUNK_APPS_URL")
     if apps:
-        appSet.update(apps.split(","))
-    vars_scope["splunk"]["apps_location"] = list(appSet)
+        apps = apps.split(",")
+        for app in apps:
+            if app not in appList:
+                appList.append(app)
+    vars_scope["splunk"]["apps_location"] = appList
 
 def getSecrets(vars_scope):
     """
@@ -559,6 +577,8 @@ def merge_dict(dict1, dict2, path=None):
         if key in dict1:
             if isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
                 merge_dict(dict1[key], dict2[key], path + [str(key)])
+            elif isinstance(dict1[key], list) and isinstance(dict2[key], list):
+                dict1[key] += dict2[key]
             else:
                 dict1[key] = dict2[key]
         else:

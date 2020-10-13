@@ -1,8 +1,22 @@
 ---
-- include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
+- include_tasks: ../../splunk_common/tasks/enable_forwarding.yml
 
-- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+- include_tasks: ../../splunk_common/tasks/provision_apps.yml
   when:
     - splunk.apps_location
 
-- include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
+- name: Enable license master local indexing
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/outputs.conf"
+    section: "tcpout"
+    option: "indexAndForward"
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: lm_local_indexing
+
+# Restart only when Splunk is running and when any of the above have changed
+- include_tasks: ../../splunk_common/tasks/trigger_restart.yml
+  when: lm_local_indexing is changed
+
+- include_tasks: ../../splunk_common/tasks/check_for_required_restarts.yml
