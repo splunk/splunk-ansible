@@ -76,6 +76,8 @@
     regexp: 'splunk\D*?-(\d+\.\d+\.\d+(\.\d+)?)-(.*?)-.*?'
 
 - debug: 
+    msg: {{splunk.build_location}}
+- debug: 
     var: splunk_current_version
 - debug: 
     var: splunk_target_version
