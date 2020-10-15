@@ -20,6 +20,7 @@
     validate_certs: false
     status_code: 200
     timeout: 10
+    use_proxy: no
   register: ess_info
   no_log: "{{ hide_password }}"
 

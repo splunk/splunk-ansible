@@ -8,6 +8,7 @@
     validate_certs: false
     status_code: 200,404
     timeout: 10
+    use_proxy: no
   register: restart_required
   changed_when: restart_required.status == 200
   no_log: "{{ hide_password }}"

@@ -1,7 +1,7 @@
 ---
 - name: Check current license group
   uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/licenser/groups/Free?output_mode=json"
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/licenser/groups/Forwarder?output_mode=json"
     method: GET
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
@@ -9,13 +9,13 @@
     status_code: 200,404
     timeout: 10
     use_proxy: no
-  register: check_free_lic
+  register: check_fwd_lic
   changed_when: false
   no_log: "{{ hide_password }}"
 
-- name: Activate free license
+- name: Activate forwarder license
   uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/licenser/groups/Free?output_mode=json"
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/licenser/groups/Forwarder?output_mode=json"
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
@@ -26,4 +26,4 @@
     status_code: 200
     timeout: 10
     use_proxy: no
-  when: not check_free_lic.json.entry[0].content.is_active
+  when: not check_fwd_lic.json.entry[0].content.is_active

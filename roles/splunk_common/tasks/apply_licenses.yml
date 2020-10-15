@@ -2,6 +2,9 @@
 - include_tasks: licenses/enable_free_license.yml
   when: license | lower == "free"
 
+- include_tasks: licenses/enable_forwarder_license.yml
+  when: license | lower == "forwarder"
+
 - include_tasks: licenses/add_wildcard_license.yml
   vars:
     licenses: "{{ license }}"

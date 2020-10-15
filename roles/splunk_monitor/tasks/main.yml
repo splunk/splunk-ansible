@@ -14,6 +14,7 @@
     status_code: 200
     timeout: 10
     return_content: yes
+    use_proxy: no
   register: server_info
   no_log: "{{ hide_password }}"
 
@@ -27,6 +28,7 @@
     status_code: 200
     timeout: 10
     return_content: yes
+    use_proxy: no
   register: distributed_info
   no_log: "{{ hide_password }}"
   until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0
