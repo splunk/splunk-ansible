@@ -11,6 +11,7 @@
       Content-Type: "application/x-www-form-urlencoded"
     status_code: [201, 409]
     timeout: 10
+    use_proxy: no
   register: setup_itsi_role
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
@@ -32,6 +33,7 @@
       Content-Type: "application/x-www-form-urlencoded"
     status_code: [200, 409]
     timeout: 10
+    use_proxy: no
   register: setup_itsi_user
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"

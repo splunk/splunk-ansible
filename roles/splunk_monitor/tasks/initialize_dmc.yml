@@ -8,6 +8,7 @@
     validate_certs: false
     status_code: 200
     return_content: yes
+    use_proxy: no
   register: dmc_asset_build_full
 
 - name: dmc_asset_build_full - POST
@@ -24,6 +25,7 @@
     body_format: "form-urlencoded"
     validate_certs: false
     status_code: 200,201,409
+    use_proxy: no
 
 - name: UI - GET
   uri:
@@ -34,6 +36,7 @@
     validate_certs: false
     status_code: 200
     return_content: yes
+    use_proxy: no
   register: settings
 
 - name: UI - POST
@@ -47,6 +50,7 @@
     body_format: "form-urlencoded"
     validate_certs: false
     status_code: 200,201,409
+    use_proxy: no
 
 - name: DMC Conf - POST
   uri:
@@ -63,6 +67,7 @@
     body_format: "form-urlencoded"
     validate_certs: false
     status_code: 200,201,409
+    use_proxy: no
 
 - name: DMC Settings - POST
   uri:
@@ -73,3 +78,4 @@
     body: "author=Splunk&check_for_updates=1&configured=1&label=Monitoring+Console&version={{ settings.json['generator']['version'] }}&visible=1"
     validate_certs: false
     status_code: 200,201,409
+    use_proxy: no

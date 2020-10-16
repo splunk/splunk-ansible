@@ -9,6 +9,7 @@
     status_code: 200
     timeout: 10
     return_content: yes
+    use_proxy: no
   register: telemetry
   no_log: "{{ hide_password }}"
 
@@ -21,6 +22,7 @@
     body: "{{ item.value }}"
     validate_certs: false
     status_code: 200,201,409
+    use_proxy: no
   with_items:
     - { key: "servicesNS/admin/user-prefs/data/user-prefs/general", value: "hideInstrumentationOptInModal=1&notification_python_3_impact=false&showWhatsNew=0" }
     - { key: "servicesNS/nobody/splunk_instrumentation/admin/telemetry/general", value: "showOptInModal=0&optInVersionAcknowledged={{ telemetry['json']['entry'][0]['content']['optInVersion'] }}" }

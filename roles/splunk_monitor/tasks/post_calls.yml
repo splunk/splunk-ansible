@@ -18,6 +18,7 @@
     body: "{{ item }}"
     validate_certs: false
     status_code: 201,409
+    use_proxy: no
   loop:
     - "{{ dmc_group_cluster_master }}"
     - "{{ dmc_group_indexer }}"
@@ -36,5 +37,6 @@
     body: "member={{ item.name }}&default=false&name=dmc_indexerclustergroup_{{ item.cluster_label }}"
     validate_certs: false
     status_code: 201,409
+    use_proxy: no
   loop: "{{ cluster_label_list_of_dicts }}"
   when: cluster_label_list_of_dicts is defined and item.cluster_label | length > 0
