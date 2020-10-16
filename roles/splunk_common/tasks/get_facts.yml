@@ -70,13 +70,16 @@
 - name: "Set current version fact"
   set_fact:
     splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1') if (manifests.matched == 1) else '0' }}"
+    splunk_current_build_hash: "{{ manifests.files[0].path | regex_search(regexp, '\\3') if (manifests.matched == 1) else '0' }}"
+    splunk_target_build_hash: "{{ splunk.build_location | regex_search(regexp, '\\3') | default('0') }}"
   vars:
-    regexp: 'splunk\D*?-((\d+)\.(\d+)\.(\d+))'
+    regexp: 'splunk\D*?-(\d+\.\d+\.\d+(\.\d+)?)-(.*?)-.*?'
 
-# We are upgrading if it is not a fresh installation and the current version is different from the target version
+# We are upgrading if it is not a fresh installation and the current version is different from the target version,
+# and allowing upgrades between new and old hashes of the same version.
 - name: "Setting upgrade fact"
   set_fact:
-    splunk_upgrade: "{{ 'build_location' in splunk and splunk.build_location and not splunk_install and splunk_target_version and splunk_target_version != splunk_current_version | default(False) }}"
+    splunk_upgrade: "{{ 'build_location' in splunk and splunk.build_location and not splunk_install and splunk_target_version and ((splunk_target_version != splunk_current_version) or (splunk_current_build_hash != splunk_target_build_hash))| default(False) }}"
 
 # determine if we need to set up indexer clusters
 - name: "Setting indexer cluster fact from config"

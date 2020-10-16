@@ -83,7 +83,6 @@ $ docker run -it splunk/splunk:latest create-defaults > default.yml
 If you plan on running Ansible remotely, there are a few key variables you must make sure you define:
 * `splunk.role`: the role this instance will play in the Splunk Enterprise deployment
 * `splunk.build_location`: URL to dynamically fetch the Splunk Enterprise build and install it at run time
-* `splunk.build_remote_src`: this wll be `true` when `splunk.build_location` above is a URL
 * `splunk.password`: default `admin` user password that Splunk will be provisioned with on first-time run
 
 ## Deploy Splunk
