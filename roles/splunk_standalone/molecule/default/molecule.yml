@@ -10,24 +10,24 @@ platforms:
     command: "/lib/systemd/systemd"
     volumes:
       - "/opt/splunk/var"
-  # - name: splunk-standalone-debian10
-  #   image: geerlingguy/docker-debian10-ansible:latest
-  #   pre_build_image: true
-  #   command: "/lib/systemd/systemd"
-  #   volumes:
-  #     - "/opt/splunk/var"
-  # - name: splunk-standalone-debian9
-  #   image: geerlingguy/docker-debian9-ansible:latest
-  #   pre_build_image: true
-  #   command: "/lib/systemd/systemd"
-  #   volumes:
-  #     - "/opt/splunk/var"
-  # - name: splunk-standalone-redhat8
-  #   image: geerlingguy/docker-ubi8-ansible:latest
-  #   pre_build_image: true
-  #   command: "/lib/systemd/systemd"
-  #   volumes:
-  #     - "/opt/splunk/var"
+  - name: splunk-standalone-debian10
+    image: geerlingguy/docker-debian10-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+  - name: splunk-standalone-debian9
+    image: geerlingguy/docker-debian9-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
+  - name: splunk-standalone-redhat8
+    image: geerlingguy/docker-ubi8-ansible:latest
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - "/opt/splunk/var"
 provisioner:
   name: ansible
   env:

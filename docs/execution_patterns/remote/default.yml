@@ -5,7 +5,6 @@ shc_sync_retry_num: 60
 
 splunk:
   build_location: https://download.splunk.com/products/splunk/releases/8.0.2.1/linux/splunk-8.0.2.1-f002026bad55-Linux-x86_64.tgz
-  build_remote_src: true
   admin_user: admin
   allow_upgrade: true
   app_paths:
