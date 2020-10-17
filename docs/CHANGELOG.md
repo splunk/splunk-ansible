@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [8.1.0](#810)
 * [8.0.6](#806)
 * [8.0.5.1](#8051)
 * [8.0.5](#805)
@@ -37,12 +38,26 @@
 
 ---
 
+## 8.1.0
+
+#### What's New?
+* Added environment variables to configure HTTPS on Splunkd. See [Supported environment variables](ADVANCED.md#supported-environment-variables) for details.
+    * `SPLUNKD_SSL_` prefixed environment variables
+    * `splunk.ssl` section in `default.yml`
+
+#### Changes
+* Enabled multisite for the `splunk_monitor` role
+* Enabled local indexing on the license master
+* Bugfixes and cleanup
+
+---
+
 ## 8.0.6
 
 #### What's New?
 * Support for declarative admin password, enabling password updates and rotations. `splunk.password` will always be the password for the admin user and changes to `splunk.password` will drive password reconciliation.
     * `splunk.declarative_admin_password` in `default.yml`
-    * `SPLUNK_DECLARATVE_ADMIN_PASSWORD` environment variable
+    * `SPLUNK_DECLARATIVE_ADMIN_PASSWORD` environment variable
 * Added flag to disable pop-ups and new user tour
     * `splunk.disable_popups` in `default.yml`
     * `SPLUNK_DISABLE_POPUPS` environment variable
