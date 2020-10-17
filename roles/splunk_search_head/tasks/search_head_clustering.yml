@@ -27,6 +27,7 @@
       preferred_captain: "{{ splunk_search_head_captain | bool | lower }}"
     body_format: "form-urlencoded"
     timeout: 10
+    use_proxy: no
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"

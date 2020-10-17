@@ -12,6 +12,7 @@
     validate_certs: false
     status_code: 200,201
     timeout: 10
+    use_proxy: no
   register: dmc_forwarder_build_assets
   no_log: "{{ hide_password }}"
 
@@ -31,6 +32,7 @@
     validate_certs: false
     status_code: 200,201
     timeout: 10
+    use_proxy: no
   no_log: "{{ hide_password }}"
 
 - name: Build forwarder assets
@@ -41,4 +43,5 @@
     password: "{{ splunk.password }}"
     validate_certs: false
     status_code: 200,201
+    use_proxy: no
   no_log: "{{ hide_password }}"
