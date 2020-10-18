@@ -51,7 +51,6 @@
   when:
     - splunk_indexer_cluster | bool
     - item.value | length > 0
-  no_log: "{{ hide_password }}"
   register: default_tcpout_group
 
 # NOTE: If this task is called or used, it will disable all local indexing!
@@ -59,14 +58,12 @@
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/outputs.conf"
     section: "indexAndForward"
-    option: "{{ item.key }}"
-    value: "{{ item.value }}"
+    option: "index"
+    value: "false"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  with_items:
-    - {key: "index", value: "false"}
-  no_log: "{{ hide_password }}"
   register: index_disabling
+  when: splunk.role != "splunk_license_master"
 
 # set up forward servers set by get_facts
 - name: Add forward_servers

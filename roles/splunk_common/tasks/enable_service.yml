@@ -40,41 +40,42 @@
     - splunk_systemd
     - installed_splunk_version[0] is version("7.2.2", "<")
 
-- name: "Update cpu settings"
-  replace:
-    path: "/etc/systemd/system/{{ splunk_service_name }}"
-    regexp: '^ExecStartPost=.*/sys/fs/cgroup/cpu.*$'
-    replace: 'ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/cpu/system.slice/%n"'
-  become: yes
-  become_user: "{{ privileged_user }}"
+- name: Update systemd settings
   when:
     - ansible_system is match("Linux")
     - splunk_systemd
     - installed_splunk_version[0] is version("7.2.2", ">=")
-
-- name: "Update memory settings"
-  replace:
-    path: "/etc/systemd/system/{{ splunk_service_name }}"
-    regexp: '^ExecStartPost=.*/sys/fs/cgroup/memory.*$'
-    replace: 'ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/memory/system.slice/%n"'
   become: yes
   become_user: "{{ privileged_user }}"
-  when:
-    - ansible_system is match("Linux")
-    - splunk_systemd
-    - installed_splunk_version[0] is version("7.2.2", ">=")
+  block:
+  - name: Update cpu cgroup
+    replace:
+      path: "/etc/systemd/system/{{ splunk_service_name }}"
+      regexp: '^ExecStartPost=.*/sys/fs/cgroup/cpu.*$'
+      replace: 'ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/cpu/system.slice/%n"'
+    when: installed_splunk_version[0] is version("8.0.0", "<")
 
-- name: "Disable cgroup systemd settings in Docker"
-  replace:
-    path: "/etc/systemd/system/{{ splunk_service_name }}"
-    regexp: '^ExecStartPost=(.*)$'
-    replace: '#ExecStartPost=\1'
-  become: yes
-  become_user: "{{ privileged_user }}"
-  when:
-    - ansible_system is match("Linux")
-    - splunk_systemd
-    - installed_splunk_version[0] is version("8.0.0", ">=")
+  - name: Update memory cgroup
+    replace:
+      path: "/etc/systemd/system/{{ splunk_service_name }}"
+      regexp: '^ExecStartPost=.*/sys/fs/cgroup/memory.*$'
+      replace: 'ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/memory/system.slice/%n"'
+    when: installed_splunk_version[0] is version("8.0.0", "<")
+
+  - name: Disable cgroup per Splunk version
+    replace:
+      path: "/etc/systemd/system/{{ splunk_service_name }}"
+      regexp: '^ExecStartPost=(.*)$'
+      replace: '#ExecStartPost=\1'
+    when:
+      - installed_splunk_version[0] is version("8.0.0", ">=")
+      - installed_splunk_version[0] is version("8.1.0", "<")
+
+  - name: Remove init.scope pathing
+    replace:
+      path: "/etc/systemd/system/{{ splunk_service_name }}"
+      regexp: '^(ExecStartPost=.*?)\/init.scope\/(.*)'
+      replace: '\1/\2'
 
 - name: "Reload daemons via systemctl - Linux (systemd)"
   become: yes

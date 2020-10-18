@@ -4,6 +4,7 @@
     url: "{{ scheme | default(cert_prefix) }}://{{ splunk_instance_address }}:{{ port | default(splunk.svc_port) }}"
     method: GET
     validate_certs: false
+    use_proxy: no
   register: task_response
   until:
     - task_response.status == 200

@@ -12,6 +12,7 @@
     body_format: "form-urlencoded"
     status_code: 201,409
     timeout: 10
+    use_proxy: no
   register: set_indexer_discovery
   changed_when: set_indexer_discovery.status == 201
   no_log: "{{ hide_password }}"

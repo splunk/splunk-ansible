@@ -11,10 +11,10 @@
       update: "true"
       filename: "true"
       auth: "{{ splunkbase_token }}"
-      mode: 0666
     body_format: "form-urlencoded"
     status_code: [ 200, 201 ]
     timeout: 300
+    use_proxy: no
   when:
     - "'splunkbase.splunk.com' in app_url"
     - splunkbase_token is defined
@@ -83,6 +83,7 @@
       body_format: "form-urlencoded"
       status_code: [ 200, 201 ]
       timeout: 90
+      use_proxy: no
     register: post_apps_local
     until: post_apps_local is succeeded
     retries: 5
