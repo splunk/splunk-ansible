@@ -71,7 +71,7 @@
   set_fact:
     splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1') if (manifests.matched == 1) else '0' }}"
     splunk_current_build_hash: "{{ manifests.files[0].path | regex_search(regexp, '\\3') if (manifests.matched == 1) else '0' }}"
-    splunk_target_build_hash: "{{ splunk.build_location | regex_search(regexp, '\\3') | default('0') }}"
+    splunk_target_build_hash: "{{ splunk.build_location | string | regex_search(regexp, '\\3') | default('0') }}"
   vars:
     regexp: 'splunk\D*?-(\d+\.\d+\.\d+(\.\d+)?)-(.*?)-.*?'
 
