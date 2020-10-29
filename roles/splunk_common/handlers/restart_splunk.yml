@@ -1,6 +1,6 @@
 ---
 - name: "Restart the splunkd service - Via CLI"
-  command: "{{ splunk.exec }} restart -f --answer-yes --accept-license"
+  command: "{{ splunk.exec }} restart --answer-yes --accept-license"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
