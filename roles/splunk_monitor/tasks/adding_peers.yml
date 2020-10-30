@@ -27,9 +27,9 @@
 - name: Create list of peers
   set_fact:
     group_list: "{{ groups['splunk_indexer'] | default([]) }} + {{ groups['splunk_search_head'] | default([]) }} + {{ groups['splunk_search_head_captain'] | default([]) }} + {{ groups['splunk_cluster_master'] | default([]) }} + {{ groups['splunk_deployment_server']| default([]) }} + {{ groups['splunk_license_master'] | default([]) }} + {{ groups['splunk_standalone'] | default([]) }}"
-    
+
 - name: Update group_list
-  set_fact: 
+  set_fact:
     updated_group_list: "{{ updated_group_list }} + [ '{{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }}' ]"
   with_items: "{{ group_list }}"
 
