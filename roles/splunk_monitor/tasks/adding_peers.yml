@@ -12,15 +12,32 @@
     use_proxy: no
   register: distsearch_server_info
 
-- name: Initialize current group list
+- name: Initialize lists
   set_fact:
     current_group_list: []
+    remove_peer_list: []
+    updated_group_list: []
 
 - name: Create list of current peers
   set_fact:
     current_group_list: "{{ current_group_list }} + [ '{{ item }}' ]"
   with_items: "{{ distsearch_server_info['json']['entry'][0]['content']['servers'].split(',') }}"
   when: distsearch_server_info['json']['entry'][0]['content']['servers'] is defined and (distsearch_server_info['json']['entry'][0]['content']['servers']| length > 0)
+
+- name: Create list of peers
+  set_fact:
+    group_list: "{{ groups['splunk_indexer'] | default([]) }} + {{ groups['splunk_search_head'] | default([]) }} + {{ groups['splunk_search_head_captain'] | default([]) }} + {{ groups['splunk_cluster_master'] | default([]) }} + {{ groups['splunk_deployment_server']| default([]) }} + {{ groups['splunk_license_master'] | default([]) }} + {{ groups['splunk_standalone'] | default([]) }}"
+    
+- name: Update group_list
+  set_fact: 
+    updated_group_list: "{{ updated_group_list }} + [ '{{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }}' ]"
+  with_items: "{{ group_list }}"
+
+- name: Non-existent peers list
+  set_fact:
+    remove_peer_list: "{{ remove_peer_list }} + [ '{{ item }}' ]"
+  with_items: "{{ current_group_list }}"
+  when: item not in updated_group_list and current_group_list is defined and (current_group_list| length > 0)
 
 - name: Remove search peers
   command: "{{ splunk.exec }} remove search-server {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -remoteUsername {{ splunk.admin_user }} -remotePassword {{ splunk.password }}"
@@ -35,12 +52,8 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
-  with_items: "{{ current_group_list }}"
-  when: current_group_list is defined and (current_group_list| length > 0)
-
-- name: Create list of peers
-  set_fact:
-    group_list: "{{ groups['splunk_indexer'] | default([]) }} + {{ groups['splunk_search_head'] | default([]) }} + {{ groups['splunk_search_head_captain'] | default([]) }} + {{ groups['splunk_cluster_master'] | default([]) }} + {{ groups['splunk_deployment_server']| default([]) }} + {{ groups['splunk_license_master'] | default([]) }} + {{ groups['splunk_standalone'] | default([]) }}"
+  with_items: "{{ remove_peer_list }}"
+  when: remove_peer_list is defined and (remove_peer_list| length > 0)
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
