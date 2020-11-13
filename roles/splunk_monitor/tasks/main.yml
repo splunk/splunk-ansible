@@ -18,6 +18,10 @@
   register: server_info
   no_log: "{{ hide_password }}"
 
+- name: Pause for getting updated distributed peers list
+  wait_for:
+    timeout: 3
+
 - name: Fetch distributed peers
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json"
