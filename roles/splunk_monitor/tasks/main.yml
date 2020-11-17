@@ -18,6 +18,32 @@
   register: server_info
   no_log: "{{ hide_password }}"
 
+- name: Initialize lists
+  set_fact:
+    cluster_master_peers: []
+
+- name: Fetch clusterMaster peers
+  uri:
+    url: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}/services/cluster/master/peers?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200
+    timeout: 10
+    return_content: yes
+    use_proxy: no
+  register: clusterMaster_peers_info
+  no_log: "{{ hide_password }}"
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+
+- name: Create list of clusterMaster peers
+  set_fact:
+    cluster_master_peers: "{{ cluster_master_peers }} + [ '{{ item }}' ]"
+  with_items: "{{ clusterMaster_peers_info['json']['entry'] | selectattr('content.host_port_pair','defined') | map(attribute='content.host_port_pair') }}"
+  when: clusterMaster_peers_info['json']['entry'] | selectattr('content.host_port_pair','defined')
+
 - name: Fetch distributed peers
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json"
@@ -31,7 +57,7 @@
     use_proxy: no
   register: distributed_info
   no_log: "{{ hide_password }}"
-  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0
+  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0 and cluster_master_peers[0] in distributed_info['json']['entry'] | map(attribute='name')
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
