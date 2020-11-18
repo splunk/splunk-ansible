@@ -35,6 +35,7 @@
     use_proxy: no
   register: clusterMaster_peers_info
   no_log: "{{ hide_password }}"
+  when: splunk_indexer_cluster or splunk.multisite_master is defined
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
@@ -42,7 +43,25 @@
   set_fact:
     cluster_master_peers: "{{ cluster_master_peers }} + [ '{{ item }}' ]"
   with_items: "{{ clusterMaster_peers_info['json']['entry'] | selectattr('content.host_port_pair','defined') | map(attribute='content.host_port_pair') }}"
-  when: clusterMaster_peers_info['json']['entry'] | selectattr('content.host_port_pair','defined')
+  when: splunk_indexer_cluster or splunk.multisite_master is defined
+
+- name: Fetch distributed peers when cm defined
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    validate_certs: false
+    status_code: 200
+    timeout: 10
+    return_content: yes
+    use_proxy: no
+  register: distributed_info
+  no_log: "{{ hide_password }}"
+  when: splunk_indexer_cluster or splunk.multisite_master is defined
+  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0 and cluster_master_peers is defined and (cluster_master_peers| length > 0) and cluster_master_peers[0] in distributed_info['json']['entry'] | map(attribute='name')
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
 
 - name: Fetch distributed peers
   uri:
@@ -57,7 +76,8 @@
     use_proxy: no
   register: distributed_info
   no_log: "{{ hide_password }}"
-  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0 and cluster_master_peers[0] in distributed_info['json']['entry'] | map(attribute='name')
+  when: splunk_indexer_cluster or splunk.multisite_master is not defined
+  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
