@@ -45,7 +45,7 @@
   with_items: "{{ clusterMaster_peers_info['json']['entry'] | selectattr('content.host_port_pair','defined') | map(attribute='content.host_port_pair') }}"
   when: splunk_indexer_cluster or splunk.multisite_master is defined
 
-- name: Fetch distributed peers when cm defined
+- name: Fetch distributed peers when cm is defined
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json"
     method: GET
@@ -59,7 +59,7 @@
   register: distributed_info
   no_log: "{{ hide_password }}"
   when: splunk_indexer_cluster or splunk.multisite_master is defined
-  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0 and cluster_master_peers is defined and (cluster_master_peers| length > 0) and cluster_master_peers[0] in distributed_info['json']['entry'] | map(attribute='name')
+  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0 and cluster_master_peers is defined and (cluster_master_peers| length > 0) and (cluster_master_peers[0] in (distributed_info['json']['entry'] | map(attribute='name') | list))
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
