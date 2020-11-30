@@ -121,6 +121,7 @@ def getDefaultVars():
     # in order to rectify multisite replication and search factors
     getMultisite(defaultVars)
     getSplunkWebSSL(defaultVars)
+    getSplunkdSSL(defaultVars)
     getDistributedTopology(defaultVars)
     getLicenses(defaultVars)
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
@@ -273,6 +274,8 @@ def getSplunkdSSL(vars_scope):
     enable = os.environ.get("SPLUNKD_SSL_ENABLE", "")
     if enable.lower() == "false":
         ssl_vars["enable"] = False
+        vars_scope["cert_prefix"] = "http"
+    
 
 def getDistributedTopology(vars_scope):
     """
