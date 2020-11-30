@@ -433,6 +433,10 @@ splunk:
     * Determine the secret used to enable indexer discovery (for any forwarding clients connecting to the cluster master). This is pass4SymmKey in the `[indexer_discovery]` stanza of server.conf.
     * Default: null
 
+  multisite_master:
+  * Specify the location of the multisite cluster
+  * Default: null
+
   multisite_master_port:
   * Specify the management port of the multisite cluster master
   * Default: 8089
@@ -452,6 +456,14 @@ splunk:
   multisite_search_factor_total:
   * Determine site-level search replication factor when in a multisite environment
   * Default: 3
+
+  site:
+  * Define the site of this particular Splunk Enterprise instance when in a multisite environment
+  * Default: null
+
+  all_sites:
+  * Define all sites of the topology when in a multisite environment
+  * Default: null
 
   set_search_peers: <bool>
   * Feature-flag to disable the automatic peering from the search tier to the indexer tier (cluster master or indexers directly). It is discouraged to change this to false, but it is exposed for the purposes of testing and isolating the groups.
