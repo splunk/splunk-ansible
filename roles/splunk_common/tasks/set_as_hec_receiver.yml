@@ -48,7 +48,7 @@
   register: delete_hec_token
   changed_when: delete_hec_token.status == 200
   when:
-    - hec_token.status == 200
+    - hec_token is defined and hec_token.status == 200
     - ('hec' in splunk and 'token' in splunk.hec and hec_token.json['entry'][0]['content']['token'] != splunk.hec.token) or ('hec_token' in splunk and hec_token.json['entry'][0]['content']['token'] != splunk.hec_token)
   no_log: "{{ hide_password }}"
 
