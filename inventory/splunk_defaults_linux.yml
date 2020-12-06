@@ -97,9 +97,9 @@ splunk:
         discoveryPass4SymmKey:
         label: "idxc_label"
         search_factor: 3
-        register_forwarder_address: false
-        register_replication_address: false
-        register_search_address: false
+        register_forwarder_address: False
+        register_replication_address: False
+        register_search_address: False
         replication_factor: 3
         replication_port: 9887
     dfs:

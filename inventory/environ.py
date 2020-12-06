@@ -190,6 +190,9 @@ def getIndexerClustering(vars_scope):
     if inventory.get("splunk_indexer"):
         # If there are indexers, we need to make sure the replication factor is <= number of indexers
         indexer_count = len(inventory["splunk_indexer"].get("hosts", []))
+        idxc_vars["register_forwarder_address"] = bool(os.environ.get('SPLUNK_IDXC_REGISTER_FORWARDER_ADDRESS', idxc_vars.get("register_forwarder_address")))
+        idxc_vars["register_replication_address"] = bool(os.environ.get('SPLUNK_IDXC_REGISTER_REPLICATION_ADDRESS', idxc_vars.get("register_replication_address")))
+        idxc_vars["register_search_address"] = bool(os.environ.get('SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS', idxc_vars.get("register_search_address")))
     else:
         # Only occurs during create-defaults generation or topologies without indexers
         indexer_count = idxc_vars.get("replication_factor", 1)
@@ -496,9 +499,6 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["user"] = os.environ.get("SPLUNK_USER", vars_scope["splunk"]["user"])
     vars_scope["splunk"]["group"] = os.environ.get("SPLUNK_GROUP", vars_scope["splunk"]["group"])
     vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
-    vars_scope["splunk"]["idxc"]["register_forwarder_address"] = os.environ.get('SPLUNK_IDXC_REGISTER_FORWARDER_ADDRESS', vars_scope["splunk"]["idxc"]["register_forwarder_address"])
-    vars_scope["splunk"]["idxc"]["register_replication_address"] = os.environ.get('SPLUNK_IDXC_REGISTER_REPLICATION_ADDRESS', vars_scope["splunk"]["idxc"]["register_replication_address"])
-    vars_scope["splunk"]["idxc"]["register_search_address"] = os.environ.get('SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS', vars_scope["splunk"]["idxc"]["register_search_address"])    
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
