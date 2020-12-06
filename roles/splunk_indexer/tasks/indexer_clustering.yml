@@ -3,6 +3,33 @@
   vars:
     splunk_instance_address: "{{ splunk.cluster_master_url }}"
 
+- name: Set register_replication_address
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: clustering
+    option: "register_replication_address"
+    value: "{{ ansible_fqdn }}"
+
+- name: Set register_forwarder_address
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: clustering
+    option: "register_forwarder_address"
+    value: "{{ ansible_fqdn }}"
+
+- name: Set register_search_address
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: clustering
+    option: "register_search_address"
+    value: "{{ ansible_fqdn }}"
+
 - name: Set current node as indexer cluster peer
   command: "{{ splunk.exec }} edit cluster-config -mode slave -master_uri '{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}' -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
@@ -16,39 +43,3 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
-
-- name: Set register_replication_address
-  become: yes
-  become_user: "{{ splunk.user }}"
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: clustering
-    option: "register_replication_address"
-    value: "{{ ansible_fqdn }}"
-    when: splunk.idxc.register_replication_address | bool
-  notify:
-    - Restart the splunkd service
-
-- name: Set register_forwarder_address
-  become: yes
-  become_user: "{{ splunk.user }}"
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: clustering
-    option: "register_forwarder_address"
-    value: "{{ ansible_fqdn }}"
-    when: splunk.idxc.register_forwarder_address | bool
-  notify:
-    - Restart the splunkd service
-
-- name: Set register_search_address
-  become: yes
-  become_user: "{{ splunk.user }}"
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: clustering
-    option: "register_search_address"
-    value: "{{ ansible_fqdn }}"
-    when: splunk.idxc.register_search_address  | bool
-  notify:
-    - Restart the splunkd service
