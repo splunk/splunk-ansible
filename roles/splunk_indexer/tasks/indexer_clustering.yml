@@ -16,3 +16,39 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
+
+- name: Set register_replication_address
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: clustering
+    option: "register_replication_address"
+    value: "{{ splunk.idxc.register_replication_address }}"
+    when: splunk.idxc.register_replication_address != ""
+  notify:
+    - Restart the splunkd service
+
+- name: Set register_forwarder_address
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: clustering
+    option: "register_forwarder_address"
+    value: "{{ splunk.idxc.register_forwarder_address }}"
+    when: splunk.idxc.register_forwarder_address != ""
+  notify:
+    - Restart the splunkd service
+
+- name: Set register_search_address
+  become: yes
+  become_user: "{{ splunk.user }}"
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: clustering
+    option: "register_search_address"
+    value: "{{ splunk.idxc.register_search_address }}"
+    when: splunk.idxc.register_search_address != ""
+  notify:
+    - Restart the splunkd service
