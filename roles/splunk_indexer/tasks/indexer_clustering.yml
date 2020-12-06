@@ -24,8 +24,8 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: clustering
     option: "register_replication_address"
-    value: "{{ splunk.idxc.register_replication_address }}"
-    when: splunk.idxc.register_replication_address != ""
+    value: "{{ ansible_fqdn }}"
+    when: splunk.idxc.register_replication_address | bool
   notify:
     - Restart the splunkd service
 
@@ -36,8 +36,8 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: clustering
     option: "register_forwarder_address"
-    value: "{{ splunk.idxc.register_forwarder_address }}"
-    when: splunk.idxc.register_forwarder_address != ""
+    value: "{{ ansible_fqdn }}"
+    when: splunk.idxc.register_forwarder_address | bool
   notify:
     - Restart the splunkd service
 
@@ -48,7 +48,7 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: clustering
     option: "register_search_address"
-    value: "{{ splunk.idxc.register_search_address }}"
-    when: splunk.idxc.register_search_address != ""
+    value: "{{ ansible_fqdn }}"
+    when: splunk.idxc.register_search_address  | bool
   notify:
     - Restart the splunkd service
