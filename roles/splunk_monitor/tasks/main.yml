@@ -58,8 +58,10 @@
     use_proxy: no
   register: distributed_info
   no_log: "{{ hide_password }}"
-  when: splunk_indexer_cluster or splunk.multisite_master is defined
-  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0 and cluster_master_peers is defined and (cluster_master_peers| length > 0) and (cluster_master_peers[0] in (distributed_info['json']['entry'] | map(attribute='name') | list))
+  when:
+    - splunk_indexer_cluster or splunk.multisite_master is defined
+    - cluster_master_peers is defined and (cluster_master_peers | length > 0)
+  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0 and (cluster_master_peers[0] in (distributed_info['json']['entry'] | map(attribute='name') | list))
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
