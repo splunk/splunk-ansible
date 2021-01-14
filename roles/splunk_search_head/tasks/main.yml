@@ -44,7 +44,7 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
-    - splunk.apps_location
+    - "'apps_location' in splunk and splunk.apps_location"
     - not splunk_search_head_cluster | bool
     - splunk.deployment_server is not defined or not splunk.deployment_server
 
