@@ -8,13 +8,16 @@
 
     - block:
         - name: Execute pre-setup playbooks
+          loop: "{{ ansible_pre_tasks }}"
+          loop_control:
+            loop_var: ansible_pre_tasks_item
           include_tasks: execute_adhoc_plays.yml
           vars:
-            playbook: "{{ ansible_pre_tasks }}"
+            playbook: "{{ ansible_pre_tasks_item }}"
           when:
-            - ansible_pre_tasks is defined
-            - ansible_pre_tasks is not none
-            - ansible_pre_tasks is match("^(http|https|file)://.*")
+            - ansible_pre_tasks_item is defined
+            - ansible_pre_tasks_item is not none
+            - ansible_pre_tasks_item is match("^(http|https|file)://.*")
 
         - name: Provision role
           include_role:
@@ -23,13 +26,16 @@
             - splunk.role is defined
 
         - name: Execute post-setup playbooks
+          loop: "{{ ansible_post_tasks }}"
+          loop_control:
+            loop_var: ansible_post_tasks_item
           include_tasks: execute_adhoc_plays.yml
           vars:
-            playbook: "{{ ansible_post_tasks }}"
+            playbook: "{{ ansible_post_tasks_item }}"
           when:
-            - ansible_post_tasks is defined
-            - ansible_post_tasks is not none
-            - ansible_post_tasks is match("^(http|https|file)://.*")
+            - ansible_post_tasks_item is defined
+            - ansible_post_tasks_item is not none
+            - ansible_post_tasks_item is match("^(http|https|file)://.*")
 
         - name: Check all instances for required restarts
           include_tasks: ./roles/splunk_common/tasks/check_for_required_restarts.yml
