@@ -411,12 +411,32 @@ def getLaunchConf(vars_scope):
         launch.update({k:v for k,v in [x.split("=", 1) for x in settings.split(",")]})
     vars_scope["splunk"]["launch"] = launch
 
+def ensureListValue(value, separator):
+    if isinstance(value, list):
+        return value
+    elif (not value) or (not value.strip()):
+        return []
+    else:
+        return splitAndStrip(value, separator)
+
+def splitAndStrip(value, separator):
+    if not value:
+        return []
+    return [x.strip() for x in value.split(separator)]
+
+def transformEnvironmentVariable(environmentVariableName, transform, default):
+    if environmentVariableName in os.environ:
+        return transform(os.environ.get(environmentVariableName))
+    else:
+        return default
+
 def getAnsibleContext(vars_scope):
     """
     Parse parameters that influence Ansible execution
     """
-    vars_scope["ansible_pre_tasks"] = os.environ.get("SPLUNK_ANSIBLE_PRE_TASKS", vars_scope.get("ansible_pre_tasks"))
-    vars_scope["ansible_post_tasks"] = os.environ.get("SPLUNK_ANSIBLE_POST_TASKS", vars_scope.get("ansible_post_tasks"))
+    stringSeparator = ","
+    vars_scope["ansible_pre_tasks"] = transformEnvironmentVariable("SPLUNK_ANSIBLE_PRE_TASKS", lambda v: splitAndStrip(v, stringSeparator), ensureListValue(vars_scope.get("ansible_pre_tasks"), stringSeparator))
+    vars_scope["ansible_post_tasks"] = transformEnvironmentVariable("SPLUNK_ANSIBLE_POST_TASKS", lambda v: splitAndStrip(v, stringSeparator), ensureListValue(vars_scope.get("ansible_post_tasks"), stringSeparator))
     vars_scope["ansible_environment"] = vars_scope.get("ansible_environment") or {}
     env = os.environ.get("SPLUNK_ANSIBLE_ENV")
     if env:
