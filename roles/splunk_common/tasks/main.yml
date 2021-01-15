@@ -42,11 +42,11 @@
   when:
     - java_version is defined and java_version
 
+# This needs to be done before any encrypted passkeys are generated, and before first call to splunk status
+- include_tasks: set_splunk_secret.yml
+
 - include_tasks: set_general_symmkey_password.yml
   when: "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
-
-# This needs to be done before any encrypted passkeys are generated
-- include_tasks: set_splunk_secret.yml
 
 - include_tasks: enable_admin_auth.yml
 

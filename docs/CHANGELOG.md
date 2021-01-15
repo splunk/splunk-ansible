@@ -2,9 +2,11 @@
 
 ## Navigation
 
+* [8.1.1](#811)
 * [8.1.0.1](#8101)
 * [8.1.0](#810)
 * [8.0.7](#807)
+* [8.0.6.1](#8061)
 * [8.0.6](#806)
 * [8.0.5.1](#8051)
 * [8.0.5](#805)
@@ -41,6 +43,14 @@
 
 ---
 
+## 8.1.1
+
+#### Changes
+* Fetches peer node data for DMC
+* Bugfixes and documentation updates
+
+---
+
 ## 8.1.0.1
 
 #### Changes
@@ -69,6 +79,16 @@ Syncing with latest codebase - currently up to sync with 8.1.0.
 
 #### Changes
 * See [8.1.0](#810) changes above.
+
+---
+
+## 8.0.6.1
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.1.1.
+
+#### Changes
+* See [8.1.1](#811) changes above.
 
 ---
 
