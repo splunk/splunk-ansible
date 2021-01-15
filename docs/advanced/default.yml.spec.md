@@ -10,13 +10,13 @@
 The following is the full spec file for a `default.yml` that controls how Splunk gets provisioned.
 
 ```
-ansible_post_tasks: <str>
-* Comma-separated list of paths or URLs to custom Ansible playbooks to run AFTER Splunk has been setup using the provided site.yml
-* Default: null
+ansible_post_tasks: <list>
+* list of paths or URLs to custom Ansible playbooks to run AFTER Splunk has been setup using the provided site.yml
+* Default: []
 
-ansible_pre_tasks: <str>
-* Comma-separated list of paths or URLs to custom Ansible playbooks to run BEFORE Splunk sets up using the provided site.yml
-* Default: null
+ansible_pre_tasks: <list>
+* list of paths or URLs to custom Ansible playbooks to run BEFORE Splunk sets up using the provided site.yml
+* Default: []
 
 ansible_environment: <dict>
 * Map of environment variables used only during the execution context of all the Ansible tasks. For more information, see https://docs.ansible.com/ansible/latest/user_guide/playbooks_environment.html
