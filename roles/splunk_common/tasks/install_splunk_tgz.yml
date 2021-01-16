@@ -9,6 +9,9 @@
     mode: 0666
   when: splunk.build_location is match("^(https?)://.*")
   register: download_result
+  until: download_result is succeeded
+  retries: 5
+  delay: "{{ retry_delay }}"
   become: yes
   become_user: "{{ privileged_user }}"
 
