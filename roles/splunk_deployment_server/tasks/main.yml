@@ -2,8 +2,7 @@
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
 - include_tasks: create_deployment_apps.yml
-  when:
-    - splunk.apps_location
+  when: "'apps_location' in splunk and splunk.apps_location"
 
 - include_tasks: generate_server_classes.yml
 

@@ -13,8 +13,7 @@
   when: splunk.add is defined
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
-  when:
-    - splunk.apps_location
+  when: "'apps_location' in splunk and splunk.apps_location"
 
 - name: Execute Splunk commands
   command: "{{ splunk.exec }} {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
