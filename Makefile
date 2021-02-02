@@ -8,7 +8,7 @@ test-setup:
 	pip install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 py3k-test-setup:
-	pip3 install pip==20.3.3
+	pip3 install --upgrade pip
 	pip3 install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 lint: test-setup
