@@ -2,7 +2,7 @@ version: 2
 jobs:
   splunk-ansible-test:
     machine:
-      image: circleci/classic:latest
+      image: ubuntu-1604:202007-01
     steps:
       - checkout
       - run:
@@ -24,12 +24,14 @@ jobs:
           path: tests/results
   py3k-splunk-ansible-test:
     machine:
-      image: circleci/classic:latest
+      image: ubuntu-1604:202007-01
     steps:
       - checkout
       - run:
           name: Setup Python3
-          command: pyenv global 2.7.12 3.5.2
+          command: |
+            pyenv install 2.7.12
+            pyenv global 2.7.12 3.7.6
       - run:
           name: Run small tests
           command: make py3k-small-tests
