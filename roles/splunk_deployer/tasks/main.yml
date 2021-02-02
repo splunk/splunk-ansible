@@ -51,22 +51,20 @@
   delay: "{{ retry_delay }}"
   when:
     - splunk_search_head_cluster | bool
-    - splunk.apps_location
+    - "'apps_location' in splunk and splunk.apps_location"
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
-    - splunk.apps_location
+    - "'apps_location' in splunk and splunk.apps_location"
     - splunk.deployment_server is not defined or not splunk.deployment_server
 
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when: splunk.deployment_server is defined and splunk.deployment_server
 
 - include_tasks: push_apps_to_search_heads.yml
-  when:
-    - splunk.apps_location
+  when: "'apps_location' in splunk and splunk.apps_location"
 
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
-  when:
-    - splunk.apps_location
+  when: "'apps_location' in splunk and splunk.apps_location"
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
