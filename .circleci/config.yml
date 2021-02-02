@@ -1,9 +1,14 @@
 version: 2.1
 
-jobs:
-  splunk-ansible-test:
+executors:
+  circleci_large:
     machine:
       image: ubuntu-1604:202007-01
+    resource_class: large
+
+jobs:
+  splunk-ansible-test:
+    executor: circleci_large
     steps:
       - checkout
       - run:
@@ -24,8 +29,7 @@ jobs:
       - store_test_results:
           path: tests/results
   py3k-splunk-ansible-test:
-    machine:
-      image: ubuntu-1604:202007-01
+    executor: circleci_large
     steps:
       - checkout
       - run:
