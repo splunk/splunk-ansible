@@ -1,4 +1,5 @@
-version: 2
+version: 2.1
+
 jobs:
   splunk-ansible-test:
     machine:
@@ -30,7 +31,8 @@ jobs:
       - run:
           name: Setup Python3
           command: |
-            pyenv install 2.7.12
+            pyenv versions
+            pyenv install -s 2.7.12
             pyenv global 2.7.12 3.7.6
       - run:
           name: Run small tests
