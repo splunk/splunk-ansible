@@ -4,7 +4,7 @@ executors:
   circleci_large:
     machine:
       image: ubuntu-1604:202007-01
-    resource_class: xlarge
+    resource_class: large
 
 jobs:
   splunk-ansible-test:
