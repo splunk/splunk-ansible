@@ -124,8 +124,8 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT | When fetching a remote `default.yml`, specify the timeout of the request | no | no | no |
 | SPLUNK_DEFAULTS_HTTP_MAX_RETRIES | When fetching a remote `default.yml`, the number of retries to make. For unlimited retries, use `-1` | no | no | no |
 | SPLUNK_DEFAULTS_HTTP_MAX_DELAY | When fetching a remote `default.yml`, specify the delay between each retry | no | no | no |
-| SPLUNK_ANSIBLE_PRE_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed before `site.yml`. Must include the protocol, ie it must match the regex "^(http\|https\|file)://.*". | no | no | no |
-| SPLUNK_ANSIBLE_POST_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed after `site.yml`. Must include the protocol, ie it must match the regex "^(http\|https\|file)://.*". | no | no | no |
+| SPLUNK_ANSIBLE_PRE_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed before `site.yml`. Must include the protocol, ie it must match the regex `^(http\|https\|file)://.*` | no | no | no |
+| SPLUNK_ANSIBLE_POST_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed after `site.yml`. Must include the protocol, ie it must match the regex `^(http\|https\|file)://.*` | no | no | no |
 | SPLUNK_ANSIBLE_ENV | Pass in a comma-separated list of "key=value" pairs that will be mapped to environment variables used during `site.yml` execution | no | no | no |
 | SPLUNK_CONNECTION_TIMEOUT | Configures splunkdConnectionTimeout in `web.conf` with passed integer value (in seconds) | no | no | no |
 | SPLUNK_ES_SSL_ENABLEMENT | Set the ssl-enablement flag in ES.  Valid values are 'auto', 'strict', and 'ignore'. Defaults to auto when present. | no | no | no |
