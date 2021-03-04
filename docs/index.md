@@ -33,5 +33,5 @@ See the [Ansible User Guide](https://docs.ansible.com/ansible/latest/user_guide/
 * [Advanced Usage](ADVANCED.md)
 * [Architecture](ARCHITECTURE.md)
 * [Contributing](CONTRIBUTING.md)
-* [License](LICENSE.md)
 * [Changelog](CHANGELOG.md)
+* [License](LICENSE.md)
