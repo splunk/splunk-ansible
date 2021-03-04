@@ -124,7 +124,7 @@ def getDefaultVars():
     getSplunkdSSL(defaultVars)
     getDistributedTopology(defaultVars)
     getLicenses(defaultVars)
-    defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
+    defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', defaultVars["splunk"].get("role") or "splunk_standalone")
     # Determine DMC settings
     defaultVars["dmc_forwarder_monitoring"] = os.environ.get('DMC_FORWARDER_MONITORING', False)
     defaultVars["dmc_asset_interval"] = os.environ.get('DMC_ASSET_INTERVAL', '3,18,33,48 * * * *')
