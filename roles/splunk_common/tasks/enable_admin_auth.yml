@@ -24,6 +24,8 @@
     loop_control:
       label: "{{ item.opt }}"
     when: ansible_system is match("Linux")
+    become: yes
+    become_user: "{{ splunk.user }}"
     no_log: "{{ hide_password }}"
 
   - name: "Generate user-seed.conf (Windows)"

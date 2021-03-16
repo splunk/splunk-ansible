@@ -11,6 +11,9 @@
     use_proxy: no
   register: restart_required
   changed_when: restart_required.status == 200
+  until: restart_required is succeeded
+  retries: 5
+  delay: "{{ retry_delay }}"
   no_log: "{{ hide_password }}"
   notify:
     - Restart the splunkd service
