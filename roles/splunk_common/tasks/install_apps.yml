@@ -64,7 +64,7 @@
     become_user: "{{ splunk.user }}"
     no_log: "{{ hide_password }}"
     when:
-      - "'itsi' in app_contents.stdout_lines"
+      - "'itsi' in app_contents.stdout_lines or 'DA-ITSI-ContentLibrary' in app_contents.stdout_lines"
       - app_remote is changed or app_local.stat.exists
     notify:
       - Restart the splunkd service
@@ -91,5 +91,6 @@
     changed_when: post_apps_local.status == 201
     when:
       - "'itsi' not in app_contents.stdout_lines"
+      - "'DA-ITSI-ContentLibrary' not in app_contents.stdout_lines"
       - app_remote is changed or app_local.stat.exists
     no_log: "{{ hide_password }}"
