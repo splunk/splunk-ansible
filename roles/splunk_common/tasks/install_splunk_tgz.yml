@@ -6,6 +6,7 @@
     group: "{{ splunk.group }}"
     headers: '{% if splunk.build_url_bearer_token %}{"Authorization": "Bearer {{ splunk.build_url_bearer_token }}"}{% else %}{}{% endif %}'
     validate_certs: no
+    timeout: 900
     mode: 0666
   when: splunk.build_location is match("^(https?)://.*")
   register: download_result
