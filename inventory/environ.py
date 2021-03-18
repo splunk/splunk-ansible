@@ -124,7 +124,7 @@ def getDefaultVars():
     getSplunkdSSL(defaultVars)
     getDistributedTopology(defaultVars)
     getLicenses(defaultVars)
-    defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', 'splunk_standalone')
+    defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', defaultVars["splunk"].get("role") or "splunk_standalone")
     # Determine DMC settings
     defaultVars["dmc_forwarder_monitoring"] = os.environ.get('DMC_FORWARDER_MONITORING', False)
     defaultVars["dmc_asset_interval"] = os.environ.get('DMC_ASSET_INTERVAL', '3,18,33,48 * * * *')
@@ -351,6 +351,8 @@ def getSplunkbaseToken(vars_scope):
         if resp.status_code != 200:
             raise Exception("Invalid Splunkbase credentials - will not download apps from Splunkbase")
         output = resp.content
+        if isinstance(output, bytes):
+            output = output.decode("utf-8", "ignore")
         splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
         vars_scope["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
 
@@ -644,7 +646,10 @@ def mergeDefaultsFromURL(vars_scope, url, headers=None, verify=False):
             resp = requests.get(url.format(hostname=HOSTNAME, platform=PLATFORM),
                                 headers=headers, timeout=max_timeout, verify=verify)
             resp.raise_for_status()
-            vars_scope = merge_dict(vars_scope, yaml.load(resp.content, Loader=yaml.Loader))
+            output = resp.content
+            if isinstance(output, bytes):
+                output = output.decode("utf-8", "ignore")
+            vars_scope = merge_dict(vars_scope, yaml.load(output, Loader=yaml.Loader))
             break
         except Exception as err:
             if unlimited_retries or current_retry < max_retries:

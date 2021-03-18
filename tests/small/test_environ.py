@@ -698,19 +698,24 @@ def test_getSplunkBuild(default_yml, os_env, build, build_url_bearer_token):
     assert vars_scope["splunk"]["build_location"] == build
     assert vars_scope["splunk"]["build_url_bearer_token"] == build_url_bearer_token
 
-@pytest.mark.parametrize(("default_yml", "trigger_splunkbase"),
+@pytest.mark.parametrize(("default_yml", "response_content", "trigger_splunkbase"),
                          [
-                            ({}, False),
-                            ({"splunkbase_username": "ocho"}, False),
-                            ({"splunkbase_password": "cinco"}, False),
-                            ({"splunkbase_username": "ocho", "splunkbase_password": "cinco"}, True),
-                            ({"splunkbase_username": "", "splunkbase_password": ""}, False),
+                            ({}, "<id>123abc</id>", False),
+                            ({"splunkbase_username": "ocho"}, "<id>123abc</id>", False),
+                            ({"splunkbase_password": "cinco"}, "<id>123abc</id>", False),
+                            ({"splunkbase_username": "ocho", "splunkbase_password": "cinco"}, "<id>123abc</id>", True),
+                            ({"splunkbase_username": "", "splunkbase_password": ""}, "<id>123abc</id>", False),
+                            ({}, "<id>123abc</id>", False),
+                            ({"splunkbase_username": "ocho"}, b"<id>123abc</id>", False),
+                            ({"splunkbase_password": "cinco"}, b"<id>123abc</id>", False),
+                            ({"splunkbase_username": "ocho", "splunkbase_password": "cinco"}, b"<id>123abc</id>", True),
+                            ({"splunkbase_username": "", "splunkbase_password": ""}, b"<id>123abc</id>", False),
                          ]
                         )
-def test_getSplunkbaseToken(default_yml, trigger_splunkbase):
+def test_getSplunkbaseToken(default_yml, response_content, trigger_splunkbase):
     vars_scope = default_yml
     with patch("environ.requests.post") as mock_post:
-        mock_post.return_value = MagicMock(status_code=200, content="<id>123abc</id>")
+        mock_post.return_value = MagicMock(status_code=200, content=response_content)
         with patch("os.environ", new=dict()):
             environ.getSplunkbaseToken(vars_scope)
         # Make sure Splunkbase token is populated when appropriate

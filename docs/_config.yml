@@ -1,3 +1,4 @@
+include: [ 'CONTRIBUTING.md', 'LICENSE.md' ]
 relative_links:
   enabled: true
   collections: true
