@@ -4,7 +4,7 @@ SHELL := /bin/bash
 
 test-setup:
 	@echo 'Install test requirements'
-	pip install --upgrade pip
+	pip install pip==20.3.4
 	pip install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 py3k-test-setup:
@@ -15,7 +15,7 @@ lint: test-setup
 	ansible-lint -v -c ./tests/ansible-lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml
 
 py3k-lint: test-setup 
-	# We're treating each file separately here, because of their scarsity
+	# We're treating each file separately here, because of their scarcity
 	# This will need to be re-evaluated if a full blown module gets in here
 	pylint --py3k $(shell find . -name "*.py")
 	caniusepython3 -r tests/requirements.txt

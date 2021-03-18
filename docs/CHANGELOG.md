@@ -2,9 +2,11 @@
 
 ## Navigation
 
+* [8.1.2](#812)
 * [8.1.1](#811)
 * [8.1.0.1](#8101)
 * [8.1.0](#810)
+* [8.0.8](#808)
 * [8.0.7](#807)
 * [8.0.6.1](#8061)
 * [8.0.6](#806)
@@ -17,6 +19,7 @@
 * [8.0.2](#802)
 * [8.0.1](#801)
 * [8.0.0](#800)
+* [7.3.9](#739)
 * [7.3.8](#738)
 * [7.3.7](#737)
 * [7.3.6](#736)
@@ -40,6 +43,13 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.1.2
+
+#### Changes
+* Bugfixes and documentation updates
 
 ---
 
@@ -69,6 +79,16 @@
 * Enabled multisite for the `splunk_monitor` role
 * Enabled local indexing on the license master
 * Bugfixes and cleanup
+
+---
+
+## 8.0.8
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.1.1.
+
+#### Changes
+* See [8.1.1](#811) changes above.
 
 ---
 
@@ -246,6 +266,16 @@ Syncing with latest codebase - currently up to sync with 8.0.6.
 * Increasing delay intervals to better handle different platforms
 * Adding vars needed for Ansible Galaxy
 * Bugfix for pre-playbook tasks not supporting URLs
+
+---
+
+## 7.3.9
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.1.2.
+
+#### Changes
+* See [8.1.2](#812) changes.
 
 ---
 

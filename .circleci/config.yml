@@ -1,8 +1,14 @@
-version: 2
+version: 2.1
+
+executors:
+  circleci_xlarge:
+    machine:
+      image: ubuntu-1604:202007-01
+    resource_class: xlarge
+
 jobs:
   splunk-ansible-test:
-    machine:
-      image: circleci/classic:latest
+    executor: circleci_xlarge
     steps:
       - checkout
       - run:
@@ -23,13 +29,17 @@ jobs:
       - store_test_results:
           path: tests/results
   py3k-splunk-ansible-test:
-    machine:
-      image: circleci/classic:latest
+    executor: circleci_xlarge
     steps:
       - checkout
       - run:
           name: Setup Python3
-          command: pyenv global 2.7.12 3.5.2
+          command: |
+            pyenv global 2.7.18 3.7.8
+            python --version
+            pip --version
+            python3 --version
+            pip3 --version
       - run:
           name: Run small tests
           command: make py3k-small-tests

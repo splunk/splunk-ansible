@@ -307,31 +307,76 @@ def test_getLaunchConf(default_yml, os_env, output):
             environ.getLaunchConf(vars_scope)
     assert vars_scope["splunk"] == output
 
+@pytest.mark.parametrize(("value", "separator", "output"),
+            [
+                # Check null value
+                (None, ",", []),
+                # Check empty value
+                ("", ",", []),
+                # Check string value
+                ("a", ",", ["a"]),
+                # Check comma separated string value
+                ("a,b,c", ",", ["a", "b", "c"]),
+                # Check list value
+                (["a"], ",", ["a"]),
+                (["a", "b", "c"], ",", ["a", "b", "c"])
+            ]
+        )
+def test_ensureListValue(value, separator, output):
+    result = environ.ensureListValue(value, separator)
+    assert result == output
+
+@pytest.mark.parametrize(("value", "separator", "output"),
+            [
+                # Check null value
+                (None, ",", []),
+                # Check empty value
+                ("", ",", []),
+                # Check string value
+                ("a", ",", ["a"]),
+                # Check comma separated string value
+                ("a,b,c", ",", ["a", "b", "c"]),
+                # Check comma separated string value with whitespaces
+                (" a, b,c ", ",", ["a", "b", "c"]),
+            ]
+        )
+def test_splitAndStrip(value, separator, output):
+    result = environ.splitAndStrip(value, separator)
+    assert result == output
+
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters
-                ({}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_environment": {}}),
+                ({}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {}}),
                 # Check ansible_pre_tasks using defaults or env vars
-                ({"ansible_pre_tasks": ""}, {}, {"ansible_pre_tasks": "", "ansible_post_tasks": None, "ansible_environment": {}}),
-                ({"ansible_pre_tasks": "a"}, {}, {"ansible_pre_tasks": "a", "ansible_post_tasks": None, "ansible_environment": {}}),
-                ({"ansible_pre_tasks": "a,b,c"}, {}, {"ansible_pre_tasks": "a,b,c", "ansible_post_tasks": None, "ansible_environment": {}}),
-                ({}, {"SPLUNK_ANSIBLE_PRE_TASKS": "d"}, {"ansible_pre_tasks": "d", "ansible_post_tasks": None, "ansible_environment": {}}),
-                ({}, {"SPLUNK_ANSIBLE_PRE_TASKS": "e,f,g"}, {"ansible_pre_tasks": "e,f,g", "ansible_post_tasks": None, "ansible_environment": {}}),
-                ({"ansible_pre_tasks": "a,b,c"}, {"SPLUNK_ANSIBLE_PRE_TASKS": "e,f,g"}, {"ansible_pre_tasks": "e,f,g", "ansible_post_tasks": None, "ansible_environment": {}}),
+                ({"ansible_pre_tasks": ""}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_pre_tasks": None}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_pre_tasks": "a"}, {}, {"ansible_pre_tasks": ["a"], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_pre_tasks": ["a"]}, {}, {"ansible_pre_tasks": ["a"], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_pre_tasks": "a,b,c"}, {}, {"ansible_pre_tasks": ["a","b","c"], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_pre_tasks": ["a","b","c"]}, {}, {"ansible_pre_tasks": ["a","b","c"], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({}, {"SPLUNK_ANSIBLE_PRE_TASKS": "d"}, {"ansible_pre_tasks": ["d"], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({}, {"SPLUNK_ANSIBLE_PRE_TASKS": "e,f,g"}, {"ansible_pre_tasks": ["e","f","g"], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_pre_tasks": "a,b,c"}, {"SPLUNK_ANSIBLE_PRE_TASKS": "e,f,g"}, {"ansible_pre_tasks": ["e","f","g"], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_pre_tasks": ["a","b","c"]}, {"SPLUNK_ANSIBLE_PRE_TASKS": "e,f,g"}, {"ansible_pre_tasks": ["e","f","g"], "ansible_post_tasks": [], "ansible_environment": {}}),
                 # Check ansible_post_tasks using defaults or env vars
-                ({"ansible_post_tasks": ""}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": "", "ansible_environment": {}}),
-                ({"ansible_post_tasks": "a"}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": "a", "ansible_environment": {}}),
-                ({"ansible_post_tasks": "a,b,c"}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": "a,b,c", "ansible_environment": {}}),
-                ({}, {"SPLUNK_ANSIBLE_POST_TASKS": "d"}, {"ansible_pre_tasks": None, "ansible_post_tasks": "d", "ansible_environment": {}}),
-                ({}, {"SPLUNK_ANSIBLE_POST_TASKS": "e,f,g"}, {"ansible_pre_tasks": None, "ansible_post_tasks": "e,f,g", "ansible_environment": {}}),
-                ({"ansible_post_tasks": "a,b,c"}, {"SPLUNK_ANSIBLE_POST_TASKS": "e,f,g"}, {"ansible_pre_tasks": None, "ansible_post_tasks": "e,f,g", "ansible_environment": {}}),
+                ({"ansible_post_tasks": ""}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_post_tasks": None}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_post_tasks": "a"}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": ["a"], "ansible_environment": {}}),
+                ({"ansible_post_tasks": ["a"]}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": ["a"], "ansible_environment": {}}),
+                ({"ansible_post_tasks": "a,b,c"}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": ["a","b","c"], "ansible_environment": {}}),
+                ({"ansible_post_tasks": ["a","b","c"]}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": ["a","b","c"], "ansible_environment": {}}),
+                ({}, {"SPLUNK_ANSIBLE_POST_TASKS": "d"}, {"ansible_pre_tasks": [], "ansible_post_tasks": ["d"], "ansible_environment": {}}),
+                ({}, {"SPLUNK_ANSIBLE_POST_TASKS": "e,f,g"}, {"ansible_pre_tasks": [], "ansible_post_tasks": ["e","f","g"], "ansible_environment": {}}),
+                ({"ansible_post_tasks": "a,b,c"}, {"SPLUNK_ANSIBLE_POST_TASKS": "e,f,g"}, {"ansible_pre_tasks": [], "ansible_post_tasks": ["e","f","g"], "ansible_environment": {}}),
+                ({"ansible_post_tasks": ["a","b","c"]}, {"SPLUNK_ANSIBLE_POST_TASKS": "e,f,g"}, {"ansible_pre_tasks": [], "ansible_post_tasks": ["e","f","g"], "ansible_environment": {}}),
                 # Check ansible_environment using defaults or env vars
-                ({"ansible_environment": None}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_environment": {}}),
-                ({"ansible_environment": {"a": "b"}}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_environment": {"a": "b"}}),
-                ({"ansible_environment": {"a": "b", "d": "e"}}, {}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_environment": {"a": "b", "d": "e"}}),
-                ({}, {"SPLUNK_ANSIBLE_ENV": "a=b"}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_environment": {"a": "b"}}),
-                ({}, {"SPLUNK_ANSIBLE_ENV": "a=b,x=y"}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_environment": {"a": "b", "x": "y"}}),
-                ({"ansible_environment": {"a": "c", "d": "e"}}, {"SPLUNK_ANSIBLE_ENV": "a=b,x=y"}, {"ansible_pre_tasks": None, "ansible_post_tasks": None, "ansible_environment": {"a": "b", "d": "e", "x": "y"}}),
+                ({"ansible_environment": None}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {}}),
+                ({"ansible_environment": {"a": "b"}}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {"a": "b"}}),
+                ({"ansible_environment": {"a": "b", "d": "e"}}, {}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {"a": "b", "d": "e"}}),
+                ({}, {"SPLUNK_ANSIBLE_ENV": "a=b"}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {"a": "b"}}),
+                ({}, {"SPLUNK_ANSIBLE_ENV": "a=b,x=y"}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {"a": "b", "x": "y"}}),
+                ({"ansible_environment": {"a": "c", "d": "e"}}, {"SPLUNK_ANSIBLE_ENV": "a=b,x=y"}, {"ansible_pre_tasks": [], "ansible_post_tasks": [], "ansible_environment": {"a": "b", "d": "e", "x": "y"}}),
             ]
         )
 def test_getAnsibleContext(default_yml, os_env, output):
@@ -653,19 +698,24 @@ def test_getSplunkBuild(default_yml, os_env, build, build_url_bearer_token):
     assert vars_scope["splunk"]["build_location"] == build
     assert vars_scope["splunk"]["build_url_bearer_token"] == build_url_bearer_token
 
-@pytest.mark.parametrize(("default_yml", "trigger_splunkbase"),
+@pytest.mark.parametrize(("default_yml", "response_content", "trigger_splunkbase"),
                          [
-                            ({}, False),
-                            ({"splunkbase_username": "ocho"}, False),
-                            ({"splunkbase_password": "cinco"}, False),
-                            ({"splunkbase_username": "ocho", "splunkbase_password": "cinco"}, True),
-                            ({"splunkbase_username": "", "splunkbase_password": ""}, False),
+                            ({}, "<id>123abc</id>", False),
+                            ({"splunkbase_username": "ocho"}, "<id>123abc</id>", False),
+                            ({"splunkbase_password": "cinco"}, "<id>123abc</id>", False),
+                            ({"splunkbase_username": "ocho", "splunkbase_password": "cinco"}, "<id>123abc</id>", True),
+                            ({"splunkbase_username": "", "splunkbase_password": ""}, "<id>123abc</id>", False),
+                            ({}, "<id>123abc</id>", False),
+                            ({"splunkbase_username": "ocho"}, b"<id>123abc</id>", False),
+                            ({"splunkbase_password": "cinco"}, b"<id>123abc</id>", False),
+                            ({"splunkbase_username": "ocho", "splunkbase_password": "cinco"}, b"<id>123abc</id>", True),
+                            ({"splunkbase_username": "", "splunkbase_password": ""}, b"<id>123abc</id>", False),
                          ]
                         )
-def test_getSplunkbaseToken(default_yml, trigger_splunkbase):
+def test_getSplunkbaseToken(default_yml, response_content, trigger_splunkbase):
     vars_scope = default_yml
     with patch("environ.requests.post") as mock_post:
-        mock_post.return_value = MagicMock(status_code=200, content="<id>123abc</id>")
+        mock_post.return_value = MagicMock(status_code=200, content=response_content)
         with patch("os.environ", new=dict()):
             environ.getSplunkbaseToken(vars_scope)
         # Make sure Splunkbase token is populated when appropriate

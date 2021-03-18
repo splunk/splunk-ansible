@@ -2,8 +2,7 @@
 - include_tasks: ../../splunk_common/tasks/enable_forwarding.yml
 
 - include_tasks: ../../splunk_common/tasks/provision_apps.yml
-  when:
-    - splunk.apps_location
+  when: "'apps_location' in splunk and splunk.apps_location"
 
 - name: Enable license master local indexing
   ini_file:

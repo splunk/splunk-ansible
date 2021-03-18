@@ -1,14 +1,14 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
-    - splunk.apps_location
+    - "'apps_location' in splunk and splunk.apps_location"
     - splunk.deployment_server is not defined or not splunk.deployment_server
 
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when: splunk.deployment_server is defined and splunk.deployment_server
 
 - include_tasks: prepare_apps_bundle.yml
-  when: splunk.apps_location
+  when: "'apps_location' in splunk and splunk.apps_location"
 
 - include_tasks: initialize_cluster_master.yml
 
@@ -17,10 +17,10 @@
 # This installed_apps list gets mutated by ESS bundle generation, hence we
 # need to refresh this array of apps before disabling them all
 - include_tasks: ../../../roles/splunk_common/tasks/find_installed_apps.yml
-  when: splunk.apps_location
+  when: "'apps_location' in splunk and splunk.apps_location"
 
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
-  when: splunk.apps_location
+  when: "'apps_location' in splunk and splunk.apps_location"
 
 - include_tasks: setup_multisite.yml
   when:
