@@ -919,7 +919,7 @@ def test_getDFS(default_yml, os_env, output):
                             ({"SPLUNK_DEPLOYMENT_SERVER": ""}, None, None, None, None, None),
                             ({"SPLUNK_DEPLOYMENT_SERVER": "something"}, "something", None, None, None, None),
                             ({"SPLUNK_DEPLOYMENT_CLIENT_NAME": ""}, None, None, None, None, None),
-                            ({"SPLUNK_DEPLOYMENT_CLIENT_NAME": "client_name"}, None, "client_name", None, None, None),
+                            ({"SPLUNK_DEPLOYMENT_CLIENT_NAME": "client_name"}, None, {"name": "client_name"}, None, None, None),
                             ({"SPLUNK_ADD": ""}, None, None, None, None, None),
                             ({"SPLUNK_ADD": "echo 1"}, None, None, ["echo 1"], None, None),
                             ({"SPLUNK_ADD": "echo 1,echo 2"}, None, None, ["echo 1", "echo 2"], None, None),
