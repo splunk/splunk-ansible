@@ -912,28 +912,31 @@ def test_getDFS(default_yml, os_env, output):
     assert type(vars_scope["splunk"]["dfs"]["spark_master_webui_port"]) == int
     assert vars_scope["splunk"]["dfs"] == output
 
-@pytest.mark.parametrize(("os_env", "deployment_server", "add", "before_start_cmd", "cmd"),
+@pytest.mark.parametrize(("os_env", "deployment_server", "deployment_client", "add", "before_start_cmd", "cmd"),
                          [
-                            ({}, None, None, None, None),
+                            ({}, None, None, None, None, None),
                             # Check environment variable parameters
-                            ({"SPLUNK_DEPLOYMENT_SERVER": ""}, None, None, None, None),
-                            ({"SPLUNK_DEPLOYMENT_SERVER": "something"}, "something", None, None, None),
-                            ({"SPLUNK_ADD": ""}, None, None, None, None),
-                            ({"SPLUNK_ADD": "echo 1"}, None, ["echo 1"], None, None),
-                            ({"SPLUNK_ADD": "echo 1,echo 2"}, None, ["echo 1", "echo 2"], None, None),
-                            ({"SPLUNK_BEFORE_START_CMD": ""}, None, None, None, None),
-                            ({"SPLUNK_BEFORE_START_CMD": "echo 1"}, None, None, ["echo 1"], None),
-                            ({"SPLUNK_BEFORE_START_CMD": "echo 1,echo 2"}, None, None, ["echo 1", "echo 2"], None),
-                            ({"SPLUNK_CMD": ""}, None, None, None, None),
-                            ({"SPLUNK_CMD": "echo 1"}, None, None, None, ["echo 1"]),
-                            ({"SPLUNK_CMD": "echo 1,echo 2"}, None, None, None, ["echo 1", "echo 2"]),
+                            ({"SPLUNK_DEPLOYMENT_SERVER": ""}, None, None, None, None, None),
+                            ({"SPLUNK_DEPLOYMENT_SERVER": "something"}, "something", None, None, None, None),
+                            ({"SPLUNK_DEPLOYMENT_CLIENT_NAME": ""}, None, None, None, None, None),
+                            ({"SPLUNK_DEPLOYMENT_CLIENT_NAME": "client_name"}, None, "client_name", None, None, None),
+                            ({"SPLUNK_ADD": ""}, None, None, None, None, None),
+                            ({"SPLUNK_ADD": "echo 1"}, None, None, ["echo 1"], None, None),
+                            ({"SPLUNK_ADD": "echo 1,echo 2"}, None, None, ["echo 1", "echo 2"], None, None),
+                            ({"SPLUNK_BEFORE_START_CMD": ""}, None, None, None, None, None),
+                            ({"SPLUNK_BEFORE_START_CMD": "echo 1"}, None, None, None, ["echo 1"], None),
+                            ({"SPLUNK_BEFORE_START_CMD": "echo 1,echo 2"}, None, None, None, ["echo 1", "echo 2"], None),
+                            ({"SPLUNK_CMD": ""}, None, None, None, None, None),
+                            ({"SPLUNK_CMD": "echo 1"}, None, None, None, None, ["echo 1"]),
+                            ({"SPLUNK_CMD": "echo 1,echo 2"}, None, None, None, None, ["echo 1", "echo 2"]),
                          ]
                         )
-def test_getUFSplunkVariables(os_env, deployment_server, add, before_start_cmd, cmd):
+def test_getUFSplunkVariables(os_env, deployment_server, deployment_client, add, before_start_cmd, cmd):
     vars_scope = {"splunk": {}}
     with patch("os.environ", new=os_env):
         environ.getUFSplunkVariables(vars_scope)
     assert vars_scope["splunk"].get("deployment_server") == deployment_server
+    assert vars_scope["splunk"].get("deployment_client") == deployment_client
     assert vars_scope["splunk"].get("add") == add
     assert vars_scope["splunk"].get("before_start_cmd") == before_start_cmd
     assert vars_scope["splunk"].get("cmd") == cmd

@@ -558,6 +558,8 @@ def getUFSplunkVariables(vars_scope):
         vars_scope["splunk"]["before_start_cmd"] = os.environ.get("SPLUNK_BEFORE_START_CMD").split(",")
     if os.environ.get("SPLUNK_CMD"):
         vars_scope["splunk"]["cmd"] = os.environ.get("SPLUNK_CMD").split(",")
+    if os.environ.get("SPLUNK_DEPLOYMENT_CLIENT_NAME"):
+        vars_scope["splunk"]["deployment_client"] = os.environ.get("SPLUNK_DEPLOYMENT_CLIENT_NAME")
 
 def getRandomString():
     """

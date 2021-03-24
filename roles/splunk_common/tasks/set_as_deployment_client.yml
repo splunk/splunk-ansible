@@ -19,3 +19,19 @@
     - Restart the splunkd service
   ignore_errors: yes
   no_log: "{{ hide_password }}"
+
+- name: Set deployment client
+  ini_file:
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    dest: "{{ splunk.home }}/etc/system/local/deploymentclient.conf"
+    section: deployment-client
+    option: "clientName"
+    value: "{{ splunk.deployment_client }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  notify:
+    - Restart the splunkd service
+  ignore_errors: yes
+  no_log: "{{ hide_password }}"
+  when: splunk.deployment_client is defined
