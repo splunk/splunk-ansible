@@ -173,6 +173,14 @@ splunk:
   * Hostname of Splunk Enterprise deployer instance. May be overridden using SPLUNK_DEPLOYER_URL environment variable.
   * Default: null
 
+  deployment_client: <dict>
+  * Deployment client object that configures `deployment-client` stanza of `deploymentclient.conf` file.
+  * Default: null
+
+    name: null
+    * Client name for deployment client. May be overridden using SPLUNK_DEPLOYMENT_CLIENT_NAME environment variable.
+    * Default: null
+
   search_head_captain_url: null
   * Hostname of Splunk Enterprise search head cluster captain instance. May be overridden using SPLUNK_SEARCH_HEAD_CAPTAIN_URL environment variable.
   * Default: null

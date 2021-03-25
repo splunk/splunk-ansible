@@ -101,6 +101,8 @@ splunk:
     auxiliary_cluster_masters: []
     search_head_captain_url:
     deployer_url:
+    deployment_client:
+        name:
     connection_timeout: 180
     enable_service: False
     disable_popups: False
