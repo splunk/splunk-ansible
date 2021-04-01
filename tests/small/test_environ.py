@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import os
 import sys
 import pytest
+import requests
 from mock import MagicMock, patch, mock_open
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -1062,9 +1063,47 @@ def test_mergeDefaults_url_with_req_params(key):
             else:
                 mock_merge_url.assert_called_with(config, "http://website/default.yml", None, False)
 
-@pytest.mark.skip(reason="TODO")
-def test_mergeDefaultsFromURL():
-    pass
+@pytest.mark.parametrize(("vars_scope", "content", "os_env", "headers", "verify"),
+    [
+        # Check dicts
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 5}}, "helloworld", {}, None, False),
+        # Change max_timeout
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 11}}, "helloworld", {}, None, False),
+        # Enable verify
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 5}}, "helloworld", {}, None, True),
+        # Exercise bytes content
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 5}}, b"helloworld", {}, None, False),
+        # Exercise various headers
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 5}}, "helloworld", {}, {}, False),
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 5}}, "helloworld", {}, {"HELLO": "WORLD"}, False),
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 5}}, "helloworld", {}, {"A": "B", "C": "D"}, False),
+        # Exercise OS env vars with headers
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 5}}, "helloworld", {"one": "two"}, {}, False),
+        ({"config": {"max_retries": 3, "max_delay": 4, "max_timeout": 5}}, "helloworld", {"SPLUNK_DEFAULTS_HTTP_AUTH_HEADER": "Bearer xyz"}, {"HELLO": "WORLD"}, False),
+    ]
+)
+def test_mergeDefaultsFromURL(vars_scope, content, os_env, headers, verify):
+    # Mock response
+    mock_response = MagicMock()
+    mock_response.content = "helloworld"
+    mock_response.status_code = 200
+    mock_response.raise_for_status = MagicMock()
+    # Invoke function
+    with patch("os.environ", new=os_env):
+        with patch("environ.merge_dict") as mock_merge:
+            with patch("environ.requests.get") as mock_get:
+                mock_get.return_value = mock_response
+                result = environ.mergeDefaultsFromURL(vars_scope, "http://website", headers, verify)
+    # Check headers and parameters send to GET call
+    expected_headers = {}
+    if headers:
+        expected_headers.update(headers)
+    if os_env and "SPLUNK_DEFAULTS_HTTP_AUTH_HEADER" is os_env:
+        expected_headers["Authorization"] = os_env["SPLUNK_DEFAULTS_HTTP_AUTH_HEADER"]
+    mock_get.assert_called_once()
+    mock_get.assert_called_with("http://website", headers=expected_headers, timeout=vars_scope["config"]["max_timeout"], verify=verify)
+    mock_merge.assert_called_once()
+    mock_merge.assert_called_with(vars_scope, "helloworld")
 
 @pytest.mark.parametrize(("file", "file_exists", "merge_called"),
             [

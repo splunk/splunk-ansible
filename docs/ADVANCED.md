@@ -124,6 +124,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT | When fetching a remote `default.yml`, specify the timeout of the request | no | no | no |
 | SPLUNK_DEFAULTS_HTTP_MAX_RETRIES | When fetching a remote `default.yml`, the number of retries to make. For unlimited retries, use `-1` | no | no | no |
 | SPLUNK_DEFAULTS_HTTP_MAX_DELAY | When fetching a remote `default.yml`, specify the delay between each retry | no | no | no |
+| SPLUNK_DEFAULTS_HTTP_AUTH_HEADER | When fetching a remote `default.yml`, set the `Authorization` header | no | no | no |
 | SPLUNK_ANSIBLE_PRE_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed before `site.yml`. Must include the protocol, i.e. it must match the regex `^(http\|https\|file)://.*` | no | no | no |
 | SPLUNK_ANSIBLE_POST_TASKS | Pass in a comma-separated list of local paths or remote URLs to Ansible playbooks that will be executed after `site.yml`. Must include the protocol, i.e. it must match the regex `^(http\|https\|file)://.*` | no | no | no |
 | SPLUNK_ANSIBLE_ENV | Pass in a comma-separated list of "key=value" pairs that will be mapped to environment variables used during `site.yml` execution. These variables are also available in ansible pre/post playbooks and can be referenced as `hostvars['localhost'].ansible_environment['key']` | no | no | no |
