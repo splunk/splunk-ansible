@@ -9,6 +9,7 @@
     value: "{{ item.value }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   with_items:
     - {key: "pass4SymmKey", value: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"}
     - {key: "master_uri", value: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}"}
@@ -26,6 +27,7 @@
     value: "{{ item.value }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   with_items:
     - {key: "indexerDiscovery", value: "splunk-indexer"}
     - {key: "clientCert", value: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"}
@@ -45,6 +47,7 @@
     value: "{{ item.value }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   with_items:
     - {key: "indexAndForward", value: "false"}
     - {key: "defaultGroup", value: "group1"}
@@ -62,6 +65,7 @@
     value: "false"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: index_disabling
   when: splunk.role != "splunk_license_master"
 

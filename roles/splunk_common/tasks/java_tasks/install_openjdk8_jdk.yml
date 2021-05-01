@@ -3,6 +3,7 @@
   file:
     path: /usr/share/man/man1
     state: directory
+    mode: 0660
   when:
     - ansible_distribution == 'Debian'
   become: yes

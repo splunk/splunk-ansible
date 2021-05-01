@@ -7,3 +7,4 @@
     value: "{{ splunk.kvstore.port }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660

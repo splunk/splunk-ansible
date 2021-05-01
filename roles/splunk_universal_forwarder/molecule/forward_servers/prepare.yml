@@ -15,6 +15,7 @@
         regexp: '^Acquire::http::Proxy '
         line: "Acquire::http::Proxy \"{{ lookup('env','http_proxy') }}\";"
         create: true
+        mode: 0644
       when:
         - "lookup('env','http_proxy') is defined"
         - "lookup('env','http_proxy')  | length > 0"
@@ -25,6 +26,7 @@
         regexp: '^Acquire::https::Proxy '
         line: "Acquire::https::Proxy \"{{ lookup('env','https_proxy') }}\";"
         create: true
+        mode: 0644
       when:
         - "lookup('env','http_proxy') is defined"
         - "lookup('env','http_proxy')  | length > 0"

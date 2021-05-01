@@ -39,5 +39,6 @@
     state: directory
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   become: yes
   become_user: "{{ splunk.user }}"

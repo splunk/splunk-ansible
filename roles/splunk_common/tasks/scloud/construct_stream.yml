@@ -30,6 +30,7 @@
       line: "{{ gen_pipe_spec.stdout | trim | from_json | to_json }}"
       owner: "{{ splunk.user }}"
       group: "{{ splunk.group }}"
+      mode: 0660
       create: yes
     when: not pipe_spec.stat.exists or gen_pipe_spec.stdout | trim | from_json | to_json != pipe_spec_def.stdout | trim | from_json | to_json
     register: write_pipe_spec

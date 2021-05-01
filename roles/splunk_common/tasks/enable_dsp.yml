@@ -16,6 +16,7 @@
     value: "{{ splunk.home }}/etc/auth/DigiCertGlobalRootCA.pem"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: dsp_ca
 
 - name: Find DSP auto-generated cert
@@ -61,6 +62,7 @@
     value: "{{ item.value }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   with_items:
     - {key: "server", value: "{{ splunk.dsp.server }}"}
     - {key: "clientCert", value: "{{ '{{ splunk.home }}/etc/auth/dsp-fwd-chain.pem' if splunk.dsp.cert == 'auto' else splunk.dsp.cert }}"}
@@ -78,6 +80,7 @@
     value: datastreamprocessor
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: dsp_default
 
 - include_tasks: scloud/construct_stream.yml

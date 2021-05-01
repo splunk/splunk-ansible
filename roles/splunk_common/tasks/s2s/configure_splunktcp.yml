@@ -7,6 +7,7 @@
     value: "{{ 0 if 's2s' in splunk and 'enable' in splunk.s2s and splunk.s2s.enable else 1 }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: splunktcp_enabled
 
 - name: Remove splunktcp-ssl input
@@ -16,6 +17,7 @@
     state: absent
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: splunktcp_ssl_disabled
 
 - name: Remove input SSL settings
@@ -25,6 +27,7 @@
     state: absent
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: splunktcp_ssl_reset
 
 - name: Reset root CA
@@ -35,6 +38,7 @@
     state: absent
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: splunktcp_ssl_ca_reset
 
 # Restart only when Splunk is running and when any of the above have changed

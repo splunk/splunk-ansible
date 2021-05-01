@@ -3,6 +3,7 @@
   file:
     path: /usr/share/man/man1
     state: directory
+    mode: 0660
   when:
     - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
   become: yes
@@ -52,6 +53,7 @@
     line: "JAVA_HOME=/opt/container_artifact/jdk-{{ java_update_version }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
     create: yes
   when:
     - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'

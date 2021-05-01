@@ -19,10 +19,12 @@
   lineinfile:
     path: /home/splunk/.bash_profile
     line: "JAVA_HOME=/home/splunk/java-se-9-ri/jdk-9/"
+    mode: 0666
     create: yes
 
 - name: Write path into .bash_profile
   lineinfile:
     path: /home/splunk/.bash_profile
     line: "PATH=$PATH:$JAVA_HOME/bin"
+    mode: 0666
     create: yes

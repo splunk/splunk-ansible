@@ -7,3 +7,4 @@
     value: "{{ splunk.http_port }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660

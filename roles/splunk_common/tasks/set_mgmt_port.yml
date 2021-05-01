@@ -7,3 +7,4 @@
     value: "127.0.0.1:{{ splunk.svc_port }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660

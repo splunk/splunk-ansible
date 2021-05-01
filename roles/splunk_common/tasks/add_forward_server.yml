@@ -28,6 +28,7 @@
     value: "{{ item.value }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   with_items:
     - {key: "server", value: "{% for fwd in forward_servers %}{{ fwd }}:{{ splunk.s2s.port }}{{ ',' if not loop.last else '' }}{% endfor %}"}
     - {key: "clientCert", value: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined else ''}}"}

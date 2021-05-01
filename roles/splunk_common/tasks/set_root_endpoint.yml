@@ -7,6 +7,7 @@
     value: "{{ splunk.root_endpoint }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: set_root_endpoint
 
 # Restart only when Splunk is running and when any of the above have changed

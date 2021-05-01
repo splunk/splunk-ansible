@@ -7,3 +7,4 @@
     value: "{{ splunk.connection_timeout }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660

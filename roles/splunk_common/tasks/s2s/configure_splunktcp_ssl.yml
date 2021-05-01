@@ -8,6 +8,7 @@
     value: "0"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: splunktcp_ssl_enabled
 
 - name: Remove splunktcp input
@@ -17,6 +18,7 @@
     state: absent
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: splunktcp_disabled
 
 - name: Configure SSL certificate path
@@ -27,6 +29,7 @@
     value: "{{ splunk.s2s.cert }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: splunktcp_ssl_cert_configured
 
 - name: Configure SSL password
@@ -37,6 +40,7 @@
     value: "{{ splunk.s2s.password }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   register: splunktcp_ssl_pass_configured
 
 - name: Configure SSL root CA
@@ -47,6 +51,7 @@
     value: "{{ splunk.s2s.ca if splunk.s2s.ca else '$SPLUNK_HOME/etc/auth/cacert.pem' }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+    mode: 0660
   when: ansible_system is not match("CYGWIN*|Win32NT")
   register: splunktcp_ssl_ca_configured
 

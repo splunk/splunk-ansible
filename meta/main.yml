@@ -1,2 +1,5 @@
 ---
 galaxy_info:
+  author: Splunk, Inc.
+  description: Splunk roles for Ansible
+dependencies: []

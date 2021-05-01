@@ -3,6 +3,7 @@
   file:
     path: "{{ conf_directory }}"
     state: directory
+    mode: 0660
   when: conf_directory is defined
   become: yes
   become_user: "{{ splunk.user }}"
