@@ -12,27 +12,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run linting
-          command: make lint
-      - run:
-          name: Run py3k linting
-          command: make py3k-lint
-      - run:
-          name: Run small tests
-          command: make small-tests
-      - run:
-          name: Run large (molecule) tests
-          command: make large-tests
-      - store_artifacts:
-          path: tests/results
-          destination: tests/results
-      - store_test_results:
-          path: tests/results
-  py3k-splunk-ansible-test:
-    executor: circleci_xlarge
-    steps:
-      - checkout
-      - run:
           name: Setup Python3
           command: |
             pyenv global 2.7.18 3.7.8
@@ -57,4 +36,3 @@ workflows:
   run_tests:
     jobs:
       - splunk-ansible-test
-      - py3k-splunk-ansible-test
