@@ -1,5 +1,10 @@
 # added the environment section due to bug:
 # https://github.com/ansible/ansible/issues/18979
+- name: Import Splunk key
+  rpm_key:
+    key: https://docs.splunk.com/images/6/6b/SplunkPGPKey.pub
+    state: present
+
 - name: Install Splunk (yum)
   yum:
     name: "{{ splunk.build_location }}"
