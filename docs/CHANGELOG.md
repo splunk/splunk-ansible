@@ -2,11 +2,14 @@
 
 ## Navigation
 
+* [8.2.0](#820)
+* [8.1.4](#814)
 * [8.1.3](#813)
 * [8.1.2](#812)
 * [8.1.1](#811)
 * [8.1.0.1](#8101)
 * [8.1.0](#810)
+* [8.0.9](#809)
 * [8.0.8](#808)
 * [8.0.7](#807)
 * [8.0.6.1](#8061)
@@ -44,6 +47,28 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.2.0
+
+#### What's New?
+* Added support for setting `clientName` in `deploymentclient.conf`
+    * `splunk.deployment_client.name` in `default.yml`
+    * `SPLUNK_DEPLOYMENT_CLIENT_NAME` environment variable
+
+#### Changes
+* Bugfixes
+
+---
+
+## 8.1.4
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.2.0.
+
+#### Changes
+* See [8.2.0](#820) changes above.
 
 ---
 
@@ -88,6 +113,16 @@
 * Enabled multisite for the `splunk_monitor` role
 * Enabled local indexing on the license master
 * Bugfixes and cleanup
+
+---
+
+## 8.0.9
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.2.0.
+
+#### Changes
+* See [8.2.0](#820) changes above.
 
 ---
 

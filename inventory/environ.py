@@ -558,6 +558,10 @@ def getUFSplunkVariables(vars_scope):
         vars_scope["splunk"]["before_start_cmd"] = os.environ.get("SPLUNK_BEFORE_START_CMD").split(",")
     if os.environ.get("SPLUNK_CMD"):
         vars_scope["splunk"]["cmd"] = os.environ.get("SPLUNK_CMD").split(",")
+    if os.environ.get("SPLUNK_DEPLOYMENT_CLIENT_NAME"):
+        vars_scope["splunk"]["deployment_client"] = {
+            "name": os.environ.get("SPLUNK_DEPLOYMENT_CLIENT_NAME")
+        }
 
 def getRandomString():
     """
@@ -636,9 +640,14 @@ def mergeDefaultsFromURL(vars_scope, url, headers=None, verify=False):
     """
     if not url:
         return vars_scope
+    if not headers:
+        headers = {}
     max_retries = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_RETRIES", vars_scope["config"].get("max_retries")))
     max_delay = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_DELAY", vars_scope["config"].get("max_delay")))
     max_timeout = int(os.environ.get("SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT", vars_scope["config"].get("max_timeout")))
+    auth = os.environ.get("SPLUNK_DEFAULTS_HTTP_AUTH_HEADER")
+    if auth:
+        headers["Authorization"] = auth
     unlimited_retries = (max_retries == -1)
     current_retry = 0
     while True:
