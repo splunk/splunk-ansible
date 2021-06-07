@@ -377,6 +377,24 @@ def getSplunkApps(vars_scope):
                 appList.append(app)
     vars_scope["splunk"]["apps_location"] = appList
 
+    # Check if theres a local apps list for CM/Deployer roles
+    appListLocal = []
+    if not "apps_location_local" in vars_scope["splunk"]:
+        vars_scope["splunk"]["apps_location_local"] = []
+    # From default.yml
+    elif type(vars_scope["splunk"]["apps_location_local"]) == str:
+        appListLocal = vars_scope["splunk"]["apps_location_local"].split(",")
+    elif type(vars_scope["splunk"]["apps_location_local"]) == list:
+        appListLocal = vars_scope["splunk"]["apps_location_local"]
+    # From environment variables
+    apps = os.environ.get("SPLUNK_APPS_URL_LOCAL")
+    if apps:
+        apps = apps.split(",")
+        for app in apps:
+            if app not in appListLocal:
+                appListLocal.append(app)
+    vars_scope["splunk"]["apps_location_local"] = appListLocal
+
 def getSecrets(vars_scope):
     """
     Parse sensitive passphrases

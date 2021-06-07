@@ -22,6 +22,11 @@
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
   when: "'apps_location' in splunk and splunk.apps_location"
 
+# Now install local apps in apps_location_local exists
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps_local.yml
+  when:
+    - "'apps_location_local' in splunk and splunk.apps_location_local"
+
 - include_tasks: setup_multisite.yml
   when:
     - splunk.site is defined
