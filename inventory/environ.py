@@ -146,6 +146,7 @@ def getDefaultVars():
     getSplunkBuild(defaultVars)
     getSplunkbaseToken(defaultVars)
     getSplunkApps(defaultVars)
+    getSplunkAppsLocal(defaultVars)
     getLaunchConf(defaultVars)
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
@@ -377,6 +378,10 @@ def getSplunkApps(vars_scope):
                 appList.append(app)
     vars_scope["splunk"]["apps_location"] = appList
 
+def getSplunkAppsLocal(vars_scope):
+    """
+    Determine the set of Splunk apps to install locally only as union of defaults.yml and environment variables
+    """
     # Check if theres a local apps list for CM/Deployer roles
     appListLocal = []
     if not "apps_location_local" in vars_scope["splunk"]:

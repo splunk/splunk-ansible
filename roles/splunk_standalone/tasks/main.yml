@@ -38,6 +38,8 @@
   when:
     - "'apps_location' in splunk and splunk.apps_location"
     - splunk.deployment_server is not defined or not splunk.deployment_server
+  vars:
+    app_list: "{{ splunk.apps_location }}"
 
 - include_tasks: ../../../roles/splunk_common/tasks/enable_dfs.yml
   when:

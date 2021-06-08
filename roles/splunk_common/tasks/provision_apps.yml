@@ -2,7 +2,7 @@
 - include_tasks: install_apps.yml
   vars:
     app_url: "{{ item }}"
-  loop: "{{ splunk.apps_location }}"
+  loop: "{{ app_list }}"
 
 - name: Flush restart handlers
   meta: flush_handlers
