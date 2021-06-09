@@ -785,6 +785,46 @@ def test_getSplunkApps(default_yml, os_env, apps_count):
     assert type(vars_scope["splunk"]["apps_location"]) == list
     assert len(vars_scope["splunk"]["apps_location"]) == apps_count
 
+@pytest.mark.parametrize(("default_yml", "os_env", "apps_count"),
+                         [
+                            # Check null parameters
+                            ({}, {}, 0),
+                            # Check default.yml parameters
+                            ({"app_location_local": []}, {}, 0),
+                            ({"app_location_local": ["a"]}, {}, 0),
+                            ({"app_location_local": ["a", "b", "c"]}, {}, 0),
+                            ({"apps_location_local": []}, {}, 0),
+                            ({"apps_location_local": ["a"]}, {}, 1),
+                            ({"apps_location_local": ["a", "b", "c"]}, {}, 3),
+                            ({"apps_location_local": "a"}, {}, 1),
+                            ({"apps_location_local": "a,b,c,d"}, {}, 4),
+                            # Check the union combination of default.yml + environment variables
+                            ### Invalid 'app_location' variable name in default.yml
+                            ({"app_location_local": []}, {"SPLUNK_APPS_URL_LOCAL": None}, 0),
+                            ({"app_location_local": ["a"]}, {"SPLUNK_APPS_URL_LOCAL": "a"}, 1),
+                            ({"app_location_local": ["a", "b", "c"]}, {"SPLUNK_APPS_URL_LOCAL": "a,bb"}, 2),
+                            ### Invalid 'SPLUNK_APP_URL' variable name in env vars
+                            ({"apps_location_local": ["x"]}, {"SPLUNK_APP_URL_LOCAL": "a"}, 1),
+                            ({"apps_location_local": ["x", "y"]}, {"SPLUNK_APP_URL_LOCAL": "a,bb"}, 2),
+                            ({"apps_location_local": "x,y,z"}, {"SPLUNK_APP_URL_LOCAL": "a,bb"}, 3),
+                            ### Correct variable names
+                            ({"apps_location_local": ["x"]}, {"SPLUNK_APPS_URL_LOCAL": "a"}, 2),
+                            ({"apps_location_local": ["x", "y"]}, {"SPLUNK_APPS_URL_LOCAL": "a,bb"}, 4),
+                            ({"apps_location_local": "x,y,z"}, {"SPLUNK_APPS_URL_LOCAL": "a,bb"}, 5),
+                            ### Only return unique set of apps
+                            ({"apps_location_local": ["x"]}, {"SPLUNK_APPS_URL_LOCAL": "x"}, 1),
+                            ({"apps_location_local": ["x", "y"]}, {"SPLUNK_APPS_URL_LOCAL": "a,bb,y"}, 4),
+                            ({"apps_location_local": "x,y,z"}, {"SPLUNK_APPS_URL_LOCAL": "x,yy,a,z"}, 5),
+                         ]
+                        )
+def test_getSplunkAppsLocal(default_yml, os_env, apps_count):
+    vars_scope = dict()
+    vars_scope["splunk"] = default_yml
+    with patch("os.environ", new=os_env):
+        environ.getSplunkAppsLocal(vars_scope)
+    assert type(vars_scope["splunk"]["apps_location_local"]) == list
+    assert len(vars_scope["splunk"]["apps_location_local"]) == apps_count
+
 @pytest.mark.parametrize(("default_yml", "os_env", "key", "value"),
             [
                 # Check cert_prefix
