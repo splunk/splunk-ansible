@@ -22,6 +22,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       preferred_captain: "{{ splunk_search_head_captain | bool | lower }}"

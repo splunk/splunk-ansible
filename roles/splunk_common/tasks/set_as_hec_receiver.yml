@@ -7,6 +7,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
@@ -26,6 +27,7 @@
     method: GET
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     status_code: 200,404
     timeout: 60
@@ -41,6 +43,7 @@
     method: DELETE
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     status_code: 200,404
     timeout: 60
@@ -58,6 +61,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       name: "splunk_hec_token"

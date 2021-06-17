@@ -5,6 +5,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       disabled: "false"
@@ -24,6 +25,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       dfc_num_slots: "{{ splunk.dfs.dfc_num_slots }}"
@@ -42,6 +44,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       phased_execution: "true"
@@ -59,6 +62,7 @@
     method: GET
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     use_proxy: no
   register: check_dfs_job_extractor_result
@@ -71,6 +75,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       name: "search_optimization::dfs_job_extractor"
@@ -90,6 +95,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       enabled: "true"
