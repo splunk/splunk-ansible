@@ -5,6 +5,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body: "name=itsi_admin&imported_roles=itoa_user&imported_roles=itoa_analyst&imported_roles=itoa_admin"
     headers:
@@ -27,6 +28,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body: "roles=itsi_admin&roles=admin"
     headers:

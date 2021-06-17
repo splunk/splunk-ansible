@@ -5,6 +5,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       name: "{{ app_url }}"
@@ -75,6 +76,7 @@
       method: POST
       user: "{{ splunk.admin_user }}"
       password: "{{ splunk.password }}"
+      force_basic_auth: yes
       validate_certs: false
       body:
         name: "{{ app_filepath }}"

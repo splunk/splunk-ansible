@@ -25,6 +25,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       deployer_push_mode: "{{ splunk.shc.deployer_push_mode }}"
