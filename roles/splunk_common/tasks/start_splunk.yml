@@ -26,6 +26,9 @@
     register: start_splunk
     changed_when: start_splunk.rc == 0 and 'already running' not in start_splunk.stdout
     when: not splunk.enable_service
+    until: start_splunk.rc == 0
+    retries: 5
+    delay: 10
     become: yes
     become_user: "{{ splunk.user }}"
 

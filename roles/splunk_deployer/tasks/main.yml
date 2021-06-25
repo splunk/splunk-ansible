@@ -25,6 +25,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     body:
       deployer_push_mode: "{{ splunk.shc.deployer_push_mode }}"
@@ -57,6 +58,8 @@
   when:
     - "'apps_location' in splunk and splunk.apps_location"
     - splunk.deployment_server is not defined or not splunk.deployment_server
+  vars:
+    app_list: "{{ splunk.apps_location }}"
 
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when: splunk.deployment_server is defined and splunk.deployment_server
@@ -66,5 +69,11 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
   when: "'apps_location' in splunk and splunk.apps_location"
+
+# Now install local apps in apps_location_local exists
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when: "'apps_location_local' in splunk and splunk.apps_location_local"
+  vars:
+    app_list: "{{ splunk.apps_location_local }}"
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

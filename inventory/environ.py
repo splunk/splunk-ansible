@@ -146,6 +146,7 @@ def getDefaultVars():
     getSplunkBuild(defaultVars)
     getSplunkbaseToken(defaultVars)
     getSplunkApps(defaultVars)
+    getSplunkAppsLocal(defaultVars)
     getLaunchConf(defaultVars)
     getDFS(defaultVars)
     getUFSplunkVariables(defaultVars)
@@ -376,6 +377,28 @@ def getSplunkApps(vars_scope):
             if app not in appList:
                 appList.append(app)
     vars_scope["splunk"]["apps_location"] = appList
+
+def getSplunkAppsLocal(vars_scope):
+    """
+    Determine the set of Splunk apps to install locally only as union of defaults.yml and environment variables
+    """
+    # Check if theres a local apps list for CM/Deployer roles
+    appListLocal = []
+    if not "apps_location_local" in vars_scope["splunk"]:
+        vars_scope["splunk"]["apps_location_local"] = []
+    # From default.yml
+    elif type(vars_scope["splunk"]["apps_location_local"]) == str:
+        appListLocal = vars_scope["splunk"]["apps_location_local"].split(",")
+    elif type(vars_scope["splunk"]["apps_location_local"]) == list:
+        appListLocal = vars_scope["splunk"]["apps_location_local"]
+    # From environment variables
+    apps = os.environ.get("SPLUNK_APPS_URL_LOCAL")
+    if apps:
+        apps = apps.split(",")
+        for app in apps:
+            if app not in appListLocal:
+                appListLocal.append(app)
+    vars_scope["splunk"]["apps_location_local"] = appListLocal
 
 def getSecrets(vars_scope):
     """

@@ -5,6 +5,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: False
     body:
       name: "indexer_discovery"

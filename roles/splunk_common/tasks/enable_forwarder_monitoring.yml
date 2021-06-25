@@ -9,6 +9,7 @@
     method: GET
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     status_code: 200,201
     timeout: 10
@@ -22,6 +23,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     body:
       search: "{{ dmc_forwarder_build_assets.json['entry'][0]['content']['search'] }}"
       request.ui_dispatch_app: splunk_monitoring_console
@@ -41,6 +43,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
     validate_certs: false
     status_code: 200,201
     use_proxy: no
