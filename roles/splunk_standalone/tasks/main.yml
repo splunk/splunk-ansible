@@ -41,6 +41,13 @@
   vars:
     app_list: "{{ splunk.apps_location }}"
 
+- include_tasks: ../../splunk_common/tasks/provision_apps.yml
+  when:
+    - "'app_paths_install' in splunk and splunk.app_paths_install.default"
+    - splunk.deployment_server is not defined or not splunk.deployment_server
+  vars:
+    app_list: "{{ splunk.app_paths_install.default }}"
+
 - include_tasks: ../../../roles/splunk_common/tasks/enable_dfs.yml
   when:
     - "'dfs' in splunk and 'enable' in splunk.dfs and splunk.dfs.enable is not none"

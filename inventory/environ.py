@@ -400,6 +400,25 @@ def getSplunkAppsLocal(vars_scope):
                 appListLocal.append(app)
     vars_scope["splunk"]["apps_location_local"] = appListLocal
 
+def getSplunkAppPathInstall(vars_scope):
+    """
+    Determine the set of Splunk apps to install at which location as a
+    union of defaults.yml.  The actual path to install to is determined by
+    the splunk.app_paths.* variable
+    """
+    appPaths = ["shc", "idxc", "default", "deployment"]
+    for path in appPaths:
+        appList = []
+        if not "app_paths_install" in vars_scope["splunk"]:
+            vars_scope["splunk"]["app_paths_install"][path] = []
+        # From default.yml
+        elif type(vars_scope["splunk"]["app_paths_install"][path]) == str:
+            appList = vars_scope["splunk"]["app_paths_install"][path].split(",")
+        elif type(vars_scope["splunk"]["app_paths_install"][path]) == list:
+            appList = vars_scope["splunk"]["app_paths_install"][path]
+
+        vars_scope["splunk"]["app_paths_install"][path] = appList
+
 def getSecrets(vars_scope):
     """
     Parse sensitive passphrases

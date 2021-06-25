@@ -1,4 +1,10 @@
 ---
+- include_tasks: ../../../roles/splunk_common/tasks/extract_app.yml
+  vars:
+    app_filepath: "{{ item }}"
+    extract_path: "{{ splunk.app_paths.shc }}"
+  loop: "{{ app_list }}"
+
 - name: Apply shcluster bundle
   command: "{{ splunk.exec }} apply shcluster-bundle -target {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --answer-yes -push-default-apps true"
   become: yes
@@ -12,6 +18,3 @@
   delay: "{{ retry_delay }}"
   ignore_errors: true
 
-- debug:
-    msg: "WARNING: Applying shcluster bundle failed - proceeding anyways..."
-  when: shcluster_bundle.rc != 0

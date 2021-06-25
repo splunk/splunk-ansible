@@ -1,0 +1,9 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/extract_app.yml
+  vars:
+    app_filepath: "{{ item }}"
+    extract_path: "{{ splunk.app_paths.idxc }}"
+  loop: "{{ app_list }}"
+
+- include_tasks: ../../../roles/splunk_cluster_master/tasks/apply_cluster_bundle.yml
+

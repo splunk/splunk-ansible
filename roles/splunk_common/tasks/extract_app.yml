@@ -1,0 +1,12 @@
+---
+- name: Extract app to location
+  unarchive:
+    src: "{{ app_filepath }}"
+    dest: "{{ extract_path }}"
+    remote_src: true
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
+  when:
+    - app_filepath is defined
+
