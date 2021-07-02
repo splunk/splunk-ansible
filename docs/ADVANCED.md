@@ -231,6 +231,18 @@ When deploying distributed Splunk Enterprise environments, apps should be instal
 
 To install an app from elsewhere, provide a path to a compressed `splunkApp.spl` file (either through a filesystem or URL) as seen above. For proper installation, apps should be compressed using `tar` in a GNU/Linux environment, as apps compressed on OSX or other BSD-variant operating systems have been known to cause issues.
 
+For roles that manage clusters, such as Cluster Master and SH Deployer, the apps specified in `apps_location` will be pushed to the cluster and disabled on the local CM or Deployer instance.  For apps that need to be installed locally on these instances, use the `apps_location_local` variable.  Apps specified here will not be pushed to the cluster but installed locally in the same way that apps are installed on a standalone instance.  Both `apps_location` and `apps_location_local` can be used concurrently to allow for different sets of apps to be installed locally vs. pushed to the cluster for CM and Deployer instance.  The syntax is the same as `apps_location`:
+```
+splunk:
+  ...
+  apps_location:
+    - /tmp/cluster_app.tgz
+  apps_location_local:
+    - /tmp/local_app.tgz
+    - http://webserver.com/path/to/local_auth_app.spl
+  ...
+```
+
 Splunk Apps and Add-on archive files can also be extracted and installed using the `app_paths_install:` option.  This configuration will install a list of apps directly to the configure `app_paths` directory, bypassing any local install then copy to bundle directory that `apps_location` uses for cluster managing roles such as CM or Deployer.  The suported `app_paths` are default (local apps), shc, idxc, and deployment.  An example of a CM config with one local app and two cluster apps is:
 ```
 splunk:
