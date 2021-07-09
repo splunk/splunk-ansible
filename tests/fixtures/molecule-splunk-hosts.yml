@@ -18,7 +18,6 @@ all:
       preferred_captaincy: true
       ignore_license: true
       apps_location: null
-      apps_location_local: null
       admin_user: admin
       allow_upgrade: true
       appserver:
