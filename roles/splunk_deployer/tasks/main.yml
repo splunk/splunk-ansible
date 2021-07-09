@@ -75,6 +75,12 @@
     apps: "{{ installed_apps }}"
     dest: "{{ splunk.app_paths.shc }}"
 
+- include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
+  when: splunk.deployment_server is defined and splunk.deployment_server
+
+- include_tasks: push_apps_to_search_heads.yml
+  when: "'apps_location' in splunk and splunk.apps_location"
+
 - include_tasks: ../../../roles/splunk_common/tasks/extract_app.yml
   when: "'app_paths_install' in splunk and splunk.app_paths_install.shc"
   vars:
@@ -82,11 +88,8 @@
     extract_path: "{{ splunk.app_paths.shc }}"
   loop: "{{ splunk.app_paths_install.shc }}"
 
-- include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
-  when: splunk.deployment_server is defined and splunk.deployment_server
-
-- include_tasks: push_apps_to_search_heads.yml
-  when: "('apps_location' in splunk and splunk.apps_location) or ('app_paths_install' in splunk and splunk.app_paths_install.shc)"
+- include_tasks: bundle_push_to_search_heads.yml
+  when: "'app_paths_install' in splunk and splunk.app_paths_install.shc"
 
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
   when: "'apps_location' in splunk and splunk.apps_location"
