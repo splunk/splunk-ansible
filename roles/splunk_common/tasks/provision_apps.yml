@@ -1,5 +1,7 @@
 ---
 - include_tasks: install_apps.yml
+  when:
+   - app_list is defined and app_list
   vars:
     app_url: "{{ item }}"
   loop: "{{ app_list }}"
