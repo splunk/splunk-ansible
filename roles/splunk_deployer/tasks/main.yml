@@ -82,7 +82,7 @@
   when: "'apps_location' in splunk and splunk.apps_location"
 
 - include_tasks: ../../../roles/splunk_common/tasks/extract_app.yml
-  when: "'app_paths_install' in splunk and splunk.app_paths_install.shc"
+  when: "'app_paths_install' in splunk and 'shc' in splunk.app_paths_install and splunk.app_paths_install.shc"
   vars:
     app_filepath: "{{ item }}"
     extract_path: "{{ splunk.app_paths.shc }}"
@@ -102,7 +102,7 @@
 
 - include_tasks: ../../roles/splunk_common/tasks/provision_apps.yml
   when:
-    - "'app_paths_install' in splunk and splunk.app_paths_install.default"
+    - "'app_paths_install' in splunk and 'default' in splunk.app_paths_install and splunk.app_paths_install.default"
   vars:
     app_list: "{{ splunk.app_paths_install.default }}"
 

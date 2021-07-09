@@ -13,7 +13,7 @@
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
-    - "'app_paths_install' in splunk and splunk.app_paths_install.default"
+    - "'app_paths_install' in splunk and 'default' in splunk.app_paths_install and splunk.app_paths_install.default"
   vars:
     app_list: "{{ splunk.app_paths_install.default }}"
 
