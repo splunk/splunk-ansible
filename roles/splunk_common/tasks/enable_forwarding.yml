@@ -7,8 +7,6 @@
     section: "indexer_discovery:splunk-indexer"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   with_items:
     - {key: "pass4SymmKey", value: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"}
     - {key: "master_uri", value: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}"}
@@ -17,6 +15,8 @@
     - item.value | length > 0
   no_log: "{{ hide_password }}"
   register: indexer_discovery
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Setup tcpout group for index-clustering
   ini_file:
@@ -24,8 +24,6 @@
     section: "tcpout:group1"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   with_items:
     - {key: "indexerDiscovery", value: "splunk-indexer"}
     - {key: "clientCert", value: "{{ splunk.s2s.cert if splunk.s2s is defined and splunk.s2s.cert is defined }}"}
@@ -36,6 +34,8 @@
     - item.value | length > 0
   no_log: "{{ hide_password }}"
   register: tcpout_group
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Setup default tcpout group for index-clustering
   ini_file:
@@ -43,8 +43,6 @@
     section: "tcpout"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   with_items:
     - {key: "indexAndForward", value: "false"}
     - {key: "defaultGroup", value: "group1"}
@@ -52,6 +50,8 @@
     - splunk_indexer_cluster | bool
     - item.value | length > 0
   register: default_tcpout_group
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 # NOTE: If this task is called or used, it will disable all local indexing!
 - name: Disable indexing on the current node
@@ -60,10 +60,10 @@
     section: "indexAndForward"
     option: "index"
     value: "false"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: index_disabling
   when: splunk.role != "splunk_license_master"
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 # set up forward servers set by get_facts
 - name: Add forward_servers

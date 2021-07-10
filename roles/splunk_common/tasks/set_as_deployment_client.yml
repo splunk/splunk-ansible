@@ -22,8 +22,6 @@
 
 - name: Set deployment client name
   ini_file:
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
     dest: "{{ splunk.home }}/etc/system/local/deploymentclient.conf"
     section: deployment-client
     option: "clientName"

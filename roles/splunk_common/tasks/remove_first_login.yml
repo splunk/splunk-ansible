@@ -5,8 +5,5 @@
     state: touch
     modification_time: preserve
     access_time: preserve
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-    mode: 0660
   become: yes
   become_user: "{{ splunk.user }}"

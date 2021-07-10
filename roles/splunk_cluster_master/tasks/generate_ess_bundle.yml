@@ -7,8 +7,6 @@
 - name: Modify bundle script permissions
   file:
     path: /tmp/es_ta_for_indexers.py
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
     mode: 0777
 
 - name: Get ESS version
@@ -37,8 +35,6 @@
   unarchive:
     src: "{{ ta_location.stdout_lines[0] }}"
     dest: "{{ splunk.app_paths.idxc }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
     remote_src: yes
   when:
     - ta_location is success
