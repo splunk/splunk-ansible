@@ -243,6 +243,21 @@ splunk:
   ...
 ```
 
+Splunk Apps and Add-on archive files can also be extracted and installed using the `app_paths_install:` option.  This configuration will install a list of apps directly to the configure `app_paths` directory, bypassing any local install then copy to bundle directory that `apps_location` uses for cluster managing roles such as CM or Deployer.  The suported `app_paths` are default (local apps), shc, idxc, and deployment.  An example of a CM config with one local app and two cluster apps is:
+```
+splunk:
+  ...
+  app_paths_install:
+    default:
+      - /tmp/local_app.tgz
+    idxc:
+      - /tmp/cluster_app1.tgz
+      - /tmp/cluster_app2.spl
+  ...
+```
+
+The `shc` and `idxc` apps specified in `app_paths_install` are not installed locally so Apps that require a local installation prior to a cluster-wide implementation (such as Enterprise Security Suite) would not be support.  Those apps would still need to use the `apps_location` field for proper installation.
+
 ---
 
 ## SmartStore

@@ -11,7 +11,7 @@ platforms:
     volumes:
       - "/opt/splunk/var"
   - name: splunk-monitor-debian10
-    image: geerlingguy/docker-debian10-ansible:latest
+    image: jgeusebroek/debian10-molecule:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:
