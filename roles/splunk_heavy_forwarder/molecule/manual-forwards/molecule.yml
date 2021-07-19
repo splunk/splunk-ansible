@@ -15,7 +15,7 @@ platforms:
       https_proxy: "${https_proxy}"
       no_proxy: "${no_proxy}"
   - name: splunk-hf-debian10
-    image: geerlingguy/docker-debian10-ansible:latest
+    image: jgeusebroek/debian10-molecule:latest
     pre_build_image: true
     command: "/lib/systemd/systemd"
     volumes:

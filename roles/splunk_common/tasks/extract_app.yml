@@ -1,0 +1,59 @@
+---
+- name: Install Splunkbase app
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local"
+    method: POST
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    force_basic_auth: yes
+    validate_certs: false
+    body:
+      name: "{{ app_filepath }}"
+      update: "true"
+      filename: "true"
+      auth: "{{ splunkbase_token }}"
+    body_format: "form-urlencoded"
+    status_code: [ 200, 201 ]
+    timeout: 300
+    use_proxy: no
+  when:
+    - app_filepath is defined
+    - "'splunkbase.splunk.com' in app_filepath"
+    - splunkbase_token is defined
+    - splunkbase_token != None
+  no_log: "{{ hide_password }}"
+
+- name: Install via app_paths
+  when: "'splunkbase.splunk.com' not in app_filepath"
+  block:
+  - name: Check local app
+    stat:
+      path: "{{ app_filepath }}"
+    register: app_local
+  - name: Download remote app
+    get_url:
+      url: "{{ app_filepath }}"
+      dest: /tmp/
+      mode: 0777
+      timeout: 120
+      validate_certs: no
+      force: yes
+    register: app_remote
+    when:
+      - app_filepath is match("^(https?|file)://.*")
+
+  - name: Infer app filepath
+    set_fact:
+      app_install_filepath: "{% if app_filepath | regex_search('^(https?|file)://.*') %}{{ app_remote.dest }}{% else %}{{ app_local.stat.path }}{% endif %}"
+
+  - name: Extract app to location
+    unarchive:
+      src: "{{ app_install_filepath }}"
+      dest: "{{ extract_path }}"
+      remote_src: true
+    become: yes
+    become_user: "{{ splunk.user }}"
+    no_log: "{{ hide_password }}"
+    when:
+      - app_install_filepath is defined
+

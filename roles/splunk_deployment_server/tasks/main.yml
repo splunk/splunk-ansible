@@ -1,8 +1,21 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
+- include_tasks: ../../../roles/splunk_common/tasks/extract_app.yml
+  when: "'app_paths_install' in splunk and splunk.app_paths_install.deployment"
+  vars:
+    app_filepath: "{{ item }}"
+    extract_path: "{{ splunk.app_paths.deployment }}"
+  loop: "{{ splunk.app_paths_install.deployment }}"
+
 - include_tasks: create_deployment_apps.yml
   when: "'apps_location' in splunk and splunk.apps_location"
+
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when:
+    - "'app_paths_install' in splunk and 'default' in splunk.app_paths_install and splunk.app_paths_install.default"
+  vars:
+    app_list: "{{ splunk.app_paths_install.default }}"
 
 - include_tasks: generate_server_classes.yml
 
