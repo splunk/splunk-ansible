@@ -89,7 +89,7 @@
   loop: "{{ splunk.app_paths_install.shc }}"
 
 - include_tasks: bundle_push_to_search_heads.yml
-  when: "'app_paths_install' in splunk and splunk.app_paths_install.shc"
+  when: "'app_paths_install' in splunk and 'shc' in splunk.app_paths_install and splunk.app_paths_install.shc"
 
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
   when: "'apps_location' in splunk and splunk.apps_location"
