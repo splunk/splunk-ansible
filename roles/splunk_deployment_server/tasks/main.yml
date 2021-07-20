@@ -2,7 +2,7 @@
 - include_tasks: ../../../roles/splunk_common/tasks/enable_forwarding.yml
 
 - include_tasks: ../../../roles/splunk_common/tasks/extract_app.yml
-  when: "'app_paths_install' in splunk and splunk.app_paths_install.deployment"
+  when: "'app_paths_install' in splunk and 'deployment' in splunk.app_paths_install and splunk.app_paths_install.deployment"
   vars:
     app_filepath: "{{ item }}"
     extract_path: "{{ splunk.app_paths.deployment }}"
