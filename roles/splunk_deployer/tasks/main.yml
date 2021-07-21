@@ -61,11 +61,35 @@
   vars:
     app_list: "{{ splunk.apps_location }}"
 
+# Only find and copy installed apps to the SHC bundle dir if we installed app via 'apps_location'
+- include_tasks: ../../../roles/splunk_common/tasks/find_installed_apps.yml
+  when:
+    - "'apps_location' in splunk and splunk.apps_location"
+    - splunk.deployment_server is not defined or not splunk.deployment_server
+
+- include_tasks: ../../../roles/splunk_common/tasks/copy_installed_apps.yml
+  when:
+    - "'apps_location' in splunk and splunk.apps_location"
+    - splunk.deployment_server is not defined or not splunk.deployment_server
+  vars:
+    apps: "{{ installed_apps }}"
+    dest: "{{ splunk.app_paths.shc }}"
+
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when: splunk.deployment_server is defined and splunk.deployment_server
 
 - include_tasks: push_apps_to_search_heads.yml
   when: "'apps_location' in splunk and splunk.apps_location"
+
+- include_tasks: ../../../roles/splunk_common/tasks/extract_app.yml
+  when: "'app_paths_install' in splunk and 'shc' in splunk.app_paths_install and splunk.app_paths_install.shc"
+  vars:
+    app_filepath: "{{ item }}"
+    extract_path: "{{ splunk.app_paths.shc }}"
+  loop: "{{ splunk.app_paths_install.shc }}"
+
+- include_tasks: bundle_push_to_search_heads.yml
+  when: "'app_paths_install' in splunk and 'shc' in splunk.app_paths_install and splunk.app_paths_install.shc"
 
 - include_tasks: ../../../roles/splunk_common/tasks/disable_installed_apps.yml
   when: "'apps_location' in splunk and splunk.apps_location"
@@ -75,5 +99,11 @@
   when: "'apps_location_local' in splunk and splunk.apps_location_local"
   vars:
     app_list: "{{ splunk.apps_location_local }}"
+
+- include_tasks: ../../roles/splunk_common/tasks/provision_apps.yml
+  when:
+    - "'app_paths_install' in splunk and 'default' in splunk.app_paths_install and splunk.app_paths_install.default"
+  vars:
+    app_list: "{{ splunk.app_paths_install.default }}"
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

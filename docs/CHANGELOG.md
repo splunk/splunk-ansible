@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [8.2.1](#821)
 * [8.2.0](#820)
 * [8.1.5](#815)
 * [8.1.4](#814)
@@ -48,6 +49,17 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.2.1
+
+#### What's New?
+* Support for installing apps locally on a Cluster Manager or Deployer instance using `apps_location_local`. Both `apps_location` and `apps_location_local` can be used concurrently and follow the same syntax. See our [documentation](https://splunk.github.io/splunk-ansible/ADVANCED.html#apps) for details.
+
+#### Changes
+* Enabled `force_basic_auth` to reduce requests to splunkd
+* Bugfixes
 
 ---
 

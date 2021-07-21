@@ -17,6 +17,12 @@
   vars:
     app_list: "{{ splunk.apps_location }}"
 
+- include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
+  when:
+    - "'app_paths_install' in splunk and 'default' in splunk.app_paths_install and splunk.app_paths_install.default"
+  vars:
+    app_list: "{{ splunk.app_paths_install.default }}"
+
 # Execute other Splunk commands
 - name: Execute Splunk commands
   command: "{{ splunk.exec }} {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"

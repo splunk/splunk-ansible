@@ -283,6 +283,23 @@ splunk:
     * Path in filesystem of search head cluster apps (this will depend on splunk.home)
     * Default: /opt/splunk/etc/shcluster/apps
 
+  app_paths_install:
+    default: <list>
+    * List of apps to install into app_paths.default - elements can be in the form of a URL or a location in the filessytem
+    * Default: null
+
+    deployment: <list>
+    * List of apps to install into app_paths.deployment - elements can be in the form of a URL or a location in the filessytem
+    * Default: null
+
+    idxc: <list>
+    * List of apps to install into app_paths.idxc on the CM to be pushed to the Indexer Cluster - elements can be in the form of a URL or a location in the filessytem
+    * Default: null
+
+    shc: <list>
+    * List of apps to install into app_paths.shc on the deployer to be pushed to the Search Head Cluster- elements can be in the form of a URL or a location in the filessytem
+    * Default: null
+
   hec:
     enable: <bool>
     * Determine whether or not to disable setting up the HTTP event collector (HEC)
