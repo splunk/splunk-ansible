@@ -4,6 +4,7 @@
 
 * [8.2.1](#821)
 * [8.2.0](#820)
+* [8.1.5](#815)
 * [8.1.4](#814)
 * [8.1.3](#813)
 * [8.1.2](#812)
@@ -71,6 +72,16 @@
 
 #### Changes
 * Bugfixes
+
+---
+
+## 8.1.5
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.2.1.
+
+#### Changes
+* See [8.2.1](#821) changes above.
 
 ---
 
