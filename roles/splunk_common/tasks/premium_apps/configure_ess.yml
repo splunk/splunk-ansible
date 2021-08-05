@@ -20,6 +20,6 @@
   become_user: "{{ splunk.user }}"
   register: essinstall
   changed_when: essinstall.rc == 0
-  failed_when: essinstall.rc != 0
+  failed_when: essinstall.rc != 0 and 'Unknown search command' not in essinstall.stderr
   notify:
     - Restart the splunkd service
