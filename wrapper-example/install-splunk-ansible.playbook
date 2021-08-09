@@ -138,7 +138,7 @@
         src: /tmp/splunk-ansible.tgz
         dest: /tmp/splunk-ansible.tgz
 
-    - name: Create splunk-anisble directory
+    - name: Create splunk-ansible directory
       file:
         state: directory
         path: /opt/ansible
@@ -147,7 +147,7 @@
         # when specifying mode using octal numbers, add a leading 0
         mode: 0755
 
-    - name: Create splunk-anisble contianer info directory
+    - name: Create splunk-ansible container info directory
       file:
         state: directory
         path: /opt/container_artifact
