@@ -4,7 +4,7 @@
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "enableSplunkWebSSL"
-    value: "True"
+    value: "{{ splunk.http_enableSSL }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     mode: 0660
