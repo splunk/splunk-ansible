@@ -4,9 +4,9 @@
   get_url:
     url: https://cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
     dest: "{{ splunk.home }}/etc/auth/DigiCertGlobalRootCA.pem"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
     mode: 0666
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Set root CA
   ini_file:
@@ -14,9 +14,9 @@
     section: sslConfig
     option: sslRootCAPath
     value: "{{ splunk.home }}/etc/auth/DigiCertGlobalRootCA.pem"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: dsp_ca
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Find DSP auto-generated cert
   stat:
@@ -59,8 +59,6 @@
     section: "tcpout:datastreamprocessor"
     option: "{{ item.key }}"
     value: "{{ item.value }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   with_items:
     - {key: "server", value: "{{ splunk.dsp.server }}"}
     - {key: "clientCert", value: "{{ '{{ splunk.home }}/etc/auth/dsp-fwd-chain.pem' if splunk.dsp.cert == 'auto' else splunk.dsp.cert }}"}
@@ -69,6 +67,8 @@
     - splunk.dsp.server is defined and splunk.dsp.server
     - splunk.dsp.cert is defined and splunk.dsp.cert
   register: dsp_group
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Enable DSP output
   ini_file:
@@ -76,9 +76,9 @@
     section: tcpout
     option: defaultGroup
     value: datastreamprocessor
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: dsp_default
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - include_tasks: scloud/construct_stream.yml
   when:

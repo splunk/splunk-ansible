@@ -5,9 +5,9 @@
     section: settings
     option: "root_endpoint"
     value: "{{ splunk.root_endpoint }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: set_root_endpoint
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 # Restart only when Splunk is running and when any of the above have changed
 - include_tasks: trigger_restart.yml

@@ -5,9 +5,6 @@
     line: "[{{ stanza_name }}]"
     state: present
     create: yes
-    mode: 0660
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when: stanza_name and not stanza_settings
@@ -20,9 +17,6 @@
     value: "{{ stanza_setting.value }}"
     allow_no_value: True
     state: present
-    mode: 0660
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_dict: "{{ stanza_settings | default({}) }}"

@@ -10,9 +10,9 @@
     section: "serverClass:all"
     option: whitelist.0
     value: "*"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   when: not serverclass_conf.stat.exists
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Gather all deployment server apps
   find:
@@ -28,9 +28,9 @@
     section: "serverClass:all:app:{{ item.path | basename }}"
     option: restartSplunkd
     value: "true"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
     allow_no_value: true
   when: not serverclass_conf.stat.exists
   with_items: "{{ deployment_apps.files }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
 

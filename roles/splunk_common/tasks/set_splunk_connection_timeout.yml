@@ -5,5 +5,5 @@
     section: settings
     option: "splunkdConnectionTimeout"
     value: "{{ splunk.connection_timeout }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"

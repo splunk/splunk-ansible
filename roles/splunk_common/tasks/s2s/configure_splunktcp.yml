@@ -5,27 +5,27 @@
     section: "splunktcp://{{ splunk.s2s_port if splunk.s2s_port is defined else splunk.s2s.port }}"
     option: "disabled"
     value: "{{ 0 if 's2s' in splunk and 'enable' in splunk.s2s and splunk.s2s.enable else 1 }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: splunktcp_enabled
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Remove splunktcp-ssl input
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: "splunktcp-ssl:{{ splunk.s2s_port if splunk.s2s_port is defined else splunk.s2s.port }}"
     state: absent
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: splunktcp_ssl_disabled
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Remove input SSL settings
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: SSL
     state: absent
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: splunktcp_ssl_reset
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Reset root CA
   ini_file:
@@ -33,9 +33,9 @@
     section: sslConfig
     option: rootCA
     state: absent
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: splunktcp_ssl_ca_reset
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 # Restart only when Splunk is running and when any of the above have changed
 - include_tasks: trigger_restart.yml

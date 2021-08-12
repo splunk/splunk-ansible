@@ -37,7 +37,5 @@
   file:
     path: "{{ splunk.home }}/_asanoutput"
     state: directory
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"

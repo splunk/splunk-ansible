@@ -18,9 +18,9 @@
     section: "tcpout"
     option: "indexAndForward"
     value: "true"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
   register: lm_local_indexing
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 # Restart only when Splunk is running and when any of the above have changed
 - include_tasks: ../../splunk_common/tasks/trigger_restart.yml
