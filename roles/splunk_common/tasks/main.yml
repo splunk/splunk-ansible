@@ -93,7 +93,6 @@
 - include_tasks: enable_splunkweb_ssl.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
-    - splunk.http_enableSSL | bool
 
 - include_tasks: enable_splunkd_ssl.yml
   when: "'ssl' in splunk and splunk.ssl"

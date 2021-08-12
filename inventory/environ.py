@@ -255,7 +255,7 @@ def getSplunkWebSSL(vars_scope):
     """
     # TODO: Split this into its own splunk.http.* section
     splunk_vars = vars_scope["splunk"]
-    splunk_vars["http_enableSSL"] = bool(os.environ.get('SPLUNK_HTTP_ENABLESSL', splunk_vars.get("http_enableSSL")))
+    splunk_vars["http_enableSSL"] = os.environ.get('SPLUNK_HTTP_ENABLESSL', splunk_vars.get("http_enableSSL"))
     splunk_vars["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', splunk_vars.get("http_enableSSL_cert"))
     splunk_vars["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', splunk_vars.get("http_enableSSL_privKey"))
     splunk_vars["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', splunk_vars.get("http_enableSSL_privKey_password"))
