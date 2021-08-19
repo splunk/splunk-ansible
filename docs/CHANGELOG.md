@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [8.2.2](#822)
 * [8.2.1](#821)
 * [8.2.0](#820)
 * [8.1.5](#815)
@@ -50,6 +51,16 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.2.2
+
+#### What's New?
+* Support for installing apps directly to a given path using `app_paths_install`. See our [documentation](https://splunk.github.io/splunk-ansible/ADVANCED.html#apps) for details.
+
+#### Changes
+* Bugfixes
 
 ---
 
