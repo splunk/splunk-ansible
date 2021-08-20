@@ -255,7 +255,7 @@ def getSplunkWebSSL(vars_scope):
     """
     # TODO: Split this into its own splunk.http.* section
     splunk_vars = vars_scope["splunk"]
-    splunk_vars["http_enableSSL"] = bool(os.environ.get('SPLUNK_HTTP_ENABLESSL', splunk_vars.get("http_enableSSL")))
+    splunk_vars["http_enableSSL"] = os.environ.get('SPLUNK_HTTP_ENABLESSL', splunk_vars.get("http_enableSSL"))
     splunk_vars["http_enableSSL_cert"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_CERT', splunk_vars.get("http_enableSSL_cert"))
     splunk_vars["http_enableSSL_privKey"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY', splunk_vars.get("http_enableSSL_privKey"))
     splunk_vars["http_enableSSL_privKey_password"] = os.environ.get('SPLUNK_HTTP_ENABLESSL_PRIVKEY_PASSWORD', splunk_vars.get("http_enableSSL_privKey_password"))
@@ -399,6 +399,29 @@ def getSplunkAppsLocal(vars_scope):
             if app not in appListLocal:
                 appListLocal.append(app)
     vars_scope["splunk"]["apps_location_local"] = appListLocal
+
+def getSplunkAppPathInstall(vars_scope):
+    """
+    Determine the set of Splunk apps to install at which location as a
+    union of defaults.yml.  The actual path to install to is determined by
+    the splunk.app_paths.* variable
+    """
+    appPaths = ["shc", "idxc", "default", "deployment"]
+    if not "app_paths_install" in vars_scope["splunk"]:
+        vars_scope["splunk"]["app_paths_install"] = {}
+        for path in appPaths:
+            vars_scope["splunk"]["app_paths_install"][path] = []
+    else:
+        for path in appPaths:
+            appList = []
+            if path in vars_scope["splunk"]["app_paths_install"]:
+                # From default.yml
+                if type(vars_scope["splunk"]["app_paths_install"][path]) == str:
+                    appList = vars_scope["splunk"]["app_paths_install"][path].split(",")
+                elif type(vars_scope["splunk"]["app_paths_install"][path]) == list:
+                    appList = vars_scope["splunk"]["app_paths_install"][path]
+
+            vars_scope["splunk"]["app_paths_install"][path] = appList
 
 def getSecrets(vars_scope):
     """

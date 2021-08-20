@@ -14,6 +14,13 @@
 
 - include_tasks: initialize_cluster_master.yml
 
+- include_tasks: ../../../roles/splunk_common/tasks/extract_app.yml
+  when: "'app_paths_install' in splunk and 'idxc' in splunk.app_paths_install and splunk.app_paths_install.idxc"
+  vars:
+    app_filepath: "{{ item }}"
+    extract_path: "{{ splunk.app_paths.idxc }}"
+  loop: "{{ splunk.app_paths_install.idxc }}"
+
 - include_tasks: apply_cluster_bundle.yml
 
 # This installed_apps list gets mutated by ESS bundle generation, hence we
@@ -30,6 +37,12 @@
     - "'apps_location_local' in splunk and splunk.apps_location_local"
   vars:
     app_list: "{{ splunk.apps_location_local }}"
+
+- include_tasks: ../../roles/splunk_common/tasks/provision_apps.yml
+  when:
+    - "'app_paths_install' in splunk and 'default' in splunk.app_paths_install and splunk.app_paths_install.default"
+  vars:
+    app_list: "{{ splunk.app_paths_install.default }}"
 
 - include_tasks: setup_multisite.yml
   when:

@@ -740,6 +740,32 @@ def test_getSplunkbaseToken_exception():
             assert True
             assert "Invalid Splunkbase credentials" in str(e)
 
+@pytest.mark.parametrize(("default_yml", "os_env", "apps_cnt_def", "apps_cnt_shc", "apps_cnt_idc"),
+                         [
+                            # Check null parameters
+                            ({}, {}, 0, 0, 0),
+                            # Check default.yml parameters
+                            ({"app_paths_install": {"defaults": ["a"]}}, {}, 0, 0, 0),
+                            ({"app_paths_install": {"default": ["a"]}}, {}, 1, 0, 0),
+                            ({"apps_paths_install":{"default": ["a", "b", "c"]}}, {}, 0, 0, 0),
+                            ({"app_paths_install": {"default": ["a", "b", "c"], "shc": ["e", "f"]}}, {}, 3, 2, 0),
+                            ({"app_paths_install": {"default": ["a", "b", "c"], "idxc": ["e", "f"]}}, {}, 3, 0, 2),
+                            ({"app_paths_install": {"shc": ["a", "b", "c"], "idxc": ["e", "f"]}}, {}, 0, 3, 2),
+                            ({"app_paths_install": {"default": ["a"], "shc": ["b"], "idxc": ["c"]}}, {}, 1, 1, 1),
+                         ]
+                        )
+def test_getSplunkAppPathInstall(default_yml, os_env, apps_cnt_def, apps_cnt_shc, apps_cnt_idc):
+    vars_scope = dict()
+    vars_scope["splunk"] = default_yml
+    with patch("os.environ", new=os_env):
+        environ.getSplunkAppPathInstall(vars_scope)
+    assert type(vars_scope["splunk"]["app_paths_install"]["default"]) == list
+    assert len(vars_scope["splunk"]["app_paths_install"]["default"]) == apps_cnt_def
+    assert type(vars_scope["splunk"]["app_paths_install"]["shc"]) == list
+    assert len(vars_scope["splunk"]["app_paths_install"]["shc"]) == apps_cnt_shc
+    assert type(vars_scope["splunk"]["app_paths_install"]["idxc"]) == list
+    assert len(vars_scope["splunk"]["app_paths_install"]["idxc"]) == apps_cnt_idc
+
 @pytest.mark.parametrize(("default_yml", "os_env", "apps_count"),
                          [
                             # Check null parameters

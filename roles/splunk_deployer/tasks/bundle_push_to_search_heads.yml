@@ -1,0 +1,17 @@
+---
+- name: Apply shcluster bundle
+  command: "{{ splunk.exec }} apply shcluster-bundle -target {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --answer-yes -push-default-apps true"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
+  register: shcluster_bundle
+  until: shcluster_bundle.rc == 0 or "Found zero deployable apps" in shcluster_bundle.stderr
+  changed_when: shcluster_bundle.rc == 0
+  failed_when: shcluster_bundle.rc != 0 and "Found zero deployable apps" not in shcluster_bundle.stderr
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+  ignore_errors: true
+
+- debug:
+    msg: "WARNING: Applying shcluster bundle failed - proceeding anyways..."
+  when: shcluster_bundle.rc != 0
