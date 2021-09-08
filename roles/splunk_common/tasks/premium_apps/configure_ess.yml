@@ -13,6 +13,19 @@
   register: ess_info
   no_log: "{{ hide_password }}"
 
+- name: Extend splunkd connection timeout
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: "settings"
+    option: "splunkdConnectionTimeout"
+    value: 3000
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
 - name: Run ESS post-install setup
   command: "{{ splunk.exec }} search '| essinstall {% if ess_info.json.entry[0].content.version is version('6.3', '>=') %}{{ es_ssl_enablement }}{% endif %} {% if splunk.role == 'splunk_deployer' %}--deployment_type shc_deployer{% endif %}' -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   no_log: "{{ hide_password }}"
