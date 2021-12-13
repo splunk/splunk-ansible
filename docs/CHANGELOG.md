@@ -2,10 +2,14 @@
 
 ## Navigation
 
+* [8.2.3.2](#8232)
 * [8.2.3](#823)
 * [8.2.2](#822)
 * [8.2.1](#821)
 * [8.2.0](#820)
+* [8.1.7.1](#8171)
+* [8.1.7](#817)
+* [8.1.6](#816)
 * [8.1.5](#815)
 * [8.1.4](#814)
 * [8.1.3](#813)
@@ -55,6 +59,13 @@
 
 ---
 
+## 8.2.3.2
+
+#### Changes
+* Patch release for CVE-2021-44228
+
+---
+
 ## 8.2.3
 
 #### Changes
@@ -92,6 +103,36 @@
 
 #### Changes
 * Bugfixes
+
+---
+
+## 8.1.7.1
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.2.3.2.
+
+#### Changes
+* See [8.2.3.2](#8232) changes above.
+
+---
+
+## 8.1.7
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.2.3.
+
+#### Changes
+* See [8.2.3](#823) changes above.
+
+---
+
+## 8.1.6
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.2.2.
+
+#### Changes
+* See [8.2.2](#822) changes above.
 
 ---
 
