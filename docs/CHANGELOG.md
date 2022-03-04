@@ -2,12 +2,15 @@
 
 ## Navigation
 
+* [8.2.5](#825)
 * [8.2.4](#824)
 * [8.2.3.2](#8232)
 * [8.2.3](#823)
 * [8.2.2](#822)
 * [8.2.1](#821)
 * [8.2.0](#820)
+* [8.1.9](#819)
+* [8.1.8](#818)
 * [8.1.7.1](#8171)
 * [8.1.7](#817)
 * [8.1.6](#816)
@@ -57,6 +60,13 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 8.2.5
+
+#### Changes
+* Bugfixes
 
 ---
 
@@ -111,6 +121,26 @@
 
 #### Changes
 * Bugfixes
+
+---
+
+## 8.1.9
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.2.5.
+
+#### Changes
+* See [8.2.5](#825) changes above.
+
+---
+
+## 8.1.8
+
+#### What's New?
+Syncing with latest codebase - currently up to sync with 8.2.4.
+
+#### Changes
+* See [8.2.4](#824) changes above.
 
 ---
 
