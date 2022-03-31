@@ -27,11 +27,18 @@ splunk:
     allow_upgrade: True
     tar_dir: "splunk"
     opt: &opt "/opt"
-    home: &home !!python/object/apply:os.path.join [*opt, "splunk"]
+    home: !!python/object/apply:os.path.join &home [*opt, "splunk"]
     user: "splunk"
     group: "splunk"
     exec: !!python/object/apply:os.path.join [*home, "bin", "splunk"]
-    pid: !!python/object/apply:os.path.join [*home, "var", "run", "splunk", "splunkd.pid"]
+    pid:
+        !!python/object/apply:os.path.join [
+            *home,
+            "var",
+            "run",
+            "splunk",
+            "splunkd.pid",
+        ]
     admin_user: "admin"
     root_endpoint:
     password:
@@ -90,6 +97,9 @@ splunk:
         discoveryPass4SymmKey:
         label: "idxc_label"
         search_factor: 3
+        register_forwarder_address: False
+        register_replication_address: False
+        register_search_address: False
         replication_factor: 3
         replication_port: 9887
     dfs:
@@ -118,10 +128,23 @@ splunk:
     smartstore:
     app_paths:
         default: !!python/object/apply:os.path.join [*home, "etc", "apps"]
-        shc: !!python/object/apply:os.path.join [*home, "etc", "shcluster", "apps"]
+        shc:
+            !!python/object/apply:os.path.join [
+                *home,
+                "etc",
+                "shcluster",
+                "apps",
+            ]
         idxc: !!python/object/apply:os.path.join [*home, "etc", "master-apps"]
-        deployment: !!python/object/apply:os.path.join [*home, "etc", "deployment-apps"]
-        httpinput: !!python/object/apply:os.path.join [*home, "etc", "apps", "splunk_httpinput"]
+        deployment:
+            !!python/object/apply:os.path.join [*home, "etc", "deployment-apps"]
+        httpinput:
+            !!python/object/apply:os.path.join [
+                *home,
+                "etc",
+                "apps",
+                "splunk_httpinput",
+            ]
 
     es:
-      ssl_enablement: "auto"
+        ssl_enablement: "auto"

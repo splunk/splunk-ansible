@@ -191,6 +191,9 @@ def getIndexerClustering(vars_scope):
     if inventory.get("splunk_indexer"):
         # If there are indexers, we need to make sure the replication factor is <= number of indexers
         indexer_count = len(inventory["splunk_indexer"].get("hosts", []))
+        idxc_vars["register_forwarder_address"] = bool(os.environ.get('SPLUNK_IDXC_REGISTER_FORWARDER_ADDRESS', idxc_vars.get("register_forwarder_address")))
+        idxc_vars["register_replication_address"] = bool(os.environ.get('SPLUNK_IDXC_REGISTER_REPLICATION_ADDRESS', idxc_vars.get("register_replication_address")))
+        idxc_vars["register_search_address"] = bool(os.environ.get('SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS', idxc_vars.get("register_search_address")))
     else:
         # Only occurs during create-defaults generation or topologies without indexers
         indexer_count = idxc_vars.get("replication_factor", 1)
