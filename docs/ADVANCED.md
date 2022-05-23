@@ -75,7 +75,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_APPS_URL | Pass in a comma-separated list of local paths or remote URLs to Splunk apps that will get installed | no | no | no |
 | SPLUNKBASE_USERNAME | Splunkbase username used for authentication when installing an app from [Splunkbase](https://splunkbase.splunk.com/) | no | no | no |
 | SPLUNKBASE_PASSWORD | Splunkbase password used for authentication when installing an app from [Splunkbase](https://splunkbase.splunk.com/) | no | no | no |
-| SPLUNK_HTTP_PORT | Port to run SplunkWeb on. Default: `8000` | no | no | no |
+| SPLUNK_HTTP_PORT | Port to run SplunkWeb on. To disable SplunkWeb, set to `0`. Default: `8000` | no | no | no |
 | SPLUNK_HTTP_ENABLESSL | Enable HTTPS on SplunkWeb | no | no | no |
 | SPLUNK_HTTP_ENABLESSL_CERT | Path to SSL certificate used for SplunkWeb, if HTTPS is enabled | no | no | no |
 | SPLUNK_HTTP_ENABLESSL_PRIVKEY | Path to SSL private key used for SplunkWeb, if HTTPS is enabled | no | no | no |
