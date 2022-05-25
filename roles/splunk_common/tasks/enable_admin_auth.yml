@@ -28,6 +28,12 @@
     become_user: "{{ splunk.user }}"
     no_log: "{{ hide_password }}"
 
+  - name: "Delete etc/passwd if exists (Windows)"
+    file:
+      path: "{{ splunk.home }}/etc/passwd"
+      state: absent
+    when: ansible_system is match("CYGWIN*|Win32NT")
+
   - name: "Generate user-seed.conf (Windows)"
     ini_file:
       dest: "{{ splunk.home }}/etc/system/local/user-seed.conf"
