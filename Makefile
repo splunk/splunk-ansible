@@ -4,7 +4,7 @@ SHELL := /bin/bash
 
 test-setup:
 	@echo 'Install test requirements'
-	pip install pip==20.3.4
+	pip install --upgrade pip
 	pip install -r $(shell pwd)/tests/requirements.txt --upgrade
 
 py3k-test-setup:

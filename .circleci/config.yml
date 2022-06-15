@@ -3,7 +3,7 @@ version: 2.1
 executors:
   circleci_xlarge:
     machine:
-      image: ubuntu-2004:2022.04.1
+      image: ubuntu-2004:202201-02
     resource_class: xlarge
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
       - run:
           name: Setup Python3
           command: |
-            pyenv global 2.7.18 3.7.8
+            pyenv global 2.7.18 3.9.7
             python --version
             pip --version
             python3 --version
