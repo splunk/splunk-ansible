@@ -2,6 +2,8 @@
 
 ## Navigation
 
+* [9.0.0](#900)
+* [8.2.6](#826)
 * [8.2.5](#825)
 * [8.2.4](#824)
 * [8.2.3.2](#8232)
@@ -61,6 +63,21 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 9.0.0
+
+#### Changes
+* Support for latest major Splunk release
+* Documentation updates + bugfixes
+
+---
+
+## 8.2.6
+
+#### Changes
+* Bugfixes
 
 ---
 

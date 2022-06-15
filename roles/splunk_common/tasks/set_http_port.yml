@@ -1,4 +1,14 @@
 ---
+- name: Disable Web UI
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "startwebserver"
+    value: "{{ splunk.http_port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: splunk.http_port == 0
+
 - name: Set HTTP Port
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
@@ -7,3 +17,4 @@
     value: "{{ splunk.http_port }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+  when: splunk.http_port != 0

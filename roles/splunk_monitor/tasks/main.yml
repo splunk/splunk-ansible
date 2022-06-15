@@ -25,7 +25,7 @@
 
 - name: Fetch clusterMaster peers
   uri:
-    url: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}/services/cluster/master/peers?output_mode=json"
+    url: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}/services/cluster/master/peers?output_mode=json&count=0"
     method: GET
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
@@ -49,7 +49,7 @@
 
 - name: Fetch distributed peers when cm is defined
   uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json"
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json&count=0"
     method: GET
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
@@ -70,7 +70,7 @@
 
 - name: Fetch distributed peers
   uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json"
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json&count=0"
     method: GET
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
