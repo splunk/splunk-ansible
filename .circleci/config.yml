@@ -14,7 +14,8 @@ jobs:
       - run:
           name: Setup Python3
           command: |
-            pyenv global 2.7.18 3.9.7
+            pyenv versions
+            pyenv global 2.7.18 3.10.2
             python --version
             pip --version
             python3 --version
