@@ -118,6 +118,10 @@
     - (splunk.role != "splunk_standalone" and splunk.role != "splunk_search_head") or
         (splunk_indexer_cluster | bool or splunk_forward_servers is defined)
 
+- include_tasks: set_cpusysmem_limits.yml
+  when:
+    - "('total_cpus' in splunk) or ('total_vcpus' in splunk) or ('total_sys_memory' in splunk)"
+
 - include_tasks: enable_dsp.yml
   when: "'dsp' in splunk and 'enable' in splunk.dsp and splunk.dsp.enable"
 
