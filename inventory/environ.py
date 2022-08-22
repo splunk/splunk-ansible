@@ -162,6 +162,8 @@ def getSplunkPaths(vars_scope):
     splunk_vars = vars_scope["splunk"]
     splunk_vars["opt"] = os.environ.get("SPLUNK_OPT", splunk_vars.get("opt"))
     splunk_vars["home"] = os.environ.get("SPLUNK_HOME", splunk_vars.get("home"))
+    splunk_vars["containerEnv"] = os.environ.get("SPLUNK_CONTAINER_ENV", splunk_vars.get("containerEnv"))
+    splunk_vars["cgroup"] = os.environ.get("SPLUNK_CGROUP_PATH", splunk_vars.get("cgroup"))
     # Not sure if we should expose this - exec is fixed relative to SPLUNK_HOME
     splunk_vars["exec"] = os.environ.get("SPLUNK_EXEC", splunk_vars.get("exec"))
     # Not sure if we should expose this - pid is fixed relative to SPLUNK_HOME

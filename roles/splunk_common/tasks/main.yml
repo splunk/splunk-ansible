@@ -131,3 +131,28 @@
 
 - include_tasks: disable_popups.yml
   when: "'disable_popups' in splunk and splunk.disable_popups | bool"
+
+# set containerEnv to true in limits.conf
+- name: set_container_true
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/limits.conf"
+    section: default
+    option: "containerEnv"
+    value: "{{ splunk.containerEnv }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.containerEnv is defined
+    - splunk.containerEnv | bool
+
+# set cgroup path, if defined, in limits.conf
+- name: set_cgroup_path
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/limits.conf"
+    section: default
+    option: "cgroup"
+    value: "{{ splunk.cgroup }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.cgroup is defined
