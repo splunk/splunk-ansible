@@ -1,4 +1,11 @@
 ---
+- name: "Restrict permissions on splunk.key for Status"
+  include_tasks: restrict_permissions.yml
+  vars:
+    file_path: "{{ item }}"
+  with_items:
+    - "{{ splunk.home }}/var/lib/splunk/kvstore/mongo/splunk.key"
+
 - name: Get Splunk status
   command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
   become: yes
