@@ -113,6 +113,7 @@ def getDefaultVars():
     getASan(defaultVars)
     getDisablePopups(defaultVars)
     getHEC(defaultVars)
+    getContainerEnv(defaultVars)
     getSecrets(defaultVars)
     getSplunkPaths(defaultVars)
     getIndexerClustering(defaultVars)
@@ -522,6 +523,13 @@ def getHEC(vars_scope):
         vars_scope["splunk"]["hec"]["ssl"] = False
     else:
         vars_scope["splunk"]["hec"]["ssl"] = bool(vars_scope["splunk"]["hec"].get("ssl"))
+
+def getContainerEnv(vars_scope):
+    """
+    Get the configured max cpu, vcpu, and system memory
+    """
+    vars_scope["splunk"]["containerEnv"] = os.environ.get("SPLUNK_CONTAINER_ENV", vars_scope["splunk"].get("containerEnv"))
+    vars_scope["splunk"]["cgroup"] = os.environ.get("SPLUNK_CGROUP_PATH", vars_scope["splunk"].get("cgroup"))
 
 def getDSP(vars_scope):
     """
