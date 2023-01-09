@@ -1,6 +1,5 @@
 # Splunk-Ansible: Provisioning Splunk Enterprise the Easy Way
 
-[![Build Status](https://circleci.com/gh/splunk/splunk-ansible/tree/develop.svg?style=svg)](https://circleci.com/gh/splunk/splunk-ansible/tree/develop)&nbsp;
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)&nbsp;
 [![GitHub release](https://img.shields.io/github/v/tag/splunk/splunk-ansible?sort=semver&label=Version)](https://github.com/splunk/splunk-ansible/releases)
 
