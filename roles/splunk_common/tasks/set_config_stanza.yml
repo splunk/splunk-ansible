@@ -29,3 +29,4 @@
   loop_control:
     loop_var: stanza_setting
   when: stanza_name and stanza_settings
+  no_log: "{{ hide_password }}"
