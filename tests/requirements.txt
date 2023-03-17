@@ -10,4 +10,5 @@ caniusepython3
 ansible==7.0.0
 ansible-lint>=7.0.0
 testinfra
-
+Mako==1.2.2
+avro==1.11.0
