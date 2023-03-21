@@ -12,4 +12,4 @@ ansible-lint>=7.0.0
 testinfra
 Mako==1.2.2
 avro==1.11.0
-setuptools>=65.5.1
+setuptools==67.5.1
