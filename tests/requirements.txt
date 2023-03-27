@@ -13,3 +13,4 @@ testinfra
 Mako==1.2.2
 avro==1.11.0
 setuptools==67.5.1
+protobuf==3.18.3
