@@ -5,17 +5,14 @@
   meta: flush_handlers
 
 - name: Fetch server info
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/server/info/server-info?output_mode=json"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/services/server/info/server-info?output_mode=json"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
     status_code: 200
     timeout: 10
     return_content: yes
-    use_proxy: no
   register: server_info
   no_log: "{{ hide_password }}"
 
@@ -24,12 +21,11 @@
     cluster_master_peers: []
 
 - name: Fetch clusterMaster peers
-  uri:
-    url: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}/services/cluster/master/peers?output_mode=json&count=0"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/services/cluster/master/peers?output_mode=json&count=0"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     validate_certs: false
     status_code: 200
     timeout: 10
@@ -48,12 +44,11 @@
   when: splunk_indexer_cluster or splunk.multisite_master is defined
 
 - name: Fetch distributed peers when cm is defined
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json&count=0"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/services/search/distributed/peers?output_mode=json&count=0"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     validate_certs: false
     status_code: 200
     timeout: 10
@@ -69,12 +64,11 @@
   delay: "{{ retry_delay }}"
 
 - name: Fetch distributed peers
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/peers?output_mode=json&count=0"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/services/search/distributed/peers?output_mode=json&count=0"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     validate_certs: false
     status_code: 200
     timeout: 10

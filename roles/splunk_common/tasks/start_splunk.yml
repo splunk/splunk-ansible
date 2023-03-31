@@ -53,6 +53,8 @@
 - name: "Wait for splunkd management port"
   wait_for:
     port: "{{ splunk.svc_port }}"
+  become: false
+  when: not splunk_http_enabled
 
 - name: Flush restart handlers
   meta: flush_handlers

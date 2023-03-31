@@ -10,15 +10,15 @@
     dmc_group_shc_deployer: "default=false&name=dmc_group_shc_deployer"
 
 - name: POST Requests
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/groups"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/services/search/distributed/groups"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body: "{{ item }}"
-    validate_certs: false
-    status_code: 201,409
+    body_format: "form-urlencoded"
+    status_code: "201,409"
+    timeout: 10
     use_proxy: no
   register: distributed_groups
   loop:
@@ -31,15 +31,15 @@
     - "{{ dmc_group_shc_deployer }}"
 
 - name: Edit DMC Group Requests
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/groups/{{ item }}/edit"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/services/search/distributed/groups/{{ item }}/edit"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body: "{{ item }}"
-    validate_certs: false
-    status_code: 201,409
+    body_format: "form-urlencoded"
+    status_code: "201,409"
+    timeout: 10
     use_proxy: no
   loop:
     - "{{ dmc_group_cluster_master }}"
@@ -52,30 +52,30 @@
   when: distributed_groups.results[0].status == 409
 
 - name: Cluster Label POST Requests
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/groups"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/services/search/distributed/groups"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body: "member={{ item.name }}&default=false&name=dmc_indexerclustergroup_{{ item.cluster_label }}"
-    validate_certs: false
-    status_code: 201,409
+    body_format: "form-urlencoded"
+    status_code: "201,409"
+    timeout: 10
     use_proxy: no
   loop: "{{ cluster_label_list_of_dicts }}"
   register: cluster_label
   when: cluster_label_list_of_dicts is defined and item.cluster_label | length > 0
 
 - name: Edit Cluster Label POST Requests
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/groups"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/services/search/distributed/groups"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body: "member={{ item.name }}&default=false&name=dmc_indexerclustergroup_{{ item.cluster_label }}/edit"
-    validate_certs: false
-    status_code: 201,409
+    body_format: "form-urlencoded"
+    status_code: "201,409"
+    timeout: 10
     use_proxy: no
   loop: "{{ cluster_label_list_of_dicts }}"
   when: cluster_label_list_of_dicts is defined and item.cluster_label | length > 0 and cluster_label.results[0].status == 409

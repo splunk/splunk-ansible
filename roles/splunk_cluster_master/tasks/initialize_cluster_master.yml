@@ -1,19 +1,16 @@
 ---
 - name: Set indexer discovery
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: /servicesNS/nobody/system/configs/conf-server
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: False
-    body:
-      name: "indexer_discovery"
+    payload:
+      name: indexer_discovery
       pass4SymmKey: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"
-    body_format: "form-urlencoded"
-    status_code: 201,409
+    body_format: form-urlencoded
+    status_code: "201,409"
     timeout: 10
-    use_proxy: no
   register: set_indexer_discovery
   changed_when: set_indexer_discovery.status == 201
   no_log: "{{ hide_password }}"

@@ -1,18 +1,17 @@
 ---
 - name: Fetch distsearch server info
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/search/configs/conf-distsearch/distributedSearch?output_mode=json"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/search/configs/conf-distsearch/distributedSearch?output_mode=json"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
-    status_code: 200
+    body_format: "json"
+    status_code: "200"
     return_content: yes
-    body_format: json
+    timeout: 10
     use_proxy: no
   register: distsearch_server_info
-
+  no_log: "{{ hide_password }}"
 - name: Initialize lists
   set_fact:
     current_group_list: []
@@ -33,6 +32,7 @@
   set_fact:
     updated_group_list: "{{ updated_group_list }} + [ '{{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }}' ]"
   with_items: "{{ group_list }}"
+  #INFRA-38882: Update Task?
 
 - name: Non-existent peers list
   set_fact:
@@ -75,3 +75,4 @@
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
   with_items: "{{ group_list }}"
+#INFRA-38882: Update exec?

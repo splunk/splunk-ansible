@@ -1,31 +1,27 @@
 ---
 - name: GET OptInVersion
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_instrumentation/admin/telemetry/general?output_mode=json"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/splunk_instrumentation/admin/telemetry/general?output_mode=json"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     validate_certs: false
     status_code: 200
     timeout: 10
     return_content: yes
-    use_proxy: no
   register: telemetry
   no_log: "{{ hide_password }}"
 
 - name: Disable Popups
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/{{ item.key }}"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "{{ item.key }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body: "{{ item.value }}"
     validate_certs: false
     status_code: 200,201,409
-    use_proxy: no
   with_items:
-    - { key: "servicesNS/admin/user-prefs/data/user-prefs/general", value: "hideInstrumentationOptInModal=1&notification_python_3_impact=false&showWhatsNew=0" }
-    - { key: "servicesNS/nobody/splunk_instrumentation/admin/telemetry/general", value: "showOptInModal=0&optInVersionAcknowledged={{ telemetry['json']['entry'][0]['content']['optInVersion'] }}" }
-    - { key: "servicesNS/admin/search/data/ui/ui-tour/search-tour", value: "tourPage=search&viewed=1" }
+    - { key: "/servicesNS/admin/user-prefs/data/user-prefs/general", value: "hideInstrumentationOptInModal=1&notification_python_3_impact=false&showWhatsNew=0" }
+    - { key: "/servicesNS/nobody/splunk_instrumentation/admin/telemetry/general", value: "showOptInModal=0&optInVersionAcknowledged={{ telemetry['json']['entry'][0]['content']['optInVersion'] }}" }
+    - { key: "/servicesNS/admin/search/data/ui/ui-tour/search-tour", value: "tourPage=search&viewed=1" }
