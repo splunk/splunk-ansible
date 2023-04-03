@@ -6,7 +6,7 @@ import requests
 import requests_unixsocket
 import json
 
-UDS_SOCKET_PATH = "../var/run/splunk/cli.socket"
+UDS_SOCKET_PATH = "/var/run/splunk/cli.socket"
 
 def supports_uds():
     return os.path.exists(UDS_SOCKET_PATH)
