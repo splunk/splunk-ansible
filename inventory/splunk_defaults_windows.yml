@@ -6,6 +6,7 @@ retry_delay: 10
 retry_num: 60
 wait_for_splunk_retry_num: 150
 shc_sync_retry_num: 300
+splunk_http_enabled: False
 
 config:
     max_retries: 3
