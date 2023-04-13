@@ -1,0 +1,20 @@
+---
+- name: Set Mgmt Mode UDS
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    option: "mgmtMode"
+    section: "httpServer"
+    value: "auto"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: splunk.role == "splunk_universal_forwarder" and splunk.splunk_http_enabled|bool == false
+
+- name: Set Mgmt Mode TCP
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    option: "mgmtMode"
+    section: "httpServer"
+    value: "tcp"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: splunk.role == "splunk_universal_forwarder" and splunk.splunk_http_enabled|bool == true

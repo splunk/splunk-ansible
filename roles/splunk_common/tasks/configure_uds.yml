@@ -1,0 +1,8 @@
+- name: Deploy UDS configuration
+  copy:
+    src: ../../../roles/splunk_universal_forwader/uds_inputs.conf
+    dest: "{{ splunk.home }}/etc/apps/your_app/local/uds_inputs.conf"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: 0644
+  notify: restart splunk
