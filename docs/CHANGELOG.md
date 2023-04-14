@@ -73,16 +73,15 @@
 ## 9.0.4.1
 
 #### Changes
-* Support for latest major Splunk release
-* Documentation updates + bugfixes
-
+* Bugfixes
 
 ---
 
 ## 9.0.4
 
 #### Changes
-* Bugfixes
+* Support for latest major Splunk release
+* Documentation updates + bugfixes
 
 ---
 
