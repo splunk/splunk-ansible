@@ -33,7 +33,7 @@
   become_user: "{{ privileged_user }}"
   with_items:
     - "{{ splunk.home }}"
-  when: splunk_install
+  when: splunk_install | bool or first_run | bool
 
 - name: Install Splunk
   include_tasks: install_splunk_{{ splunk_build_type }}.yml
