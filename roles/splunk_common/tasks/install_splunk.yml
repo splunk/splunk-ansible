@@ -24,6 +24,17 @@
     - "{{ splunk.home }}/Python-2.7"
   when: splunk_upgrade | bool
 
+- name: Clean up Splunk home for fresh install
+  file:
+    path: "{{ item }}"
+    state: "absent"
+  ignore_errors: yes
+  become: yes
+  become_user: "{{ privileged_user }}"
+  with_items:
+    - "{{ splunk.home }}"
+  when: splunk_install
+
 - name: Install Splunk
   include_tasks: install_splunk_{{ splunk_build_type }}.yml
 
