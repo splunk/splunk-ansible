@@ -24,15 +24,24 @@
     - "{{ splunk.home }}/Python-2.7"
   when: splunk_upgrade | bool
 
+- name: Find all files to clean up in Splunk home for fresh install
+  find:
+    path: "{{ splunk.home }}"
+    file_type: file
+  ignore_errors: yes
+  become: yes
+  become_user: "{{ privileged_user }}"
+  register: cleanup_files
+  when: not splunk_upgrade
+
 - name: Clean up Splunk home for fresh install
   file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: "absent"
   ignore_errors: yes
   become: yes
   become_user: "{{ privileged_user }}"
-  with_items:
-    - "{{ splunk.home }}"
+  with_items: "{{ cleanup_files.files }}"
   when: not splunk_upgrade
 
 - name: Install Splunk
