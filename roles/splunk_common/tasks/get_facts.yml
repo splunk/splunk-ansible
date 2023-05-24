@@ -79,7 +79,7 @@
 # and allowing upgrades between new and old hashes of the same version.
 - name: "Setting upgrade fact"
   set_fact:
-    splunk_upgrade: "{{ 'build_location' in splunk and splunk.build_location and not splunk_install and splunk_target_version and ((splunk_target_version != splunk_current_version) or (splunk_current_build_hash != splunk_target_build_hash))| default(False) }}"
+    splunk_upgrade: "{{ not first_run and 'build_location' in splunk and splunk.build_location and not splunk_install and splunk_target_version and ((splunk_target_version != splunk_current_version) or (splunk_current_build_hash != splunk_target_build_hash))| default(False) }}"
 
 # determine if we need to set up indexer clusters
 - name: "Setting indexer cluster fact from config"
