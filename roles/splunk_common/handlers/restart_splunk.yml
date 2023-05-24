@@ -27,4 +27,4 @@
   wait_for:
     port: "{{ splunk.svc_port }}"
   become: false
-  when: not splunk_http_enabled
+  when: not force_mgmnt_port
