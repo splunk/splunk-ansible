@@ -1,0 +1,78 @@
+ansible_post_tasks: null
+ansible_pre_tasks: null
+hide_password: false
+retry_delay: 3
+retry_num: 60
+wait_for_splunk_retry_num: 60
+shc_sync_retry_num: 60
+splunk_home_ownership_enforcement: true
+
+config:
+  baked: default.yml
+  defaults_dir: /tmp/defaults
+  env:
+    headers: null
+    var: SPLUNK_DEFAULTS_URL
+    verify: true
+  host:
+    headers: null
+    url: null
+    verify: true
+  max_delay: 60
+  max_retries: 3
+  max_timeout: 1200
+
+splunk:
+  role: splunk_standalone
+  upgrade: false
+  build_location: /tmp/splunk.tgz
+  apps_location: null
+  license_uri: null
+  admin_user: admin
+  app_paths:
+    default: /opt/splunk/etc/apps
+    deployment: /opt/splunk/etc/deployment-apps
+    httpinput: /opt/splunk/etc/apps/splunk_httpinput
+    idxc: /opt/splunk/etc/master-apps
+    shc: /opt/splunk/etc/shcluster/apps
+  enable_service: false
+  exec: /opt/splunk/bin/splunk
+  group: splunk
+  hec:
+    enable: True
+    ssl: True
+    port: 8088
+    token: 4a8a737d-5452-426c-a6f7-106dca4e813f
+  home: /opt/splunk
+  http_enableSSL: 0
+  http_enableSSL_cert: null
+  http_enableSSL_privKey: null
+  http_enableSSL_privKey_password: null
+  http_port: 8000
+  idxc:
+    enable: false
+    label: idxc_label
+    replication_factor: 3
+    replication_port: 9887
+    search_factor: 3
+    secret: dmwHG97SpM+GzeGPUELwr7xXowSAVmLW
+  ignore_license: false
+  license_download_dest: /tmp/splunk.lic
+  opt: /opt
+  password: helloworld
+  pid: /opt/splunk/var/run/splunk/splunkd.pid
+  s2s_enable: true
+  s2s_port: 9997
+  search_head_captain_url: null
+  secret: null
+  shc:
+    enable: false
+    label: shc_label
+    replication_factor: 3
+    replication_port: 9887
+    secret: EpcUlTUHMSOhdjRZb3QqPYf9Lf7L991c
+  smartstore: null
+  svc_port: 8089
+  tar_dir: splunk
+  user: splunk
+  wildcard_license: false
