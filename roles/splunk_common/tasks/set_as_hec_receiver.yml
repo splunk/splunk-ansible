@@ -52,7 +52,7 @@
       name: "splunk_hec_token"
       token: "{% if 'hec' in splunk and 'token' in splunk.hec and splunk.hec.token %}{{ splunk.hec.token }}{% else %}{{ splunk.hec_token }}{% endif %}"
     body_format: "form-urlencoded"
-    status_code: 201,409
+    status_code: [201,409]
   register: create_hec_token
   changed_when: create_hec_token.status == 201
   when: ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)

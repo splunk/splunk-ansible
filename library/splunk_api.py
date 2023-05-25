@@ -59,7 +59,7 @@ def main():
         module.exit_json(changed=False)
 
     method = module.params['method']
-    endpoint = module.params['endpoint']
+    endpoint = module.params['url']
     username = module.params['username']
     password = module.params['password']
     payload = module.params.get('payload', None)
