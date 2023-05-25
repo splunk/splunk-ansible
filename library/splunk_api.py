@@ -3,7 +3,7 @@
 from ansible.module_utils.basic import AnsibleModule
 import os
 import requests
-import requests_unixsocket
+# import requests_unixsocket
 import json
 
 UDS_SOCKET_PATH = "/var/run/splunk/cli.socket"
@@ -11,18 +11,18 @@ UDS_SOCKET_PATH = "/var/run/splunk/cli.socket"
 def supports_uds():
     return os.path.exists(UDS_SOCKET_PATH)
 
-def api_call_uds(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-    session = requests_unixsocket.Session()
-    url = f"http+unix://{UDS_SOCKET_PATH}{endpoint}"
-    if headers is None:
-        headers = {}
-    headers['Content-Type'] = 'application/json'
-    auth = (username, password)
+# def api_call_uds(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
+#     session = requests_unixsocket.Session()
+#     url = f"http+unix://{UDS_SOCKET_PATH}{endpoint}"
+#     if headers is None:
+#         headers = {}
+#     headers['Content-Type'] = 'application/json'
+#     auth = (username, password)
 
-    response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
-    if status_code is not None and response.status_code not in status_code:
-        raise ValueError(f"API call failed with status code {response.status_code}: {response.text}")
-    return response
+#     response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
+#     if status_code is not None and response.status_code not in status_code:
+#         raise ValueError(f"API call failed with status code {response.status_code}: {response.text}")
+#     return response
 
 # update to take svc_port variable
 def api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
@@ -69,7 +69,8 @@ def main():
     timeout = module.params.get('timeout', None)
 
     if supports_uds():
-        response = api_call_uds(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
+        # TODO: Update back
+        response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
     else:
         response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
 
