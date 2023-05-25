@@ -6,7 +6,7 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     validate_certs: false
-    status_code: 200
+     status_code: [200]
     timeout: 10
     return_content: yes
   register: telemetry

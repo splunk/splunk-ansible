@@ -6,7 +6,7 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     body_format: "json"
-    status_code: "200"
+    status_code: [200]
     return_content: yes
     timeout: 10
     use_proxy: no

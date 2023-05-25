@@ -5,7 +5,7 @@
     endpoint: /services/apps/local
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    payload:
+    body:
       name: "{{ app_filepath }}"
       update: "true"
       filename: "true"

@@ -6,7 +6,7 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     body_format: "form-urlencoded"
-    status_code: "200"
+    status_code: [200]
     return_content: true
     use_proxy: no
   register: dmc_asset_build_full
@@ -32,7 +32,7 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     body_format: "form-urlencoded"
-    status_code: "200"
+    status_code: [200]
     return_content: true
     use_proxy: no
   register: settings

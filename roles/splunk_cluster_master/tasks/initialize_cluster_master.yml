@@ -5,11 +5,11 @@
     endpoint: /servicesNS/nobody/system/configs/conf-server
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    payload:
+    body:
       name: indexer_discovery
       pass4SymmKey: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"
     body_format: form-urlencoded
-    status_code: "201,409"
+    status_code: [201,409]
     timeout: 10
   register: set_indexer_discovery
   changed_when: set_indexer_discovery.status == 201

@@ -7,7 +7,7 @@
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    data:
+    body:
       disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
       enableSSL: "{% if ('hec' in splunk and 'ssl' in splunk.hec and splunk.hec.ssl | bool) or ('hec_enableSSL' in splunk and splunk.hec_enableSSL | bool) %}1{% else %}0{% endif %}"
       port: "{% if 'hec' in splunk and 'port' in splunk.hec and splunk.hec.port %}{{ splunk.hec.port }}{% elif 'hec_port' in splunk and splunk.hec_port %}{{ splunk.hec_port }}{% else %}8088{% endif %}"

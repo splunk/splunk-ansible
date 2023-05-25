@@ -9,9 +9,9 @@
     endpoint: "{{ dmc_forwarder_assets_url }}?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    payload:
+    body:
       body_format: "form-urlencoded"
-      status_code: "200,201"
+      status_code: [200,201]
       timeout: 10
   register: dmc_forwarder_build_assets
   no_log: "{{ hide_password }}"
@@ -23,14 +23,14 @@
     endpoint: "{{ dmc_forwarder_assets_url }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    payload:
+    body:
       search: "{{ dmc_forwarder_build_assets.content['entry'][0]['content']['search'] }}"
       request.ui_dispatch_app: splunk_monitoring_console
       cron_schedule: "{{ dmc_asset_interval }}"
       alert.track: 0
       disabled: 0
     body_format: "form-urlencoded"
-    status_code: "200,201"
+    status_code: [200,201]
     timeout: 10
   no_log: "{{ hide_password }}"
 
@@ -40,8 +40,8 @@
     endpoint: "{{ dmc_forwarder_assets_url }}/dispatch"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    payload:
+    body:
     body_format: "form-urlencoded"
-    status_code: "200,201"
+    status_code: [200, 201]
     timeout: 10
   no_log: "{{ hide_password }}"

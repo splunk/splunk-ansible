@@ -28,7 +28,7 @@
     body:
       deployer_push_mode: "{{ splunk.shc.deployer_push_mode }}"
     body_format: "form-urlencoded"
-    status_code: "200"
+    status_code: [200]
     timeout: 10
     use_proxy: no
   when: "'deployer_push_mode' in splunk.shc and splunk.shc.deployer_push_mode"
