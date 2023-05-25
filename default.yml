@@ -63,6 +63,7 @@ splunk:
   s2s_port: 9997
   search_head_captain_url: null
   secret: null
+  splunk_http_enabled: True
   shc:
     enable: false
     label: shc_label
