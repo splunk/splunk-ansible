@@ -1,5 +1,3 @@
-ansible_post_tasks: null
-ansible_pre_tasks: null
 hide_password: false
 retry_delay: 3
 retry_num: 60
