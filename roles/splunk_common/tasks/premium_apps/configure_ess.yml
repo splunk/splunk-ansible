@@ -5,16 +5,13 @@
   become_user: "{{ splunk.user }}"
 
 - name: Get ESS version
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/apps/local/SplunkEnterpriseSecuritySuite?output_mode=json"
+  splunk_api:
+    endpoint: apps/local/SplunkEnterpriseSecuritySuite
     method: GET
-    user: "{{ splunk.admin_user }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     validate_certs: false
-    status_code: 200
     timeout: 10
-    use_proxy: no
   register: ess_info
   no_log: "{{ hide_password }}"
 

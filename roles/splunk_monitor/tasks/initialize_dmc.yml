@@ -1,68 +1,59 @@
 ---
 - name: dmc_asset_build_full - GET
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full?output_mode=json"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full?output_mode=json"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
-    status_code: 200
-    return_content: yes
+    body_format: "form-urlencoded"
+    status_code: "200"
+    return_content: true
     use_proxy: no
   register: dmc_asset_build_full
 
 - name: dmc_asset_build_full - POST
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full/dispatch"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full/dispatch"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body:
       trigger_actions: true
       dispatch.auto_cancel: "{{ dmc_asset_build_full.json['entry'][0]['content']['dispatch.auto_cancel'] }}"
       dispatch.buckets: "{{ dmc_asset_build_full.json['entry'][0]['content']['dispatch.buckets'] }}"
       dispatch.enablePreview: true
     body_format: "form-urlencoded"
-    validate_certs: false
-    status_code: 200,201,409
-    use_proxy: no
+    status_code: "200,201,409"
 
 - name: UI - GET
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default.distributed?output_mode=json"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default.distributed?output_mode=json"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
-    status_code: 200
-    return_content: yes
+    body_format: "form-urlencoded"
+    status_code: "200"
+    return_content: true
     use_proxy: no
   register: settings
 
 - name: UI - POST
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body:
       eai:data: "{{ settings.json['entry'][0]['content']['eai:data'] }}"
     body_format: "form-urlencoded"
-    validate_certs: false
-    status_code: 200,201,409
-    use_proxy: no
+    status_code: "200,201,409"
 
 - name: DMC Conf - POST
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/settings"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/settings"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body:
       configuredPeers: "{{ configured_peers }}"
       disabled: "{{ settings.json['entry'][0]['content']['disabled'] }}"
@@ -70,18 +61,14 @@
       eai:appName: "{{ settings.json['entry'][0]['content']['eai:appName'] }}"
       eai:userName: "{{ settings.json['entry'][0]['content']['eai:userName'] }}"
     body_format: "form-urlencoded"
-    validate_certs: false
-    status_code: 200,201,409
-    use_proxy: no
+    status_code: "200,201,409"
 
 - name: DMC Settings - POST
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/apps/local/splunk_monitoring_console"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/system/apps/local/splunk_monitoring_console"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
     body: "author=Splunk&check_for_updates=1&configured=1&label=Monitoring+Console&version={{ settings.json['generator']['version'] }}&visible=1"
-    validate_certs: false
-    status_code: 200,201,409
-    use_proxy: no
+    body_format: "form"
+    status_code: "200,201,409"

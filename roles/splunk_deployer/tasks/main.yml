@@ -20,17 +20,15 @@
 
 # https://docs.splunk.com/Documentation/Splunk/latest/DistSearch/PropagateSHCconfigurationchanges#Set_the_deployer_push_mode
 - name: Set deployer push mode
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-app/shclustering"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    endpoint: "/servicesNS/nobody/system/configs/conf-app/shclustering"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
     body:
       deployer_push_mode: "{{ splunk.shc.deployer_push_mode }}"
     body_format: "form-urlencoded"
-    status_code: 200
+    status_code: "200"
     timeout: 10
     use_proxy: no
   when: "'deployer_push_mode' in splunk.shc and splunk.shc.deployer_push_mode"
