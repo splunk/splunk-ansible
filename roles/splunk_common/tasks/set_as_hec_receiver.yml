@@ -5,7 +5,7 @@
   splunk_api:
     url: "/services/data/inputs/http/http"
     method: POST
-    user: "{{ splunk.admin_user }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     body:
       disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
@@ -20,7 +20,7 @@
   splunk_api:
     url: "/services/data/inputs/http/splunk_hec_token?output_mode=json"
     method: GET
-    user: "{{ splunk.admin_user }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     status_code: [200, 404]
   register: hec_token
@@ -32,7 +32,7 @@
   splunk_api:
     url: "/services/data/inputs/http/splunk_hec_token"
     method: DELETE
-    user: "{{ splunk.admin_user }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     status_code: [200, 404]
   register: delete_hec_token
@@ -46,7 +46,7 @@
   splunk_api:
     url: "/services/data/inputs/http"
     method: POST
-    user: "{{ splunk.admin_user }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     body:
       name: "splunk_hec_token"
