@@ -11,19 +11,6 @@ UDS_SOCKET_PATH = "/var/run/splunk/cli.socket"
 def supports_uds():
     return os.path.exists(UDS_SOCKET_PATH)
 
-# def api_call_uds(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-#     session = requests_unixsocket.Session()
-#     url = f"http+unix://{UDS_SOCKET_PATH}{endpoint}"
-#     if headers is None:
-#         headers = {}
-#     headers['Content-Type'] = 'application/json'
-#     auth = (username, password)
-
-#     response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
-#     if status_code is not None and response.status_code not in status_code:
-#         raise ValueError(f"API call failed with status code {response.status_code}: {response.text}")
-#     return response
-
 # update to take svc_port variable
 def api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
     url = f"https://127.0.0.1:8089{endpoint}"
@@ -32,7 +19,11 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     headers['Content-Type'] = 'application/json'
     auth = (username, password)
 
-    response = requests.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
+    session = requests.Session()
+    # Disable SSL verification for the session
+    session.verify = False
+
+    response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
     if status_code is not None and response.status_code not in status_code:
         raise ValueError(f"API call failed with status code {response.status_code}: {response.text}")
     return response
