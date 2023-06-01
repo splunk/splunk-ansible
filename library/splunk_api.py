@@ -24,9 +24,18 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     session.verify = False
 
     response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
+
+    result = {
+        'url': url,
+        'status': response.status_code,
+        'headers': dict(response.headers),
+        'json': response.text
+    }
+
+
     if status_code is not None and response.status_code not in status_code:
         raise ValueError(f"API call failed with status code {response.status_code}: {response.text}")
-    return response
+    return result
 
 def main():
     module_args = dict(
