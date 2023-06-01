@@ -70,7 +70,7 @@ def main():
             content = response.json()
         except json.decoder.JSONDecodeError:
             content = response.text
-        module.exit_json(changed=True, status = response.status_code ,content=content)
+        module.exit_json(changed=True, status = response.status_code ,json=content)
     else:
         module.fail_json(msg=f"API call failed with status code {response.status_code}: {response.text}")
 
