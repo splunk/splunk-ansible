@@ -36,6 +36,10 @@
   when: ('hec' in splunk and 'token' in splunk.hec) or ('hec_token' in splunk)
   no_log: "{{ hide_password }}"
 
+- name: Debug hec_token
+  debug:
+    var: hec_token
+
 # The REST API does not support modifying tokens in-place, so we'll need to delete/re-create
 - name: Remove existing HEC token
   uri:
