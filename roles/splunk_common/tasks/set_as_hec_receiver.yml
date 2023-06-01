@@ -25,7 +25,7 @@
     status_code: [200, 404]
   register: hec_token
   when: ('hec' in splunk and 'token' in splunk.hec) or ('hec_token' in splunk)
-  no_log: "{{ hide_password }}"
+  # no_log: "{{ hide_password }}"
 
 # The REST API does not support modifying tokens in-place, so we'll need to delete/re-create
 - name: Remove existing HEC token
