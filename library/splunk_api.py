@@ -21,16 +21,16 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     session.verify = verify
 
     response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), timeout=timeout)
-
+    json_data = json.loads(response.text)
     result = {
         'url': url,
-        'status': response.status_code,
-        'headers': dict(response.headers),
-        'body': response
+        'status': json_data.status_code,
+        'headers': dict(json_data.headers),
+        'body': json_data
     }
 
-    if status_code is not None and response.status_code not in status_code:
-        raise ValueError(f"API call failed with status code {response.status_code}: {response.text}")
+    if status_code is not None and json_data['status_code'] not in status_code:
+        raise ValueError(f"API call failed with status code {json_data['status_code']}: {response.text}")
     return result
 
 def main():
