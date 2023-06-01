@@ -26,7 +26,7 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
         'url': url,
         'status': response.status_code,
         'headers': dict(response.headers),
-        'body': response.text
+        'body': response.json()
     }
 
     if status_code is not None and response.status_code not in status_code:
