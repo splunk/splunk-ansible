@@ -59,6 +59,10 @@
     - ('hec' in splunk and 'token' in splunk.hec and hec_token.json['entry'][0]['content']['token'] != splunk.hec.token) or ('hec_token' in splunk and hec_token.json['entry'][0]['content']['token'] != splunk.hec_token)
   no_log: "{{ hide_password }}"
 
+- name: Debug create_hec_token
+  debug:
+    var: create_hec_token
+
 - name: Update HEC token configuration
   uri:
     url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http"
