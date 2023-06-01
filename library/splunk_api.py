@@ -26,7 +26,7 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
         'url': url,
         'status': response.status_code,
         'headers': dict(response.headers),
-        'body': response.json()
+        'body': response
     }
 
     if status_code is not None and response.status_code not in status_code:
@@ -67,7 +67,7 @@ def main():
     response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
 
     if response['status'] >= 200 and response['status'] < 300:
-        module.exit_json(changed=True, content=response)
+        module.exit_json(changed=True, status=response['status'], json=response)
     else:
         module.fail_json(msg=f"API call failed with status code {response['status']}: {response['body']}")
 
