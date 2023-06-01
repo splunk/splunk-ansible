@@ -66,7 +66,11 @@ def main():
         response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
 
     if response.status_code >= 200 and response.status_code < 300:
-        module.exit_json(changed=True, content=response.json())
+        try:
+            content = response.json()
+        except json.decoder.JSONDecodeError:
+            content = response.text
+        module.exit_json(changed=True, content=content)
     else:
         module.fail_json(msg=f"API call failed with status code {response.status_code}: {response.text}")
 
