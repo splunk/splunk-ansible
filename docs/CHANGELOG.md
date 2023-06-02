@@ -6,6 +6,7 @@
 * [9.0.4.1](#9041)
 * [9.0.4](#904)
 * [9.0.0](#900)
+* [8.2.11](#8211)
 * [8.2.10](#8210)
 * [8.2.6](#826)
 * [8.2.5](#825)
@@ -15,6 +16,7 @@
 * [8.2.2](#822)
 * [8.2.1](#821)
 * [8.2.0](#820)
+* [8.1.14](#8114)
 * [8.1.13](#8113)
 * [8.1.10](#8110)
 * [8.1.9](#819)
@@ -99,6 +101,14 @@
 #### Changes
 * Support for latest major Splunk release
 * Documentation updates + bugfixes
+
+---
+
+## 8.2.11
+
+#### Changes
+* Bugfixes
+
 ---
 
 ## 8.2.10
@@ -172,6 +182,13 @@
 * Added support for setting `clientName` in `deploymentclient.conf`
     * `splunk.deployment_client.name` in `default.yml`
     * `SPLUNK_DEPLOYMENT_CLIENT_NAME` environment variable
+
+#### Changes
+* Bugfixes
+
+---
+
+## 8.1.14
 
 #### Changes
 * Bugfixes
