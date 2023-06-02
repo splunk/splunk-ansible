@@ -15,6 +15,7 @@
 * [8.2.2](#822)
 * [8.2.1](#821)
 * [8.2.0](#820)
+* [8.1.14](#8114)
 * [8.1.13](#8113)
 * [8.1.10](#8110)
 * [8.1.9](#819)
@@ -172,6 +173,13 @@
 * Added support for setting `clientName` in `deploymentclient.conf`
     * `splunk.deployment_client.name` in `default.yml`
     * `SPLUNK_DEPLOYMENT_CLIENT_NAME` environment variable
+
+#### Changes
+* Bugfixes
+
+---
+
+## 8.1.14
 
 #### Changes
 * Bugfixes
