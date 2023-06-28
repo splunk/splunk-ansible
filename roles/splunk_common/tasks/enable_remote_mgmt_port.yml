@@ -1,0 +1,22 @@
+---
+- name: Set MGMT Port
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: httpServer
+    option: mgmtMode
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Set disableDefaultPort Port
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: httpServer
+    option: disableDefaultPort
+    value: "false"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"

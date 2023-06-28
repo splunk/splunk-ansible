@@ -130,5 +130,7 @@
 
 - include_tasks: add_splunk_license.yml
 
+- include_tasks: enable_remote_mgmt_port.yml
+
 - include_tasks: disable_popups.yml
   when: "'disable_popups' in splunk and splunk.disable_popups | bool"
