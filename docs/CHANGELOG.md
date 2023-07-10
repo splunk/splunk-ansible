@@ -2,6 +2,7 @@
 
 ## Navigation
 
+* [9.1](#91)
 * [9.0.5](#905)
 * [9.0.4.1](#9041)
 * [9.0.4](#904)
@@ -70,6 +71,14 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 9.1
+
+#### Changes
+* Support for latest major Splunk release
+* Documentation updates 
 
 ---
 
