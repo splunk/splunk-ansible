@@ -43,7 +43,7 @@
 
 - name: Create list of clusterMaster peers
   set_fact:
-    cluster_master_peers: "{{ cluster_master_peers }} + [ '{{ item }}' ]"
+    cluster_master_peers: "{{ cluster_master_peers + [ item ] }}"
   with_items: "{{ clusterMaster_peers_info['json']['entry'] | selectattr('content.host_port_pair','defined') | map(attribute='content.host_port_pair') |list}}"
   when: splunk_indexer_cluster or splunk.multisite_master is defined
 
