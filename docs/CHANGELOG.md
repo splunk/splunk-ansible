@@ -146,7 +146,7 @@
 
 ---
 
-## 8.2.11
+## 8.2.12
 
 #### Changes
 * Documentation updates + bugfixes
