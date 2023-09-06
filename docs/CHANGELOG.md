@@ -4,11 +4,13 @@
 * [9.1.1](#911)
 * [9.1.0.2](#9102)
 * [9.1.0.1](#9101)
+* [9.0.6](#906)
 * [9.0.5.1](#9051)
 * [9.0.5](#905)
 * [9.0.4.1](#9041)
 * [9.0.4](#904)
 * [9.0.0](#900)
+* [8.2.12](#8212)
 * [8.2.11](#8211)
 * [8.2.10](#8210)
 * [8.2.6](#826)
@@ -99,6 +101,13 @@
 
 ---
 
+## 9.0.6
+
+#### Changes
+* Support for latest major Splunk release
+* Documentation updates + bugfixes
+
+---
 ## 9.0.5.1
 
 #### Changes
@@ -133,6 +142,13 @@
 
 #### Changes
 * Support for latest major Splunk release
+* Documentation updates + bugfixes
+
+---
+
+## 8.2.12
+
+#### Changes
 * Documentation updates + bugfixes
 
 ---
