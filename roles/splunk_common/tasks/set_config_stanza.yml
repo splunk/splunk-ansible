@@ -18,7 +18,7 @@
     section: "{{ stanza_name }}"
     option: "{{ stanza_setting.key }}"
     value: "{{ stanza_setting.value }}"
-    allow_no_value: True
+    allow_no_value: False
     state: present
     mode: 0660
     owner: "{{ splunk.user }}"
