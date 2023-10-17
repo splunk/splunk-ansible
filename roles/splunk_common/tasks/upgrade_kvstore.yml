@@ -6,6 +6,8 @@
 # so we need to upgrade mongo before we do anything.
 - name: Upgrade MongoDB version from 3.6 to 4.0
   command: "{{ splunk.exec }} migrate migrate-kvstore-36-40"
+  become: yes
+  become_user: "{{ splunk.user }}"
   when:
     - splunk_current_version is version('9', '>=')
 
