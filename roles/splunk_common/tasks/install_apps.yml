@@ -34,7 +34,7 @@
     http_auth:
       url: "{{ app_url }}"
       dest: /tmp/
-      token: "{{ lookup('env', 'MY_ENV_VARIABLE') }}"
+      token: "{{ lookup('env', 'ARTIFACTORY_AUTHORIZATION') }}"
     register: app_remote
     when:
       - app_url is match("^(https?|file)://.*")
