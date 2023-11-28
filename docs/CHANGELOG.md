@@ -5,6 +5,7 @@
 * [9.1.1](#911)
 * [9.1.0.2](#9102)
 * [9.1.0.1](#9101)
+* [9.0.7](#907)
 * [9.0.6](#906)
 * [9.0.5.1](#9051)
 * [9.0.5](#905)
@@ -108,6 +109,15 @@
 #### Changes
 * Support for latest major Splunk release
 * Documentation updates
+
+---
+
+## 9.0.7
+
+#### Changes
+* Support for latest major Splunk release
+* Documentation updates 
+
 
 ---
 
