@@ -17,7 +17,7 @@ def run_module():
     )
 
     headers = {
-        "Authorization": "Bearer {}".format(module.params['token'].split(":")[1])
+        "Authorization": "Bearer {}".format(module.params['token'])
     }
 
     try:
