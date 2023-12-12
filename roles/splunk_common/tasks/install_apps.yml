@@ -31,16 +31,19 @@
     register: app_local
 
   - name: Download remote app
-    uri:
+    get_url:
       url: "{{ app_url }}"
-      method: GET
+      dest: /tmp/
+      mode: 0777
+      timeout: 120
+      validate_certs: no
+      force: yes
       url_username: "{{ lookup('env', 'ARTIFACTORY_USER') }}"
       url_password: "{{ lookup('env', 'ARTIFACTORY_TOKEN') }}"
-      dest: /tmp/
     register: app_remote
     when:
       - app_url is match("^(https?|file)://.*")
-
+  
   - name: Infer app filepath
     set_fact:
       app_filepath: "{% if app_url | regex_search('^(https?|file)://.*') %}{{ app_remote.dest }}{% else %}{{ app_local.stat.path }}{% endif %}"

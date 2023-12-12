@@ -57,4 +57,3 @@
     no_log: "{{ hide_password }}"
     when:
       - app_install_filepath is defined
-
