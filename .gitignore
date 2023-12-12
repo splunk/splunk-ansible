@@ -23,5 +23,3 @@ test*.xml
 **/*.xml
 .pytest_cache
 version.txt
-env
-
