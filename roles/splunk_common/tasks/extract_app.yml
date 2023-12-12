@@ -30,14 +30,15 @@
     stat:
       path: "{{ app_filepath }}"
     register: app_local
-  - name: Download remote app
-    get_url:
+  - name: Download using custom module
+    http_auth:
       url: "{{ app_filepath }}"
-      dest: /tmp/
-      mode: 0777
+      dest: "/tmp/"
+      mode: '0777'
       timeout: 120
       validate_certs: no
       force: yes
+      token: "{{ token }}"
     register: app_remote
     when:
       - app_filepath is match("^(https?|file)://.*")
