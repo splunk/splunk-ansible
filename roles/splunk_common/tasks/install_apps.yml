@@ -31,10 +31,12 @@
     register: app_local
 
   - name: Download remote app
-    http_auth:
+    uri:
       url: "{{ app_url }}"
+      method: GET
+      url_username: "{{ lookup('env', 'ARTIFACTORY_USER') }}"
+      url_password: "{{ lookup('env', 'ARTIFACTORY_TOKEN') }}"
       dest: /tmp/
-      token: "{{ lookup('env', 'ARTIFACTORY_AUTHORIZATION') }}"
     register: app_remote
     when:
       - app_url is match("^(https?|file)://.*")
