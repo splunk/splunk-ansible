@@ -9,3 +9,8 @@
     group: "{{ splunk.group }}"
   when:
     - "'svc_port' in splunk"
+  register: set_mgmt_port
+
+# Restart only when Splunk is running and when any of the above have changed
+- include_tasks: ../handlers/restart_splunk.yml
+  when: set_mgmt_port is changed
