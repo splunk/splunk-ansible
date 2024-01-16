@@ -13,7 +13,7 @@
   become_user: "{{ splunk.user }}"
   register: set_new_master
   until: set_new_master.rc == 0 or (set_new_master.rc != 0 and "Cannot edit this searchhead. Use 'splunk edit cluster-master' to edit information for this searchhead." in set_new_master.stderr) or (set_new_master.rc != 0 and "Cannot edit this searchhead. Use 'splunk edit cluster-manager' to edit information for this searchhead." in set_new_master.stderr)
-  failed_when: (set_new_master.rc != 0 and "Cannot edit this searchhead. Use 'splunk edit cluster-master' to edit information for this searchhead." not in set_new_master.stderr) or (set_new_master.rc != 0 and "Cannot edit this searchhead. Use 'splunk edit cluster-manager' to edit information for this searchhead." not in set_new_master.stderr)
+  failed_when: set_new_master.rc != 0 and ("Cannot edit this searchhead. Use 'splunk edit cluster-master' to edit information for this searchhead." not in set_new_master.stderr and "Cannot edit this searchhead. Use 'splunk edit cluster-manager' to edit information for this searchhead." not in set_new_master.stderr)
   changed_when: set_new_master.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
@@ -40,4 +40,4 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
-  failed_when: (set_associated_site.rc != 0 and 'No change in master or secret or site.' not in set_associated_site.stderr) or (set_associated_site.rc != 0 and 'No change in manager or secret or site.' not in set_associated_site.stderr)
+  failed_when: set_associated_site.rc != 0 and ('No change in master or secret or site.' not in set_associated_site.stderr and 'No change in manager or secret or site.' not in set_associated_site.stderr)
