@@ -20,7 +20,7 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
-  failed_when: (set_new_master.rc != 0 and "Use 'splunk edit cluster-master' to edit information for this." not in set_new_master.stderr) or (set_new_master.rc != 0 and "Use 'splunk edit cluster-manager' to edit information for this." not in set_new_master.stderr)
+  failed_when: (set_new_master.rc != 0 and "Use 'splunk edit cluster-master' to edit information for this." not in set_new_master.stderr and "Use 'splunk edit cluster-manager' to edit information for this." not in set_new_master.stderr)
 
 - name: Flush restart handlers
   meta: flush_handlers
