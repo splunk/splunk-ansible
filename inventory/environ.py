@@ -133,7 +133,6 @@ def getDefaultVars():
     if os.environ.get("SPLUNK_HOME_OWNERSHIP_ENFORCEMENT", "").lower() == "false":
         defaultVars["splunk_home_ownership_enforcement"] = False
     # Determine password visibility
-    defaultVars["hide_password"] = False
     if os.environ.get("HIDE_PASSWORD", "").lower() == "true":
         defaultVars["hide_password"] = True
     # Determine SHC preferred captaincy
