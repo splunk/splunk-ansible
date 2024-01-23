@@ -6,5 +6,5 @@
 #       Order matters: The last matching pattern has the most precedence.
 
 # Default owners for everything in docker-splunk:
-*       @splunk/if-01
+*       @splunk/splunk-internal-dev-services
 
