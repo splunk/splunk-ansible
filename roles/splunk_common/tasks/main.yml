@@ -107,6 +107,7 @@
     conf_stanzas: "{{ item.value.content | default({}) }}"
   with_items: "{% if splunk.conf is mapping %}{{ splunk.conf | dict2items }}{% else %}{{ splunk.conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
+  no_log: "{{ hide_password }}"
 
 # Generate outputs.conf before splunk starts to prevent data being indexed locally
 - include_tasks: enable_forwarding.yml
