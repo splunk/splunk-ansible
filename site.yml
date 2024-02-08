@@ -25,12 +25,6 @@
           when:
             - splunk.role is defined
 
-        - name: print to stdout
-          command: echo "hello, this is DEBUG PRINT STMT"
-          register: hello
-
-        - debug: msg="{{ hello.stdout }}"
-
         - name: Execute post-setup playbooks
           loop: "{{ ansible_post_tasks }}"
           loop_control:
@@ -45,20 +39,6 @@
 
         - name: Check all instances for required restarts
           include_tasks: ./roles/splunk_common/tasks/check_for_required_restarts.yml
-
-        - name: print to stdout bye
-          command: echo "This will be hidden if HIDE_PASSWORD is set"
-          register: bye
-          no_log: "{{ hide_password }}"
-
-        - debug: msg="{{ bye.stdout }}"
-          no_log: "{{ hide_password }}"
-
-        - name: unhidden print to stdout bye
-          command: echo "This will be shown as HIDE_PASSWORD IS NOT USED BY this PLAY"
-          register: byeshow
-
-        - debug: msg="{{ byeshow.stdout }}"
 
         - name: Flush restart handlers
           meta: flush_handlers
