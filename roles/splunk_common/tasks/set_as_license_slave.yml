@@ -7,7 +7,7 @@
     port: "{{ splunk.license_master_url | urlsplit('port') }}"
 
 - name: Set node as license slave
-  command: "{{ splunk.exec }} edit licenser-localslave -master_uri {{ splunk.license_master_url }} -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
+  command: "{{ splunk.exec }} edit licenser-localslave -manager_uri {{ splunk.license_master_url }} -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: linux_set_lic_slave
