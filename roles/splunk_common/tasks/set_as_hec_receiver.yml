@@ -1,6 +1,18 @@
 ---
 # TODO: Remove all secondary conditionals on deprecation of splunk.hec_* variables
 
+- name: Check UDS info
+  command: cat "{{ splunk.home }}/etc/system/local/server.conf"
+  register: uds_conf
+
+- debug: msg="{{ uds_conf.stdout }}"
+
+- name: Check UDS info - 2
+  command: ls -ltra "{{ splunk.home }}/var/run/splunk/"
+  register: uds_conf_2
+
+- debug: msg="{{ uds_conf_2.stdout }}"
+
 - name: Setup global HEC
   splunk_api:
     url: "/services/data/inputs/http/http"

@@ -6,14 +6,14 @@ import requests
 # import requests_unixsocket
 import json
 
-UDS_SOCKET_PATH = "/var/run/splunk/cli.socket"
+UDS_SOCKET_PATH = "/opt/splunkforwarder/var/run/splunk/cli.socket"
 
 def supports_uds():
     return os.path.exists(UDS_SOCKET_PATH)
 
 # update to take svc_port variable
 def api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-    url = f"https://127.0.0.1:8089{endpoint}"
+    url = f"https://0.0.0.0:8089{endpoint}"
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -23,9 +23,35 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     # Disable SSL verification for the session
     session.verify = False
 
+    print(f"Check the details of REQUEST:")
+    print(f"{url} has data: {payload}")
+    response = None
+    try:
+      response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
+      if status_code is not None and response.status_code not in status_code:
+          raise ValueError(f"API call for {url} and data as {payload} failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+      cwd = os.getcwd()
+      print(f"API Call failed - except {supports_uds()} with {cwd}")
+      pass
+    return response
+
+def uds_api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
+    url = f"http+unix://{UDS_SOCKET_PATH}{endpoint}"
+    if headers is None:
+        headers = {}
+    headers['Content-Type'] = 'application/json'
+    auth = (username, password)
+
+    session = requests.Session()
+    # Disable SSL verification for the session
+    session.verify = False
+
+    print(f"Check the details of REQUEST:")
+    print(f"{url} has data: {payload}")
     response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
     if status_code is not None and response.status_code not in status_code:
-        raise ValueError(f"API call failed with status code {response.status_code}: {response.text}")
+        raise ValueError(f"API call for {url} and data as {payload} failed with status code {response.status_code}: {response.text}")
     return response
 
 def main():
@@ -61,7 +87,7 @@ def main():
 
     if supports_uds():
         # TODO: Update back
-        response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
+        response = uds_api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
     else:
         response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
 
@@ -72,7 +98,7 @@ def main():
             content = response.text
         module.exit_json(changed=True, status = response.status_code ,json=content)
     else:
-        module.fail_json(msg=f"API call failed with status code {response.status_code}: {response.text}")
+        module.fail_json(msg=f"UDS: {supports_uds()}? API call for {endpoint} and data {payload} failed with status code {response.status_code}: {response.text}")
 
 if __name__ == '__main__':
     main()
