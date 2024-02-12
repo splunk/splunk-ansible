@@ -90,6 +90,10 @@
     - "'kvstore' in splunk and 'port' in splunk.kvstore"
     - splunk.kvstore.port | int != 8191
 
+- include_tasks: set_mgmt_mode.yml
+  when:
+    - splunk.splunk_http_enabled
+
 - include_tasks: enable_splunkweb_ssl.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
@@ -125,6 +129,7 @@
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
+  when: "splunk.splunk_http_enabled"
 
 - include_tasks: clean_user_seed.yml
 

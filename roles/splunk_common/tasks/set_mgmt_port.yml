@@ -4,7 +4,7 @@
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "mgmtHostPort"
-    value: "127.0.0.1:{{ splunk.svc_port }}"
+    value: "0.0.0.0:{{ splunk.svc_port }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
 # INFRA-38882 where is this getting called?

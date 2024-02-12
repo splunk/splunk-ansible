@@ -8,6 +8,7 @@
     timeout: 10
     use_proxy: no
   register: ssl_enabled
+  when:  "splunk.splunk_http_enabled"
   ignore_errors: true
   delay: "{{ retry_delay }}"
   retries: "{{ retry_num }}"

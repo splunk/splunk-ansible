@@ -10,5 +10,5 @@
     host: 127.0.0.1
     port: "{{ splunk.svc_port }}"
     timeout: 180
-  when:  "{{ splunk.splunk_http_enabled }}"
+  when:  "splunk.splunk_http_enabled"
 
