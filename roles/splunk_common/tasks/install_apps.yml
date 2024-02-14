@@ -38,8 +38,8 @@
       timeout: 120
       validate_certs: no
       force: yes
-      url_username: "{{ lookup('env', 'ARTIFACTORY_USER') }}"
-      url_password: "{{ lookup('env', 'ARTIFACTORY_TOKEN') }}"
+      url_username: "{{ splunk.artifact_auth_user }}"
+      url_password: "{{ splunk.artifact_auth_pass }}"
     register: app_remote
     when:
       - app_url is match("^(https?|file)://.*")

@@ -145,6 +145,7 @@ def getDefaultVars():
     getJava(defaultVars)
     getSplunkBuild(defaultVars)
     getSplunkbaseToken(defaultVars)
+    getSplunkBuildAuth(defaultVars)
     getSplunkApps(defaultVars)
     getSplunkAppsLocal(defaultVars)
     getLaunchConf(defaultVars)
@@ -356,6 +357,13 @@ def getSplunkbaseToken(vars_scope):
             output = output.decode("utf-8", "ignore")
         splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
         vars_scope["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
+
+def getSplunkBuildAuth(vars_scope):
+    """
+    Load username and password to be used in basic auth when fetching splunk build or apps
+    """
+    vars_scope["splunk"]["artifact_auth_user"] = os.environ.get("ARTIFACTORY_USER", vars_scope["splunk"].get("basic_auth_user"))
+    vars_scope["splunk"]["artifact_auth_pass"] = os.environ.get("ARTIFACTORY_TOKEN", vars_scope["splunk"].get("artifact_auth_pass"))
 
 def getSplunkApps(vars_scope):
     """
