@@ -17,3 +17,8 @@
   retries: 5
   delay: "{{ retry_delay }}"
   no_log: "{{ hide_password }}"
+  ignore_errors: yes
+
+- debug:
+    msg: "Hello World - "
+  with_items: "{{ restart_required }}"

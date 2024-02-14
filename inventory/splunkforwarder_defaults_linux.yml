@@ -24,8 +24,8 @@ config:
 
 splunk:
     build_location:
-    force_mgmnt_port: False
-    splunk_http_enabled: True
+    force_mgmnt_port: True
+    splunk_http_enabled: False
     allow_upgrade: True
     tar_dir: "splunkforwarder"
     opt: &opt "/opt"
