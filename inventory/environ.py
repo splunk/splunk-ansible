@@ -567,6 +567,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
     vars_scope["splunk"]["force_mgmnt_port"] = os.environ.get('FORCE_MGMNT_PORT', vars_scope["splunk"]["force_mgmnt_port"])
+    vars_scope["splunk"]["splunk_http_enabled"] = os.environ.get('FORCE_MGMNT_PORT', vars_scope["splunk"]["force_mgmnt_port"])
     vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
