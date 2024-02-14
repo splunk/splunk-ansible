@@ -3,17 +3,18 @@
 from ansible.module_utils.basic import AnsibleModule
 import os
 import requests
-# import requests_unixsocket
+import requests_unixsocket
 import json
 
 UDS_SOCKET_PATH = "/opt/splunkforwarder/var/run/splunk/cli.socket"
+UDS_SOCKET_PATH_URL = "%2Fopt%2Fsplunkforwarder%2Fvar%2Frun%2Fsplunk%2Fcli.socket"
 
 def supports_uds():
     return os.path.exists(UDS_SOCKET_PATH)
 
 # update to take svc_port variable
 def api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-    url = f"https://0.0.0.0:8089{endpoint}"
+    url = f"https://127.0.0.1:8089{endpoint}"
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -37,13 +38,13 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     return response
 
 def uds_api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-    url = f"http+unix://{UDS_SOCKET_PATH}{endpoint}"
+    url = f"http+unix://{UDS_SOCKET_PATH_URL}{endpoint}"
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
     auth = (username, password)
 
-    session = requests.Session()
+    session = requests_unixsocket.Session()
     # Disable SSL verification for the session
     session.verify = False
 
@@ -79,7 +80,7 @@ def main():
     endpoint = module.params['url']
     username = module.params['username']
     password = module.params['password']
-    payload = module.params.get('payload', None)
+    payload = module.params.get('body', None)
     headers = module.params.get('headers', None)
     verify = module.params.get('verify', False)
     status_code = module.params.get('status_code', None)
@@ -89,16 +90,26 @@ def main():
         # TODO: Update back
         response = uds_api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
     else:
+        s = ""
+        s += f"method:: {method} || "
+        s += f"endpoint:: {endpoint} || "
+        s += f"username:: {username} || "
+        s += f"password:: {password} || "
+        s += f"payload:: {payload} || "
+        s += f"headers:: {headers} || "
+        s += f"verify:: {verify} || "
+        s += f"status_code:: {status_code} || "
+        s += f"timeout:: {timeout} || "
         response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
 
-    if response.status_code >= 200 and response.status_code < 300:
+    if (status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300):
         try:
             content = response.json()
         except json.decoder.JSONDecodeError:
             content = response.text
         module.exit_json(changed=True, status = response.status_code ,json=content)
     else:
-        module.fail_json(msg=f"UDS: {supports_uds()}? API call for {endpoint} and data {payload} failed with status code {response.status_code}: {response.text}")
+        module.fail_json(msg=f"{s};;; failed with status code {response.status_code}: {response.text}")
 
 if __name__ == '__main__':
     main()
