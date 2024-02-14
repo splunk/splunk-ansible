@@ -23,7 +23,8 @@ config:
         verify: True
 
 splunk:
-    force_mgmnt_port: False
+    force_mgmnt_port: True
+    splunk_http_enabled: False
     build_location:
     allow_upgrade: True
     tar_dir: "splunk"

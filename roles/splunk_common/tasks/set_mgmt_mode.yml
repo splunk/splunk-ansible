@@ -4,7 +4,7 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     option: "mgmtMode"
     section: "httpServer"
-    value: "tcp"
+    value: "auto"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
 
