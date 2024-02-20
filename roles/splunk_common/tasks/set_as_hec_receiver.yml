@@ -26,7 +26,10 @@
       serverCert: "{% if 'hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert %}{{ splunk.hec.cert }}{% endif %}"
       sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
     # body_format: "form-urlencoded"
-  no_log: "{{ hide_password }}"
+  ignore_errors: yes
+  register: sample
+
+- debug: msg="{{ sample.stdout }}"
 
 - name: Get existing HEC token
   splunk_api:
