@@ -29,7 +29,9 @@
   ignore_errors: yes
   register: sample
 
-- debug: msg="{{ sample.stdout }}"
+- debug: msg="{{ item.item.name }} ==>>> {{ item.stdout }}"
+  with_items: "{{ sample }}" 
+      
 
 - name: Get existing HEC token
   splunk_api:
