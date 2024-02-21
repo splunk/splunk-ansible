@@ -14,6 +14,7 @@ def supports_uds():
 
 # update to take svc_port variable
 def api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
+    url = "https://0.0.0.0:8089{}".format(endpoint)
     url = f"https://0.0.0.0:8089{endpoint}"
     if headers is None:
         headers = {}
