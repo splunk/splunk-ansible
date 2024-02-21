@@ -7,7 +7,7 @@
     value: "auto"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  when: splunk.splunk_http_enabled|bool == false
+  when: splunk.role == "splunk_universal_forwarder" and splunk.splunk_http_enabled|bool == false
 
 - name: Set Mgmt Mode TCP
   ini_file:
@@ -17,4 +17,4 @@
     value: "none"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  when: splunk.splunk_http_enabled|bool == true
+  when: splunk.role == "splunk_universal_forwarder" and splunk.splunk_http_enabled|bool == true
