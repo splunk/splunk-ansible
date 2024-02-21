@@ -6,7 +6,6 @@ retry_delay: 10
 retry_num: 60
 wait_for_splunk_retry_num: 150
 shc_sync_retry_num: 300
-force_mgmnt_port: False
 
 config:
     max_retries: 3
@@ -25,6 +24,7 @@ config:
 
 splunk:
     build_location:
+    enable_uds_mode: True
     allow_upgrade: True
     tar_dir: "splunkforwarder"
     opt: &opt "/opt"
