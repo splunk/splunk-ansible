@@ -362,7 +362,7 @@ def getSplunkBuildAuth(vars_scope):
     """
     Load username and password to be used in basic auth when fetching splunk build or apps
     """
-    vars_scope["splunk"]["artifact_auth_user"] = os.environ.get("ARTIFACTORY_USER", vars_scope["splunk"].get("basic_auth_user"))
+    vars_scope["splunk"]["artifact_auth_user"] = os.environ.get("ARTIFACTORY_USER", vars_scope["splunk"].get("artifact_auth_user"))
     vars_scope["splunk"]["artifact_auth_pass"] = os.environ.get("ARTIFACTORY_TOKEN", vars_scope["splunk"].get("artifact_auth_pass"))
 
 def getSplunkApps(vars_scope):
