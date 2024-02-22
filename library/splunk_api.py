@@ -25,21 +25,21 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     # Disable SSL verification for the session
     session.verify = False
 
-    print(f"Check the details of REQUEST:")
-    print(f"{url} has data: {payload}")
+    #print(f"Check the details of REQUEST:")
+    #print(f"{url} has data: {payload}")
     response = None
     try:
       response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
       if status_code is not None and response.status_code not in status_code:
-          raise ValueError(f"API call for {url} and data as {payload} failed with status code {response.status_code}: {response.text}")
+          raise ValueError("API call for {url} and data as {payload} failed with status code {response.status_code}: {response.text}".format(url, payload, response.status_code, response.text))
     except Exception as e:
       cwd = os.getcwd()
-      print(f"API Call failed - except {supports_uds()} with {cwd}")
+      #print(f"API Call failed - except {supports_uds()} with {cwd}")
       pass
     return response
 
 def uds_api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-    url = f"http+unix://{UDS_SOCKET_PATH_URL}{endpoint}"
+    url = "http+unix://{UDS_SOCKET_PATH_URL}{endpoint}".format(UDS_SOCKET_PATH_URL,endpoint)
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -49,11 +49,11 @@ def uds_api_call_port_8089(method, endpoint, username, password, payload=None, h
     # Disable SSL verification for the session
     session.verify = False
 
-    print(f"Check the details of REQUEST:")
-    print(f"{url} has data: {payload}")
+    #print(f"Check the details of REQUEST:")
+    #print(f"{url} has data: {payload}")
     response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
     if status_code is not None and response.status_code not in status_code:
-        raise ValueError(f"API call for {url} and data as {payload} failed with status code {response.status_code}: {response.text}")
+        raise ValueError("API call for {url} and data as {payload} failed with status code {response.status_code}: {response.text}".format(url, payload, response.status_code, response.text))
     return response
 
 def main():
@@ -92,15 +92,15 @@ def main():
         response = uds_api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
     else:
         s = ""
-        s += f"method:: {method} || "
-        s += f"endpoint:: {endpoint} || "
-        s += f"username:: {username} || "
-        s += f"password:: {password} || "
-        s += f"payload:: {payload} || "
-        s += f"headers:: {headers} || "
-        s += f"verify:: {verify} || "
-        s += f"status_code:: {status_code} || "
-        s += f"timeout:: {timeout} || "
+        #s += f"method:: {method} || "
+        #s += f"endpoint:: {endpoint} || "
+        #s += f"username:: {username} || "
+        #s += f"password:: {password} || "
+        #s += f"payload:: {payload} || "
+        #s += f"headers:: {headers} || "
+        #s += f"verify:: {verify} || "
+        #s += f"status_code:: {status_code} || "
+        #s += f"timeout:: {timeout} || "
         response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
 
     if (status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300):
@@ -110,7 +110,7 @@ def main():
             content = response.text
         module.exit_json(changed=True, status = response.status_code ,json=content)
     else:
-        module.fail_json(msg=f"{s};;; failed with status code {response.status_code}: {response.text}")
+        module.fail_json(msg="{s};;; failed with status code {response.status_code}: {response.text}".format(s, response.status_code, response.text))
 
 if __name__ == '__main__':
     main()
