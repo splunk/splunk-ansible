@@ -31,7 +31,7 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     try:
       response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
       if status_code is not None and response.status_code not in status_code:
-          raise ValueError("API call for {url} and data as {payload} failed with status code {response.status_code}: {response.text}".format(url, payload, response.status_code, response.text))
+          raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
     except Exception as e:
       cwd = os.getcwd()
       #print(f"API Call failed - except {supports_uds()} with {cwd}")
@@ -39,7 +39,7 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     return response
 
 def uds_api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-    url = "http+unix://{UDS_SOCKET_PATH_URL}{endpoint}".format(UDS_SOCKET_PATH_URL,endpoint)
+    url = "http+unix://{}{}".format(UDS_SOCKET_PATH_URL,endpoint)
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -53,7 +53,7 @@ def uds_api_call_port_8089(method, endpoint, username, password, payload=None, h
     #print(f"{url} has data: {payload}")
     response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
     if status_code is not None and response.status_code not in status_code:
-        raise ValueError("API call for {url} and data as {payload} failed with status code {response.status_code}: {response.text}".format(url, payload, response.status_code, response.text))
+        raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
     return response
 
 def main():
@@ -110,7 +110,7 @@ def main():
             content = response.text
         module.exit_json(changed=True, status = response.status_code ,json=content)
     else:
-        module.fail_json(msg="{s};;; failed with status code {response.status_code}: {response.text}".format(s, response.status_code, response.text))
+        module.fail_json(msg="{};;; failed with status code {}: {}".format(s, response.status_code, response.text))
 
 if __name__ == '__main__':
     main()
