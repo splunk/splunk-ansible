@@ -106,7 +106,7 @@ def main():
     if (status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300):
         try:
             content = response.json()
-        except json.decoder.JSONDecodeError:
+        except:
             content = response.text
         module.exit_json(changed=True, status = response.status_code ,json=content)
     else:
