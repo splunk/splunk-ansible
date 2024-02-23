@@ -65,7 +65,7 @@
   register: delete_hec_token
   changed_when: delete_hec_token.status == 200
   when:
-    - "splunk.splunk_http_enabled"
+    #- "splunk.splunk_http_enabled"
     - hec_token is defined and hec_token.status == 200
     - ('hec' in splunk and 'token' in splunk.hec and hec_token.json['entry'][0]['content']['token'] != splunk.hec.token) or ('hec_token' in splunk and hec_token.json['entry'][0]['content']['token'] != splunk.hec_token)
   no_log: "{{ hide_password }}"
@@ -82,7 +82,7 @@
     # body_format: "form-urlencoded"
     status_code: [201,409]
   register: create_hec_token
-  #changed_when: create_hec_token.status == 201
+  changed_when: create_hec_token.status == 201
   when: ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
   no_log: "{{ hide_password }}"
 
