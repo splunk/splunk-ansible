@@ -15,7 +15,6 @@ def supports_uds():
 # update to take svc_port variable
 def api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
     url = "https://0.0.0.0:8089{}".format(endpoint)
-    #url = f"https://0.0.0.0:8089{endpoint}"
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -25,8 +24,6 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
     # Disable SSL verification for the session
     session.verify = False
 
-    #print(f"Check the details of REQUEST:")
-    #print(f"{url} has data: {payload}")
     response = None
     try:
       response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
@@ -34,8 +31,6 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
           raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
     except Exception as e:
       cwd = os.getcwd()
-      #print(f"API Call failed - except {supports_uds()} with {cwd}")
-      pass
     return response
 
 def uds_api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
@@ -49,8 +44,6 @@ def uds_api_call_port_8089(method, endpoint, username, password, payload=None, h
     # Disable SSL verification for the session
     session.verify = False
 
-    #print(f"Check the details of REQUEST:")
-    #print(f"{url} has data: {payload}")
     response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
     if status_code is not None and response.status_code not in status_code:
         raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
@@ -87,11 +80,14 @@ def main():
     status_code = module.params.get('status_code', None)
     timeout = module.params.get('timeout', None)
 
+    s = "{}{}{}{}{}{}{}{}{}".format(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
     if supports_uds():
         # TODO: Update back
         response = uds_api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
+        s += " :::::: UDS"
     else:
-        s = ""
+        s += " :::::: TCP"
+        s += " :::::: AND URL: https://0.0.0.0:8089{}".format(endpoint)
         #s += f"method:: {method} || "
         #s += f"endpoint:: {endpoint} || "
         #s += f"username:: {username} || "
