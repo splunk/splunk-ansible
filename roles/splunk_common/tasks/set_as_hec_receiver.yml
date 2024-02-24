@@ -44,7 +44,6 @@
     status_code: [200, 404]
   register: hec_token
   when: ('hec' in splunk and 'token' in splunk.hec) or ('hec_token' in splunk)
-  no_log: "{{ hide_password }}"
 
 - name: Debug hec_token
   debug:
@@ -84,8 +83,9 @@
     status_code: [201,409]
   register: create_hec_token
   changed_when: create_hec_token.status == 201
-  when: ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
-  no_log: "{{ hide_password }}"
+  when:
+    - hec_token is defined and hec_token.status == 200
+    - ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
 
 - name: Debug create_hec_token
   debug:
