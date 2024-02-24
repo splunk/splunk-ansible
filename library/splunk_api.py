@@ -13,8 +13,8 @@ def supports_uds():
     return os.path.exists(UDS_SOCKET_PATH)
 
 # update to take svc_port variable
-def api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-    url = "https://127.0.0.1:8089{}".format(endpoint)
+def api_call_port_8089(method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None):
+    url = "https://127.0.0.1:{}{}".format(svc_port, endpoint)
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -33,7 +33,7 @@ def api_call_port_8089(method, endpoint, username, password, payload=None, heade
       cwd = os.getcwd()
     return response
 
-def uds_api_call_port_8089(method, endpoint, username, password, payload=None, headers=None, verify=False, status_code=None, timeout=None):
+def uds_api_call_port_8089(method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None):
     url = "http+unix://{}{}".format(UDS_SOCKET_PATH_URL,endpoint)
     if headers is None:
         headers = {}
@@ -59,7 +59,8 @@ def main():
         headers=dict(type='dict', required=False),
         verify=dict(type='bool', required=False),
         status_code=dict(type='list', required=False),
-        timeout=dict(type='int', required=False)
+        timeout=dict(type='int', required=False),
+        svc_port=dict(type='int', required=False)
     )
 
     module = AnsibleModule(
@@ -79,11 +80,12 @@ def main():
     verify = module.params.get('verify', False)
     status_code = module.params.get('status_code', None)
     timeout = module.params.get('timeout', None)
+    svc_port = module.params.get('svc_port', 8089)
 
     s = "{}{}{}{}{}{}{}{}{}".format(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
     if supports_uds():
         # TODO: Update back
-        response = uds_api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
+        response = uds_api_call_port_8089(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
         s += " :::::: UDS"
     else:
         s += " :::::: TCP"
@@ -97,7 +99,7 @@ def main():
         #s += f"verify:: {verify} || "
         #s += f"status_code:: {status_code} || "
         #s += f"timeout:: {timeout} || "
-        response = api_call_port_8089(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
+        response = api_call_port_8089(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
 
     if (status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300):
         try:

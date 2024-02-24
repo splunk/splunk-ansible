@@ -76,6 +76,7 @@
     method: POST
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    svc_port: "{{ splunk.svc_port }}"
     body:
       name: "splunk_hec_token"
       token: "{% if 'hec' in splunk and 'token' in splunk.hec and splunk.hec.token %}{{ splunk.hec.token }}{% else %}{{ splunk.hec_token }}{% endif %}"
