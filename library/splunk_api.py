@@ -82,14 +82,14 @@ def main():
     timeout = module.params.get('timeout', None)
     svc_port = module.params.get('svc_port', 8089)
 
-    s = "{}{}{}{}{}{}{}{}{}".format(method, endpoint, username, password, payload, headers, verify, status_code, timeout)
+    s = "{}{}{}{}{}{}{}{}{}".format(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
     if supports_uds():
         # TODO: Update back
         response = uds_api_call_port_8089(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
         s += " :::::: UDS"
     else:
         s += " :::::: TCP"
-        s += " :::::: AND URL: https://127.0.0.1:8089{}".format(endpoint)
+        s += " :::::: AND URL: https://127.0.0.1:{}{}".format(svc_port, endpoint)
         #s += f"method:: {method} || "
         #s += f"endpoint:: {endpoint} || "
         #s += f"username:: {username} || "
