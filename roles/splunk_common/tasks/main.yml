@@ -127,7 +127,7 @@
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
-  when: "splunk.splunk_http_enabled"
+  when: splunk.splunk_http_enabled|bool == true
 
 - include_tasks: clean_user_seed.yml
 

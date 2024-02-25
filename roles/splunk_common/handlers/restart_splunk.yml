@@ -26,4 +26,4 @@
 - name: "Wait for splunkd management port"
   wait_for:
     port: "{{ splunk.svc_port }}"
-  when:  "splunk.splunk_http_enabled"
+  when: splunk.splunk_http_enabled|bool == true
