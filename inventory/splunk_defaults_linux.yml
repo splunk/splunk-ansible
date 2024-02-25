@@ -23,7 +23,7 @@ config:
         verify: True
 
 splunk:
-    enable_uds_mode: True
+    enable_tcp_mode: True
     build_location:
     allow_upgrade: True
     tar_dir: "splunk"
