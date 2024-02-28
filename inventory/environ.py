@@ -108,6 +108,7 @@ def getDefaultVars():
     environment variables to return a consolidated inventory object
     """
     defaultVars = loadDefaults()
+    defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', defaultVars["splunk"].get("role") or "splunk_standalone")
     overrideEnvironmentVars(defaultVars)
     getAnsibleContext(defaultVars)
     getASan(defaultVars)
@@ -124,7 +125,6 @@ def getDefaultVars():
     getSplunkdSSL(defaultVars)
     getDistributedTopology(defaultVars)
     getLicenses(defaultVars)
-    defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', defaultVars["splunk"].get("role") or "splunk_standalone")
     # Determine DMC settings
     defaultVars["dmc_forwarder_monitoring"] = os.environ.get('DMC_FORWARDER_MONITORING', False)
     defaultVars["dmc_asset_interval"] = os.environ.get('DMC_ASSET_INTERVAL', '3,18,33,48 * * * *')
@@ -575,7 +575,11 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["kvstore"]["port"] = os.environ.get('SPLUNK_KVSTORE_PORT', vars_scope["splunk"]["kvstore"]["port"])
     vars_scope["splunk"]["connection_timeout"] = int(os.environ.get('SPLUNK_CONNECTION_TIMEOUT', vars_scope["splunk"]["connection_timeout"]))
 
+    if vars_scope["splunk"]["splunk_http_enabled"] == "false" and vars_scope["splunk"]["role"] not in ["splunk_universal_forwarder"]:
+        vars_scope["splunk"]["splunk_http_enabled"] = "true"
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
+    if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
+        vars_scope["splunk"]["set_search_peers"] = False
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
         vars_scope["splunk"]["set_search_peers"] = False
 
