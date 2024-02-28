@@ -5,10 +5,27 @@
 
 # Do I need to upate this line?
 # http://docs.splunk.com/Documentation/Splunk/latest/DistSearch/SHCandindexercluster#Integrate_with_a_single-site_indexer_cluster
-- name: Peer cluster master
+- name: Peer cluster master TCP
   command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
+  when: splunk.splunk_http_enabled|bool == true
+  register: peer_cluster_master
+  until: peer_cluster_master.rc == 0 or "Cannot edit this searchhead" in peer_cluster_master.stderr
+  changed_when: peer_cluster_master.rc == 0
+  failed_when: peer_cluster_master.rc != 0 and "Cannot edit this searchhead" not in peer_cluster_master.stderr
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+  ignore_errors: yes
+  notify:
+    - Restart the splunkd service
+  no_log: "{{ hide_password }}"
+
+- name: Peer cluster master UDS
+  command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri http+unix://{{ splunk.uds_socket_path_url }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: splunk.splunk_http_enabled|bool == false
   register: peer_cluster_master
   until: peer_cluster_master.rc == 0 or "Cannot edit this searchhead" in peer_cluster_master.stderr
   changed_when: peer_cluster_master.rc == 0

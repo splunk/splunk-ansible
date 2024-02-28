@@ -32,6 +32,7 @@ splunk:
     user: "splunk"
     group: "splunk"
     exec: !!python/object/apply:os.path.join [*home, "bin", "splunk"]
+    uds_socket_path_url: "%2Fopt%2Fsplunkforwarder%2Fvar%2Frun%2Fsplunk%2Fcli.socket"
     pid: !!python/object/apply:os.path.join [*home, "var", "run", "splunk", "splunkd.pid"]
     admin_user: "admin"
     root_endpoint:
