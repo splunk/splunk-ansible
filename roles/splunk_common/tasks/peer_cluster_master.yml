@@ -14,7 +14,8 @@
   until: peer_cluster_master.rc == 0 or "Cannot edit this searchhead" in peer_cluster_master.stderr
   changed_when: peer_cluster_master.rc == 0
   failed_when: peer_cluster_master.rc != 0 and "Cannot edit this searchhead" not in peer_cluster_master.stderr
-  retries: "{{ retry_num }}"
+  retries: "3"
+  #retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
   ignore_errors: yes
   notify:
@@ -30,7 +31,8 @@
   until: peer_cluster_master.rc == 0 or "Cannot edit this searchhead" in peer_cluster_master.stderr
   changed_when: peer_cluster_master.rc == 0
   failed_when: peer_cluster_master.rc != 0 and "Cannot edit this searchhead" not in peer_cluster_master.stderr
-  retries: "{{ retry_num }}"
+  retries: "5"
+  #retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
   ignore_errors: yes
   notify:
