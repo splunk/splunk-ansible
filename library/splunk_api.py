@@ -25,13 +25,15 @@ def api_call_port_8089(method, endpoint, username, password, svc_port, payload=N
     session.verify = False
 
     response = None
+    excep_str = "No Exception"
     try:
       response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
       if status_code is not None and response.status_code not in status_code:
           raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
     except Exception as e:
+      excep_str = "{}".format(e)
       cwd = os.getcwd()
-    return response
+    return response, excep_str
 
 def uds_api_call_port_8089(method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None):
     url = "http+unix://{}{}".format(UDS_SOCKET_PATH_URL,endpoint)
@@ -44,10 +46,15 @@ def uds_api_call_port_8089(method, endpoint, username, password, svc_port, paylo
     # Disable SSL verification for the session
     session.verify = False
 
-    response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
-    if status_code is not None and response.status_code not in status_code:
+    excep_str = "No Exception"
+    response = None
+    try:
+      response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
+      if status_code is not None and response.status_code not in status_code:
         raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
-    return response
+    except Exception as e:
+      excep_str = "{}".format(e)
+    return response, excep_str
 
 def main():
     module_args = dict(
@@ -85,7 +92,7 @@ def main():
     s = "{}{}{}{}{}{}{}{}{}".format(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
     if supports_uds():
         # TODO: Update back
-        response = uds_api_call_port_8089(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
+        response, excep_str = uds_api_call_port_8089(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
         s += " :::::: UDS"
     else:
         s += " :::::: TCP"
@@ -99,16 +106,19 @@ def main():
         #s += f"verify:: {verify} || "
         #s += f"status_code:: {status_code} || "
         #s += f"timeout:: {timeout} || "
-        response = api_call_port_8089(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
+        response, excep_str = api_call_port_8089(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
 
-    if (status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300):
+    if response is not None and ((status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300)):
         try:
-            content = response.json()
+          content = response.json()
         except:
-            content = response.text
+          content = response.text
         module.exit_json(changed=True, status = response.status_code ,json=content)
     else:
-        module.fail_json(msg="{};;; failed with status code {}: {}".format(s, response.status_code, response.text))
+        if response is None:
+          module.fail_json(msg="{};;; failed with NO RESPONSE and EXCEP_STR as {}".format(s, excep_str))
+        else:
+          module.fail_json(msg="{};;; failed with status code {}: {}".format(s, response.status_code, response.text))
 
 if __name__ == '__main__':
     main()
