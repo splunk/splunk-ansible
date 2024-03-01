@@ -116,7 +116,6 @@ def main():
         response, excep_str = api_call_port_8089(cert_prefix_mode, method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
     logging.write("\ncheckpoint 1: {} and {}".format(response, excep_str))
 
-    module.fail_json(msg="{};;; failed with status code {}: {}".format(s, response.status_code, response.text))
     if response is not None and ((status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300)):
         try:
           content = response.json()
