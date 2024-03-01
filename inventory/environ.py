@@ -580,8 +580,6 @@ def overrideEnvironmentVars(vars_scope):
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
         vars_scope["splunk"]["set_search_peers"] = False
-    if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
-        vars_scope["splunk"]["set_search_peers"] = False
 
 def getDFS(vars_scope):
     """

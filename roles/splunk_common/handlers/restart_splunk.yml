@@ -5,7 +5,7 @@
   become_user: "{{ splunk.user }}"
   register: task_result
   until: task_result.rc == 0
-  retries: "{{ retry_num }}"
+  retries: "5"
   delay: "{{ retry_delay }}"
   when: not splunk.enable_service
 

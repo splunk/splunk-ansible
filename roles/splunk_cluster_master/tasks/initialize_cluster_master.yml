@@ -1,19 +1,60 @@
 ---
 - name: Set indexer discovery
-  splunk_api:
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server"
     method: POST
-    endpoint: /servicesNS/nobody/system/configs/conf-server
-    username: "{{ splunk.admin_user }}"
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
+    force_basic_auth: yes
+    validate_certs: False
     body:
-      name: indexer_discovery
+      name: "indexer_discovery"
       pass4SymmKey: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"
-    body_format: form-urlencoded
-    status_code: [201,409]
+    body_format: "form-urlencoded"
+    status_code: 201,409
     timeout: 10
+    use_proxy: no
   register: set_indexer_discovery
   changed_when: set_indexer_discovery.status == 201
   no_log: "{{ hide_password }}"
+
+#- name: Set indexer discovery
+#  splunk_api:
+#    method: POST
+#    cert_prefix_mode: "{{ cert_prefix }}"
+#    svc_port: "{{ splunk.svc_port }}"
+#    endpoint: /servicesNS/nobody/system/configs/conf-server
+#    username: "{{ splunk.admin_user }}"
+#    password: "{{ splunk.password }}"
+#    body:
+#      name: indexer_discovery
+#      pass4SymmKey: "{{ splunk.idxc.discoveryPass4SymmKey if splunk.idxc.discoveryPass4SymmKey is defined and splunk.idxc.discoveryPass4SymmKey else splunk.idxc.pass4SymmKey }}"
+#    body_format: form-urlencoded
+#    status_code: [201,409]
+#    timeout: 10
+#  register: set_indexer_discovery
+#  changed_when: set_indexer_discovery.status == 201
+#  ignore_errors: yes
+
+- name: Attempt to ls logs
+  command: "ls -ltr /opt/splunk/var/"
+  register: uds_resp_1
+
+- debug: msg="{{ uds_resp_1.stdout }}"
+
+#- name: Attempt to cat logs
+#  command: "cat /opt/splunk/var/current.log"
+#  register: uds_resp
+
+#- debug: msg="{{ uds_resp.stdout }}"
+
+- name: Show cert_prefix
+  debug:
+    msg: "{{ cert_prefix }}"
+
+#- name: Show set_indexer_discovery res
+#  debug:
+#    msg: "{{ set_indexer_discovery }}"
 
 - include_tasks: enable_smartstore.yml
   when: splunk.smartstore
