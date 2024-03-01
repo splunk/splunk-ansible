@@ -6,8 +6,6 @@ import requests
 import requests_unixsocket
 import json
 
-logging = open("/opt/splunk/var/current.log", "w")
-
 UDS_SOCKET_PATH = "/opt/splunkforwarder/var/run/splunk/cli.socket"
 UDS_SOCKET_PATH_URL = "%2Fopt%2Fsplunkforwarder%2Fvar%2Frun%2Fsplunk%2Fcli.socket"
 
@@ -29,13 +27,10 @@ def api_call_port_8089(cert_prefix_mode, method, endpoint, username, password, s
     response = None
     excep_str = "No Exception"
     try:
-      logging.write("\nStaring request to {}".format(url))
       response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
       if status_code is not None and response.status_code not in status_code:
-          logging.write("\nfailure 1: {}".format(status_code))
           raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
     except Exception as e:
-      logging.write("\nfailure 2: {}".format(e))
       excep_str = "{}".format(e)
       cwd = os.getcwd()
     return response, excep_str
@@ -114,21 +109,17 @@ def main():
         #s += f"status_code:: {status_code} || "
         #s += f"timeout:: {timeout} || "
         response, excep_str = api_call_port_8089(cert_prefix_mode, method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
-    logging.write("\ncheckpoint 1: {} and {}".format(response, excep_str))
 
     if response is not None and ((status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300)):
         try:
           content = response.json()
         except:
           content = response.text
-        logging.write("\nCheckpoint 2: module exit with status:{} json:{}, excep_str:{}".format(response.status_code, content, excep_str))
         module.exit_json(changed=True, status = response.status_code ,json=content,excep_str=excep_str)
     else:
         if response is None:
-          logging.write("\nFAILURE 3: module fail with status:{} json:NONE, excep_str:{}".format(s, excep_str))
           module.fail_json(msg="{};;; failed with NO RESPONSE and EXCEP_STR as {}".format(s, excep_str))
         else:
-          logging.write("\nFAILURE 3: module fail with status:{} json:{}, excep_str:{}".format(response.status_code, content, excep_str))
           module.fail_json(msg="{};;; failed with status code {}: {}".format(s, response.status_code, response.text))
 
 if __name__ == '__main__':
