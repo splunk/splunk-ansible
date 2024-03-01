@@ -575,7 +575,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["kvstore"]["port"] = os.environ.get('SPLUNK_KVSTORE_PORT', vars_scope["splunk"]["kvstore"]["port"])
     vars_scope["splunk"]["connection_timeout"] = int(os.environ.get('SPLUNK_CONNECTION_TIMEOUT', vars_scope["splunk"]["connection_timeout"]))
 
-    if vars_scope["splunk"]["splunk_http_enabled"] == "false" and vars_scope["splunk"]["role"] not in ["splunk_universal_forwarder"]:
+    if vars_scope["splunk"]["splunk_http_enabled"] == "false" and "forwarder" not in vars_scope["splunk"]["role"].lower():
         vars_scope["splunk"]["splunk_http_enabled"] = "true"
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
