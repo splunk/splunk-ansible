@@ -14,6 +14,10 @@ def supports_uds():
 
 # update to take svc_port variable
 def api_call_port_8089(cert_prefix_mode, method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None):
+    if not cert_prefix_mode or cert_prefix_mode not in ['http', 'https']:
+      cert_prefix_mode = 'https'
+    if not svc_port:
+      svc_port = 8089
     url = "{}://127.0.0.1:{}{}".format(cert_prefix_mode, svc_port, endpoint)
     if headers is None:
         headers = {}
