@@ -1,0 +1,9 @@
+---
+- name: Set Resource Limits
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/limits.conf"
+    option: "resource_limits_source"
+    section: "system_checks"
+    value: "container_sok"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"

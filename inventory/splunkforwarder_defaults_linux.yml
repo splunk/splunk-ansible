@@ -41,6 +41,7 @@ splunk:
     secret:
     pass4SymmKey:
     svc_port: 8089
+    resource_limits_source: "container_sok"
     ssl:
         enable: True
         cert:

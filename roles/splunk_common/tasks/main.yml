@@ -122,6 +122,8 @@
 - include_tasks: enable_dsp.yml
   when: "'dsp' in splunk and 'enable' in splunk.dsp and splunk.dsp.enable"
 
+- include_tasks: set_resource_limits.yml
+
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
