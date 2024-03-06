@@ -21,23 +21,25 @@
 
 - name: Create list of current peers
   set_fact:
-    current_group_list: "{{ current_group_list }} + [ '{{ item }}' ]"
+    current_group_list: "{{ current_group_list +  [ item ] }}"
   with_items: "{{ distsearch_server_info['json']['entry'][0]['content']['servers'].split(',') }}"
   when: distsearch_server_info['json']['entry'][0]['content']['servers'] is defined and (distsearch_server_info['json']['entry'][0]['content']['servers']| length > 0)
 
 - name: Create list of peers
   set_fact:
-    group_list: "{{ groups['splunk_indexer'] | default([]) }} + {{ groups['splunk_search_head'] | default([]) }} + {{ groups['splunk_search_head_captain'] | default([]) }} + {{ groups['splunk_cluster_master'] | default([]) }} + {{ groups['splunk_deployment_server']| default([]) }} + {{ groups['splunk_license_master'] | default([]) }} + {{ groups['splunk_standalone'] | default([]) }}"
+    group_list: "{{ (groups['splunk_indexer']| default([])) + (groups['splunk_search_head'] | default([])) + (groups['splunk_search_head_captain'] | default([])) + (groups['splunk_cluster_master'] | default([])) + (groups['splunk_deployment_server']| default([])) + (groups['splunk_license_master'] | default([])) + (groups['splunk_standalone'] | default([])) }}"
 
 - name: Update group_list
+  vars:
+    append_url: "{{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }}"
   set_fact:
-    updated_group_list: "{{ updated_group_list }} + [ '{{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }}' ]"
+    updated_group_list: "{{ updated_group_list+ [ append_url ] }}"
   with_items: "{{ group_list }}"
   #INFRA-38882: Update Task?
 
 - name: Non-existent peers list
   set_fact:
-    remove_peer_list: "{{ remove_peer_list }} + [ '{{ item }}' ]"
+    remove_peer_list: "{{ remove_peer_list + [ item ] }}"
   with_items: "{{ current_group_list }}"
   when: item not in updated_group_list and current_group_list is defined and (current_group_list| length > 0)
 
