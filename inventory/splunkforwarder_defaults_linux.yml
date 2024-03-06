@@ -24,6 +24,7 @@ config:
 
 splunk:
     build_location:
+    enable_tcp_mode: False
     allow_upgrade: True
     tar_dir: "splunkforwarder"
     opt: &opt "/opt"

@@ -50,6 +50,8 @@
 
 - include_tasks: enable_admin_auth.yml
 
+- include_tasks: set_mgmt_mode.yml
+
 - include_tasks: set_launch_conf.yml
   when:
     - "'launch' in splunk and splunk.launch"
@@ -122,6 +124,7 @@
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
+  when: splunk.splunk_http_enabled|bool == true
 
 - include_tasks: clean_user_seed.yml
 
