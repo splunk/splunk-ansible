@@ -1,0 +1,8 @@
+- name: Check if requests_unixsocket exists
+  command: "pip list | grep 'requests-unixsocket'"
+  register: requests_unixsocket_check
+
+- name: Install missing requests_unixsocket
+  ansible.builtin.pip:
+    name: "requests_unixsocket"
+  when: requests_unixsocket_check.stdout | length == 0 or requests_unixsocket_check.stdout.find("requests-unixsocket") == -1

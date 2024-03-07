@@ -1,9 +1,7 @@
 ---
 - include_tasks: get_facts.yml
 
-- name: Install requests_unixsocket requirement
-  ansible.builtin.pip:
-    name: "requests_unixsocket<2.29"
+- include_tasks: install_python_requirements.yml
 
 - include_tasks: change_splunk_directory_owner.yml
   when:
