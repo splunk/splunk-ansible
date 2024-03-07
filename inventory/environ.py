@@ -585,6 +585,8 @@ def overrideEnvironmentVars(vars_scope):
 
     if vars_scope["splunk"]["splunk_http_enabled"] == "false" and "forwarder" not in vars_scope["splunk"]["role"].lower():
         vars_scope["splunk"]["splunk_http_enabled"] = "true"
+    if vars_scope["splunk"]["resource_limits_source"] not in ["hardware", "container_sok"]:
+        vars_scope["splunk"]["resource_limits_source"] = "hardware"
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
         vars_scope["splunk"]["set_search_peers"] = False
