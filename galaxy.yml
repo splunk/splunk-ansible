@@ -1,6 +1,6 @@
 namespace: "splunk"
 name: "splunk-ansible"
-version: "9.0.2.2"
+version: "9.0.2-2"
 readme: "README.md"
 authors:
     - "Splunk"
