@@ -1,0 +1,9 @@
+namespace: "splunk"
+name: "splunk-ansible"
+version: "9.0.2.2"
+readme: "README.md"
+authors:
+    - "Splunk"
+tags:
+    - collection
+repository: "https://github.com/splunk/splunk-ansible.git"
