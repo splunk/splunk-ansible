@@ -19,7 +19,7 @@
 - name: Set desired preferred captaincy
   splunk_api:
     method: POST
-    endpoint: "/servicesNS/nobody/system/configs/conf-server/shclustering"
+    url: "/servicesNS/nobody/system/configs/conf-server/shclustering"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

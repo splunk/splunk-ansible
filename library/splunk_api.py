@@ -12,12 +12,12 @@ UDS_SOCKET_PATH_URL = "%2Fopt%2Fsplunkforwarder%2Fvar%2Frun%2Fsplunk%2Fcli.socke
 def supports_uds():
     return os.path.exists(UDS_SOCKET_PATH)
 
-def api_call_tcp(cert_prefix_mode, method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None):
-    if not cert_prefix_mode or cert_prefix_mode not in ['http', 'https']:
-      cert_prefix_mode = 'https'
+def api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None):
+    if not cert_prefix or cert_prefix not in ['http', 'https']:
+      cert_prefix = 'https'
     if not svc_port:
       svc_port = 8089
-    url = "{}://127.0.0.1:{}{}".format(cert_prefix_mode, svc_port, endpoint)
+    url = "{}://127.0.0.1:{}{}".format(cert_prefix, svc_port, endpoint)
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -30,7 +30,10 @@ def api_call_tcp(cert_prefix_mode, method, endpoint, username, password, svc_por
     response = None
     excep_str = "No Exception"
     try:
-      response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
+      if payload is None:
+              response = session.request(method, url, headers=headers, auth=auth, verify=verify, timeout=timeout)
+      else:
+              response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
       if status_code is not None and response.status_code not in status_code:
           raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
     except Exception as e:
@@ -65,7 +68,7 @@ def main():
         url=dict(type='str', required=True),
         username=dict(type='str', required=True),
         password=dict(type='str', required=True, no_log=True),
-        cert_prefix_mode=dict(type='str', required=False),
+        cert_prefix=dict(type='str', required=False),
         body=dict(type='dict', required=False),
         headers=dict(type='dict', required=False),
         verify=dict(type='bool', required=False),
@@ -86,7 +89,7 @@ def main():
     endpoint = module.params['url']
     username = module.params['username']
     password = module.params['password']
-    cert_prefix_mode = module.params.get('cert_prefix_mode', 'http')
+    cert_prefix = module.params.get('cert_prefix', 'http')
     payload = module.params.get('body', None)
     headers = module.params.get('headers', None)
     verify = module.params.get('verify', False)
@@ -94,11 +97,12 @@ def main():
     timeout = module.params.get('timeout', None)
     svc_port = module.params.get('svc_port', 8089)
 
+
     s = "{}{}{}{}{}{}{}{}{}".format(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
     if supports_uds():
         response, excep_str = api_call_uds(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
     else:
-        response, excep_str = api_call_tcp(cert_prefix_mode, method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
+        response, excep_str = api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
 
     if response is not None and ((status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300)):
         try:

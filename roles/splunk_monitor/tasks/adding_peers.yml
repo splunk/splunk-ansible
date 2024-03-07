@@ -2,7 +2,7 @@
 - name: Fetch distsearch server info
   splunk_api:
     method: GET
-    endpoint: "/servicesNS/nobody/search/configs/conf-distsearch/distributedSearch?output_mode=json"
+    url: "/servicesNS/nobody/search/configs/conf-distsearch/distributedSearch?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

@@ -2,7 +2,7 @@
 - name: Install Splunkbase app
   splunk_api:
     method: POST
-    endpoint: /services/apps/local
+    url: /services/apps/local
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -74,7 +74,7 @@
 - name: Install app via REST
   splunk_api:
     method: POST
-    endpoint: "/services/apps/local"
+    url: "/services/apps/local"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

@@ -6,7 +6,7 @@
 - name: Retrieve forwarder assets query
   splunk_api:
     method: GET
-    endpoint: "{{ dmc_forwarder_assets_url }}?output_mode=json"
+    url: "{{ dmc_forwarder_assets_url }}?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -21,7 +21,7 @@
 - name: Configure forwarder assets search
   splunk_api:
     method: POST
-    endpoint: "{{ dmc_forwarder_assets_url }}"
+    url: "{{ dmc_forwarder_assets_url }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -39,7 +39,7 @@
 - name: Build forwarder assets
   splunk_api:
     method: POST
-    endpoint: "{{ dmc_forwarder_assets_url }}/dispatch"
+    url: "{{ dmc_forwarder_assets_url }}/dispatch"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

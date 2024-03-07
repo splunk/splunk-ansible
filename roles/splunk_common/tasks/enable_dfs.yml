@@ -1,7 +1,7 @@
 ---
 - name: Enable DFS feature in server.conf
   splunk_api:
-    endpoint: system/configs/conf-server/dfs
+    url: system/configs/conf-server/dfs
     method: POST
     validate_certs: false
     user: "{{ splunk.admin_user }}"
@@ -17,7 +17,7 @@
 
 - name: Update DFS settings in limits.conf
   splunk_api:
-    endpoint: /servicesNS/nobody/system/configs/conf-limits/dfs
+    url: /servicesNS/nobody/system/configs/conf-limits/dfs
     method: POST
     validate_certs: false
     svc_port: "{{ splunk.svc_port }}"
@@ -35,7 +35,7 @@
 
 - name: Update search settings in limits.conf
   splunk_api:
-    endpoint: system/configs/conf-limits/search
+    url: system/configs/conf-limits/search
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
@@ -51,7 +51,7 @@
 
 - name: Check for search_optimization::dfs_job_extractor in limits.conf"
   splunk_api:
-    endpoint: servicesNS/nobody/system/configs/conf-limits/search_optimization%3a%3adfs_job_extractor
+    url: servicesNS/nobody/system/configs/conf-limits/search_optimization%3a%3adfs_job_extractor
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
@@ -63,7 +63,7 @@
 
 - name: Create search_optimization::dfs_job_extractor in limits.conf
   splunk_api:
-    endpoint: servicesNS/nobody/system/configs/conf-limits
+    url: servicesNS/nobody/system/configs/conf-limits
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
@@ -83,7 +83,7 @@
 
 - name: Update search_optimization::dfs_job_extractor in limits.conf
   splunk_api:
-    endpoint: servicesNS/nobody/system/configs/conf-limits/search_optimization%3a%3adfs_job_extractor
+    url: servicesNS/nobody/system/configs/conf-limits/search_optimization%3a%3adfs_job_extractor
     method: POST
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"

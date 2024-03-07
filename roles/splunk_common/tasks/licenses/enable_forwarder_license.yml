@@ -2,7 +2,7 @@
 - name: Check current license group
   splunk_api:
     method: GET
-    endpoint: "/services/licenser/groups/Forwarder?output_mode=json"
+    url: "/services/licenser/groups/Forwarder?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -15,7 +15,7 @@
 - name: Activate forwarder license
   splunk_api:
     method: POST
-    endpoint: "/services/licenser/groups/Forwarder?output_mode=json"
+    url: "/services/licenser/groups/Forwarder?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

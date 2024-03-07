@@ -1,22 +1,11 @@
 ---
 # TODO: Remove all secondary conditionals on deprecation of splunk.hec_* variables
 
-- name: Check UDS info
-  command: cat "{{ splunk.home }}/etc/system/local/server.conf"
-  register: uds_conf
-
-- debug: msg="{{ uds_conf.stdout }}"
-
-- name: Check UDS info - 2
-  command: ls -ltra "{{ splunk.home }}/var/run/splunk/"
-  register: uds_conf_2
-
-- debug: msg="{{ uds_conf_2.stdout }}"
-
 - name: Setup global HEC
   splunk_api:
     url: "/services/data/inputs/http/http"
     method: POST
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -27,20 +16,23 @@
       serverCert: "{% if 'hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert %}{{ splunk.hec.cert }}{% endif %}"
       sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
     # body_format: "form-urlencoded"
-  ignore_errors: yes
   register: sample
 
 - name: Get existing HEC token
   splunk_api:
     url: "/services/data/inputs/http/splunk_hec_token?output_mode=json"
     method: GET
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    svc_port: "{{ splunk.svc_port }}"
     status_code: [200, 404]
     svc_port: "{{ splunk.svc_port }}"
   register: hec_token
   when: ('hec' in splunk and 'token' in splunk.hec) or ('hec_token' in splunk)
+
+- name: Attempt
+  debug:
+    msg: "{{ hec_token.status }}"
 
 # The REST API does not support modifying tokens in-place, so we'll need to delete/re-create
 - name: Remove existing HEC token
@@ -66,6 +58,7 @@
   splunk_api:
     url: "/services/data/inputs/http"
     method: POST
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
