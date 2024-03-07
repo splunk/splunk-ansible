@@ -15,7 +15,3 @@
   delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
-
-- name: debug val
-  debug:
-    msg: "{{ restart_required.reason }}"
