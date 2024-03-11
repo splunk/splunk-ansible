@@ -20,3 +20,15 @@
     - Restart the splunkd service
   ignore_errors: yes
   no_log: "{{ hide_password }}"
+  when: false
+
+- name: Set node as license peer - FAST
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: license
+    option: manager_uri
+    value: "https://lm1:8089"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
