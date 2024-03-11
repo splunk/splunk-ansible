@@ -4,6 +4,7 @@ ansible_post_tasks:
 ansible_environment: {}
 retry_delay: 6
 retry_num: 60
+hide_password: false
 wait_for_splunk_retry_num: 60
 shc_sync_retry_num: 60
 
@@ -24,6 +25,7 @@ config:
 
 splunk:
     build_location:
+    enable_tcp_mode: False
     allow_upgrade: True
     tar_dir: "splunkforwarder"
     opt: &opt "/opt"

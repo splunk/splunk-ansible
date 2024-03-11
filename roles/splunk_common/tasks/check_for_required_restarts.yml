@@ -1,20 +1,21 @@
 ---
 - name: Check for required restarts
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/messages/restart_required?output_mode=json"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    endpoint: /services/messages/restart_required?output_mode=json
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
+    svc_port: "{{ splunk.svc_port }}"
+    cert_prefix: "{{ cert_prefix }}"
     validate_certs: false
-    status_code: 200,404
+    status_code: "200,404"
     timeout: 10
-    use_proxy: no
+    notify:
+      - Restart the splunkd service
   register: restart_required
-  changed_when: restart_required.status == 200
-  until: restart_required is succeeded
+  changed_when: restart_required.content
+  until: restart_required.content
   retries: 5
   delay: "{{ retry_delay }}"
   no_log: "{{ hide_password }}"
-  notify:
-    - Restart the splunkd service
+  ignore_errors: yes

@@ -4,6 +4,7 @@ ansible_post_tasks:
 ansible_environment: {}
 retry_delay: 10
 retry_num: 60
+hide_password: false
 wait_for_splunk_retry_num: 150
 shc_sync_retry_num: 300
 
@@ -23,6 +24,7 @@ config:
         verify: True
 
 splunk:
+    enable_tcp_mode: False
     build_location:
     allow_upgrade: True
     tar_dir: "splunk"

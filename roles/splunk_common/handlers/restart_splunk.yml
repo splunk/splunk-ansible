@@ -37,3 +37,4 @@
     port: "{{ splunk.svc_port }}"
   when: 
   - "'splunkd is running' in check_result.stdout"
+  - splunk.splunk_http_enabled|bool == true
