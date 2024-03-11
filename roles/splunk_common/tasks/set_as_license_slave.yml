@@ -7,22 +7,6 @@
     port: "{{ splunk.license_master_url | urlsplit('port') }}"
   no_log: "{{ hide_password }}"
 
-- name: Set node as license slave
-  command: "{{ splunk.exec }} edit licenser-localslave -master_uri {{ splunk.license_master_url }} -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: linux_set_lic_slave
-  until: linux_set_lic_slave.rc == 0
-  changed_when: linux_set_lic_slave.rc == 0 and "licenser-localslave object has been edited" in linux_set_lic_slave.stdout
-  failed_when: linux_set_lic_slave.rc !=0 and "does not support being a remote master" in linux_set_lic_slave.stderr
-  retries: "{{ retry_num }}"
-  delay: "{{ retry_delay }}"
-  notify:
-    - Restart the splunkd service
-  ignore_errors: yes
-  no_log: "{{ hide_password }}"
-  when: false
-
 - name: Set node as license peer - FAST
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
