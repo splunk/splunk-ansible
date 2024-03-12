@@ -13,6 +13,11 @@
   become_user: "{{ splunk.user }}"
   when: "'enable' in splunk.ssl"
 
+- name: Set HTTPS as prefix after enabling it  
+  set_fact:
+    cert_prefix: https
+  when: "'enable' in splunk.ssl"
+
 - name: Set Splunkd CA
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"

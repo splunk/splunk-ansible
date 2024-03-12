@@ -75,16 +75,3 @@
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
   no_log: "{{ hide_password }}"
-
-- name: Destructive sync search head
-  command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  when: not splunk_search_head_captain | bool
-  register: task_result
-  changed_when: task_result.rc == 0
-  failed_when: task_result.rc !=0 and "this instance is the captain" not in task_result.stderr
-  until: task_result.rc == 0 or "this instance is the captain" in task_result.stderr
-  retries: "{{ shc_sync_retry_num }}"
-  delay: "{{ retry_delay }}"
-  no_log: "{{ hide_password }}"

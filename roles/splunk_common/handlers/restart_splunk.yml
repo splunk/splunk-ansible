@@ -1,4 +1,11 @@
 ---
+- name: Check if Splunk is running
+  command: "{{ splunk.exec }} status"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: check_result
+  ignore_errors: yes
+
 - name: "Restart the splunkd service - Via CLI"
   command: "{{ splunk.exec }} restart --answer-yes --accept-license"
   become: yes
@@ -7,7 +14,9 @@
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
-  when: not splunk.enable_service
+  when: 
+    - not splunk.enable_service
+    - "'splunkd is running' in check_result.stdout"
 
 - name: "Restart the splunkd service - Via Linux systemd or init"
   service:
@@ -26,4 +35,6 @@
 - name: "Wait for splunkd management port"
   wait_for:
     port: "{{ splunk.svc_port }}"
-  when: splunk.splunk_http_enabled|bool == true
+  when: 
+  - "'splunkd is running' in check_result.stdout"
+  - splunk.splunk_http_enabled|bool == true

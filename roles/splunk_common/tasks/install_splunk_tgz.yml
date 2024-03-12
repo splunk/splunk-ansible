@@ -51,12 +51,7 @@
     splunk_replaced_build_location: "{{ splunk.build_location | regex_replace('^file://(.*)$', '\\1') }}"
 
 - name: Install Splunk (Linux) from local build location
-  unarchive:
-    src: "{% if splunk.build_location is match('^(https?)://.*') %}{{ splunk_downloaded_build_location }}{% else %}{{ splunk_replaced_build_location }}{% endif %}"
-    dest: "{{ splunk.opt }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-    remote_src: yes
+  shell: tar --no-same-owner --no-same-permissions -x --owner={{ splunk.user }} --group={{ splunk.group }}  -f {% if splunk.build_location is match('^(https?)://.*') %}{{ splunk_downloaded_build_location }}{% else %}{{ splunk_replaced_build_location }}{% endif %} -C {{ splunk.opt }} && chown -R {{ splunk.user }}:{{ splunk.group }} /opt/splunk/*
   register: install_result
   until: install_result is succeeded
   retries: "{{ retry_num }}"
