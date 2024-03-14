@@ -82,9 +82,9 @@
       name: "{{ app_filepath }}"
       update: "true"
       filename: "true"
-    body_format: "form-urlencoded"
     status_code: 200,201
     timeout: 90
+    body_format: "form-urlencoded"
   register: post_apps_local
   until: post_apps_local is succeeded
   retries: 5
