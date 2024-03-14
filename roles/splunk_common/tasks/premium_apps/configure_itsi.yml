@@ -1,6 +1,6 @@
 - name: Create ITSI admin role
   splunk_api:
-    endpoint: "servicesNS/nobody/itsi/authorization/roles"
+    url: "servicesNS/nobody/itsi/authorization/roles"
     method: "POST"
     svc_port: "{{ splunk.svc_port }}"
     body:
@@ -23,7 +23,7 @@
 
 - name: Create ITSI admin user
   splunk_api:
-    endpoint: "servicesNS/nobody/itsi/authentication/users/admin"
+    url: "servicesNS/nobody/itsi/authentication/users/admin"
     method: "POST"
     svc_port: "{{ splunk.svc_port }}"
     body:

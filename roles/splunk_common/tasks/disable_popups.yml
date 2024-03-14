@@ -2,7 +2,7 @@
 - name: GET OptInVersion
   splunk_api:
     method: GET
-    endpoint: "/servicesNS/nobody/splunk_instrumentation/admin/telemetry/general?output_mode=json"
+    url: "/servicesNS/nobody/splunk_instrumentation/admin/telemetry/general?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -16,7 +16,7 @@
 - name: Disable Popups
   splunk_api:
     method: POST
-    endpoint: "{{ item.key }}"
+    url: "{{ item.key }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

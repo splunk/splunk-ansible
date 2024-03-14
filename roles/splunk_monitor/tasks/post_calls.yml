@@ -12,7 +12,7 @@
 - name: POST Requests
   splunk_api:
     method: POST
-    endpoint: "/services/search/distributed/groups"
+    url: "/services/search/distributed/groups"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -34,7 +34,7 @@
 - name: Edit DMC Group Requests
   splunk_api:
     method: POST
-    endpoint: "/services/search/distributed/groups/{{ item }}/edit"
+    url: "/services/search/distributed/groups/{{ item }}/edit"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -56,7 +56,7 @@
 - name: Cluster Label POST Requests
   splunk_api:
     method: POST
-    endpoint: "/services/search/distributed/groups"
+    url: "/services/search/distributed/groups"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -72,7 +72,7 @@
 - name: Edit Cluster Label POST Requests
   splunk_api:
     method: POST
-    endpoint: "/services/search/distributed/groups"
+    url: "/services/search/distributed/groups"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

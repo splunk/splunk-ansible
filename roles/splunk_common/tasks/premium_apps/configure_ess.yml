@@ -6,7 +6,7 @@
 
 - name: Get ESS version
   splunk_api:
-    endpoint: apps/local/SplunkEnterpriseSecuritySuite
+    url: apps/local/SplunkEnterpriseSecuritySuite
     method: GET
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"

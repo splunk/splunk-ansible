@@ -2,7 +2,7 @@
 - name: dmc_asset_build_full - GET
   splunk_api:
     method: GET
-    endpoint: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full?output_mode=json"
+    url: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -15,7 +15,7 @@
 - name: dmc_asset_build_full - POST
   splunk_api:
     method: POST
-    endpoint: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full/dispatch"
+    url: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full/dispatch"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -30,7 +30,7 @@
 - name: UI - GET
   splunk_api:
     method: GET
-    endpoint: "/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default.distributed?output_mode=json"
+    url: "/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default.distributed?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -43,7 +43,7 @@
 - name: UI - POST
   splunk_api:
     method: POST
-    endpoint: "/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default"
+    url: "/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -55,7 +55,7 @@
 - name: DMC Conf - POST
   splunk_api:
     method: POST
-    endpoint: "/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/settings"
+    url: "/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/settings"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -71,7 +71,7 @@
 - name: DMC Settings - POST
   splunk_api:
     method: POST
-    endpoint: "/servicesNS/nobody/system/apps/local/splunk_monitoring_console"
+    url: "/servicesNS/nobody/system/apps/local/splunk_monitoring_console"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

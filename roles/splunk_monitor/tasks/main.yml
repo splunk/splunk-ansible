@@ -7,7 +7,7 @@
 - name: Fetch server info
   splunk_api:
     method: GET
-    endpoint: "/services/server/info/server-info?output_mode=json"
+    url: "/services/server/info/server-info?output_mode=json"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -24,7 +24,7 @@
 - name: Fetch clusterMaster peers
   splunk_api:
     method: GET
-    endpoint: "/services/cluster/master/peers?output_mode=json&count=0"
+    url: "/services/cluster/master/peers?output_mode=json&count=0"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -48,7 +48,7 @@
 - name: Fetch distributed peers when cm is defined
   splunk_api:
     method: GET
-    endpoint: "/services/search/distributed/peers?output_mode=json&count=0"
+    url: "/services/search/distributed/peers?output_mode=json&count=0"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -69,7 +69,7 @@
 - name: Fetch distributed peers
   splunk_api:
     method: GET
-    endpoint: "/services/search/distributed/peers?output_mode=json&count=0"
+    url: "/services/search/distributed/peers?output_mode=json&count=0"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

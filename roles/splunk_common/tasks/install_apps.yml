@@ -2,7 +2,7 @@
 - name: Install Splunkbase app
   splunk_api:
     method: POST
-    endpoint: /services/apps/local
+    url: /services/apps/local
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -74,7 +74,7 @@
 - name: Install app via REST
   splunk_api:
     method: POST
-    endpoint: "/services/apps/local"
+    url: "/services/apps/local"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -82,9 +82,9 @@
       name: "{{ app_filepath }}"
       update: "true"
       filename: "true"
-    body_format: "form-urlencoded"
     status_code: 200,201
     timeout: 90
+    body_format: "form-urlencoded"
   register: post_apps_local
   until: post_apps_local is succeeded
   retries: 5
