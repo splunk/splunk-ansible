@@ -1,8 +1,6 @@
 ---
 - include_tasks: get_facts.yml
 
-- include_tasks: install_python_requirements.yml
-
 - include_tasks: change_splunk_directory_owner.yml
   when:
     - ansible_system is match("Linux")
