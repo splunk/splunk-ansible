@@ -22,6 +22,6 @@
     body:
       is_active: 1
     body_format: "form-urlencoded"
-     status_code: [200]
+    status_code: [200]
     timeout: 10
   when: not check_fwd_lic.content.json.entry[0].content.is_active

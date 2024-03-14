@@ -15,7 +15,7 @@
       port: "{% if 'hec' in splunk and 'port' in splunk.hec and splunk.hec.port %}{{ splunk.hec.port }}{% elif 'hec_port' in splunk and splunk.hec_port %}{{ splunk.hec_port }}{% else %}8088{% endif %}"
       serverCert: "{% if 'hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert %}{{ splunk.hec.cert }}{% endif %}"
       sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
-    # body_format: "form-urlencoded"
+    body_format: "form-urlencoded"
   register: sample
 
 - name: Get existing HEC token
@@ -65,7 +65,7 @@
     body:
       name: "splunk_hec_token"
       token: "{% if 'hec' in splunk and 'token' in splunk.hec and splunk.hec.token %}{{ splunk.hec.token }}{% else %}{{ splunk.hec_token }}{% endif %}"
-    # body_format: "form-urlencoded"
+    body_format: "form-urlencoded"
     status_code: [201,409]
   register: create_hec_token
   changed_when: create_hec_token.status == 201

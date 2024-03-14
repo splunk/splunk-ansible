@@ -79,6 +79,8 @@ def main():
         body_format=dict(type='str', required=False),
         headers=dict(type='dict', required=False),
         verify=dict(type='bool', required=False),
+        return_content=dict(type='bool', required=False),
+        use_proxy=dict(type='str', required=False),
         status_code=dict(type='list', required=False),
         timeout=dict(type='int', required=False),
         svc_port=dict(type='int', required=False)
@@ -104,6 +106,8 @@ def main():
     status_code = module.params.get('status_code', None)
     timeout = module.params.get('timeout', None)
     svc_port = module.params.get('svc_port', 8089)
+    return_content = module.params.get('return_content', None)
+    use_proxy = module.params.get('use_proxy', None)
 
     if status_code:
       status_code = [int(x) for x in status_code]

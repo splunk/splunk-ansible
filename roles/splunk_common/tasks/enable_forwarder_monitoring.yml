@@ -10,10 +10,9 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body:
-      body_format: "form-urlencoded"
-      status_code: [200,201]
-      timeout: 10
+    body_format: "form-urlencoded"
+    status_code: [200,201]
+    timeout: 10
   register: dmc_forwarder_build_assets
   no_log: "{{ hide_password }}"
 
@@ -43,7 +42,6 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body:
     body_format: "form-urlencoded"
     status_code: [200, 201]
     timeout: 10
