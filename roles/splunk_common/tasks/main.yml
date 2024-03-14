@@ -50,7 +50,8 @@
 
 - include_tasks: enable_admin_auth.yml
 
-- include_tasks: set_mgmt_mode.yml
+- include_tasks: configure_mgmt_mode.yml
+  when: splunk.role == "splunk_universal_forwarder" and splunk.splunk_http_enabled|bool == true
 
 - include_tasks: set_launch_conf.yml
   when:
@@ -133,3 +134,5 @@
 
 - include_tasks: disable_popups.yml
   when: "'disable_popups' in splunk and splunk.disable_popups | bool"
+
+- include_tasks: check_mgmt_mode_status.yml
