@@ -11,7 +11,7 @@
 
 - name: UF is configured to use UDS
   debug:
-    msg: "UF(s) is configured to use UDS"
+    msg: "UF is configured to use UDS"
   when: client_socket_file.stat.exists and port_status.stdout.find("8089") == -1
 
 - name: UF is configured to use TCP
