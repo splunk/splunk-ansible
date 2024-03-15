@@ -24,9 +24,9 @@ def api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, pa
     auth = (username, password)
 
     data = None
-    if body_format and body_format == "form-urlencoded":
+    if payload and body_format and body_format == "form-urlencoded":
       data = payload
-    else:
+    elif payload:
       data = json.dumps(payload)
 
     session = requests.Session()
@@ -36,18 +36,18 @@ def api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, pa
     response = None
     excep_str = "No Exception"
     try:
-      if payload is None:
+      if data is None:
               response = session.request(method, url, headers=headers, auth=auth, verify=verify, timeout=timeout)
       else:
               response = session.request(method, url, headers=headers, auth=auth, data=data, verify=verify, timeout=timeout)
       if status_code is not None and response.status_code not in status_code:
           raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
     except Exception as e:
-      excep_str = "{}".format(e)
+      excep_str = "URL: {}; data: {}, exception: {}".format(url, data, e)
       cwd = os.getcwd()
     return response, excep_str
 
-def api_call_uds(method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None):
+def api_call_uds(method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None, body_format=None):
     url = "http+unix://{}{}".format(UDS_SOCKET_PATH_URL,endpoint)
     if headers is None:
         headers = {}
@@ -58,10 +58,19 @@ def api_call_uds(method, endpoint, username, password, svc_port, payload=None, h
     # Disable SSL verification for the session
     session.verify = False
 
+    data = None
+    if payload and body_format and body_format == "form-urlencoded":
+      data = payload
+    elif payload:
+      data = json.dumps(payload)
+
     excep_str = "No Exception"
     response = None
     try:
-      response = session.request(method, url, headers=headers, auth=auth, data=json.dumps(payload), verify=verify, timeout=timeout)
+      if data is None:
+              response = session.request(method, url, headers=headers, auth=auth, verify=verify, timeout=timeout)
+      else:
+              response = session.request(method, url, headers=headers, auth=auth, data=data, verify=verify, timeout=timeout)
       if status_code is not None and response.status_code not in status_code:
         raise ValueError("API call for {} and data as {} failed with status code {}: {}".format(url, payload, response.status_code, response.text))
     except Exception as e:
@@ -106,15 +115,19 @@ def main():
     status_code = module.params.get('status_code', None)
     timeout = module.params.get('timeout', None)
     svc_port = module.params.get('svc_port', 8089)
-    return_content = module.params.get('return_content', None)
-    use_proxy = module.params.get('use_proxy', None)
+    return_content = module.params.get('return_content', False)
+    use_proxy = module.params.get('use_proxy', "no")
 
     if status_code:
       status_code = [int(x) for x in status_code]
+    if not use_proxy:
+      use_proxy = 'no'
+    if not return_content:
+      return_content = False
 
     s = "{}{}{}{}{}{}{}{}{}".format(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
     if supports_uds():
-        response, excep_str = api_call_uds(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout)
+        response, excep_str = api_call_uds(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout, body_format)
     else:
         response, excep_str = api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout, body_format)
 
@@ -128,7 +141,7 @@ def main():
         if response is None:
           module.fail_json(msg="{};;; failed with NO RESPONSE and EXCEP_STR as {}".format(s, excep_str))
         else:
-          module.fail_json(msg="{};;; failed with status code {}: {}".format(s, response.status_code, response.text))
+          module.fail_json(msg="{};;; AND excep_str: {}, failed with status code {}: {}".format(s, excep_str, response.status_code, response.text))
 
 if __name__ == '__main__':
     main()
