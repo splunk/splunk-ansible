@@ -50,7 +50,7 @@
 
 - include_tasks: enable_admin_auth.yml
 
-- include_tasks: set_mgmt_mode.yml
+- include_tasks: configure_mgmt_port.yml
 
 - include_tasks: set_launch_conf.yml
   when:
@@ -73,8 +73,6 @@
   when:
     - "'http_port' in splunk"
     - splunk.http_port | int != 8000
-
-- include_tasks: set_mgmt_port.yml
 
 - include_tasks: set_root_endpoint.yml
   when: "'root_endpoint' in splunk and splunk.root_endpoint"
@@ -133,3 +131,5 @@
 
 - include_tasks: disable_popups.yml
   when: "'disable_popups' in splunk and splunk.disable_popups | bool"
+
+- include_tasks: check_mgmt_mode_status.yml

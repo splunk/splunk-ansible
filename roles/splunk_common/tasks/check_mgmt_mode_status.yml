@@ -1,0 +1,20 @@
+---
+- name: Check if UDS file exists
+  stat:
+    path: '{{ splunk.home }}/var/run/splunk/cli.socket'
+  register: client_socket_file
+
+- name: Check if listening on SVC Port {{ splunk.svc_port }}
+  shell: "netstat -plnt"
+  register: port_status
+  #when: not client_socket_file.stat.exists
+
+- name: UF is configured to use UDS
+  debug:
+    msg: "This UF instance is configured to use UDS socket for API communications."
+  when: client_socket_file.stat.exists and port_status.stdout.find("{{ splunk.svc_port }}") == -1
+
+- name: UF is configured to use TCP
+  debug:
+    msg: "This UF instance is configured to use TCP socket for API communications."
+  when: not client_socket_file.stat.exists and port_status.stdout.find("{{ splunk.svc_port }}") != -1
