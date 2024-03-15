@@ -133,3 +133,4 @@
   when: "'disable_popups' in splunk and splunk.disable_popups | bool"
 
 - include_tasks: check_mgmt_mode_status.yml
+  when: splunk.role == "splunk_universal_forwarder"
