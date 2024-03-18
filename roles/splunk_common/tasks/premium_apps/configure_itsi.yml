@@ -12,7 +12,6 @@
     body_format: "form-urlencoded"
     status_code: [201, 409]
   register: setup_itsi_role
-  ignore_errors: yes
   delay: "{{ retry_delay }}"
   retries: "{{ retry_num }}"
   until: setup_itsi_role.status in [201, 409]
