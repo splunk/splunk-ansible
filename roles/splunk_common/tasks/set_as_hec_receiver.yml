@@ -41,8 +41,6 @@
     method: DELETE
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
     status_code: 200,404
     timeout: 60
     use_proxy: no

@@ -6,12 +6,11 @@
 
 - name: Get ESS version
   splunk_api:
-    url: apps/local/SplunkEnterpriseSecuritySuite
+    url: "/services/apps/local/SplunkEnterpriseSecuritySuite?output_mode=json"
     method: GET
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    validate_certs: false
     timeout: 10
   register: ess_info
   no_log: "{{ hide_password }}"

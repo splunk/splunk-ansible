@@ -3,8 +3,7 @@
   splunk_api:
     url: ""
     method: GET
-    port: "{{ port | default(splunk.svc_port) }}"
-    validate_certs: false
+    svc_port: "{{ port | default(splunk.svc_port) }}"
     use_proxy: no
   register: task_response
   until:

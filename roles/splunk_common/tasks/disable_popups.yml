@@ -6,7 +6,6 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    validate_certs: false
     status_code: [200]
     timeout: 10
     return_content: yes
@@ -21,7 +20,6 @@
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
     body: "{{ item.value }}"
-    validate_certs: false
     status_code: 200,201,409
   with_items:
     - { key: "/servicesNS/admin/user-prefs/data/user-prefs/general", value: "hideInstrumentationOptInModal=1&notification_python_3_impact=false&showWhatsNew=0" }

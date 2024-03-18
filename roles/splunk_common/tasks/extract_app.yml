@@ -34,7 +34,6 @@
       dest: /tmp/
       mode: 0777
       timeout: 120
-      validate_certs: no
       force: yes
     register: app_remote
     when:
