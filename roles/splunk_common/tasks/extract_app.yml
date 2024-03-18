@@ -12,7 +12,7 @@
       filename: "true"
       auth: "{{ splunkbase_token }}"
     body_format: "form-urlencoded"
-    status_code: 200,201
+    status_code: [200,201]
     timeout: 300
   when:
     - app_filepath is defined
