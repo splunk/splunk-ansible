@@ -7,7 +7,7 @@
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
     validate_certs: false
-     status_code: [200]
+    status_code: [200]
     timeout: 10
     return_content: yes
   register: telemetry
