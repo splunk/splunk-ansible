@@ -35,7 +35,6 @@
       dest: /tmp/
       mode: 0777
       timeout: 120
-      validate_certs: no
       force: yes
       url_username: "{{ splunk.artifact_auth_user }}"
       url_password: "{{ splunk.artifact_auth_pass }}"
