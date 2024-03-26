@@ -1,6 +1,7 @@
 ## Changelog
 
 ## Navigation
+* [9.2.1](#921)
 * [9.2.0.1](#9201)
 * [9.2.0](#920)
 * [9.1.3](#913)
@@ -81,6 +82,14 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## 9.2.1
+
+#### Changes
+* Support for latest major Splunk release
+* Documentation updates
 
 ---
 
