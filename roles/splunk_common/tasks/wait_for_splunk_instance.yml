@@ -1,9 +1,9 @@
 ---
 - name: Check Splunk instance is running
-  uri:
-    url: "{{ scheme | default(cert_prefix) }}://{{ splunk_instance_address }}:{{ port | default(splunk.svc_port) }}"
+  splunk_api:
+    url: ""
     method: GET
-    validate_certs: false
+    svc_port: "{{ port | default(splunk.svc_port) }}"
     use_proxy: no
   register: task_response
   until:
@@ -12,3 +12,4 @@
   delay: "{{ retry_delay }}"
   ignore_errors: true
   no_log: "{{ hide_password }}"
+# INFRA-38882

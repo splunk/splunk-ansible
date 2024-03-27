@@ -2,13 +2,13 @@
 # TODO: Remove all secondary conditionals on deprecation of splunk.hec_* variables
 
 - name: Setup global HEC
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http/http"
+  splunk_api:
+    url: "/services/data/inputs/http/http"
     method: POST
-    user: "{{ splunk.admin_user }}"
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
+    svc_port: "{{ splunk.svc_port }}"
     body:
       disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
       enableSSL: "{% if ('hec' in splunk and 'ssl' in splunk.hec and splunk.hec.ssl | bool) or ('hec_enableSSL' in splunk and splunk.hec_enableSSL | bool) %}1{% else %}0{% endif %}"
@@ -16,25 +16,23 @@
       serverCert: "{% if 'hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert %}{{ splunk.hec.cert }}{% endif %}"
       sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
     body_format: "form-urlencoded"
-    status_code: 200
-    timeout: 60
-    use_proxy: no
-  no_log: "{{ hide_password }}"
+  register: sample
 
 - name: Get existing HEC token
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http/splunk_hec_token?output_mode=json"
+  splunk_api:
+    url: "/services/data/inputs/http/splunk_hec_token?output_mode=json"
     method: GET
-    user: "{{ splunk.admin_user }}"
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
-    status_code: 200,404
-    timeout: 60
-    use_proxy: no
+    status_code: [200, 404]
+    svc_port: "{{ splunk.svc_port }}"
   register: hec_token
   when: ('hec' in splunk and 'token' in splunk.hec) or ('hec_token' in splunk)
-  no_log: "{{ hide_password }}"
+
+- name: Attempt
+  debug:
+    msg: "{{ hec_token.status }}"
 
 # The REST API does not support modifying tokens in-place, so we'll need to delete/re-create
 - name: Remove existing HEC token
@@ -43,34 +41,32 @@
     method: DELETE
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
     status_code: 200,404
     timeout: 60
     use_proxy: no
   register: delete_hec_token
   changed_when: delete_hec_token.status == 200
   when:
+    #- "splunk.splunk_http_enabled"
     - hec_token is defined and hec_token.status == 200
     - ('hec' in splunk and 'token' in splunk.hec and hec_token.json['entry'][0]['content']['token'] != splunk.hec.token) or ('hec_token' in splunk and hec_token.json['entry'][0]['content']['token'] != splunk.hec_token)
   no_log: "{{ hide_password }}"
 
 - name: Update HEC token configuration
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http"
+  splunk_api:
+    url: "/services/data/inputs/http"
     method: POST
-    user: "{{ splunk.admin_user }}"
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
+    svc_port: "{{ splunk.svc_port }}"
     body:
       name: "splunk_hec_token"
       token: "{% if 'hec' in splunk and 'token' in splunk.hec and splunk.hec.token %}{{ splunk.hec.token }}{% else %}{{ splunk.hec_token }}{% endif %}"
     body_format: "form-urlencoded"
-    status_code: 201,409
-    timeout: 60
-    use_proxy: no
+    status_code: [201,409]
   register: create_hec_token
   changed_when: create_hec_token.status == 201
-  when: ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
-  no_log: "{{ hide_password }}"
+  when:
+    - hec_token is defined and hec_token.status == 200
+    - ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)

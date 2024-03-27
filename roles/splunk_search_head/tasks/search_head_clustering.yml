@@ -2,7 +2,7 @@
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
-
+#INFRA-38882: Update exec command?
 - name: Initialize SHC cluster config
   command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ splunk.shc.replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.pass4SymmKey }}' -shcluster_label '{{ splunk.shc.label }}'"
   become: yes
@@ -17,20 +17,22 @@
   no_log: "{{ hide_password }}"
 
 - name: Set desired preferred captaincy
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/system/configs/conf-server/shclustering"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    url: "/servicesNS/nobody/system/configs/conf-server/shclustering"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
+    svc_port: "{{ splunk.svc_port }}"
     body:
       preferred_captain: "{{ splunk_search_head_captain | bool | lower }}"
     body_format: "form-urlencoded"
+    status_code: "200,409"
     timeout: 10
     use_proxy: no
   notify:
     - Restart the splunkd service
+  register: preferred_captaincy_result
+  changed_when: false
   no_log: "{{ hide_password }}"
   when:
     - splunk_search_head_captain is defined and splunk.preferred_captaincy | bool
@@ -44,6 +46,7 @@
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
 
+#INFRA-38882: Update exec command?
 - name: Boostrap SHC captain
   command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}{{ cert_prefix }}://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
@@ -59,6 +62,7 @@
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
+#INFRA-38882: Update exec command?
 - name: Add new member to SHC
   command: "{{ splunk.exec }} add shcluster-member -current_member_uri {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes

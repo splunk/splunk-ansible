@@ -50,6 +50,8 @@
 
 - include_tasks: enable_admin_auth.yml
 
+- include_tasks: configure_mgmt_port.yml
+
 - include_tasks: set_launch_conf.yml
   when:
     - "'launch' in splunk and splunk.launch"
@@ -71,8 +73,6 @@
   when:
     - "'http_port' in splunk"
     - splunk.http_port | int != 8000
-
-- include_tasks: set_mgmt_port.yml
 
 - include_tasks: set_root_endpoint.yml
   when: "'root_endpoint' in splunk and splunk.root_endpoint"
@@ -107,6 +107,7 @@
     conf_stanzas: "{{ item.value.content | default({}) }}"
   with_items: "{% if splunk.conf is mapping %}{{ splunk.conf | dict2items }}{% else %}{{ splunk.conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
+  no_log: "{{ hide_password }}"
 
 # Generate outputs.conf before splunk starts to prevent data being indexed locally
 - include_tasks: enable_forwarding.yml
@@ -122,6 +123,7 @@
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
+  when: splunk.splunk_http_enabled|bool == true
 
 - include_tasks: clean_user_seed.yml
 
@@ -129,3 +131,6 @@
 
 - include_tasks: disable_popups.yml
   when: "'disable_popups' in splunk and splunk.disable_popups | bool"
+
+- include_tasks: check_mgmt_mode_status.yml
+  when: splunk.role == "splunk_universal_forwarder"
