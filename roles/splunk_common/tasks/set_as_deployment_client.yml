@@ -6,6 +6,7 @@
   vars:
     splunk_instance_address: "{{ splunk.deployment_server }}"
 
+# INFRA-38882: Do I need to update this task as well? or does the splunk_exec handle it?
 - name: Set node as deployment client
   command: "{{ splunk.exec }} set deploy-poll {{ splunk.deployment_server }}:{{ splunk.svc_port }} -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes

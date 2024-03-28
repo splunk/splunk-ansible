@@ -5,7 +5,7 @@
 
 - name: Determine available licenses
   set_fact:
-    licenses: "{{ licenses }} + [ '{{ item }}' ]"
+    licenses: "{{ licenses + [ item ] }}"
   with_items: "{{ splunk.license_uri.split(',') }}"
   when: splunk.license_uri is defined and splunk.license_uri
 

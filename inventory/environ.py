@@ -108,6 +108,7 @@ def getDefaultVars():
     environment variables to return a consolidated inventory object
     """
     defaultVars = loadDefaults()
+    defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', defaultVars["splunk"].get("role") or "splunk_standalone")
     overrideEnvironmentVars(defaultVars)
     getAnsibleContext(defaultVars)
     getASan(defaultVars)
@@ -124,7 +125,6 @@ def getDefaultVars():
     getSplunkdSSL(defaultVars)
     getDistributedTopology(defaultVars)
     getLicenses(defaultVars)
-    defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', defaultVars["splunk"].get("role") or "splunk_standalone")
     # Determine DMC settings
     defaultVars["dmc_forwarder_monitoring"] = os.environ.get('DMC_FORWARDER_MONITORING', False)
     defaultVars["dmc_asset_interval"] = os.environ.get('DMC_ASSET_INTERVAL', '3,18,33,48 * * * *')
@@ -133,7 +133,6 @@ def getDefaultVars():
     if os.environ.get("SPLUNK_HOME_OWNERSHIP_ENFORCEMENT", "").lower() == "false":
         defaultVars["splunk_home_ownership_enforcement"] = False
     # Determine password visibility
-    defaultVars["hide_password"] = False
     if os.environ.get("HIDE_PASSWORD", "").lower() == "true":
         defaultVars["hide_password"] = True
     # Determine SHC preferred captaincy
@@ -145,6 +144,7 @@ def getDefaultVars():
     getJava(defaultVars)
     getSplunkBuild(defaultVars)
     getSplunkbaseToken(defaultVars)
+    getSplunkBuildAuth(defaultVars)
     getSplunkApps(defaultVars)
     getSplunkAppsLocal(defaultVars)
     getLaunchConf(defaultVars)
@@ -357,6 +357,13 @@ def getSplunkbaseToken(vars_scope):
         splunkbase_token = re.search("<id>(.*)</id>", output, re.IGNORECASE)
         vars_scope["splunkbase_token"] = splunkbase_token.group(1) if splunkbase_token else None
 
+def getSplunkBuildAuth(vars_scope):
+    """
+    Load username and password to be used in basic auth when fetching splunk build or apps
+    """
+    vars_scope["splunk"]["artifact_auth_user"] = os.environ.get("ARTIFACTORY_USER", vars_scope["splunk"].get("artifact_auth_user"))
+    vars_scope["splunk"]["artifact_auth_pass"] = os.environ.get("ARTIFACTORY_TOKEN", vars_scope["splunk"].get("artifact_auth_pass"))
+
 def getSplunkApps(vars_scope):
     """
     Determine the set of Splunk apps to install as union of defaults.yml and environment variables
@@ -566,6 +573,7 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["cert_prefix"] = os.environ.get("SPLUNK_CERT_PREFIX", vars_scope.get("cert_prefix", "https"))
     vars_scope["splunk"]["root_endpoint"] = os.environ.get('SPLUNK_ROOT_ENDPOINT', vars_scope["splunk"]["root_endpoint"])
     vars_scope["splunk"]["svc_port"] = os.environ.get('SPLUNK_SVC_PORT', vars_scope["splunk"]["svc_port"])
+    vars_scope["splunk"]["splunk_http_enabled"] = os.environ.get('ENABLE_TCP_MODE', vars_scope["splunk"]["enable_tcp_mode"])
     vars_scope["splunk"]["s2s"]["port"] = int(os.environ.get('SPLUNK_S2S_PORT', vars_scope["splunk"]["s2s"]["port"]))
     vars_scope["splunk"]["enable_service"] = os.environ.get('SPLUNK_ENABLE_SERVICE', vars_scope["splunk"]["enable_service"])
     vars_scope["splunk"]["service_name"] = os.environ.get('SPLUNK_SERVICE_NAME', vars_scope["splunk"]["service_name"])
@@ -574,6 +582,8 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["kvstore"]["port"] = os.environ.get('SPLUNK_KVSTORE_PORT', vars_scope["splunk"]["kvstore"]["port"])
     vars_scope["splunk"]["connection_timeout"] = int(os.environ.get('SPLUNK_CONNECTION_TIMEOUT', vars_scope["splunk"]["connection_timeout"]))
 
+    if vars_scope["splunk"]["splunk_http_enabled"] == "false" and "forwarder" not in vars_scope["splunk"]["role"].lower():
+        vars_scope["splunk"]["splunk_http_enabled"] = "true"
     # Set set_search_peers to False to disable peering to indexers when creating multisite topology
     if os.environ.get("SPLUNK_SET_SEARCH_PEERS", "").lower() == "false":
         vars_scope["splunk"]["set_search_peers"] = False

@@ -15,3 +15,4 @@
 - debug:
     msg: "WARNING: Applying shcluster bundle failed - proceeding anyways..."
   when: shcluster_bundle.rc != 0
+#INFRA-38882 Do we need to update or is it already handled through exec

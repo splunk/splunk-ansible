@@ -8,7 +8,32 @@
     validate_certs: no
     timeout: 900
     mode: 0666
-  when: splunk.build_location is match("^(https?)://.*")
+  when: 
+    - splunk.build_location is match("^(https?)://.*")
+    - splunk.artifact_auth_user is undefined or splunk.artifact_auth_user == ""
+  register: download_result
+  until: download_result is succeeded
+  retries: 5
+  delay: "{{ retry_delay }}"
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Download Splunk using basic auth
+  get_url:
+    url: "{{ splunk.build_location }}"
+    dest: "{{ splunk.opt }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    force_basic_auth: false 
+    url_username: "{{ splunk.artifact_auth_user }}"
+    url_password: "{{ splunk.artifact_auth_pass }}"
+    validate_certs: no
+    timeout: 900
+    mode: 0666
+  when: 
+    - splunk.build_location is match("^(https?)://.*")
+    - splunk.artifact_auth_user is defined
+    - splunk.artifact_auth_user != ""
   register: download_result
   until: download_result is succeeded
   retries: 5

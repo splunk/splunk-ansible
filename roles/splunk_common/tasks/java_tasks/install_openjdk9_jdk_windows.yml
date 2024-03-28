@@ -20,9 +20,11 @@
     path: /home/splunk/.bash_profile
     line: "JAVA_HOME=/home/splunk/java-se-9-ri/jdk-9/"
     create: yes
+  no_log: "{{ hide_password }}"
 
 - name: Write path into .bash_profile
   lineinfile:
     path: /home/splunk/.bash_profile
     line: "PATH=$PATH:$JAVA_HOME/bin"
     create: yes
+  no_log: "{{ hide_password }}"

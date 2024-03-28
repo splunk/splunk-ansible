@@ -1,50 +1,48 @@
 ---
 - name: Establish DMC forwarder monitor API
   set_fact:
-    dmc_forwarder_assets_url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC+Forwarder+-+Build+Asset+Table"
+    dmc_forwarder_assets_url: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC+Forwarder+-+Build+Asset+Table"
 
 - name: Retrieve forwarder assets query
-  uri:
-    url: "{{ dmc_forwarder_assets_url }}?output_mode=json"
+  splunk_api:
     method: GET
-    user: "{{ splunk.admin_user }}"
+    url: "{{ dmc_forwarder_assets_url }}?output_mode=json"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
-    status_code: 200,201
+    svc_port: "{{ splunk.svc_port }}"
+    body_format: "form-urlencoded"
+    status_code: [200,201]
     timeout: 10
-    use_proxy: no
   register: dmc_forwarder_build_assets
   no_log: "{{ hide_password }}"
 
+# Is Use of Proxy Important
 - name: Configure forwarder assets search
-  uri:
-    url: "{{ dmc_forwarder_assets_url }}"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    url: "{{ dmc_forwarder_assets_url }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
+    svc_port: "{{ splunk.svc_port }}"
     body:
-      search: "{{ dmc_forwarder_build_assets.json['entry'][0]['content']['search'] }}"
+      search: "{{ dmc_forwarder_build_assets.content['entry'][0]['content']['search'] }}"
       request.ui_dispatch_app: splunk_monitoring_console
       cron_schedule: "{{ dmc_asset_interval }}"
       alert.track: 0
       disabled: 0
     body_format: "form-urlencoded"
-    validate_certs: false
-    status_code: 200,201
+    status_code: [200,201]
     timeout: 10
-    use_proxy: no
   no_log: "{{ hide_password }}"
 
 - name: Build forwarder assets
-  uri:
-    url: "{{ dmc_forwarder_assets_url }}/dispatch"
+  splunk_api:
     method: POST
-    user: "{{ splunk.admin_user }}"
+    url: "{{ dmc_forwarder_assets_url }}/dispatch"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    force_basic_auth: yes
-    validate_certs: false
-    status_code: 200,201
-    use_proxy: no
+    svc_port: "{{ splunk.svc_port }}"
+    body_format: "form-urlencoded"
+    status_code: [200, 201]
+    timeout: 10
   no_log: "{{ hide_password }}"

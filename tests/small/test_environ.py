@@ -905,6 +905,7 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "user": "splunk",
                                 "group": "splunk",
                                 "root_endpoint": None,
+                                "enable_tcp_mode": True,
                                 "svc_port": 8089,
                                 "s2s": {"port": 9997},
                                 "appserver": {"port": 8065},

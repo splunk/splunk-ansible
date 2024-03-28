@@ -5,6 +5,7 @@
     scheme: "{{ splunk.license_master_url | urlsplit('scheme') }}"
     splunk_instance_address: "{{ splunk.license_master_url | urlsplit('hostname') }}"
     port: "{{ splunk.license_master_url | urlsplit('port') }}"
+  no_log: "{{ hide_password }}"
 
 - name: Set node as license slave
   command: "{{ splunk.exec }} edit licenser-localslave -master_uri {{ splunk.license_master_url }} -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"

@@ -14,3 +14,4 @@
   with_dict: "{{ conf_stanzas }}"
   loop_control:
     loop_var: stanza
+  no_log: "{{ hide_password }}"

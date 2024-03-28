@@ -9,6 +9,7 @@
   vars:
     licenses: "{{ license }}"
   when: '"*" in license'
+  no_log: "{{ hide_password }}"
 
 - include_tasks: licenses/add_license.yml
   vars:
@@ -16,3 +17,4 @@
   when:
     - license | lower != "free"
     - '"*" not in license'
+  no_log: "{{ hide_password }}"
