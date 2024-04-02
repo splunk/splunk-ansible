@@ -6,9 +6,9 @@
   when: ansible_system is match("Linux")
 
 - name: Check if UDS file exists
-    stat:
-      path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
-    register: uds_socket_exists
+  stat:
+    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
+  register: uds_socket_exists
 
 - name: Wait for the Splunk service port to be available
   wait_for:

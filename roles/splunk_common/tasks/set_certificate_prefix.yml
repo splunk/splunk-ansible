@@ -1,8 +1,8 @@
 ---
 - name: Check if UDS file exists
-    stat:
-      path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
-    register: uds_socket_exists
+  stat:
+    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
+  register: uds_socket_exists
 
 - name: "Test basic https endpoint"
   uri:

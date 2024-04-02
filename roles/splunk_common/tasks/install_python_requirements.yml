@@ -1,4 +1,10 @@
 ---
+- name: Install and upgrade pip
+  pip:
+    name: pip
+    extra_args: --upgrade
+    executable: pip3
+
 - name: Check if requests_unixsocket exists
   command: "pip list | grep 'requests-unixsocket'"
   register: requests_unixsocket_check
