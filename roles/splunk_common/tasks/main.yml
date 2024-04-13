@@ -76,6 +76,8 @@
     - "'http_port' in splunk"
     - splunk.http_port | int != 8000
 
+- include_tasks: set_mgmt_port.yml
+
 - include_tasks: set_root_endpoint.yml
   when: "'root_endpoint' in splunk and splunk.root_endpoint"
 
