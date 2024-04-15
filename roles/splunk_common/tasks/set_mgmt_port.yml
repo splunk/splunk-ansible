@@ -1,0 +1,16 @@
+---
+- name: Set mgmt port
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "mgmtHostPort"
+    value: "0.0.0.0:{{ splunk.svc_port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - "'svc_port' in splunk"
+  register: set_mgmt_port
+
+# Restart only when Splunk is running and when any of the above have changed
+- include_tasks: ../handlers/restart_splunk.yml
+  when: set_mgmt_port is changed
