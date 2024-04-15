@@ -1,6 +1,8 @@
 ---
 - include_tasks: get_facts.yml
 
+- include_tasks: install_python_requirements.yml
+
 - include_tasks: change_splunk_directory_owner.yml
   when:
     - ansible_system is match("Linux")
@@ -74,6 +76,8 @@
     - "'http_port' in splunk"
     - splunk.http_port | int != 8000
 
+- include_tasks: set_mgmt_port.yml
+
 - include_tasks: set_root_endpoint.yml
   when: "'root_endpoint' in splunk and splunk.root_endpoint"
 
@@ -122,8 +126,13 @@
 
 - include_tasks: start_splunk.yml
 
+- name: Check if UDS file exists
+  stat:
+    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
+  register: uds_socket_exists
+
 - include_tasks: set_certificate_prefix.yml
-  when: splunk.splunk_http_enabled|bool == true
+  when: not uds_socket_exists.stat.exists
 
 - include_tasks: clean_user_seed.yml
 

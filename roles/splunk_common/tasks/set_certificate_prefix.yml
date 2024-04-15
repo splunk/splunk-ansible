@@ -1,4 +1,9 @@
 ---
+- name: Check if UDS file exists
+  stat:
+    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
+  register: uds_socket_exists
+
 - name: "Test basic https endpoint"
   uri:
     url: "https://127.0.0.1:{{ splunk.svc_port }}"
@@ -8,7 +13,7 @@
     timeout: 10
     use_proxy: no
   register: ssl_enabled
-  when: splunk.splunk_http_enabled|bool == true
+  when: not uds_socket_exists.stat.exists
   ignore_errors: true
   delay: "{{ retry_delay }}"
   retries: "{{ retry_num }}"
