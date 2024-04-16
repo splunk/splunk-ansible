@@ -1,15 +1,18 @@
 ## Changelog
 
 ## Navigation
+* [9.2.1-patch1](#921-patch1)
 * [9.2.1](#921)
 * [9.2.0.1](#9201)
 * [9.2.0](#920)
+* [9.1.4-patch1](#914-patch1)
 * [9.1.4](#914)
 * [9.1.3](#913)
 * [9.1.2](#912)
 * [9.1.1](#911)
 * [9.1.0.2](#9102)
 * [9.1.0.1](#9101)
+* [9.0.9-patch1](#909-patch1)
 * [9.0.9](#909)
 * [9.0.8](#908)
 * [9.0.7](#907)
@@ -87,6 +90,14 @@
 
 ---
 
+## 9.2.1-patch1
+
+#### Changes
+* Check for UDS file instead of UDS flag
+* Bugfixes
+
+---
+
 ## 9.2.1
 
 #### Changes
@@ -108,6 +119,14 @@
 #### Changes
 * Support for latest major Splunk release
 * Documentation updates
+
+---
+
+## 9.1.4-patch1
+
+#### Changes
+* Check for UDS file instead of UDS flag
+* Bugfixes
 
 ---
 
@@ -156,6 +175,14 @@
 #### Changes
 * Support for latest major Splunk release
 * Documentation updates
+
+---
+
+## 9.0.9-patch1
+
+#### Changes
+* Check for UDS file instead of UDS flag
+* Bugfixes
 
 ---
 
