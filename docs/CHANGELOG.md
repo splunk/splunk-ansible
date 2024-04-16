@@ -8,6 +8,7 @@
 * [9.1.1](#911)
 * [9.1.0.2](#9102)
 * [9.1.0.1](#9101)
+* [9.0.9-patch1](#909-patch1)
 * [9.0.9](#909)
 * [9.0.8](#908)
 * [9.0.7](#907)
@@ -138,6 +139,14 @@
 #### Changes
 * Support for latest major Splunk release
 * Documentation updates
+
+---
+
+## 9.0.9-patch1
+
+#### Changes
+* Check for UDS file instead of UDS flag
+* Bugfixes
 
 ---
 
