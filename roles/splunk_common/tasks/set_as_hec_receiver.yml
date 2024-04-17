@@ -36,12 +36,13 @@
 
 # The REST API does not support modifying tokens in-place, so we'll need to delete/re-create
 - name: Remove existing HEC token
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http/splunk_hec_token"
+  splunk_api:
+    url: "/services/data/inputs/http/splunk_hec_token"
     method: DELETE
-    user: "{{ splunk.admin_user }}"
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    status_code: 200,404
+    status_code: [200, 404]
     timeout: 60
     use_proxy: no
   register: delete_hec_token
