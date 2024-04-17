@@ -50,10 +50,15 @@
       - splunk.enable_service
       - ansible_os_family == "Windows"
 
+- name: Check if UDS file exists
+  stat:
+    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
+  register: uds_socket_exists
+
 - name: "Wait for splunkd management port"
   wait_for:
     port: "{{ splunk.svc_port }}"
-  when: splunk.splunk_http_enabled|bool == true
+  when: not uds_socket_exists.stat.exists
 
 - name: Flush restart handlers
   meta: flush_handlers
