@@ -24,6 +24,7 @@
     - "'svc_port' in splunk"
     - ansible_system is match("CYGWIN*|Win32NT")
     - splunk.svc_port | int != 8089
+  register: set_mgmt_port
 
 # Restart only when Splunk is running and when any of the above have changed
 - include_tasks: ../handlers/restart_splunk.yml
