@@ -22,11 +22,11 @@
     name: "requests_unixsocket"
   when:
     - requests_unixsocket_check.stdout is defined
-    - requests_unixsocket_check.stdout | length == 0 or requests_unixsocket_check.stdout.find("requests-unixsocket") == -1)
+    - requests_unixsocket_check.stdout | length == 0 or requests_unixsocket_check.stdout.find("requests-unixsocket") == -1
 
 - name: Install missing requests_unixsocket PY3
   ansible.builtin.pip:
     name: "requests_unixsocket"
   when:
     - requests_unixsocket_check_py3.stdout is defined
-    - requests_unixsocket_check_py3.stdout | length == 0 or requests_unixsocket_check_py3.stdout.find("requests-unixsocket") == -1)
+    - requests_unixsocket_check_py3.stdout | length == 0 or requests_unixsocket_check_py3.stdout.find("requests-unixsocket") == -1
