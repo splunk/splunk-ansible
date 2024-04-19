@@ -59,6 +59,7 @@ varPrefix = "SPLUNK_VAR_"
 reVarPrefix = r"${varPrefix}(.*)"
 envPrefix = "SPLUNK_ROLE_"
 reNamePattern = r"${envPrefix}(.*)"
+udsSocketFilename = "/opt/splunkforwarder/var/run/splunk/cli.socket"
 
 inventory = {
     "_meta": {
@@ -94,6 +95,10 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
             }
     inventory["all"]["vars"] = getDefaultVars()
     inventory["all"]["vars"]["docker"] = False
+
+    if inventory["splunk"]["splunk_http_enabled"] == "true":
+        if not os.path.exists(udsSocketFilename) or os.stat(udsSocketFilename).st_size == 0:
+            inventory["splunk"]["splunk_http_enabled"] = "false"
 
     if os.path.isfile("/.dockerenv") or os.path.isfile("/run/.containerenv") or os.path.isdir("/var/run/secrets/kubernetes.io") or os.environ.get("KUBERNETES_SERVICE_HOST"):
         inventory["all"]["vars"]["docker"] = True
