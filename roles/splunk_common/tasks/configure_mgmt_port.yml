@@ -11,6 +11,18 @@
     - splunk.splunk_http_enabled|bool == false
     - not socket_file.stat.exists or (socket_file.stat.exists and socket_file.stat.size == 0)
 
+- name: "Retrieve Splunk version"
+  command: "{{ splunk.exec }} version --accept-license --answer-yes --no-prompt"
+  register: installed_splunk_version
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: "Set installed version fact"
+  set_fact:
+    installed_splunk_version: "{{ installed_splunk_version.stdout | regex_search(regexp, '\\1') }}"
+  vars:
+    regexp: 'Splunk(?:\sUniversal\sForwarder)?\s((\d+)\.(\d+)\.(\d+)).*'
+
 - name: Configure to set Mgmt Mode as auto (Allows UDS)
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
@@ -23,6 +35,7 @@
     - splunk.role == "splunk_universal_forwarder"
     - socket_file.stat.exists
     - socket_file.stat.size > 0
+    - installed_splunk_version[0] is version("9.1.0", ">=")
 
 - name: Configure to set Mgmt Mode as tcp (Allows only TCP)
   ini_file:
@@ -35,3 +48,4 @@
   when:
     - splunk.role == "splunk_universal_forwarder"
     - not socket_file.stat.exists or (socket_file.stat.exists and socket_file.stat.size == 0)
+    - installed_splunk_version[0] is version("9.1.0", ">=")
