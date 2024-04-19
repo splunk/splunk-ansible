@@ -1,6 +1,6 @@
 ---
 - name: Check if requests_unixsocket exists
-  command: "pip list | grep 'requests-unixsocket'"
+  command: "python -m pip list | grep 'requests-unixsocket'"
   register: requests_unixsocket_check
   ignore_errors: true
 
