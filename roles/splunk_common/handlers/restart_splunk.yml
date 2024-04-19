@@ -26,9 +26,9 @@
 - name: Check if UDS file exists
   stat:
     path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
-  register: uds_socket_exists
+  register: socket_file
 
 - name: "Wait for splunkd management port"
   wait_for:
     port: "{{ splunk.svc_port }}"
-  when: not uds_socket_exists.stat.exists
+  when: not socket_file.stat.exists or (socket_file.stat.exists and socket_file.stat.size == 0)
