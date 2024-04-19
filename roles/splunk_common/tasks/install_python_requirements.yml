@@ -9,12 +9,12 @@
     name: pip
     extra_args: --upgrade
     executable: pip3
-  when: requests_unixsocket_check is failed
+  when: requests_unixsocket_check.stdout is undefined
 
 - name: Check if pip3 unixsocket exits
   command: "pip3 list | grep 'requests-unixsocket'"
   register: requests_unixsocket_check_py3
-  when: requests_unixsocket_check is failed
+  when: requests_unixsocket_check.stdout is undefined
   ignore_errors: true
 
 - name: Install missing requests_unixsocket
