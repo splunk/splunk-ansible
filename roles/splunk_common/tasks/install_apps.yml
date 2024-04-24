@@ -7,7 +7,7 @@
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
     body:
-      name: "{{ app_filepath }}"
+      name: "{{ app_url }}"
       update: "true"
       filename: "true"
       auth: "{{ splunkbase_token }}"
@@ -15,8 +15,8 @@
     status_code: 200,201
     timeout: 300
   when:
-    - app_filepath is defined
-    - "'splunkbase.splunk.com' in app_filepath"
+    - app_url is defined
+    - "'splunkbase.splunk.com' in app_url"
     - splunkbase_token is defined
     - splunkbase_token != None
   no_log: "{{ hide_password }}"
@@ -70,27 +70,27 @@
     notify:
       - Restart the splunkd service
 
-- name: Install app via REST
-  splunk_api:
-    method: POST
-    url: "/services/apps/local"
-    username: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    svc_port: "{{ splunk.svc_port }}"
-    body:
-      name: "{{ app_filepath }}"
-      update: "true"
-      filename: "true"
-    status_code: 200,201
-    timeout: 90
-    body_format: "form-urlencoded"
-  register: post_apps_local
-  until: post_apps_local is succeeded
-  retries: 5
-  delay: "{{ retry_delay }}"
-  changed_when: post_apps_local.status == 201
-  when:
-    - "'itsi' not in app_contents.stdout_lines"
-    - "'DA-ITSI-ContentLibrary' not in app_contents.stdout_lines"
-    - app_remote is changed or app_local.stat.exists
-  no_log: "{{ hide_password }}"
+  - name: Install app via REST
+    splunk_api:
+      method: POST
+      url: "/services/apps/local"
+      username: "{{ splunk.admin_user }}"
+      password: "{{ splunk.password }}"
+      svc_port: "{{ splunk.svc_port }}"
+      body:
+        name: "{{ app_filepath }}"
+        update: "true"
+        filename: "true"
+      status_code: 200,201
+      timeout: 90
+      body_format: "form-urlencoded"
+    register: post_apps_local
+    until: post_apps_local is succeeded
+    retries: 5
+    delay: "{{ retry_delay }}"
+    changed_when: post_apps_local.status == 201
+    when:
+      - "'itsi' not in app_contents.stdout_lines"
+      - "'DA-ITSI-ContentLibrary' not in app_contents.stdout_lines"
+      - app_remote is changed or app_local.stat.exists
+    no_log: "{{ hide_password }}"
