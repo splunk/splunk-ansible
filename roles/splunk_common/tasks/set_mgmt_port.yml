@@ -9,6 +9,21 @@
     group: "{{ splunk.group }}"
   when:
     - "'svc_port' in splunk"
+    - ansible_system is not match("CYGWIN*|Win32NT")
+  register: set_mgmt_port
+
+- name: Set mgmt port (Windows)
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: "mgmtHostPort"
+    value: "127.0.0.1:{{ splunk.svc_port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - "'svc_port' in splunk"
+    - ansible_system is match("CYGWIN*|Win32NT")
+    - splunk.svc_port | int != 8089
   register: set_mgmt_port
 
 # Restart only when Splunk is running and when any of the above have changed

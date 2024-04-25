@@ -8,11 +8,11 @@
 - name: Check if UDS file exists
   stat:
     path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
-  register: uds_socket_exists
+  register: socket_file
 
 - name: Wait for the Splunk service port to be available
   wait_for:
     host: 127.0.0.1
     port: "{{ splunk.svc_port }}"
     timeout: 180
-  when: not uds_socket_exists.stat.exists
+  when: not socket_file.stat.exists or (socket_file.stat.exists and socket_file.stat.size == 0)
