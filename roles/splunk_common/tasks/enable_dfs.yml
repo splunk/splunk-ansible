@@ -85,7 +85,7 @@
     body:
       enabled: "true"
       commands: "stats,join,sort,head,tail,reverse,dedup,rename,fields,union,from,eval"
-     status_code: [200]
+      status_code: [200]
     timeout: 10
     use_proxy: no
   register: update_dfs_job_extractor_result
