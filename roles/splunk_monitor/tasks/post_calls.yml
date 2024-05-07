@@ -17,6 +17,7 @@
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
     body: "{{ item }}"
+    body_format: "form-urlencoded"
     status_code: "201,409"
     timeout: 10
     use_proxy: no
@@ -63,6 +64,7 @@
       member: {{ item.name }}
       default: false
       name: dmc_indexerclustergroup_{{ item.cluster_label }}"
+    body_format: "form-urlencoded"
     status_code: "201,409"
     timeout: 10
     use_proxy: no
@@ -81,6 +83,7 @@
       member: {{ item.name }}
       default: false
       name: dmc_indexerclustergroup_{{ item.cluster_label }}/edit"
+    body_format: "form-urlencoded"
     status_code: "201,409"
     timeout: 10
     use_proxy: no
