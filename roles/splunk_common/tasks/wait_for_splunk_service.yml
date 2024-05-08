@@ -1,0 +1,6 @@
+---
+- name: Wait for the Splunk service port to be available
+  wait_for:
+    port: "{{ splunk.svc_port }}"
+    timeout: 180
+  when: not uds_enabled | bool

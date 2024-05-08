@@ -1,0 +1,17 @@
+---
+- name: Check if UDS file exists
+  stat:
+    path: "{{ splunk.home }}/var/run/splunk/cli.socket"
+  register: socket_file
+
+- name: Mark UDS enabled
+  set_fact:
+    uds_enabled: True
+  when:
+    - socket_file.stat.exists
+    - socket_file.stat.size > 0
+
+- name: Mark UDS disabled
+  set_fact:
+    uds_enabled: False
+  when: uds_enabled is not defined
