@@ -12,12 +12,15 @@ UDS_SOCKET_PATH_URL = "%2Fopt%2Fsplunkforwarder%2Fvar%2Frun%2Fsplunk%2Fcli.socke
 def supports_uds():
     return os.path.exists(UDS_SOCKET_PATH)
 
-def api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None, body_format=None):
+def api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, payload=None, headers=None, verify=False, status_code=None, timeout=None, body_format=None, remote=None):
     if not cert_prefix or cert_prefix not in ['http', 'https']:
       cert_prefix = 'https'
     if not svc_port:
       svc_port = 8089
-    url = "{}://127.0.0.1:{}{}".format(cert_prefix, svc_port, endpoint)
+    host = "127.0.0.1"
+    if remote:
+       host = remote
+    url = "{}://{}:{}{}".format(cert_prefix, host, svc_port, endpoint)
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -92,7 +95,8 @@ def main():
         use_proxy=dict(type='str', required=False),
         status_code=dict(type='list', required=False),
         timeout=dict(type='int', required=False),
-        svc_port=dict(type='int', required=False)
+        svc_port=dict(type='int', required=False),
+        remote=dict(type='str', required=False)
     )
 
     module = AnsibleModule(
@@ -117,6 +121,7 @@ def main():
     svc_port = module.params.get('svc_port', 8089)
     return_content = module.params.get('return_content', False)
     use_proxy = module.params.get('use_proxy', "no")
+    remote = module.params.get('remote', None)
 
     if status_code:
       status_code = [int(x) for x in status_code]
@@ -129,7 +134,7 @@ def main():
     if supports_uds():
         response, excep_str = api_call_uds(method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout, body_format)
     else:
-        response, excep_str = api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout, body_format)
+        response, excep_str = api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout, body_format, remote)
 
     if response is not None and ((status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300)):
         try:

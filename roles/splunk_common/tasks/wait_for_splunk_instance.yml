@@ -1,6 +1,7 @@
 ---
 - name: Check Splunk instance is running
   splunk_api:
+    remote: "{{ splunk_instance_address }}"
     url: ""
     method: GET
     svc_port: "{{ port | default(splunk.svc_port) }}"
