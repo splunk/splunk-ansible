@@ -6,6 +6,7 @@
     method: GET
     svc_port: "{{ port | default(splunk.svc_port) }}"
     use_proxy: no
+    cert_prefix: "{{ scheme | default(cert_prefix) }}"
   register: task_response
   until:
     - task_response.status == 200
