@@ -75,6 +75,12 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body: "author=Splunk&check_for_updates=1&configured=1&label=Monitoring+Console&version={{ settings.json['generator']['version'] }}&visible=1"
-    body_format: "form"
+    body:
+      author: Splunk
+      check_for_updates: 1
+      configured: 1
+      label: "Monitoring Console"
+      version: "{{ settings.json['generator']['version'] }}"
+      visible: 1
+    body_format: "form-urlencoded"
     status_code: "200,201,409"

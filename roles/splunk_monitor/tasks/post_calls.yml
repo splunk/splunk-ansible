@@ -60,7 +60,10 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body: "member={{ item.name }}&default=false&name=dmc_indexerclustergroup_{{ item.cluster_label }}"
+    body:
+      member: {{ item.name }}
+      default: false
+      name: dmc_indexerclustergroup_{{ item.cluster_label }}"
     body_format: "form-urlencoded"
     status_code: "201,409"
     timeout: 10
@@ -76,7 +79,10 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body: "member={{ item.name }}&default=false&name=dmc_indexerclustergroup_{{ item.cluster_label }}/edit"
+    body:
+      member: {{ item.name }}
+      default: false
+      name: dmc_indexerclustergroup_{{ item.cluster_label }}/edit"
     body_format: "form-urlencoded"
     status_code: "201,409"
     timeout: 10
