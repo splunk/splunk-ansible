@@ -50,7 +50,10 @@
       - splunk.enable_service
       - ansible_os_family == "Windows"
 
-- include_tasks: wait_for_splunk_service.yml
+- name: "Wait for splunkd management port"
+  wait_for:
+    port: "{{ splunk.svc_port }}"
+  when: not uds_enabled | bool
 
 - name: Flush restart handlers
   meta: flush_handlers
