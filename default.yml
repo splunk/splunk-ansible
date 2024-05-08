@@ -1,5 +1,6 @@
 hide_password: false
 retry_delay: 3
+restart_retry_delay: 30
 retry_num: 60
 wait_for_splunk_retry_num: 60
 shc_sync_retry_num: 60
