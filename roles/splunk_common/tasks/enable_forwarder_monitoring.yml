@@ -7,6 +7,7 @@
   splunk_api:
     method: GET
     url: "{{ dmc_forwarder_assets_url }}?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -21,6 +22,7 @@
   splunk_api:
     method: POST
     url: "{{ dmc_forwarder_assets_url }}"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -39,6 +41,7 @@
   splunk_api:
     method: POST
     url: "{{ dmc_forwarder_assets_url }}/dispatch"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

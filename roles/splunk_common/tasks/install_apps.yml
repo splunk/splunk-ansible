@@ -3,6 +3,7 @@
   splunk_api:
     method: POST
     url: /services/apps/local
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -74,6 +75,7 @@
     splunk_api:
       method: POST
       url: "/services/apps/local"
+      cert_prefix: "{{ cert_prefix }}"
       username: "{{ splunk.admin_user }}"
       password: "{{ splunk.password }}"
       svc_port: "{{ splunk.svc_port }}"

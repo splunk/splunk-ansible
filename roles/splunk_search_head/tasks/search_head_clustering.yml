@@ -29,6 +29,7 @@
     status_code: "200,409"
     timeout: 10
     use_proxy: no
+    cert_prefix: "{{ cert_prefix }}"
   notify:
     - Restart the splunkd service
   register: preferred_captaincy_result

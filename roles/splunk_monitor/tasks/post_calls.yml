@@ -13,6 +13,7 @@
   splunk_api:
     method: POST
     url: "/services/search/distributed/groups"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -35,6 +36,7 @@
   splunk_api:
     method: POST
     url: "/services/search/distributed/groups/{{ item }}/edit"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -57,6 +59,7 @@
   splunk_api:
     method: POST
     url: "/services/search/distributed/groups"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -76,6 +79,7 @@
   splunk_api:
     method: POST
     url: "/services/search/distributed/groups"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
