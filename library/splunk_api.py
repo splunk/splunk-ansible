@@ -17,7 +17,7 @@ def api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, pa
       cert_prefix = 'https'
     if not svc_port:
       svc_port = 8089
-    url = "{}://127.0.0.1:{}{}".format(cert_prefix, host, svc_port, endpoint)
+    url = "{}://127.0.0.1:{}{}".format(cert_prefix, svc_port, endpoint)
     if headers is None:
         headers = {}
     headers['Content-Type'] = 'application/json'
@@ -117,7 +117,6 @@ def main():
     svc_port = module.params.get('svc_port', 8089)
     return_content = module.params.get('return_content', False)
     use_proxy = module.params.get('use_proxy', "no")
-    remote = module.params.get('remote', None)
 
     if status_code:
       status_code = [int(x) for x in status_code]
