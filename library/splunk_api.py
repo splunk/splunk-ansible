@@ -136,17 +136,17 @@ def main():
     else:
         response, excep_str = api_call_tcp(cert_prefix, method, endpoint, username, password, svc_port, payload, headers, verify, status_code, timeout, body_format, remote)
 
-    if response is not None:
+    if response is not None and ((status_code and response.status_code in status_code) or (status_code is None and response.status_code >= 200 and response.status_code < 300)):
         try:
           content = response.json()
         except:
           content = response.text
-        is_changed = False
-        if 200 <= response.status_code < 300:
-            is_changed = True
-        module.exit_json(changed=is_changed, status=response.status_code, json=content, excep_str=excep_str)
+        module.exit_json(changed=True, status = response.status_code, json=content,excep_str=excep_str)
     else:
-        module.fail_json(msg="{};;; failed with NO RESPONSE and EXCEP_STR as {}".format(s, excep_str))
+        if response is None:
+          module.fail_json(msg="{};;; failed with NO RESPONSE and EXCEP_STR as {}".format(s, excep_str))
+        else:
+          module.fail_json(msg="{};;; AND excep_str: {}, failed with status code {}: {}".format(s, excep_str, response.status_code, response.text))
 
 if __name__ == '__main__':
     main()
