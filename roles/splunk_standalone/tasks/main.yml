@@ -1,5 +1,8 @@
 ---
 - include_tasks: ../../splunk_common/tasks/set_as_hec_receiver.yml
+  when:
+    - splunk.hec.enable
+    - splunk.hec.enable is defined
 
 - include_tasks: ../../splunk_common/tasks/add_splunk_object.yml
   when: splunk.add is defined
