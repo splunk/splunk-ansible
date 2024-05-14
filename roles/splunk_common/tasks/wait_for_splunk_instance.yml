@@ -1,5 +1,7 @@
 ---
-- name: Check Splunk instance is running
+# Use wait_for_splunk_process.yml for local (non-remote) instances
+# This play does not support UDS endpoints on remote forwarders
+- name: Check remote Splunk instance is running
   uri:
     url: "{{ scheme | default(cert_prefix) }}://{{ splunk_instance_address }}:{{ port | default(splunk.svc_port) }}"
     method: GET
