@@ -42,6 +42,10 @@ retry_delay: <int>
 * Duration of waits between each of the aforementioned retries (in seconds)
 * Default: 6
 
+restart_retry_delay: <int>
+* Duration of waits between retries to issue restart command for splunkd (in seconds)
+* Default: 30
+
 splunk_home_ownership_enforcement: true
 * Boolean that to control and enable UAC on $SPLUNK_HOME (recommended to be enabled)
 * Default: true

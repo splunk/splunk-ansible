@@ -15,13 +15,24 @@
 - name: Disable Popups
   splunk_api:
     method: POST
-    url: "{{ item.key }}"
+    url: "{{ item.url }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body: "{{ item.value }}"
+    body: "{{ item.body }}"
+    body_format: "form-urlencoded"
     status_code: 200,201,409
   with_items:
-    - { key: "/servicesNS/admin/user-prefs/data/user-prefs/general", value: "hideInstrumentationOptInModal=1&notification_python_3_impact=false&showWhatsNew=0" }
-    - { key: "/servicesNS/nobody/splunk_instrumentation/admin/telemetry/general", value: "showOptInModal=0&optInVersionAcknowledged={{ telemetry['json']['entry'][0]['content']['optInVersion'] }}" }
-    - { key: "/servicesNS/admin/search/data/ui/ui-tour/search-tour", value: "tourPage=search&viewed=1" }
+    - url: "/servicesNS/admin/user-prefs/data/user-prefs/general"
+      body:
+        hideInstrumentationOptInModal: 1
+        notification_python_3_impact: false
+        showWhatsNew: 0
+    - url: "/servicesNS/nobody/splunk_instrumentation/admin/telemetry/general"
+      body:
+        showOptInModal: 0
+        optInVersionAcknowledged: "{{ telemetry['json']['entry'][0]['content']['optInVersion'] }}"
+    - url: "/servicesNS/admin/search/data/ui/ui-tour/search-tour"
+      body:
+        tourPage: search
+        viewed: 1
