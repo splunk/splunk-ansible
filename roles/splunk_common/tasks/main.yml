@@ -34,6 +34,8 @@
     - splunk.allow_upgrade is defined
     - splunk.allow_upgrade | bool
 
+- include_tasks: check_uds_file.yml
+
 - include_tasks: enable_asan.yml
   when:
     - "'asan' in splunk and splunk.asan | bool"
@@ -126,13 +128,8 @@
 
 - include_tasks: start_splunk.yml
 
-- name: Check if UDS file exists
-  stat:
-    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
-  register: socket_file
-
 - include_tasks: set_certificate_prefix.yml
-  when: not socket_file.stat.exists or (socket_file.stat.exists and socket_file.stat.size == 0)
+  when: not uds_enabled | bool
 
 - include_tasks: clean_user_seed.yml
 
