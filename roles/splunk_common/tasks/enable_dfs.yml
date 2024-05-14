@@ -3,6 +3,7 @@
   splunk_api:
     url: system/configs/conf-server/dfs
     method: POST
+    cert_prefix: "{{ cert_prefix }}"
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -18,6 +19,7 @@
   splunk_api:
     url: /servicesNS/nobody/system/configs/conf-limits/dfs
     method: POST
+    cert_prefix: "{{ cert_prefix }}"
     svc_port: "{{ splunk.svc_port }}"
     body:
       dfc_num_slots: "{{ splunk.dfs.dfc_num_slots }}"
@@ -35,6 +37,7 @@
   splunk_api:
     url: system/configs/conf-limits/search
     method: POST
+    cert_prefix: "{{ cert_prefix }}"
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -50,6 +53,7 @@
   splunk_api:
     url: servicesNS/nobody/system/configs/conf-limits/search_optimization%3a%3adfs_job_extractor
     method: POST
+    cert_prefix: "{{ cert_prefix }}"
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -61,6 +65,7 @@
   splunk_api:
     url: servicesNS/nobody/system/configs/conf-limits
     method: POST
+    cert_prefix: "{{ cert_prefix }}"
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -79,13 +84,14 @@
   splunk_api:
     url: servicesNS/nobody/system/configs/conf-limits/search_optimization%3a%3adfs_job_extractor
     method: POST
+    cert_prefix: "{{ cert_prefix }}"
     user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
     body:
       enabled: "true"
       commands: "stats,join,sort,head,tail,reverse,dedup,rename,fields,union,from,eval"
-     status_code: [200]
+    status_code: [200]
     timeout: 10
     use_proxy: no
   register: update_dfs_job_extractor_result

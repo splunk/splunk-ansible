@@ -3,6 +3,7 @@
   splunk_api:
     method: GET
     url: "/servicesNS/nobody/search/configs/conf-distsearch/distributedSearch?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
