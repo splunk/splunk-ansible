@@ -12,6 +12,7 @@
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
     timeout: 10
+    cert_prefix: "{{ cert_prefix }}"
   register: ess_info
   no_log: "{{ hide_password }}"
 

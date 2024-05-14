@@ -1,16 +1,4 @@
 ---
-- name: Check if UDS file exists
-  stat:
-    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
-  register: socket_file
-
-- name: UDS flag check
-  debug:
-    msg: "UDS is marked as enabled, but cli.socket file is missing or empty"
-  when:
-    - splunk.splunk_http_enabled|bool == false
-    - not socket_file.stat.exists or (socket_file.stat.exists and socket_file.stat.size == 0)
-
 - name: "Retrieve Splunk version"
   command: "{{ splunk.exec }} version --accept-license --answer-yes --no-prompt"
   register: installed_splunk_version
@@ -33,8 +21,7 @@
     group: "{{ splunk.group }}"
   when:
     - splunk.role == "splunk_universal_forwarder"
-    - socket_file.stat.exists
-    - socket_file.stat.size > 0
+    - uds_enabled | bool
     - installed_splunk_version[0] is version("9.1.0", ">=")
 
 - name: Configure to set Mgmt Mode as tcp (Allows only TCP)
@@ -47,5 +34,5 @@
     group: "{{ splunk.group }}"
   when:
     - splunk.role == "splunk_universal_forwarder"
-    - not socket_file.stat.exists or (socket_file.stat.exists and socket_file.stat.size == 0)
+    - not uds_enabled | bool
     - installed_splunk_version[0] is version("9.1.0", ">=")

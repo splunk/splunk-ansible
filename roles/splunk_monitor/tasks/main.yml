@@ -8,6 +8,7 @@
   splunk_api:
     method: GET
     url: "/services/server/info/server-info?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -25,6 +26,7 @@
   splunk_api:
     method: GET
     url: "/services/cluster/master/peers?output_mode=json&count=0"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -48,6 +50,7 @@
   splunk_api:
     method: GET
     url: "/services/search/distributed/peers?output_mode=json&count=0"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -68,6 +71,7 @@
   splunk_api:
     method: GET
     url: "/services/search/distributed/peers?output_mode=json&count=0"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
