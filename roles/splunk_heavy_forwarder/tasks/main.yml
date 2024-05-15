@@ -1,8 +1,9 @@
 ---
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
   when: 
-    - splunk.hec.enable
     - splunk.hec.enable is defined
+    - splunk.hec.enable
+
 
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when:
