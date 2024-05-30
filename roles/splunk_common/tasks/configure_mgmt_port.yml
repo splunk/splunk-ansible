@@ -21,8 +21,9 @@
     group: "{{ splunk.group }}"
   when:
     - splunk.role == "splunk_universal_forwarder"
-    - uds_enabled | bool
+    - not splunk.splunk_http_enabled | bool
     - installed_splunk_version[0] is version("9.1.0", ">=")
+    - ansible_system is not match("CYGWIN*|Win32NT")
 
 - name: Configure to set Mgmt Mode as tcp (Allows only TCP)
   ini_file:
@@ -34,5 +35,5 @@
     group: "{{ splunk.group }}"
   when:
     - splunk.role == "splunk_universal_forwarder"
-    - not uds_enabled | bool
+    - splunk.splunk_http_enabled | bool or ansible_system is match("CYGWIN*|Win32NT")
     - installed_splunk_version[0] is version("9.1.0", ">=")
