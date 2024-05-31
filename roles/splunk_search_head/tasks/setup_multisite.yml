@@ -2,13 +2,15 @@
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ splunk.multisite_master }}"
-    
+
 #this will setup the mode as searchhead in the server.conf and that will allow the Setup SHC -multisite to work as expected.
 - include_tasks: ../../splunk_common/tasks/peer_cluster_master.yml
   when:
     - splunk_indexer_cluster or splunk.multisite_master is defined
     - splunk.set_search_peers is defined
     - splunk.set_search_peers | bool
+
+- include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
 
 - name: Setup SHC - Multisite
   command: "{{ splunk.exec }} add cluster-manager {{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.idxc.pass4SymmKey }} -site {{ splunk.site }}"
@@ -21,6 +23,7 @@
   changed_when: set_new_master.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
+  ignore_errors: yes
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
