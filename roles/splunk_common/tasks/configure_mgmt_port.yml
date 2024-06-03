@@ -1,15 +1,7 @@
 ---
-- name: "Retrieve Splunk version"
-  command: "{{ splunk.exec }} version --accept-license --answer-yes --no-prompt"
-  register: installed_splunk_version
-  become: yes
-  become_user: "{{ splunk.user }}"
-
-- name: "Set installed version fact"
+- name: set version fact
   set_fact:
-    installed_splunk_version: "{{ installed_splunk_version.stdout | regex_search(regexp, '\\1') }}"
-  vars:
-    regexp: 'Splunk(?:\sUniversal\sForwarder)?\s((\d+)\.(\d+)\.(\d+)).*'
+    installed_splunk_version: "{{ lookup('file', '{{ splunk.home }}/etc/splunk.version') | regex_findall('VERSION=([0-9.]+)') | first }}"
 
 - name: Configure to set Mgmt Mode as auto (Allows UDS)
   ini_file:
@@ -22,7 +14,7 @@
   when:
     - splunk.role == "splunk_universal_forwarder"
     - not splunk.splunk_http_enabled | bool
-    - installed_splunk_version[0] is version("9.1.0", ">=")
+    - installed_splunk_version is version("9.1.0", ">=")
     - ansible_system is not match("CYGWIN*|Win32NT")
 
 - name: Configure to set Mgmt Mode as tcp (Allows only TCP)
@@ -36,4 +28,4 @@
   when:
     - splunk.role == "splunk_universal_forwarder"
     - splunk.splunk_http_enabled | bool or ansible_system is match("CYGWIN*|Win32NT")
-    - installed_splunk_version[0] is version("9.1.0", ">=")
+    - installed_splunk_version is version("9.1.0", ">=")
