@@ -10,6 +10,7 @@
   when:
     - "'svc_port' in splunk"
     - ansible_system is not match("CYGWIN*|Win32NT")
+    - ansible_system.abcd is not abcdef
   register: set_mgmt_port
 
 - name: Set mgmt port (Windows)
