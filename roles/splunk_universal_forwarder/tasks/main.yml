@@ -39,4 +39,6 @@
   notify:
     - Restart the splunkd service
 
+- include_tasks: ../../../roles/splunk_common/tasks/configure_mgmt_port.yml
+
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
