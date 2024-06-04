@@ -12,6 +12,7 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when:
+    - force_tcp is undefined or not force_tcp | bool
     - splunk.role == "splunk_universal_forwarder"
     - not splunk.splunk_http_enabled | bool
     - installed_splunk_version is version("9.1.0", ">=")
@@ -27,5 +28,5 @@
     group: "{{ splunk.group }}"
   when:
     - splunk.role == "splunk_universal_forwarder"
-    - splunk.splunk_http_enabled | bool or ansible_system is match("CYGWIN*|Win32NT")
+    - splunk.splunk_http_enabled | bool or (force_tcp is defined and force_tcp | bool) or ansible_system is match("CYGWIN*|Win32NT")
     - installed_splunk_version is version("9.1.0", ">=")
