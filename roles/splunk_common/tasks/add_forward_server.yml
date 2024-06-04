@@ -1,8 +1,4 @@
 ---
-# start splunk before running "add forward-server" command
-- include_tasks: start_splunk.yml
-  when: '("s2s" not in splunk and "s2s_port" in splunk) or ("s2s" in splunk and ("ssl" not in splunk.s2s or ("ssl" in splunk.s2s and not splunk.s2s.ssl))) | bool'
-
 - name: "Enable forwarding to {{ forward_servers }}"
   command: "{{ splunk.exec }} add forward-server {{ item }}:{{ splunk.s2s.port if splunk.s2s.port is defined else splunk.s2s_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} --accept-license --answer-yes --no-prompt"
   become: yes
