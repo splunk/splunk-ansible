@@ -1,6 +1,4 @@
 ---
-- include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
-
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when:
     - splunk.deployment_server is defined
@@ -39,6 +37,6 @@
   notify:
     - Restart the splunkd service
 
-- include_tasks: ../../../roles/splunk_common/tasks/configure_mgmt_port.yml
+- include_tasks: ../../../roles/splunk_common/tasks/set_as_hec_receiver.yml
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml

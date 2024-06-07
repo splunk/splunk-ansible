@@ -53,8 +53,6 @@
 - include_tasks: enable_admin_auth.yml
 
 - include_tasks: configure_mgmt_port.yml
-  vars:
-    force_tcp: true
 
 - include_tasks: set_launch_conf.yml
   when:
