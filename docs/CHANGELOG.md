@@ -98,11 +98,10 @@
 #### Changes
 * Use splunk_api to remove existing HEC token
 * Revert UDS regressions for windows bind + idx cluster peering
-* Add UDS check for empty cli.socket file
 * Fix conditions for HEC token creation
 * Add Splunk version condition for setting mgmtMode
-* Fix UDS check for indexer cluster peering
 * Fix splunk_api body + cert_prefix usage
+* Fix cluster master ESS version check
 
 ---
 
@@ -143,11 +142,10 @@
 #### Changes
 * Use splunk_api to remove existing HEC token
 * Revert UDS regressions for windows bind + idx cluster peering
-* Add UDS check for empty cli.socket file
 * Fix conditions for HEC token creation
 * Add Splunk version condition for setting mgmtMode
-* Fix UDS check for indexer cluster peering
 * Fix splunk_api body + cert_prefix usage
+* Fix cluster master ESS version check
 
 ---
 
@@ -212,11 +210,10 @@
 #### Changes
 * Use splunk_api to remove existing HEC token
 * Revert UDS regressions for windows bind + idx cluster peering
-* Add UDS check for empty cli.socket file
 * Fix conditions for HEC token creation
 * Add Splunk version condition for setting mgmtMode
-* Fix UDS check for indexer cluster peering
 * Fix splunk_api body + cert_prefix usage
+* Fix cluster master ESS version check
 
 ---
 
