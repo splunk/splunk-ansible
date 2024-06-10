@@ -96,10 +96,6 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     inventory["all"]["vars"] = getDefaultVars()
     inventory["all"]["vars"]["docker"] = False
 
-    if inventory["all"]["vars"]["splunk"]["splunk_http_enabled"] == "true":
-        if not os.path.exists(udsSocketFilename) or os.stat(udsSocketFilename).st_size == 0:
-            inventory["all"]["vars"]["splunk"]["splunk_http_enabled"] = "false"
-
     if os.path.isfile("/.dockerenv") or os.path.isfile("/run/.containerenv") or os.path.isdir("/var/run/secrets/kubernetes.io") or os.environ.get("KUBERNETES_SERVICE_HOST"):
         inventory["all"]["vars"]["docker"] = True
         if "localhost" not in inventory["all"]["children"]:
