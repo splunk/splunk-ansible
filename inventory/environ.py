@@ -59,7 +59,6 @@ varPrefix = "SPLUNK_VAR_"
 reVarPrefix = r"${varPrefix}(.*)"
 envPrefix = "SPLUNK_ROLE_"
 reNamePattern = r"${envPrefix}(.*)"
-udsSocketFilename = "/opt/splunkforwarder/var/run/splunk/cli.socket"
 
 inventory = {
     "_meta": {
