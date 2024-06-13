@@ -14,3 +14,9 @@
   become_user: "{{ splunk.user }}"
   environment:
     SPLUNK_HOME: "{{ splunk.home }}"
+
+# Reset the current version if the splunk.version file was populated.
+- name: "Set current version fact"
+  include_tasks: get_facts_current_version.yml
+  when:
+    - updateetc_stat_result.stat.exists
