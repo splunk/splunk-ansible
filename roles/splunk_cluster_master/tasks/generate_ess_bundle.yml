@@ -18,7 +18,7 @@
 
 - name: Set ESS version fact
   set_fact:
-    ess_version: "{{ ess_info | regex_search(regexp, '\\1')[0] }}"
+    ess_version: "{{ ess_info | regex_search(regexp, '\\1') | first }}"
   vars:
     regexp: '(\d+\.\d+\.\d+)'
 
