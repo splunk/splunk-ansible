@@ -17,8 +17,8 @@
   no_log: "{{ hide_password }}"
 
 - name: Set ESS version fact
-  set_facts:
-    ess_version: "{{ ess_info | regex_search(regexp, '\\1')[0] }}"
+  set_fact:
+    ess_version: "{{ ess_info | regex_search(regexp, '\\1') | first }}"
   vars:
     regexp: '(\d+\.\d+\.\d+)'
 
