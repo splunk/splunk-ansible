@@ -1,6 +1,7 @@
 ## Changelog
 
 ## Navigation
+* [Supported Versions](#supported-versions)
 * [9.2.1-patch2](#921-patch2)
 * [9.2.1-patch1](#921-patch1)
 * [9.2.1](#921)
@@ -90,6 +91,15 @@
 * [7.2.2](#722)
 * [7.2.1](#721)
 * [7.2.0](#720)
+
+---
+
+## Supported Versions
+
+#### The following versions are marked as officially supported by this release (including patch versions):
+* 9.2.1
+* 9.1.4
+* 9.0.9
 
 ---
 
