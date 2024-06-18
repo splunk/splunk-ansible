@@ -3,6 +3,7 @@
   splunk_api:
     method: GET
     url: "/services/licenser/groups/Forwarder?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -16,6 +17,7 @@
   splunk_api:
     method: POST
     url: "/services/licenser/groups/Forwarder?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -24,4 +26,4 @@
     body_format: "form-urlencoded"
     status_code: [200]
     timeout: 10
-  when: not check_fwd_lic.content.json.entry[0].content.is_active
+  when: not check_fwd_lic.json.entry[0].content.is_active

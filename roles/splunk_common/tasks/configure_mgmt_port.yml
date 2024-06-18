@@ -1,4 +1,8 @@
 ---
+- name: set version fact
+  set_fact:
+    installed_splunk_version: "{{ lookup('file', '{{ splunk.home }}/etc/splunk.version') | regex_findall('VERSION=([0-9.]+)') | first }}"
+
 - name: Configure to set Mgmt Mode as auto (Allows UDS)
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
@@ -7,7 +11,11 @@
     value: "auto"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  when: splunk.role == "splunk_universal_forwarder" and splunk.splunk_http_enabled|bool == false
+  when:
+    - splunk.role == "splunk_universal_forwarder"
+    - not splunk.splunk_http_enabled | bool
+    - installed_splunk_version is version("9.1.0", ">=")
+    - ansible_system is not match("CYGWIN*|Win32NT")
 
 - name: Configure to set Mgmt Mode as tcp (Allows only TCP)
   ini_file:
@@ -17,4 +25,7 @@
     value: "tcp"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  when: splunk.role == "splunk_universal_forwarder" and splunk.splunk_http_enabled|bool == true
+  when:
+    - splunk.role == "splunk_universal_forwarder"
+    - splunk.splunk_http_enabled | bool or ansible_system is match("CYGWIN*|Win32NT")
+    - installed_splunk_version is version("9.1.0", ">=")

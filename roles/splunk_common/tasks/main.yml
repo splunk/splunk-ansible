@@ -126,13 +126,8 @@
 
 - include_tasks: start_splunk.yml
 
-- name: Check if UDS file exists
-  stat:
-    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
-  register: uds_socket_exists
-
 - include_tasks: set_certificate_prefix.yml
-  when: not uds_socket_exists.stat.exists
+  when: not uds_enabled | bool
 
 - include_tasks: clean_user_seed.yml
 

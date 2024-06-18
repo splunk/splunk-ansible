@@ -12,12 +12,18 @@
     mode: 0777
 
 - name: Get ESS version
-  command: "/opt/splunk/bin/splunk display app -auth {{ splunk.admin_user }}:{{ splunk.password }} SplunkEnterpriseSecuritySuite"
+  command: "{{ splunk.exec }} search '| rest /services/apps/local splunk_server=local | search title=SplunkEnterpriseSecuritySuite | fields version' -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   register: ess_info
   no_log: "{{ hide_password }}"
 
+- name: Set ESS version fact
+  set_fact:
+    ess_version: "{{ ess_info | regex_search(regexp, '\\1') | first }}"
+  vars:
+    regexp: '(\d+\.\d+\.\d+)'
+
 - name: Execute bundle script
-  command: "{{ splunk.exec }} cmd {% if ess_info.json.entry[0].content.version is version('6.1', '>=') %}python3{% else %}python{% endif %} /tmp/es_ta_for_indexers.py --password {{ splunk.password }} --username {{ splunk.admin_user }}"
+  command: "{{ splunk.exec }} cmd {% if ess_version is version('6.1', '>=') %}python3{% else %}python{% endif %} /tmp/es_ta_for_indexers.py --password {{ splunk.password }} --username {{ splunk.admin_user }}"
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"

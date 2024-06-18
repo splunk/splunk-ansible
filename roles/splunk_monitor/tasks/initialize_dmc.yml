@@ -3,6 +3,7 @@
   splunk_api:
     method: GET
     url: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -16,6 +17,7 @@
   splunk_api:
     method: POST
     url: "/servicesNS/nobody/splunk_monitoring_console/saved/searches/DMC%20Asset%20-%20Build%20Full/dispatch"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -31,6 +33,7 @@
   splunk_api:
     method: GET
     url: "/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default.distributed?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -44,6 +47,7 @@
   splunk_api:
     method: POST
     url: "/servicesNS/nobody/splunk_monitoring_console/data/ui/nav/default"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -56,6 +60,7 @@
   splunk_api:
     method: POST
     url: "/servicesNS/nobody/splunk_monitoring_console/configs/conf-splunk_monitoring_console_assets/settings"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -72,9 +77,16 @@
   splunk_api:
     method: POST
     url: "/servicesNS/nobody/system/apps/local/splunk_monitoring_console"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body: "author=Splunk&check_for_updates=1&configured=1&label=Monitoring+Console&version={{ settings.json['generator']['version'] }}&visible=1"
-    body_format: "form"
+    body:
+      author: Splunk
+      check_for_updates: 1
+      configured: 1
+      label: "Monitoring Console"
+      version: "{{ settings.json['generator']['version'] }}"
+      visible: 1
+    body_format: "form-urlencoded"
     status_code: "200,201,409"

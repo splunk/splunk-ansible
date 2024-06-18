@@ -3,6 +3,7 @@
   splunk_api:
     method: GET
     url: "/services/licenser/groups/Free?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -18,6 +19,7 @@
   splunk_api:
     method: POST
     url: "/services/licenser/groups/Free?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"

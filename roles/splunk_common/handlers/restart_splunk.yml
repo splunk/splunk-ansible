@@ -6,7 +6,7 @@
   register: task_result
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
-  delay: "{{ retry_delay }}"
+  delay: "{{ restart_retry_delay }}"
   when: not splunk.enable_service
 
 - name: "Restart the splunkd service - Via Linux systemd or init"
@@ -23,12 +23,9 @@
     state: restarted
   when: splunk.enable_service and not ansible_system is match("Linux")
 
-- name: Check if UDS file exists
-  stat:
-    path: "/opt/splunkforwarder/var/run/splunk/cli.socket"
-  register: uds_socket_exists
+- include_tasks: ../tasks/check_uds_file.yml
 
 - name: "Wait for splunkd management port"
   wait_for:
     port: "{{ splunk.svc_port }}"
-  when: not uds_socket_exists.stat.exists
+  when: not uds_enabled | bool

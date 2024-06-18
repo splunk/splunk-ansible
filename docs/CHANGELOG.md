@@ -1,10 +1,12 @@
 ## Changelog
 
 ## Navigation
+* [9.2.1-patch2](#921-patch2)
 * [9.2.1-patch1](#921-patch1)
 * [9.2.1](#921)
 * [9.2.0.1](#9201)
 * [9.2.0](#920)
+* [9.1.4-patch2](#914-patch2)
 * [9.1.4-patch1](#914-patch1)
 * [9.1.4](#914)
 * [9.1.3](#913)
@@ -12,6 +14,7 @@
 * [9.1.1](#911)
 * [9.1.0.2](#9102)
 * [9.1.0.1](#9101)
+* [9.0.9-patch2](#909-patch2)
 * [9.0.9-patch1](#909-patch1)
 * [9.0.9](#909)
 * [9.0.8](#908)
@@ -90,6 +93,18 @@
 
 ---
 
+## 9.2.1-patch2
+
+#### Changes
+* Use splunk_api to remove existing HEC token
+* Revert UDS regressions for windows bind + idx cluster peering
+* Fix conditions for HEC token creation
+* Add Splunk version condition for setting mgmtMode
+* Fix splunk_api body + cert_prefix usage
+* Fix cluster master ESS version check
+
+---
+
 ## 9.2.1-patch1
 
 #### Changes
@@ -119,6 +134,18 @@
 #### Changes
 * Support for latest major Splunk release
 * Documentation updates
+
+---
+
+## 9.1.4-patch2
+
+#### Changes
+* Use splunk_api to remove existing HEC token
+* Revert UDS regressions for windows bind + idx cluster peering
+* Fix conditions for HEC token creation
+* Add Splunk version condition for setting mgmtMode
+* Fix splunk_api body + cert_prefix usage
+* Fix cluster master ESS version check
 
 ---
 
@@ -175,6 +202,18 @@
 #### Changes
 * Support for latest major Splunk release
 * Documentation updates
+
+---
+
+## 9.0.9-patch2
+
+#### Changes
+* Use splunk_api to remove existing HEC token
+* Revert UDS regressions for windows bind + idx cluster peering
+* Fix conditions for HEC token creation
+* Add Splunk version condition for setting mgmtMode
+* Fix splunk_api body + cert_prefix usage
+* Fix cluster master ESS version check
 
 ---
 

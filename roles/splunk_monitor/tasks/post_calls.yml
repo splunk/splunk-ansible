@@ -13,6 +13,7 @@
   splunk_api:
     method: POST
     url: "/services/search/distributed/groups"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -35,6 +36,7 @@
   splunk_api:
     method: POST
     url: "/services/search/distributed/groups/{{ item }}/edit"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
@@ -57,10 +59,14 @@
   splunk_api:
     method: POST
     url: "/services/search/distributed/groups"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body: "member={{ item.name }}&default=false&name=dmc_indexerclustergroup_{{ item.cluster_label }}"
+    body:
+      member: {{ item.name }}
+      default: false
+      name: dmc_indexerclustergroup_{{ item.cluster_label }}"
     body_format: "form-urlencoded"
     status_code: "201,409"
     timeout: 10
@@ -73,10 +79,14 @@
   splunk_api:
     method: POST
     url: "/services/search/distributed/groups"
+    cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body: "member={{ item.name }}&default=false&name=dmc_indexerclustergroup_{{ item.cluster_label }}/edit"
+    body:
+      member: {{ item.name }}
+      default: false
+      name: dmc_indexerclustergroup_{{ item.cluster_label }}/edit"
     body_format: "form-urlencoded"
     status_code: "201,409"
     timeout: 10

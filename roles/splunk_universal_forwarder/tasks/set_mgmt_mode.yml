@@ -1,8 +1,0 @@
----
-- name: Set Mgmt Mode
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    option: "mgmtMode"
-    value: "auto"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"

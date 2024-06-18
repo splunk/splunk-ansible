@@ -1,23 +1,6 @@
 ---
 # TODO: Remove all secondary conditionals on deprecation of splunk.hec_* variables
 
-- name: Setup global HEC
-  splunk_api:
-    url: "/services/data/inputs/http/http"
-    method: POST
-    cert_prefix: "{{ cert_prefix }}"
-    username: "{{ splunk.admin_user }}"
-    password: "{{ splunk.password }}"
-    svc_port: "{{ splunk.svc_port }}"
-    body:
-      disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
-      enableSSL: "{% if ('hec' in splunk and 'ssl' in splunk.hec and splunk.hec.ssl | bool) or ('hec_enableSSL' in splunk and splunk.hec_enableSSL | bool) %}1{% else %}0{% endif %}"
-      port: "{% if 'hec' in splunk and 'port' in splunk.hec and splunk.hec.port %}{{ splunk.hec.port }}{% elif 'hec_port' in splunk and splunk.hec_port %}{{ splunk.hec_port }}{% else %}8088{% endif %}"
-      serverCert: "{% if 'hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert %}{{ splunk.hec.cert }}{% endif %}"
-      sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
-    body_format: "form-urlencoded"
-  register: sample
-
 - name: Get existing HEC token
   splunk_api:
     url: "/services/data/inputs/http/splunk_hec_token?output_mode=json"
@@ -36,12 +19,14 @@
 
 # The REST API does not support modifying tokens in-place, so we'll need to delete/re-create
 - name: Remove existing HEC token
-  uri:
-    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/data/inputs/http/splunk_hec_token"
+  splunk_api:
+    url: "/services/data/inputs/http/splunk_hec_token"
     method: DELETE
-    user: "{{ splunk.admin_user }}"
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    status_code: 200,404
+    status_code: [200, 404]
+    svc_port: "{{ splunk.svc_port }}"
     timeout: 60
     use_proxy: no
   register: delete_hec_token
@@ -68,5 +53,21 @@
   register: create_hec_token
   changed_when: create_hec_token.status == 201
   when:
-    - hec_token is defined and hec_token.status == 200
     - ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
+
+- name: Setup global HEC
+  splunk_api:
+    url: "/services/data/inputs/http/http"
+    method: POST
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    svc_port: "{{ splunk.svc_port }}"
+    body:
+      disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
+      enableSSL: "{% if ('hec' in splunk and 'ssl' in splunk.hec and splunk.hec.ssl | bool) or ('hec_enableSSL' in splunk and splunk.hec_enableSSL | bool) %}1{% else %}0{% endif %}"
+      port: "{% if 'hec' in splunk and 'port' in splunk.hec and splunk.hec.port %}{{ splunk.hec.port }}{% elif 'hec_port' in splunk and splunk.hec_port %}{{ splunk.hec_port }}{% else %}8088{% endif %}"
+      serverCert: "{% if 'hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert %}{{ splunk.hec.cert }}{% endif %}"
+      sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
+    body_format: "form-urlencoded"
+  register: sample

@@ -1,0 +1,9 @@
+---
+- name: Check if UDS file exists
+  stat:
+    path: "{{ splunk.home }}/var/run/splunk/cli.socket"
+  register: socket_file
+
+- name: Set UDS enabled/disabled
+  set_fact:
+    uds_enabled: "{{ socket_file.stat.exists }}"

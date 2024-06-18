@@ -6,3 +6,4 @@
     group: "{{ splunk.group }}"
     mode: 0644
   notify: restart splunk
+  when: uds_enabled | bool
