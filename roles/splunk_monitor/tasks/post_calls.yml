@@ -10,17 +10,15 @@
     dmc_group_shc_deployer: "default=false&name=dmc_group_shc_deployer"
 
 - name: POST Requests
-  splunk_api:
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/groups"
     method: POST
-    url: "/services/search/distributed/groups"
-    cert_prefix: "{{ cert_prefix }}"
-    username: "{{ splunk.admin_user }}"
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    svc_port: "{{ splunk.svc_port }}"
+    force_basic_auth: yes
     body: "{{ item }}"
-    body_format: "form-urlencoded"
-    status_code: "201,409"
-    timeout: 10
+    validate_certs: false
+    status_code: 201,409
     use_proxy: no
   register: distributed_groups
   loop:
@@ -33,17 +31,15 @@
     - "{{ dmc_group_shc_deployer }}"
 
 - name: Edit DMC Group Requests
-  splunk_api:
+  uri:
+    url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/search/distributed/groups/{{ item }}/edit"
     method: POST
-    url: "/services/search/distributed/groups/{{ item }}/edit"
-    cert_prefix: "{{ cert_prefix }}"
-    username: "{{ splunk.admin_user }}"
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    svc_port: "{{ splunk.svc_port }}"
+    force_basic_auth: yes
     body: "{{ item }}"
-    body_format: "form-urlencoded"
-    status_code: "201,409"
-    timeout: 10
+    validate_certs: false
+    status_code: 201,409
     use_proxy: no
   loop:
     - "{{ dmc_group_cluster_master }}"
