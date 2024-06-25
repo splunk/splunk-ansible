@@ -1,0 +1,4 @@
+---
+galaxy_info:
+dependencies:
+  - role: splunk_common

@@ -1,0 +1,7 @@
+---
+splunk:
+  role: splunk_indexer
+  build_location: https://download.splunk.com/products/splunk/releases/8.0.4.1/linux/splunk-8.0.4.1-ab7a85abaa98-Linux-x86_64.tgz
+  hec:
+    token: abcd1234
+  password: helloworld

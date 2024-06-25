@@ -86,6 +86,11 @@
   set_fact:
     splunk_indexer_cluster: "{{ True if 'cluster_master_url' in splunk and splunk.cluster_master_url else False }}"
 
+# determine if we need to set up noah clusters
+- name: "Setting noah cluster fact from config"
+  set_fact:
+    splunk_noah_cluster: "{{ True if 'noah_cluster_url' in splunk and splunk.noah_cluster_url else False }}"
+
 # determine if we need to set up search head clusters
 - name: "Setting search head cluster fact from config"
   set_fact:

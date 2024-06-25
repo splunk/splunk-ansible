@@ -1,0 +1,179 @@
+---
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
+  vars:
+    splunk_instance_address: "{{ splunk.cluster_master_url }}"
+
+---
+- name: Set noah endpoint
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "uri"
+    value: "{{ splunk.noah_service.uri}}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_endpoint 
+
+- name: Set noah heartbeat period
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "heartbeatPeriod"
+    value: "{{ splunk.noah_service.heartbeatPeriod }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_heartbeat_period
+
+- name: Set heartbeat as percentage of lease
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "heartbeatAsPercentageOfLease"
+    value: "{{ splunk.noah_service.heartbeat_as_percentage_of_lease }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_heartbeat_as_percentage_of_lease 
+
+- name: Set remote bundle
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "remoteBundle"
+    value: "{{ splunk.noah_service.remote_bundle }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_remote_bundle
+
+- name: Set pass4symmkey
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "pass4SymmKey"
+    value: "{{ splunk.noah_service.pass_4_symm_key }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_pass_symm_key 
+
+- name: Set advertised address
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "advertised_addr"
+    value: "{{ splunk.noah_service.advertised_addr }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_advertised_addr 
+
+- name: Set root endpoint
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noah_settings
+    option: "pass4SymmKey_minLength"
+    value: "{{ splunk.noah_settings.pass_4_symm_key_min_length }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_pass4symmkey_min_lenght
+
+- name: Set max retries per part
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient 
+    option: "max_count.max_retries_per_part"
+    value: "{{ splunk.noah_client.max_count_max_retries_per_part }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_max_retries_per_part
+
+- name: Set timeout connect
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient
+    option: "timeout.connect"
+    value: "{{ splunk.noah_client.timeout_connect }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_timeout_connect
+
+- name: Set timeout read
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient
+    option: "timeout.read"
+    value: "{{ splunk.noah_client.timeout_read }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_timeout_read
+
+- name: Set timeout write
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient
+    option: "timeout.write"
+    value: "{{ splunk.noah_client.timeout_write }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_timeout_write
+
+- name: Set retry policy
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient
+    option: "retry_policy"
+    value: "{{ splunk.noah_client.retry_policy }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_retry_policy
+
+- name: Set skip bucket reload period
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noah_settings
+    option: "skip_bucket_reload_period"
+    value: "{{ splunk.noah_settings.skip_bucket_reload_period }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_skip_bucket_reload_period
+
+- name: Set list frozen bucket period
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient:get_latest_bucket_map
+    option: "list_frozen_bucket_period"
+    value: "{{ splunk.noah_client.get_latest_bucket_map.list_frozen_bucket_period }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_list_frozen_bucket_period
+
+- name: Set max retries per part
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient:get_latest_bucket_map
+    option: "max_count.max_retries_per_part"
+    value: "{{ splunk.noah_client.get_latest_bucket_map.max_retries_per_part }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_max_retries_per_part
+
+- name: Set latest bucket map
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient:get_latest_bucket_map
+    option: "backoff_strategy"
+    value: "{{ splunk.noah_client.get_latest_bucket_map.backoff_strategy }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_get_latest_bucket_map
+
+- name: Set backoff strategy constant delay
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahClient:get_latest_bucket_map
+    option: "backoff_strategy.constant.delay"
+    value: "{{ splunk.noah_client.get_latest_bucket_map.backoff_strategy_constant_delay }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_noah_constant_delay
+
+# Restart only when Splunk is running and when any of the above have changed
+- include_tasks: trigger_restart.yml
+  when: set_noah_endpoint is changed

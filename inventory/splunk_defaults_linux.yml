@@ -65,6 +65,35 @@ splunk:
         pipeline_name:
         pipeline_desc:
         pipeline_spec:
+    noah:
+        enable: False
+        noah_client:
+            timeout_connect: 12
+            timeout_read: 12
+            timeout_write: 12
+            retry_policy: max_count
+            max_retries_per_part: 5
+        noah_service:
+            uri: 
+            heartbeat_period:
+            heartbeat_as_percentage_of_lease:
+            tenant:
+            remote_bundle:
+            pass_4_symmKey:
+            advertise_addr:
+            pass_4_symm_key_min_length:
+            report_index_deletion:
+            cache_bucket_timeout:
+        noah_client_bucket_settings:
+            retry_policy:
+            max_count_max_retries_per_part:
+            backoff_strategy:
+            backoff_strategey_constant:
+        noah_settings:
+            skip_bucket_reload_period:
+            list_frozen_bucket_period:
+
+
     appserver:
         port: 8065
     kvstore:
