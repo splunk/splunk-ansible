@@ -23,14 +23,14 @@
     cluster_master_peers: []
 
 - name: Fetch clusterMaster peers
-  splunk_api:
+  uri:
+    url: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}/services/cluster/master/peers?output_mode=json&count=0"
     method: GET
-    url: "/services/cluster/master/peers?output_mode=json&count=0"
-    cert_prefix: "{{ cert_prefix }}"
-    username: "{{ splunk.admin_user }}"
+    user: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
-    svc_port: "{{ splunk.svc_port }}"
-    status_code: [200]
+    force_basic_auth: yes
+    validate_certs: false
+    status_code: 200
     timeout: 10
     return_content: yes
     use_proxy: no
