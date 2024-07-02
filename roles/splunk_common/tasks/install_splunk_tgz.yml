@@ -11,8 +11,8 @@
   when: 
     - splunk.build_location is match("^(https?)://.*")
     - splunk.artifact_auth_user is undefined or splunk.artifact_auth_user == ""
-  register: download_result
-  until: download_result is succeeded
+  register: download_result_bearer
+  until: download_result_bearer is succeeded
   retries: 5
   delay: "{{ retry_delay }}"
   become: yes
@@ -34,17 +34,27 @@
     - splunk.build_location is match("^(https?)://.*")
     - splunk.artifact_auth_user is defined
     - splunk.artifact_auth_user != ""
-  register: download_result
-  until: download_result is succeeded
+  register: download_result_basic
+  until: download_result_basic is succeeded
   retries: 5
   delay: "{{ retry_delay }}"
   become: yes
   become_user: "{{ privileged_user }}"
 
-- name: Define a path for the downloaded package
+- name: Define a path for the downloaded package (bearer token)
   set_fact:
-    splunk_downloaded_build_location: "{{ download_result.dest }}"
-  when: splunk.build_location is match("^(https?)://.*")
+    splunk_downloaded_build_location: "{{ download_result_bearer.dest }}"
+  when:
+    - splunk.build_location is match("^(https?)://.*")
+    - splunk.artifact_auth_user is undefined or splunk.artifact_auth_user == ""
+
+- name: Define a path for the downloaded package (basic auth)
+  set_fact:
+    splunk_downloaded_build_location: "{{ download_result_basic.dest }}"
+  when:
+    - splunk.build_location is match("^(https?)://.*")
+    - splunk.artifact_auth_user is defined
+    - splunk.artifact_auth_user != ""
 
 - name: Define a regex replacement for splunk.build_location
   set_fact:
