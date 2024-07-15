@@ -63,7 +63,7 @@
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ item }}"
-  with_items: "{{ groups['splunk_indexer'] }}"
+  with_items: "{{ group_list }}"
 
 - name: Set search peers
   command: "{{ splunk.exec }} add search-server {{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -remoteUsername {{ splunk.admin_user }} -remotePassword {{ splunk.password }}"
@@ -78,5 +78,5 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
-  with_items: "{{ groups['splunk_indexer'] }}"
+  with_items: "{{ group_list }}"
 #INFRA-38882: Update exec?
