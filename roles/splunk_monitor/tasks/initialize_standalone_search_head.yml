@@ -1,4 +1,6 @@
 ---
+- include_tasks: ../../../roles/splunk_monitor/tasks/adding_peers.yml
+
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when:
     - splunk.deployment_server is defined
@@ -18,13 +20,6 @@
   vars:
     app_list: "{{ splunk.app_paths_install.default }}"
 
-# Non Indexer Clustering peering
-- include_tasks: ../../../roles/splunk_monitor/tasks/adding_peers.yml
-  when:
-    - not splunk_indexer_cluster
-    - splunk.multisite_master is not defined
-
-# Indexer Clustering peering
 - include_tasks: ../../splunk_common/tasks/peer_cluster_master.yml
   when:
     - splunk_indexer_cluster or splunk.multisite_master is defined
