@@ -63,7 +63,9 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   register: index_disabling
-  when: splunk.role != "splunk_license_master"
+  when:
+    - splunk.role != "splunk_license_master"
+    - splunk.role != "splunk_deployment_server"
 
 # set up forward servers set by get_facts
 - name: Add forward_servers
