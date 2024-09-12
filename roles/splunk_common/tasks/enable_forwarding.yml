@@ -17,6 +17,8 @@
     - item.value | length > 0
   no_log: "{{ hide_password }}"
   register: indexer_discovery
+  loop_control:
+    label: "{{ item.key }}"
 
 - name: Setup tcpout group for index-clustering
   ini_file:
