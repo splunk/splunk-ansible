@@ -1,0 +1,23 @@
+---
+# Set endpoints to bind and listen to IPv6
+- name: Enable Splunk Enterprise for IPv6
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: general
+    option: listenOnIPv6
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Enable Splunk Web for IPv6
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/web.conf"
+    section: settings
+    option: listenOnIPv6
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"

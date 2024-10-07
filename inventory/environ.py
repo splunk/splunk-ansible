@@ -152,6 +152,7 @@ def getDefaultVars():
     getUFSplunkVariables(defaultVars)
     getESSplunkVariables(defaultVars)
     getDSP(defaultVars)
+    getIPv6(defaultVars)
     return defaultVars
 
 def getSplunkPaths(vars_scope):
@@ -618,6 +619,13 @@ def getUFSplunkVariables(vars_scope):
         vars_scope["splunk"]["deployment_client"] = {
             "name": os.environ.get("SPLUNK_DEPLOYMENT_CLIENT_NAME")
         }
+
+def getIPv6(vars_scope):
+    """
+    Set specific environment variables to apply IPv6 configurations
+    """
+    vars_scope["splunk"]["listen_on_ipv6"] = os.environ.get("SPLUNK_LISTEN_ON_IPV6", False)
+
 
 def getRandomString():
     """
