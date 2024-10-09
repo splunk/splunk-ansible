@@ -1,7 +1,7 @@
 - name: Install Splunk (apt)
   apt:
     name: "{{{{ splunk.build_location }}}}"
-    state: "{{{{ 'latest' if splunk_upgrade else 'present' }}}}"
+    state: "{{{{ 'latest' if splunk_upgrade and not splunk_preinstall else 'present' }}}}"
   register: install_result
   until: install_result is succeeded
   retries: "{{ retry_num }}"
