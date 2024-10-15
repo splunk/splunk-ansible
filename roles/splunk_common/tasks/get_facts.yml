@@ -77,10 +77,8 @@
 
 - name: "Determine if Splunk has preinstall checks"
   set_fact:
-    splunk_preinstall: "true"
-  vars:
-    target_version: "{{ splunk_target_version | first }}"
-  when: "splunk_target_version is defined and target_version is version('9.4.0', '>=')"
+    splunk_preinstall: "{{ splunk_target_version | first is version('9.4.0', '>=') }}"
+  when: splunk_target_version is defined and splunk_target_version | length > 0
 
 # We are upgrading if it is not a fresh installation and the current version is different from the target version,
 # and allowing upgrades between new and old hashes of the same version.
