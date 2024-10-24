@@ -2,7 +2,7 @@
 - name: Wait for cluster peers to join
   splunk_api:
     method: GET
-    url: "services/cluster/master/peers?output_mode=json"
+    url: "/services/cluster/master/peers?output_mode=json"
     cert_prefix: "{{ cert_prefix }}"
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
