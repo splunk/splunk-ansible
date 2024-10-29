@@ -112,7 +112,7 @@ ansible-playbook --inventory hosts --connection local site.yml --extra-vars "@de
 ---
 
 ## Provision HEC
-The HTTP Event Collector (HEC) enables sending data directly to Splunk via a HTTP endpoint and a token. Here's how you can enable it with a user-defined token (`abcd-1234-efgh-5678`).
+The HTTP Event Collector (HEC) enables sending data directly to Splunk via a HTTP endpoint and a token. Here's how you can enable it with a user-defined token (`abcd-1234-efgh-5678`). See the [Splunk docs](https://docs.splunk.com/Documentation/Splunk/latest/Data/ScaleHTTPEventCollector) for guidance on where HEC should be enabled, depending on your setup.
 <details><summary markdown='span'><code>hosts</code> file inventory</summary><p></p>
 
 ```
