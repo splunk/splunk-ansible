@@ -43,7 +43,7 @@
 - name: Create list of clusterMaster peers
   set_fact:
     cluster_master_peers: "{{ cluster_master_peers + [ item ] }}"
-  with_items: "{{ clusterMaster_peers_info['json']['entry'] | selectattr('content.host_port_pair','defined') | map(attribute='content.host_port_pair') |list}}"
+  with_items: "{{ clusterMaster_peers_info['json']['entry'] | selectattr('content.label','defined') | map(attribute='content.label') |list}}"
   when: splunk_indexer_cluster or splunk.multisite_master is defined
 
 - name: Fetch distributed peers when cm is defined
@@ -63,7 +63,7 @@
   when:
     - splunk_indexer_cluster or splunk.multisite_master is defined
     - cluster_master_peers is defined and (cluster_master_peers | length > 0)
-  until: distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Down') | map(attribute='name') | list | length == 0 and (cluster_master_peers[0] in (distributed_info['json']['entry'] | map(attribute='name') | list))
+  until: cluster_master_peers | length == (cluster_master_peers | intersect(distributed_info['json']['entry'] | selectattr('content.status','defined') | selectattr('content.status', 'search', 'Up') | map(attribute='content.peerName') | list) | length)
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
