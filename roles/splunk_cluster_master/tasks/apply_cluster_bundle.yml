@@ -10,6 +10,7 @@
     status_code: [200]
   register: peer_list
   until: peer_list.json.entry | length == groups['splunk_indexer'] | length
+  when: "'splunk_indexer' in groups"
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
