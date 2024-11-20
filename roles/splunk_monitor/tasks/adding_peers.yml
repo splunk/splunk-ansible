@@ -14,6 +14,7 @@
     use_proxy: no
   register: distsearch_server_info
   no_log: "{{ hide_password }}"
+
 - name: Initialize lists
   set_fact:
     current_group_list: []
