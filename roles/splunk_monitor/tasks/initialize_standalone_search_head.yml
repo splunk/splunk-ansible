@@ -18,12 +18,6 @@
   vars:
     app_list: "{{ splunk.app_paths_install.default }}"
 
-- include_tasks: ../../splunk_common/tasks/peer_cluster_master.yml
-  when:
-    - splunk_indexer_cluster or splunk.multisite_master is defined
-    - splunk.set_search_peers is defined
-    - splunk.set_search_peers | bool
-
 - include_tasks: setup_multisite.yml
   when:
     - splunk.site is defined
