@@ -4,6 +4,8 @@
 - name: Flush restart handlers
   meta: flush_handlers
 
+- include_tasks: ../../../roles/splunk_monitor/tasks/adding_peers.yml
+
 - name: Fetch server info
   splunk_api:
     method: GET

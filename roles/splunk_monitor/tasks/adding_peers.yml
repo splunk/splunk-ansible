@@ -29,7 +29,28 @@
 
 - name: Create list of peers
   set_fact:
-    group_list: "{{ (groups['splunk_indexer']| default([])) + (groups['splunk_search_head'] | default([])) + (groups['splunk_search_head_captain'] | default([])) + (groups['splunk_cluster_master'] | default([])) + (groups['splunk_deployment_server']| default([])) + (groups['splunk_license_master'] | default([])) + (groups['splunk_standalone'] | default([])) }}"
+    group_list: "{{ (groups['splunk_indexer'] | default([])) + (groups['splunk_search_head'] | default([])) + (groups['splunk_search_head_captain'] | default([])) + (groups['splunk_cluster_master'] | default([])) + (groups['splunk_deployment_server']| default([])) + (groups['splunk_license_master'] | default([])) + (groups['splunk_standalone'] | default([])) }}"
+
+- name: Fetch existing peers
+  splunk_api:
+    method: GET
+    url: "/services/search/distributed/peers?output_mode=json&count=0"
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    svc_port: "{{ splunk.svc_port }}"
+    status_code: [200]
+    timeout: 10
+    return_content: yes
+    use_proxy: no
+  register: existing_peers
+  no_log: "{{ hide_password }}"
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+
+- name: Remove existing peers from group_list
+  set_fact:
+    group_list: "{{ group_list | difference(existing_peers['json']['entry'] | selectattr('content.status', 'search', 'Up') | map(attribute='content.peerName') | list) }}"
 
 - name: Update group_list
   vars:
