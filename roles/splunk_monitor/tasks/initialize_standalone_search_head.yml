@@ -1,6 +1,4 @@
 ---
-- include_tasks: ../../../roles/splunk_monitor/tasks/adding_peers.yml
-
 - include_tasks: ../../../roles/splunk_common/tasks/set_as_deployment_client.yml
   when:
     - splunk.deployment_server is defined
