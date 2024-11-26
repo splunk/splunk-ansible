@@ -114,6 +114,7 @@ def getDefaultVars():
     getASan(defaultVars)
     getDisablePopups(defaultVars)
     getHEC(defaultVars)
+    getCpuMemLimits(defaultVars)
     getSecrets(defaultVars)
     getSplunkPaths(defaultVars)
     getIndexerClustering(defaultVars)
@@ -429,6 +430,14 @@ def getSplunkAppPathInstall(vars_scope):
                     appList = vars_scope["splunk"]["app_paths_install"][path]
 
             vars_scope["splunk"]["app_paths_install"][path] = appList
+
+def getCpuMemLimits(vars_scope):
+    """
+    Get the configured max cpu, vcpu, and system memory
+    """
+    vars_scope["splunk"]["total_cpus"] = os.environ.get("SPLUNK_MAX_CPUS", vars_scope["splunk"].get("total_cpus"))
+    vars_scope["splunk"]["total_vcpus"] = os.environ.get("SPLUNK_MAX_VCPUS", vars_scope["splunk"].get("total_vcpus"))
+    vars_scope["splunk"]["total_sys_memory"] = os.environ.get("SPLUNK_MAX_SYSMEM", vars_scope["splunk"].get("total_sys_memory"))
 
 def getSecrets(vars_scope):
     """
