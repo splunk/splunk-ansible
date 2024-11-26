@@ -1,0 +1,48 @@
+---
+# If a splunk.version file exists, use that to get the current version,
+# otherwise try to use the manifest.
+
+- name: "Check for splunk.version file"
+  stat:
+    path: "{{ splunk.home }}/etc/splunk.version"
+  register: splunk_version_file
+
+- block:
+  - name: "Get splunk_current_version from splunk.version"
+    shell: "grep VERSION {{ splunk.home }}/etc/splunk.version | awk -F'=' '{print $2}'"
+    register: splunk_current_version
+    become: yes
+    become_user: "{{ splunk.user }}"
+    changed_when: false
+
+  - name: "Get splunk_current_build_hash from splunk.version"
+    shell: "grep BUILD {{ splunk.home }}/etc/splunk.version | awk -F'=' '{print $2}'"
+    register: splunk_current_build_hash
+    become: yes
+    become_user: "{{ splunk.user }}"
+    changed_when: false
+
+  - name: Set splunk_current_version
+    set_fact:
+      splunk_current_version: "{{ splunk_current_version.stdout }}"
+      splunk_current_build_hash: " {{ splunk_current_build_hash.stdout }}"
+  when: splunk_version_file.stat.exists
+
+- block:
+  - name: "Find manifests"
+    find:
+      paths: "{{ splunk.home }}"
+      patterns: ".*-manifest$"
+      use_regex: yes
+    become: yes
+    become_user: "{{ splunk.user }}"
+    register: manifests
+
+  - name: "Set current version fact"
+    set_fact:
+      splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1') if (manifests.matched == 1) else '0' }}"
+      splunk_current_build_hash: "{{ manifests.files[0].path | regex_search(regexp, '\\3') if (manifests.matched == 1) else '0' }}"
+      splunk_target_build_hash: "{{ splunk.build_location | string | regex_search(regexp, '\\3') | default('0') }}"
+    vars:
+      regexp: 'splunk\D*?-(\d+\.\d+\.\d+(\.\d+)?)-(.*?)-.*?'
+  when: not splunk_version_file.stat.exists

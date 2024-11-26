@@ -126,6 +126,13 @@
 
 - include_tasks: start_splunk.yml
 
+# KVStore upgrades and actions can only be done after the server.pem has been generated
+# Only upgrade standalone instances
+- include_tasks: upgrade_kvstore.yml
+  when:
+    - var_lib.stat.exists
+    - splunk.role == "splunk_standalone"
+
 - include_tasks: set_certificate_prefix.yml
   when: not uds_enabled | bool
 

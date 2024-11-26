@@ -57,23 +57,8 @@
   include_tasks: get_facts_target_version.yml
   when: splunk_target_version is not defined or splunk_target_version == none
 
-# We can apply the same logic to the current version by checking which manifest file is in Splunk
-- name: "Find manifests"
-  find:
-    paths: "{{ splunk.home }}"
-    patterns: ".*-manifest$"
-    use_regex: yes
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: manifests
-
 - name: "Set current version fact"
-  set_fact:
-    splunk_current_version: "{{ manifests.files[0].path | regex_search(regexp, '\\1') if (manifests.matched == 1) else '0' }}"
-    splunk_current_build_hash: "{{ manifests.files[0].path | regex_search(regexp, '\\3') if (manifests.matched == 1) else '0' }}"
-    splunk_target_build_hash: "{{ splunk.build_location | string | regex_search(regexp, '\\3') | default('0') }}"
-  vars:
-    regexp: 'splunk\D*?-(\d+\.\d+\.\d+(\.\d+)?)-(.*?)-.*?'
+  include_tasks: get_facts_current_version.yml
 
 - name: "Determine if Splunk has preinstall checks"
   set_fact:
@@ -138,3 +123,21 @@
 # we want to manually specify it. This is where we detect it was manually set.
 - name: "Detect service name"
   include_tasks: get_facts_service_name.yml
+
+# Check if there is existing data in $SPLUNK_HOME/var
+# This is used primarily for ephemeral hosts with a persistent storage for data.
+- name: Check if var/lib directory exists
+  ansible.builtin.stat:
+    path: "{{ splunk.home }}/var/lib"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: var_lib
+
+# Checking if the KVStore has already been migrated to the WiredTiger engine
+# The mmapv1 engine for KVStore is deprecated, and will not work on newer versions of splunk
+- name: Check if KVStore storage engine is already on wiredTiger
+  ansible.builtin.stat:
+    path: "{{ splunk.home }}/var/lib/splunk/kvstore/mongo/WiredTiger"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: wiredtiger_file
