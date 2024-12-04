@@ -1,10 +1,15 @@
 ---
+- name: Set localhost address for mgmt port
+  set_fact:
+    localhost_address: "{% if splunk.listen_on_ipv6 %}{{ '[::1]' }}{% else %}{{ '0.0.0.0' }}{% endif %}"
+    win_localhost_address: "{% if splunk.listen_on_ipv6 %}{{ '[::1]' }}{% else %}{{ '127.0.0.1' }}{% endif %}"
+
 - name: Set mgmt port
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "mgmtHostPort"
-    value: "0.0.0.0:{{ splunk.svc_port }}"
+    value: "{{ localhost_address }}:{{ splunk.svc_port }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when:
@@ -17,7 +22,7 @@
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "mgmtHostPort"
-    value: "127.0.0.1:{{ splunk.svc_port }}"
+    value: "{{ win_localhost_address }}:{{ splunk.svc_port }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when:

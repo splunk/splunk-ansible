@@ -34,6 +34,9 @@
     - splunk.allow_upgrade is defined
     - splunk.allow_upgrade | bool
 
+- include_tasks: enable_ipv6.yml
+  when: splunk.listen_on_ipv6 | bool
+
 - include_tasks: enable_asan.yml
   when:
     - "'asan' in splunk and splunk.asan | bool"
