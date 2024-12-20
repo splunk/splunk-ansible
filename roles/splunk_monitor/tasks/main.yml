@@ -41,6 +41,7 @@
   when: splunk_indexer_cluster or splunk.multisite_master is defined
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
+  until: clusterMaster_peers_info.status == 200
 
 - name: Create list of clusterMaster peers
   set_fact:
