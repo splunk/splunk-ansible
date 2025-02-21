@@ -32,6 +32,18 @@
   when: index.s3 is defined
   no_log: true
 
+- name: Write Azure properties for the remote specified
+  ini_file:
+    dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"
+    section: "volume:{{ index.remoteName }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_items:
+    - { key: "remote.azure.endpoint", value: "{{ index.azure.endpoint }}" }
+    - { key: "remote.azure.container_name", value: "{{ index.azure.container_name }}" }
+  when: index.azure is defined
+  no_log: true
+
 - name: Write paths for the index
   ini_file:
     dest: "{{ splunk.home }}/etc/master-apps/_cluster/local/indexes.conf"

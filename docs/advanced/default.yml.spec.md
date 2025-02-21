@@ -606,6 +606,9 @@ splunk:
           access_key: <access_key>
           secret_key: <secret_key>
           endpoint: http://s3-us-west-1.amazonaws.com
+        azure:
+          endpoint: https://azure_blob_storage_endpoint
+          container_name: your_container_name
         maxGlobalDataSizeMB: 500
         maxGlobalRawDataSizeMB: 200
         hotlist_recency_secs: 30
