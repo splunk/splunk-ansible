@@ -7,3 +7,7 @@
     recurse: yes
   become: yes
   become_user: "{{ privileged_user }}"
+  register: cmd_result
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+  until: not cmd_result.failed
