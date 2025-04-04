@@ -1,4 +1,8 @@
 ---
+- name: Display retry parameters - Update Splunk directory owner
+  debug:
+    msg: "retry_delay is set to {{ retry_delay }}, and retry_num is set to {{ retry_num }}"
+
 - name: Update Splunk directory owner
   file:
     path: "{{ splunk.home }}"
