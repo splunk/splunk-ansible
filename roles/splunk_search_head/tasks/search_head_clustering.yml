@@ -2,9 +2,28 @@
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
+
+- name: Update Server name in server.conf to use FQDN
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: general
+    option: "serverName"
+    value: "{{ splunk_hostname_mesh }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+
+- name: Set register replication address
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: shclustering
+    option: "register_replication_address"
+    value: "{{ splunk_hostname_mesh }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    
 #INFRA-38882: Update exec command?
 - name: Initialize SHC cluster config
-  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ splunk.shc.replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.pass4SymmKey }}' -shcluster_label '{{ splunk.shc.label }}'"
+  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ splunk_hostname_mesh }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ splunk.shc.replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.pass4SymmKey }}' -shcluster_label '{{ splunk.shc.label }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
