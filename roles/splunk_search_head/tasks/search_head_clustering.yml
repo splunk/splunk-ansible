@@ -3,6 +3,11 @@
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
 
+- name: Determine captaincy
+  set_fact:
+    splunk_search_head_captain: true
+  when: splunk_hostname_subdomain in splunk.search_head_captain_url    
+
 - name: Update Server name in server.conf to use FQDN
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
