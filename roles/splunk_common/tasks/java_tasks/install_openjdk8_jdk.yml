@@ -4,7 +4,7 @@
     path: /usr/share/man/man1
     state: directory
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -13,7 +13,7 @@
     path: /etc/apt/sources.list
     line: deb http://security.debian.org/debian-security stretch/updates main
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
     - "'10' in ansible_distribution_version"
   become: yes
   become_user: "{{ privileged_user }}"
@@ -24,7 +24,7 @@
     state: present
     update_cache: yes
   when:
-    - ansible_distribution == 'Debian'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -59,7 +59,7 @@
   become_user: "{{ privileged_user }}"
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Ubuntu'
 
 - name: Set JAVA_HOME in splunk-launch.conf
   become: yes
@@ -70,4 +70,4 @@
     line: "JAVA_HOME={{ java_home.stdout }}"
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Ubuntu'
