@@ -4,7 +4,7 @@
     path: /usr/share/man/man1
     state: directory
   when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'Ubuntu'
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -16,7 +16,7 @@
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
   when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'Ubuntu'
   become: yes
   become_user: "{{ privileged_user }}"
 
@@ -41,7 +41,7 @@
   become_user: "{{ privileged_user }}"
   ignore_errors: true
   when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'Ubuntu'
 
 - name: Set JAVA_HOME in splunk-launch.conf
   become: yes
@@ -54,4 +54,4 @@
     group: "{{ splunk.group }}"
     create: yes
   when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS'
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Ubuntu'
