@@ -3,7 +3,6 @@
   when:
     - splunk.deployment_server is defined
     - splunk.deployment_server
-    - not splunk_search_head_cluster | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
@@ -15,6 +14,7 @@
 - include_tasks: ../../../roles/splunk_common/tasks/provision_apps.yml
   when:
     - "'app_paths_install' in splunk and 'default' in splunk.app_paths_install and splunk.app_paths_install.default"
+    - splunk.deployment_server is not defined or not splunk.deployment_server
   vars:
     app_list: "{{ splunk.app_paths_install.default }}"
 
