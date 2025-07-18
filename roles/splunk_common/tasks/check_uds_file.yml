@@ -3,6 +3,8 @@
   stat:
     path: "{{ splunk.home }}/var/run/splunk/cli.socket"
   register: socket_file
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Set UDS enabled/disabled
   set_fact:
