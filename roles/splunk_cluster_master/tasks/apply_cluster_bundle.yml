@@ -11,7 +11,7 @@
   register: peer_list
   until: peer_list.json.entry | length == groups['splunk_indexer'] | length
   when: "'splunk_indexer' in groups"
-  retries: "120"
+  retries: "1200"
   delay: "{{ retry_delay }}"
 
 # Stderr/Stdout cases are:
