@@ -141,3 +141,6 @@
 
 - include_tasks: check_mgmt_mode_status.yml
   when: splunk.role == "splunk_universal_forwarder"
+
+- include_tasks: set_server_name.yml
+  when: "'server_name' in splunk and splunk.server_name is not none"
