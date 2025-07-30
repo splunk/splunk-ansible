@@ -125,6 +125,8 @@ def getDefaultVars():
     getSplunkdSSL(defaultVars)
     getDistributedTopology(defaultVars)
     getLicenses(defaultVars)
+    # Determine if Skip CM Bundle Push Enabled
+    defaultVars["splunk"]["skip_cluster_bundle_push"] = os.environ.get('SPLUNK_SKIP_CLUSTER_BUNDLE_PUSH', '').lower() == 'true'
     # Determine DMC settings
     defaultVars["dmc_forwarder_monitoring"] = os.environ.get('DMC_FORWARDER_MONITORING', False)
     defaultVars["dmc_asset_interval"] = os.environ.get('DMC_ASSET_INTERVAL', '3,18,33,48 * * * *')
