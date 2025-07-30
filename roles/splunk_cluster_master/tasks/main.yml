@@ -53,5 +53,9 @@
     - splunk.multisite_search_factor_origin is defined
     - splunk.multisite_search_factor_total is defined
 
+- include_tasks: apply_cluster_bundle.yml
+  when: 
+    - not splunk.skip_cluster_bundle_push | default(false) | bool
+    
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
 
