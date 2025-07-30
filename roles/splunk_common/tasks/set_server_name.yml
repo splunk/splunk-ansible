@@ -33,7 +33,7 @@
   when:
     - splunk.role == "splunk_search_head"
     - splunk_search_head_cluster | bool
-  register: set_shcclustering_sername_name
+  register: set_shcclustering_server_name
 
 - include_tasks: ../handlers/restart_splunk.yml
   when: set_server_name is changed or set_clustering_server_name is changed or set_shcclustering_server_name is changed
