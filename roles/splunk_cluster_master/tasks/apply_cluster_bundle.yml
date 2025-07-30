@@ -10,9 +10,7 @@
     status_code: [200]
   register: peer_list
   until: peer_list.json.entry | length == groups['splunk_indexer'] | length
-  when: 
-    - "'splunk_indexer' in groups"
-    - not (splunk.skip_cluster_bundle_push | default(false) | bool)
+  when: "'splunk_indexer' in groups"
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
@@ -43,7 +41,6 @@
   no_log: "{{ hide_password }}"
   retries: "{{ retry_num }}" # We will sometimes see this if the number of peers dictacted by the replication factor aren't up
   delay: "{{ retry_delay }}"
-  when: not (splunk.skip_cluster_bundle_push | default(false) | bool)
 
 - name: Wait for bundle push
   command: "{{ splunk.exec }} show cluster-bundle-status -auth {{ splunk.admin_user }}:{{ splunk.password }}"
@@ -56,14 +53,8 @@
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
-  when: not (splunk.skip_cluster_bundle_push | default(false) | bool)
 
 - debug:
     msg: "WARNING: Indexer bundle push still in progress - proceeding anyways..."
   when:
-    - not (splunk.skip_cluster_bundle_push | default(false) | bool)
-    - cluster_bundle_status is defined and cluster_bundle_status.stdout.find("cluster_status=Rolling restart of the peers is in progress")!=-1
-
-- debug:
-    msg: "Cluster bundle push skipped as per configuration."
-  when: splunk.skip_cluster_bundle_push | default(false) | bool
+    - cluster_bundle_status.stdout.find("cluster_status=Rolling restart of the peers is in progress")!=-1

@@ -37,6 +37,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_HEAVY_FORWARDER_URL | Comma-separated list of all Splunk Enterprise heavy forwarder hosts (network alias) | no | no | no |
 | SPLUNK_DEPLOYER_URL | One Splunk Enterprise deployer host (network alias) | no | yes | no |
 | SPLUNK_CLUSTER_MASTER_URL | One Splunk Enterprise cluster master host (network alias) | no | no | yes |
+| SPLUNK_SKIP_CLUSTER_BUNDLE_PUSH | When set to "true", skips the cluster bundle push that happens on the cluster master | no | no | no |
 | SPLUNK_SEARCH_HEAD_CAPTAIN_URL | One Splunk Enterprise search head host (network alias). Passing this ENV variable will enable search head clustering. | no | yes | no |
 | SPLUNK_LICENSE_MASTER_URL | One Splunk Enterprise license master host (network alias). Passing this ENV variable will enable license master setup. | no | no | no |
 | SPLUNK_DEPLOYMENT_SERVER | One Splunk host (network alias) that we use as a [deployment server](http://docs.splunk.com/Documentation/Splunk/latest/Updating/Configuredeploymentclients). | no | no | no |
