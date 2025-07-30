@@ -130,6 +130,11 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_ANSIBLE_ENV | Pass in a comma-separated list of "key=value" pairs that will be mapped to environment variables used during `site.yml` execution. These variables are also available in ansible pre/post playbooks and can be referenced as `hostvars['localhost'].ansible_environment['key']` | no | no | no |
 | SPLUNK_CONNECTION_TIMEOUT | Configures splunkdConnectionTimeout in `web.conf` with passed integer value (in seconds) | no | no | no |
 | SPLUNK_ES_SSL_ENABLEMENT | Set the ssl-enablement flag in ES.  Valid values are 'auto', 'strict', and 'ignore'. Defaults to auto when present. | no | no | no |
+| SPLUNK_SERVICE_NAME | Used alongside `POD_NAMESPACE` and `CLUSTER_DOMAIN` to construct a k8s-supported `issuer_uri` value for oauth2 configurations | no | no | no |
+| SPLUNK_HEADLESS_SERVICE_NAME | Used alongside `POD_NAME`, `POD_NAMESPACE`, and `CLUSTER_DOMAIN` to construct a k8s-supported `serverName` value. This is also used for the `search_head_uri` and `register_replication_address` settings when clustering is enabled. | no | no | no |
+| POD_NAME | Defines the current pod name in a k8s environment | no | no | no |
+| POD_NAMESPACE | Defines the namespace of the current pod in a k8s environment | no | no | no |
+| CLUSTER_DOMAIN | Defines the domain name for DNS resolution in a k8s cluster (default: cluster.local) | no | no | no |
 
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 

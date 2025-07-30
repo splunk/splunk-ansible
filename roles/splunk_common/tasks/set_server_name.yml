@@ -1,0 +1,39 @@
+---
+- ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: general
+    option: "serverName"
+    value: "{{ splunk.server_name }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_server_name
+
+- ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: clustering
+    option: "register_replication_address"
+    value: "{{ splunk.server_name }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.role == "splunk_indexer"
+    - splunk_indexer_cluster | bool
+  register: set_clustering_server_name
+
+- ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: shcclustering
+    option: "{{ item }}"
+    value: "{{ splunk.server_name }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  with_items:
+    - register_replication_address
+    - search_head_uri
+  when:
+    - splunk.role == "splunk_search_head"
+    - splunk_search_head_cluster | bool
+  register: set_shcclustering_server_name
+
+- include_tasks: ../handlers/restart_splunk.yml
+  when: set_server_name is changed or set_clustering_server_name is changed or set_shcclustering_server_name is changed
