@@ -27,6 +27,7 @@ config:
 splunk:
     enable_tcp_mode: False
     build_location:
+    build_location_rpm_key:
     allow_upgrade: True
     tar_dir: "splunk"
     opt: &opt "/opt"
