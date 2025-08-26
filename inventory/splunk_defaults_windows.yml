@@ -117,6 +117,11 @@ splunk:
         idxc: !!python/object/apply:os.path.join [*home, "etc", "master-apps"]
         deployment: !!python/object/apply:os.path.join [*home, "etc", "deployment-apps"]
         httpinput: !!python/object/apply:os.path.join [*home, "etc", "apps", "splunk_httpinput"]
-
     es:
       ssl_enablement: "auto"
+    oauth2:
+      certFile:
+      sslPassword:
+    samlIdp:
+      certFile:
+      sslPassword:

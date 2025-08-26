@@ -156,7 +156,19 @@ def getDefaultVars():
     getESSplunkVariables(defaultVars)
     getDSP(defaultVars)
     getIPv6(defaultVars)
+    getSplunkAuth(defaultVars)
     return defaultVars
+
+def getSplunkAuth(vars_scope):
+    """
+    Load values for authentication.conf settings
+    """
+    oauth2_vars = vars_scope['splunk']['oauth2']
+    oauth2_vars['certFile'] = os.environ.get("SPLUNK_OAUTH2_CERTFILE", oauth2_vars.get("certFile"))
+    oauth2_vars['sslPassword'] = os.environ.get("SPLUNK_OAUTH2_SSL_PASSWORD", oauth2_vars.get("sslPassword"))
+    samlIdp_vars = vars_scope['splunk']['samlIdp']
+    samlIdp_vars['certFile'] = os.environ.get("SPLUNK_SAMLIDP_CERTFILE", samlIdp_vars.get("certFile"))
+    samlIdp_vars['sslPassword'] = os.environ.get("SPLUNK_SAMLIDP_SSL_PASSWORD", samlIdp_vars.get("sslPassword"))
 
 def getServiceName(vars_scope):
     """

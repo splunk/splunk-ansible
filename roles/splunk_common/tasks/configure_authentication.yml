@@ -1,0 +1,22 @@
+---
+- name: Set Oauth2 Settings
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/authentication.conf"
+    section: oauth2_settings
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop: "{{ splunk.oauth2 | dict2items }}"
+  when: item.value != None
+
+- name: Set SamlIDP Settings
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/authentication.conf"
+    section: samlIdp
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop: "{{ splunk.samlIdp | dict2items }}"
+  when: item.value != None

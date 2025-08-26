@@ -127,6 +127,9 @@
 - include_tasks: enable_dsp.yml
   when: "'dsp' in splunk and 'enable' in splunk.dsp and splunk.dsp.enable"
 
+- include_tasks: configure_authentication.yml
+  when: "'oauth2' in splunk or 'samlIdp' in splunk"
+
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
