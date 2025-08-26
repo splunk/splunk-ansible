@@ -129,8 +129,8 @@ splunk:
     es:
       ssl_enablement: "auto"
     oauth2:
-      certFile: foo
+      certFile:
       sslPassword:
     samlIdp:
-      certFile: foo
-      sslPassword: bar
+      certFile:
+      sslPassword:
