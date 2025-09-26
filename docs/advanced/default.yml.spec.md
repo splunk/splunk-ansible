@@ -151,6 +151,10 @@ splunk:
   * Splunk build location, either on the filesystem or a remote URL
   * Default: null
 
+  build_location_rpm_key: <str>
+  * GPG key to install for rpm installation, either on the filesystem or a remote URL
+  * Default: null
+
   build_url_bearer_token: <str>
   * Bearer token used to provide authorization when fetching a Splunk build from a remote URL. 
   * Default: null
