@@ -1,2 +1,8 @@
 ---
-# defaults file for splunk_ingestor 
+# defaults file for splunk_ingestor
+splunk:
+  conf:
+  - key: server
+    value:
+      kvstore:
+        disabled: "true" 
