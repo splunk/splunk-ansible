@@ -66,9 +66,8 @@ def test_splunk_pid(host):
 
 def test_mongod_lock(host):
     f = host.file("{}/var/lib/splunk/kvstore/mongo/mongod.lock".format(SPLUNK_HOME))
-    assert f.exists
-    assert f.user == SPLUNK_USER
-    assert f.group == SPLUNK_GROUP
+    # KVStore is disabled for ingestor in this scenario
+    assert not f.exists
 
 def test_bin_splunk(host):
     f = host.file("{}".format(SPLUNK_EXEC))
@@ -99,7 +98,8 @@ def test_splunk_ports(host):
     assert "0.0.0.0:8000" in output.stdout
     assert "0.0.0.0:8089" in output.stdout
     assert "0.0.0.0:8088" in output.stdout
-    assert "0.0.0.0:8191" in output.stdout
+    # KVStore disabled -> 8191 should not be listening
+    assert "0.0.0.0:8191" not in output.stdout
     assert "0.0.0.0:9997" in output.stdout
     assert "127.0.0.1:8065" in output.stdout
 
