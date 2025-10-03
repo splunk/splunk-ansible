@@ -5,3 +5,8 @@ splunk:
   hec:
     token: abcd1234
   password: helloworld 
+  conf:
+  - key: server
+    value:
+      kvstore:
+        disabled: "true"
