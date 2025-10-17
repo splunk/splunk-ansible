@@ -80,6 +80,26 @@ def getVars(rePattern):
     return {re.match(rePattern, k).group(1).lower():os.environ[k] for k in os.environ
             if re.match(rePattern, k)}
 
+
+def is_ecs_environment():
+    # Check for ECS metadata URIs
+    if os.environ.get("ECS_CONTAINER_METADATA_URI") or os.environ.get("ECS_CONTAINER_METADATA_URI_V4"):
+        return True
+
+    try:
+        # AWS metadata endpoint
+        resp = requests.get("http://169.254.169.254/latest/meta-data/", timeout=0.5)
+        if resp.status_code == 200:
+            return True
+        # ECS agent introspection
+        resp = requests.get("http://localhost:51678/v1/metadata", timeout=0.5)
+        if resp.ok:
+            return True
+    except Exception:
+        pass
+
+    return False
+
 def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     """
     Build an inventory of hosts based on a regex that defines host-groupings
@@ -95,7 +115,7 @@ def getSplunkInventory(inventory, reName=r"(.*)_URL"):
     inventory["all"]["vars"] = getDefaultVars()
     inventory["all"]["vars"]["docker"] = False
 
-    if os.path.isfile("/.dockerenv") or os.path.isfile("/run/.containerenv") or os.path.isdir("/var/run/secrets/kubernetes.io") or os.environ.get("KUBERNETES_SERVICE_HOST"):
+    if os.path.isfile("/.dockerenv") or os.path.isfile("/run/.containerenv") or os.path.isdir("/var/run/secrets/kubernetes.io") or os.environ.get("KUBERNETES_SERVICE_HOST") or is_ecs_environment():
         inventory["all"]["vars"]["docker"] = True
         if "localhost" not in inventory["all"]["children"]:
             inventory["all"]["hosts"].append("localhost")
@@ -141,7 +161,7 @@ def getDefaultVars():
     defaultVars["splunk"]["preferred_captaincy"] = True
     if os.environ.get("SPLUNK_PREFERRED_CAPTAINCY", "").lower() == "false":
         defaultVars["splunk"]["preferred_captaincy"] = False
-    defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())    
+    defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
 
     getServiceName(defaultVars)
     getJava(defaultVars)
@@ -294,7 +314,7 @@ def getSplunkdSSL(vars_scope):
     if enable.lower() == "false":
         ssl_vars["enable"] = False
         vars_scope["cert_prefix"] = "http"
-    
+
 
 def getDistributedTopology(vars_scope):
     """
