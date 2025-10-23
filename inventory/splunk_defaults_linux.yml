@@ -96,6 +96,7 @@ splunk:
         search_factor: 3
         replication_factor: 3
         replication_port: 9887
+        replication_ssl: False
     dfs:
         enable: False
         port: 9000
