@@ -18,4 +18,4 @@ ess_apps: [ "DA-ESS-AccessProtection", "DA-ESS-EndpointProtection", "DA-ESS-Iden
             "TA-airdefense", "TA-alcatel", "TA-cef", "TA-fortinet", "TA-ftp", "TA-nmap", "TA-tippingpoint", "TA-trendmicro",
             "Splunk_ML_Toolkit", "Splunk_SA_Scientific_Python_linux_x86_64", "Splunk_SA_Scientific_Python_linux_x86",
             "Splunk_SA_Scientific_Python_darwin_x86_64", "Splunk_SA_Scientific_Python_windows_x86_64",
-            "DA-ESS-UEBA", "dlx-app", "SA-ContentVersioning", "SA-EntitlementManagement", "missioncontrol" ]
+            "DA-ESS-UEBA", "dlx-app", "SA-ContentVersioning", "SA-EntitlementManagement", "missioncontrol", "ocsf_cim_addon_for_splunk" ]
