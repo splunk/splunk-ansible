@@ -1,5 +1,7 @@
 ---
 - name: Enable splunktcp input
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: "splunktcp://{{ splunk.s2s_port if splunk.s2s_port is defined else splunk.s2s.port }}"
@@ -10,6 +12,8 @@
   register: splunktcp_enabled
 
 - name: Remove splunktcp-ssl input
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: "splunktcp-ssl:{{ splunk.s2s_port if splunk.s2s_port is defined else splunk.s2s.port }}"
@@ -19,6 +23,8 @@
   register: splunktcp_ssl_disabled
 
 - name: Remove input SSL settings
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: SSL
@@ -28,6 +34,8 @@
   register: splunktcp_ssl_reset
 
 - name: Reset root CA
+  become: yes
+  become_user: "{{ splunk.user }}"
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: sslConfig

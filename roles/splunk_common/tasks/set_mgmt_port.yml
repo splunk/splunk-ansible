@@ -16,6 +16,8 @@
     - "'svc_port' in splunk"
     - ansible_system is not match("CYGWIN*|Win32NT")
   register: set_mgmt_port
+  become: true
+  become_user: "{{ splunk.user }}"
 
 - name: Set mgmt port (Windows)
   ini_file:
@@ -30,6 +32,8 @@
     - ansible_system is match("CYGWIN*|Win32NT")
     - splunk.svc_port | int != 8089
   register: set_mgmt_port
+  become: true
+  become_user: "{{ splunk.user }}"
 
 # Restart only when Splunk is running and when any of the above have changed
 - include_tasks: ../handlers/restart_splunk.yml
