@@ -29,7 +29,7 @@
 
 - name: Create list of peers
   set_fact:
-    group_list: "{{ (groups['splunk_indexer'] | default([])) + (groups['splunk_search_head'] | default([])) + (groups['splunk_search_head_captain'] | default([])) + (groups['splunk_cluster_master'] | default([])) + (groups['splunk_deployment_server']| default([])) + (groups['splunk_license_master'] | default([])) + (groups['splunk_standalone'] | default([])) }}"
+    group_list: "{{ (groups['splunk_indexer'] | default([])) + (groups['splunk_search_head'] | default([])) + (groups['splunk_search_head_captain'] | default([])) + (groups['splunk_cluster_master'] | default([])) + (groups['splunk_deployment_server']| default([])) + (groups['splunk_license_master'] | default([])) + (groups['splunk_standalone'] | default([])) + (splunk['manual_monitor_list'] | default([])) }}"
 
 - name: Fetch existing peers
   splunk_api:
@@ -88,7 +88,7 @@
   with_items: "{{ group_list }}"
 
 - name: Set search peers
-  command: "{{ splunk.exec }} add search-server {{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -remoteUsername {{ splunk.admin_user }} -remotePassword {{ splunk.password }}"
+  command: "{{ splunk.exec }} add search-server {{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -remoteUsername {{ splunk['remote-credentials'][item]['admin_user'] | default(splunk.admin_user) }} -remotePassword {{ splunk['remote-credentials'][item]['admin_password'] | default(splunk.password) }}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: set_as_peer
