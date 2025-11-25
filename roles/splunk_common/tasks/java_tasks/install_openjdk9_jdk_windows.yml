@@ -32,6 +32,6 @@
     path: "{{ splunk.home }}/etc/splunk-launch.conf"
     regexp: '^JAVA_HOME'
     line: "JAVA_HOME=/opt/container_artifact/java-se-9-ri/jdk-9"
-    owner: "SYSTEM"
-    group: "SYSTEM"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
     create: yes
