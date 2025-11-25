@@ -25,14 +25,13 @@
   become_user: root
   ignore_errors: true
 
-## TODO: will run into issues as it breaks Windows icacls permissions
-#- name: Set JAVA_HOME in splunk-launch.conf
-#  become: yes
-#  become_user: "{{ privileged_user }}"
-#  lineinfile:
-#    path: "{{ splunk.home }}/etc/splunk-launch.conf"
-#    regexp: '^JAVA_HOME'
-#    line: "JAVA_HOME=/opt/container_artifact/java-se-9-ri/jdk-9"
-#    owner: "SYSTEM"
-#    group: "SYSTEM"
-#    create: yes
+- name: Set JAVA_HOME in splunk-launch.conf
+  become: yes
+  become_user: "{{ privileged_user }}"
+  lineinfile:
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
+    regexp: '^JAVA_HOME'
+    line: "JAVA_HOME=/opt/container_artifact/java-se-9-ri/jdk-9"
+    owner: "SYSTEM"
+    group: "SYSTEM"
+    create: yes
