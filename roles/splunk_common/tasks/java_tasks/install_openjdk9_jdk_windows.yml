@@ -2,29 +2,36 @@
 - name: Download the Java distribution
   get_url:
     url: "https://download.java.net/openjdk/jdk9/ri/jdk-9+181_windows-x64_ri.zip"
-    dest: /home/splunk/
+    dest: /opt/container_artifact/
     timeout: 30
     mode: 0666
   register: download_result
   until: download_result.status_code == 200
-  retries: "{{ retry_num }}"
-  delay: "{{ retry_delay }}"
 
 - name: Unzip the Java distribution
   unarchive:
-    src: "/home/splunk/jdk-9+181_windows-x64_ri.zip"
-    dest: /home/splunk/
+    src: "/opt/container_artifact/jdk-9+181_windows-x64_ri.zip"
+    dest: /opt/container_artifact/
 
-- name: Write vars into .bash_profile
-  lineinfile:
-    path: /home/splunk/.bash_profile
-    line: "JAVA_HOME=/home/splunk/java-se-9-ri/jdk-9/"
-    create: yes
-  no_log: "{{ hide_password }}"
+- name: Create symlinks for java/javac
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  with_items:
+    - { "src": "/opt/container_artifact/java-se-9-ri/jdk-9/bin/java.exe", "dest": "/usr/bin/java"}
+    - { "src": "/opt/container_artifact/java-se-9-ri/jdk-9/bin/javac.exe", "dest": "/usr/bin/javac"}
+  become: yes
+  become_user: root
+  ignore_errors: true
 
-- name: Write path into .bash_profile
+- name: Set JAVA_HOME in splunk-launch.conf
+  become: yes
+  become_user: "{{ privileged_user }}"
   lineinfile:
-    path: /home/splunk/.bash_profile
-    line: "PATH=$PATH:$JAVA_HOME/bin"
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
+    regexp: '^JAVA_HOME'
+    line: "JAVA_HOME=/opt/container_artifact/java-se-9-ri/jdk-9"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
     create: yes
-  no_log: "{{ hide_password }}"
