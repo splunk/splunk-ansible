@@ -700,7 +700,11 @@ def parseUrl(url, vars_scope):
 
 def merge_dict(dict1, dict2, path=None):
     """
-    Merge two dictionaries such that all the keys in dict2 overwrite those in dict1
+    Merge two dictionaries such that all the keys in dict2 overwrite those in dict1.
+
+    Special handling:
+    - If dict1[key] is a dict and dict2[key] is None (empty YAML section), preserve dict1[key]
+    - If dict1[key] is a dict and dict2[key] is a list, merge list items into dict1[key]
     """
     if path is None: path = []
     for key in dict2:
@@ -709,6 +713,19 @@ def merge_dict(dict1, dict2, path=None):
                 merge_dict(dict1[key], dict2[key], path + [str(key)])
             elif isinstance(dict1[key], list) and isinstance(dict2[key], list):
                 dict1[key] += dict2[key]
+            elif isinstance(dict1[key], dict) and dict2[key] is None:
+                # Preserve dict1[key] when dict2[key] is None (empty YAML section)
+                # This prevents losing default values when ConfigMap has empty sections
+                pass
+            elif isinstance(dict1[key], dict) and isinstance(dict2[key], list):
+                # Handle list-based format: merge each list item (dict) into dict1[key]
+                # This supports ConfigMap formats like:
+                # idxc:
+                #   - secret: value1
+                #   - pass4SymmKey: value2
+                for item in dict2[key]:
+                    if isinstance(item, dict):
+                        merge_dict(dict1[key], item, path + [str(key)])
             else:
                 dict1[key] = dict2[key]
         else:
