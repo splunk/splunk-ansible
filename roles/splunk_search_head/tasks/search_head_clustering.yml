@@ -47,6 +47,23 @@
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
 
+- name: Wait for local Splunkd REST before bootstrap
+  uri:
+    url: "{{ cert_prefix }}://localhost:{{ splunk.svc_port }}/services/server/info"
+    method: GET
+    url_username: "{{ splunk.admin_user }}"
+    url_password: "{{ splunk.password }}"
+    force_basic_auth: yes
+    validate_certs: false
+    use_proxy: no
+  register: local_splunkd_ready
+  until:
+    - local_splunkd_ready.status == 200
+  retries: "{{ wait_for_splunk_retry_num }}"
+  delay: "{{ retry_delay }}"
+  no_log: "{{ hide_password }}"
+  when: splunk_search_head_captain | bool
+
 #INFRA-38882: Update exec command?
 - name: Boostrap SHC captain
   command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}{{ cert_prefix }}://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
@@ -54,34 +71,67 @@
   become_user: "{{ splunk.user }}"
   when: splunk_search_head_captain | bool
   register: task_result
-  until: task_result.rc == 0 or "node seems to have already joined another cluster" in task_result.stderr
+  until: task_result.rc == 0 or "already joined another cluster" in ((task_result.stdout | default('') ~ task_result.stderr | default('')) | lower)
   changed_when: task_result.rc == 0
-  failed_when: task_result.rc !=0 and "node seems to have already joined another cluster" not in task_result.stderr
+  failed_when: task_result.rc !=0 and "already joined another cluster" not in ((task_result.stdout | default('') ~ task_result.stderr | default('')) | lower)
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
+  environment:
+    SPLUNK_URI: "https://127.0.0.1:{{ splunk.svc_port }}"
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
 #INFRA-38882: Update exec command?
 - name: Add new member to SHC
-  command: "{{ splunk.exec }} add shcluster-member -current_member_uri {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }}"
+  shell: |
+    err="$({{ splunk.exec }} add shcluster-member -current_member_uri {{ cert_prefix }}://{{ splunk.search_head_captain_url }}:{{ splunk.svc_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} 2>&1 >/dev/null)"
+    add_rc=$?
+    if {{ splunk.exec }} show shcluster-status -auth {{ splunk.admin_user }}:{{ splunk.password }} 2>/dev/null | grep -q "{{ ansible_hostname }}"; then
+      exit 0
+    fi
+    echo "$err" | grep -q "is already part of cluster" && exit 0
+    if [ "$add_rc" -eq 0 ]; then
+      exit 0
+    fi
+    echo "$err" >&2
+    exit "$add_rc"
+  args:
+    executable: /bin/sh
   become: yes
   become_user: "{{ splunk.user }}"
   when: not splunk_search_head_captain | bool
   register: task_result
   changed_when: task_result.rc == 0
-  failed_when: task_result.rc !=0 and "is already part of cluster" not in task_result.stderr
-  until: task_result.rc == 0 or "is already part of cluster" in task_result.stderr
+  until: task_result.rc == 0
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
   no_log: "{{ hide_password }}"
+
+- name: Wait for local splunkd before resync
+  uri:
+    url: "{{ cert_prefix }}://localhost:{{ splunk.svc_port }}"
+    method: GET
+    validate_certs: false
+    use_proxy: no
+  register: local_splunkd_ready
+  until:
+    - local_splunkd_ready.status == 200
+  retries: "{{ shc_sync_retry_num }}"
+  delay: "{{ retry_delay }}"
+  failed_when: false
+  no_log: "{{ hide_password }}"
+  when: not splunk_search_head_captain | bool
 
 - name: Destructive sync search head
   command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: not splunk_search_head_captain | bool
+  environment:
+    SPLUNK_URI: "https://127.0.0.1:{{ splunk.svc_port }}"
+  when:
+    - not splunk_search_head_captain | bool
+    - local_splunkd_ready.status | default(0) == 200
   register: task_result
   changed_when: task_result.rc == 0
   failed_when: task_result.rc !=0 and "this instance is the captain" not in task_result.stderr
