@@ -94,6 +94,12 @@
     - "'kvstore' in splunk and 'port' in splunk.kvstore"
     - splunk.kvstore.port | int != 8191
 
+- include_tasks: set_kvservice_connection_string.yml
+  when:
+    - "'kvstore' in splunk and 'kvservice_connection_string' in splunk.kvstore"
+    - splunk.kvstore.kvservice_connection_string is not none
+    - splunk.kvstore.kvservice_connection_string | length > 0
+
 - include_tasks: enable_splunkweb_ssl.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"

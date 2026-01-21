@@ -70,6 +70,7 @@ splunk:
         port: 8065
     kvstore:
         port: 8191
+        kvservice_connection_string:
     http_port: 8000
     http_enableSSL: 0
     http_enableSSL_cert:

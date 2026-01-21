@@ -1,0 +1,9 @@
+---
+- name: Set externalManagedKVStoreConnectionString
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: "externalManagedKVStoreConnectionString"
+    value: "{{ splunk.kvstore.kvservice_connection_string }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
