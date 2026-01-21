@@ -1065,6 +1065,12 @@ def test_parseUrl(url, vars_scope, output):
         ({"nested": {"x": 10, "array": [1, 2]}}, {"nested": {"y": 20, "array": [3, 4, 5]}}, {"nested": {"x": 10, "y": 20, "array": [1, 2, 3, 4, 5]}}),
         # Targeted github bug
         ({"splunk": {"conf": [{"key": "fileA", "content": {"a": "b", "c": "d"}}]}}, {"splunk": {"conf": [{"key": "fileB", "content": {"e": "f", "g": "h"}}]}}, {"splunk": {"conf": [{"key": "fileA", "content": {"a": "b", "c": "d"}}, {"key": "fileB", "content": {"e": "f", "g": "h"}}]}}),
+        # CSPL-4007: When dict2[key] is None (empty YAML section), preserve dict1[key]
+        ({"splunk": {"idxc": {"replication_port": 9887, "secret": None}}}, {"splunk": {"idxc": None}}, {"splunk": {"idxc": {"replication_port": 9887, "secret": None}}}),
+        # CSPL-4007: When dict2[key] is a list of dicts, merge each item into dict1[key]
+        ({"splunk": {"idxc": {"replication_port": 9887, "secret": None}}}, {"splunk": {"idxc": [{"secret": "mysecret"}, {"pass4SymmKey": "mykey"}]}}, {"splunk": {"idxc": {"replication_port": 9887, "secret": "mysecret", "pass4SymmKey": "mykey"}}}),
+        # CSPL-4007: Deep nested None preservation
+        ({"a": {"b": {"c": 1, "d": 2}}}, {"a": {"b": None}}, {"a": {"b": {"c": 1, "d": 2}}}),
     ]
 )
 def test_merge_dict(dict1, dict2, result):
