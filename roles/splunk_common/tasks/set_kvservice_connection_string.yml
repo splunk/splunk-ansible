@@ -1,0 +1,9 @@
+---
+- name: Set kvserviceConnectionString
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: "kvserviceConnectionString"
+    value: "{{ splunk.kvstore.kvservice_connection_string }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"

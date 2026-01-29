@@ -891,6 +891,10 @@ def test_getSplunkAppsLocal(default_yml, os_env, apps_count):
                 # Check splunk.kvstore.port
                 ({"splunk": {"kvstore" :{"port": "9165"}}}, {}, "splunk.kvstore.port", "9165"),
                 ({}, {"SPLUNK_KVSTORE_PORT": "9265"}, "splunk.kvstore.port", "9265"),
+                # Check splunk.kvstore.kvservice_connection_string
+                ({"splunk": {"kvstore": {"kvservice_connection_string": "splunk-kvservice.my-namespace.svc.cluster.local:443"}}}, {}, "splunk.kvstore.kvservice_connection_string", "splunk-kvservice.my-namespace.svc.cluster.local:443"),
+                ({}, {"KVSERVICE_CONNECTION_STRING": "splunk-kvservice.my-namespace.svc.cluster.local:443"}, "splunk.kvstore.kvservice_connection_string", "splunk-kvservice.my-namespace.svc.cluster.local:443"),
+                ({"splunk": {"kvstore": {"kvservice_connection_string": "old-value.svc.cluster.local:443"}}}, {"KVSERVICE_CONNECTION_STRING": "new-value.svc.cluster.local:443"}, "splunk.kvstore.kvservice_connection_string", "new-value.svc.cluster.local:443"),
                 # Check splunk.connection_timeout
                 ({"splunk": {"connection_timeout": 60}}, {}, "splunk.connection_timeout", 60),
                 ({}, {"SPLUNK_CONNECTION_TIMEOUT": 200}, "splunk.connection_timeout", 200),
@@ -909,7 +913,7 @@ def test_overrideEnvironmentVars(default_yml, os_env, key, value):
                                 "svc_port": 8089,
                                 "s2s": {"port": 9997},
                                 "appserver": {"port": 8065},
-                                "kvstore": {"port": 8191},
+                                "kvstore": {"port": 8191, "kvservice_connection_string": None},
                                 "hec_token": "abcd1234",
                                 "enable_service": False,
                                 "service_name": "Splunkd",
