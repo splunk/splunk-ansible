@@ -286,6 +286,79 @@ def getMultisite(vars_scope):
     splunk_vars["multisite_search_factor_origin"] = int(os.environ.get("SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN", splunk_vars.get("multisite_search_factor_origin", 1)))
     splunk_vars["multisite_search_factor_total"] = int(os.environ.get("SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL", splunk_vars.get("multisite_search_factor_total", 1)))
     splunk_vars["multisite_search_factor_total"] = max(splunk_vars["multisite_search_factor_total"], splunk_vars["idxc"]["search_factor"])
+    replication_sites = os.environ.get(
+        "SPLUNK_MULTISITE_REPLICATION_FACTOR_SITES",
+        splunk_vars.get("multisite_replication_factor_sites")
+    )
+    normalized_replication_sites = ""
+    if replication_sites:
+        normalized_replication_sites = normalizeMultisiteFactorSites(replication_sites)
+        splunk_vars["multisite_replication_factor_sites"] = normalized_replication_sites
+    splunk_vars["multisite_replication_factor"] = buildMultisiteFactor(
+        splunk_vars["multisite_replication_factor_origin"],
+        splunk_vars["multisite_replication_factor_total"],
+        normalized_replication_sites
+    )
+
+    search_sites = os.environ.get(
+        "SPLUNK_MULTISITE_SEARCH_FACTOR_SITES",
+        splunk_vars.get("multisite_search_factor_sites")
+    )
+    normalized_search_sites = ""
+    if search_sites:
+        normalized_search_sites = normalizeMultisiteFactorSites(search_sites)
+        splunk_vars["multisite_search_factor_sites"] = normalized_search_sites
+    splunk_vars["multisite_search_factor"] = buildMultisiteFactor(
+        splunk_vars["multisite_search_factor_origin"],
+        splunk_vars["multisite_search_factor_total"],
+        normalized_search_sites
+    )
+
+def normalizeMultisiteFactorSites(sites):
+    """
+    Normalize site-only multisite factors, where each term is site:value.
+    Example input: site1:1,site2:1
+    """
+    try:
+        string_types = (basestring,)
+    except NameError:
+        string_types = (str,)
+
+    if not isinstance(sites, string_types):
+        raise Exception("Invalid multisite factor sites format: expected a string")
+
+    parsed_factors = []
+    for term in sites.split(","):
+        site_factor = term.strip()
+        if not site_factor:
+            continue
+        parts = site_factor.split(":", 1)
+        if len(parts) != 2:
+            raise Exception("Invalid multisite factor term '{}'".format(site_factor))
+        site = parts[0].strip()
+        if not site:
+            raise Exception("Invalid multisite factor term '{}'".format(site_factor))
+        if site in ("origin", "total"):
+            raise Exception("Invalid multisite factor site '{}': use origin/total base variables".format(site))
+        try:
+            value = int(parts[1].strip())
+        except ValueError:
+            raise Exception("Invalid multisite factor term '{}'".format(site_factor))
+
+        parsed_factors.append((site, value))
+
+    if not parsed_factors:
+        raise Exception("Invalid multisite factor sites format: no values supplied")
+
+    return ",".join(["{}:{}".format(site, value) for site, value in parsed_factors])
+
+def buildMultisiteFactor(origin, total, sites):
+    """
+    Build full multisite factor string from base origin/total values plus site-only terms.
+    """
+    if not sites:
+        return "origin:{},total:{}".format(origin, total)
+    return "origin:{},{},total:{}".format(origin, sites, total)
 
 def getSplunkWebSSL(vars_scope):
     """

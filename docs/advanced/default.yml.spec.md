@@ -482,6 +482,12 @@ splunk:
   * Determine site-level knowledge object replication factor when in a multisite environment
   * Default: 3
 
+  multisite_replication_factor_sites:
+  * Optional site-specific replication terms (without origin/total), appended between origin and total values
+  * Example: `site1:1,site2:1`
+  * Final value rendered as: `origin:<origin>,<sites>,total:<total>`
+  * Default: null
+
   multisite_search_factor_origin:
   * Determine origin-level search replication factor when in a multisite environment
   * Default: 1
@@ -489,6 +495,12 @@ splunk:
   multisite_search_factor_total:
   * Determine site-level search replication factor when in a multisite environment
   * Default: 3
+
+  multisite_search_factor_sites:
+  * Optional site-specific search terms (without origin/total), appended between origin and total values
+  * Example: `site1:1,site2:1`
+  * Final value rendered as: `origin:<origin>,<sites>,total:<total>`
+  * Default: null
 
   site:
   * Define the site of this particular Splunk Enterprise instance when in a multisite environment
