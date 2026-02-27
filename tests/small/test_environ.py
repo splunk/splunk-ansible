@@ -164,9 +164,106 @@ def test_getSearchHeadClustering(default_yml, os_env, output):
     assert type(vars_scope["splunk"]["shc"]) == dict
     assert vars_scope["splunk"]["shc"] == output
 
-@pytest.mark.skip(reason="TODO")
-def test_getMultisite():
-    pass
+@pytest.mark.parametrize(("sites", "result"),
+            [
+                ("site1:1,site2:1", "site1:1,site2:1"),
+                (" site1:1, site2:1 ", "site1:1,site2:1"),
+            ]
+        )
+def test_normalizeMultisiteFactorSites(sites, result):
+    assert environ.normalizeMultisiteFactorSites(sites) == result
+
+@pytest.mark.parametrize(("sites",),
+            [
+                ("",),
+                ("site1",),
+                ("site1:abc",),
+                ("origin:1",),
+                ("total:2",),
+            ]
+        )
+def test_normalizeMultisiteFactorSites_exception(sites):
+    with pytest.raises(Exception):
+        environ.normalizeMultisiteFactorSites(sites)
+
+@pytest.mark.parametrize(("origin", "total", "sites", "result"),
+            [
+                (1, 2, "site1:1,site2:1", "origin:1,site1:1,site2:1,total:2"),
+                (1, 2, "", "origin:1,total:2"),
+            ]
+        )
+def test_buildMultisiteFactor(origin, total, sites, result):
+    assert environ.buildMultisiteFactor(origin, total, sites) == result
+
+@pytest.mark.parametrize(("default_yml", "os_env", "output"),
+            [
+                # Existing origin/total behavior remains unchanged
+                (
+                    {"site": "site1", "idxc": {"replication_factor": 2, "search_factor": 2}},
+                    {},
+                    {
+                        "site": "site1",
+                        "idxc": {"replication_factor": 2, "search_factor": 2},
+                        "multisite_master_port": 8089,
+                        "multisite_replication_factor_origin": 1,
+                        "multisite_replication_factor_total": 2,
+                        "multisite_replication_factor": "origin:1,total:2",
+                        "multisite_search_factor_origin": 1,
+                        "multisite_search_factor_total": 2,
+                        "multisite_search_factor": "origin:1,total:2"
+                    }
+                ),
+                # Site-specific terms are merged with generated origin/total values
+                (
+                    {"site": "site1", "idxc": {"replication_factor": 2, "search_factor": 2}},
+                    {
+                        "SPLUNK_MULTISITE_REPLICATION_FACTOR_SITES": "site1:1,site2:1",
+                        "SPLUNK_MULTISITE_SEARCH_FACTOR_SITES": "site1:1,site2:1"
+                    },
+                    {
+                        "site": "site1",
+                        "idxc": {"replication_factor": 2, "search_factor": 2},
+                        "multisite_master_port": 8089,
+                        "multisite_replication_factor_origin": 1,
+                        "multisite_replication_factor_total": 2,
+                        "multisite_replication_factor_sites": "site1:1,site2:1",
+                        "multisite_replication_factor": "origin:1,site1:1,site2:1,total:2",
+                        "multisite_search_factor_origin": 1,
+                        "multisite_search_factor_total": 2,
+                        "multisite_search_factor_sites": "site1:1,site2:1",
+                        "multisite_search_factor": "origin:1,site1:1,site2:1,total:2"
+                    }
+                ),
+                # YAML site-specific terms are merged when env vars are not provided
+                (
+                    {
+                        "site": "site1",
+                        "idxc": {"replication_factor": 2, "search_factor": 2},
+                        "multisite_replication_factor_sites": "site1:1,site2:1",
+                        "multisite_search_factor_sites": "site1:1,site2:1"
+                    },
+                    {},
+                    {
+                        "site": "site1",
+                        "idxc": {"replication_factor": 2, "search_factor": 2},
+                        "multisite_master_port": 8089,
+                        "multisite_replication_factor_origin": 1,
+                        "multisite_replication_factor_total": 2,
+                        "multisite_replication_factor_sites": "site1:1,site2:1",
+                        "multisite_replication_factor": "origin:1,site1:1,site2:1,total:2",
+                        "multisite_search_factor_origin": 1,
+                        "multisite_search_factor_total": 2,
+                        "multisite_search_factor_sites": "site1:1,site2:1",
+                        "multisite_search_factor": "origin:1,site1:1,site2:1,total:2"
+                    }
+                ),
+            ]
+        )
+def test_getMultisite(default_yml, os_env, output):
+    vars_scope = {"splunk": default_yml}
+    with patch("os.environ", new=os_env):
+        environ.getMultisite(vars_scope)
+    assert vars_scope["splunk"] == output
 
 @pytest.mark.skip(reason="TODO")
 def test_getSplunkWebSSL():

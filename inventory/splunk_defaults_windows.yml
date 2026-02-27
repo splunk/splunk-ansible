@@ -98,8 +98,10 @@ splunk:
         replication_ssl: False
     multisite_replication_factor_origin: 2
     multisite_replication_factor_total: 3
+    multisite_replication_factor_sites:
     multisite_search_factor_origin: 1
     multisite_search_factor_total: 2
+    multisite_search_factor_sites:
     license_master_url:
     cluster_master_url:
     auxiliary_cluster_masters: []

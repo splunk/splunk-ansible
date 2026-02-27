@@ -94,8 +94,10 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_MULTISITE_MASTER_PORT | For multisite topologies, define the Splunk management port of the multisite cluster master | no | no | no |
 | SPLUNK_MULTISITE_REPLICATION_FACTOR_ORIGIN | For multisite topologies, define the origin replication factor | no | no | no |
 | SPLUNK_MULTISITE_REPLICATION_FACTOR_TOTAL | For multisite topologies, define the total replication factor | no | no | no |
+| SPLUNK_MULTISITE_REPLICATION_FACTOR_SITES | For multisite topologies, define site-specific replication terms (for example: `site1:1,site2:1`) | no | no | no |
 | SPLUNK_MULTISITE_SEARCH_FACTOR_ORIGIN | For multisite topologies, define the origin search factor | no | no | no |
 | SPLUNK_MULTISITE_SEARCH_FACTOR_TOTAL | For multisite topologies, define the total search factor | no | no | no |
+| SPLUNK_MULTISITE_SEARCH_FACTOR_SITES | For multisite topologies, define site-specific search terms (for example: `site1:1,site2:1`) | no | no | no |
 | NO_HEALTHCHECK | Disable the Splunk health check script | no | no | yes |
 | STEPDOWN_ANSIBLE_USER | Removes Ansible user from the sudo group when set to true. This means that no other users than root will have root access. | no | no | no |
 | SPLUNK_HOME_OWNERSHIP_ENFORCEMENT | Recursively enforces `${SPLUNK_HOME}` to be owned by the user "splunk". Default: `True` | no | no | no |
