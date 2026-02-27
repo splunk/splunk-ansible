@@ -176,7 +176,29 @@ splunk:
   *     pass4SymmKey: thisisasecret
   *   - url: https://master.us-east.corp.net:8089
   *     pass4SymmKey: thisisanothersecret
+
+  manual_monitor_list: <list>
+  * List of other splunk instances that a monitoring console should monitor in addition to automatically added servers from other groups.
+  * Default: []
+  * Example:
+  *   manual_monitor_list:
+  *   - extra-server-1.example.org
+  *   - extra-server-2.example.org
+  *   - different-auth-server-1.example.org
+  *   - different-auth-server-2.example.org
   
+  remote-credentials: <dict>
+  * List of credentials for splunk servers that don't match the defaults
+  * Default: {}
+  * Example:
+  *   remote-credentials:
+  *     different-auth-server-1.example.org:
+  *       admin_user: my-adm-user
+  *       admin_password: my-adm-password
+  *     different-auth-server-2.example.org:
+  *       admin_user: my-adm-user
+  *       admin_password: my-adm-password
+
   deployer_url: null
   * Hostname of Splunk Enterprise deployer instance. May be overridden using SPLUNK_DEPLOYER_URL environment variable.
   * Default: null
