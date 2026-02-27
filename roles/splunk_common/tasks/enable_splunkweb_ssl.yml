@@ -8,6 +8,8 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     mode: 0660
+  become: true
+  become_user: "{{ splunk.user }}"
 
 - name: Set Web certificate path
   ini_file:
@@ -21,6 +23,8 @@
   when:
     - splunk.http_enableSSL_cert is defined
     - splunk.http_enableSSL_cert
+  become: true
+  become_user: "{{ splunk.user }}"
 
 - name: Set Web private key path
   ini_file:
@@ -34,6 +38,8 @@
   when:
     - splunk.http_enableSSL_privKey is defined
     - splunk.http_enableSSL_privKey
+  become: true
+  become_user: "{{ splunk.user }}"
 
 - name: Set Web private key password
   ini_file:
@@ -47,3 +53,5 @@
   when:
     - splunk.http_enableSSL_privKey_password is defined
     - splunk.http_enableSSL_privKey_password
+  become: true
+  become_user: "{{ splunk.user }}"

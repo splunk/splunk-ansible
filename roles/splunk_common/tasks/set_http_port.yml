@@ -8,6 +8,8 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when: splunk.http_port == 0
+  become: true
+  become_user: "{{ splunk.user }}"
 
 - name: Set HTTP Port
   ini_file:
@@ -18,3 +20,5 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when: splunk.http_port != 0
+  become: true
+  become_user: "{{ splunk.user }}"
