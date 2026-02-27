@@ -487,6 +487,10 @@ def getSecrets(vars_scope):
         vars_scope["splunk"]["declarative_admin_password"] = bool(vars_scope["splunk"].get("declarative_admin_password"))
     vars_scope["splunk"]["pass4SymmKey"] = os.environ.get('SPLUNK_PASS4SYMMKEY', vars_scope["splunk"].get("pass4SymmKey"))
     vars_scope["splunk"]["secret"] = os.environ.get('SPLUNK_SECRET', vars_scope["splunk"].get("secret"))
+    vars_scope["splunk"]["splunk_secret"] = os.environ.get('SPLUNK_SPLUNK_SECRET', vars_scope["splunk"].get("splunk_secret"))
+    if vars_scope["splunk"]["splunk_secret"] and os.path.isfile(vars_scope["splunk"]["splunk_secret"]):
+        with open(vars_scope["splunk"]["splunk_secret"], "r") as f:
+            vars_scope["splunk"]["splunk_secret"] = f.read().strip()
 
 def getLaunchConf(vars_scope):
     """

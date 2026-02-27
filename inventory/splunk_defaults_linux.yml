@@ -42,6 +42,7 @@ splunk:
     password:
     declarative_admin_password: False
     secret:
+    splunk_secret:
     pass4SymmKey:
     svc_port: 8089
     ssl:
