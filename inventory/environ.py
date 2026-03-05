@@ -449,6 +449,7 @@ def getSplunkBuild(vars_scope):
     """
     vars_scope["splunk"]["build_url_bearer_token"] = os.environ.get("SPLUNK_BUILD_URL_BEARER_TOKEN", vars_scope["splunk"].get("build_url_bearer_token"))
     vars_scope["splunk"]["build_location"] = os.environ.get("SPLUNK_BUILD_URL", vars_scope["splunk"].get("build_location"))
+    vars_scope["splunk"]["cloud_build"] = os.environ.get("SPLUNK_CLOUD_BUILD", vars_scope["splunk"].get("cloud_build"))
 
 def getSplunkbaseToken(vars_scope):
     """
