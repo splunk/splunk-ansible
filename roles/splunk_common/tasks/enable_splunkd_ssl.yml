@@ -23,7 +23,7 @@
     group: "{{ splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: "'ca' in splunk.ssl and splunk.ssl.ca"
+  when: "'ca' in splunk.ssl and splunk.ssl.ca is not none"
 
 - name: Set Splunkd cert
   ini_file:
@@ -35,7 +35,7 @@
     group: "{{ splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: "'cert' in splunk.ssl and splunk.ssl.cert"
+  when: "'cert' in splunk.ssl and splunk.ssl.cert is not none"
 
 - name: Set Splunkd SSL password
   ini_file:
@@ -47,5 +47,5 @@
     group: "{{ splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: "'password' in splunk.ssl and splunk.ssl.password"
+  when: "'password' in splunk.ssl and splunk.ssl.password is not none"
   changed_when: false

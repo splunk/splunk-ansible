@@ -23,7 +23,7 @@
 - name: "Install Splunk"
   include_tasks: install_splunk.yml
   when:
-    - splunk_install | bool or (first_run | bool and splunk.build_location and splunk.build_location is match("^(https?|file)://.*"))
+    - splunk_install | bool or (first_run | bool and splunk.build_location is not none and splunk.build_location is match("^(https?|file)://.*"))
 
 - name: "Upgrade Splunk"
   include_tasks: install_splunk.yml
@@ -45,13 +45,13 @@
 
 - include_tasks: install_java.yml
   when:
-    - java_version is defined and java_version
+    - java_version is defined and java_version is not none
 
 # This needs to be done before any encrypted passkeys are generated, and before first call to splunk status
 - include_tasks: set_splunk_secret.yml
 
 - include_tasks: set_general_symmkey_password.yml
-  when: "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
+  when: "'pass4SymmKey' in splunk and splunk.pass4SymmKey is not none"
 
 - include_tasks: enable_admin_auth.yml
 
@@ -59,7 +59,7 @@
 
 - include_tasks: set_launch_conf.yml
   when:
-    - "'launch' in splunk and splunk.launch"
+    - "'launch' in splunk and splunk.launch is not none"
 
 - include_tasks: pre_splunk_start_commands.yml
   ignore_errors: true
@@ -67,7 +67,7 @@
 - include_tasks: enable_s2s.yml
   when:
     - "('s2s_enable' in splunk) or ('s2s' in splunk and 'enable' in splunk.s2s)"
-    - "('s2s_port' in splunk and splunk.s2s_port) or ('s2s' in splunk and 'port' in splunk.s2s and splunk.s2s.port)"
+    - "('s2s_port' in splunk and splunk.s2s_port is not none) or ('s2s' in splunk and 'port' in splunk.s2s and splunk.s2s.port is not none)"
 
 - include_tasks: enable_service.yml
   when:
@@ -82,7 +82,7 @@
 - include_tasks: set_mgmt_port.yml
 
 - include_tasks: set_root_endpoint.yml
-  when: "'root_endpoint' in splunk and splunk.root_endpoint"
+  when: "'root_endpoint' in splunk and splunk.root_endpoint is not none"
 
 - include_tasks: set_appserver_port.yml
   when:
@@ -106,11 +106,11 @@
     - splunk.http_enableSSL | bool
 
 - include_tasks: enable_splunkd_ssl.yml
-  when: "'ssl' in splunk and splunk.ssl"
+  when: "'ssl' in splunk and splunk.ssl is not none"
 
 - include_tasks: set_splunk_connection_timeout.yml
   when:
-    - "'connection_timeout' in splunk and splunk.connection_timeout"
+    - "'connection_timeout' in splunk and splunk.connection_timeout is not none"
     - splunk.connection_timeout | int > 0
 
 - include_tasks: set_config_file.yml
@@ -131,7 +131,7 @@
         (splunk_indexer_cluster | bool or splunk_forward_servers is defined)
 
 - include_tasks: enable_dsp.yml
-  when: "'dsp' in splunk and 'enable' in splunk.dsp and splunk.dsp.enable"
+  when: "'dsp' in splunk and 'enable' in splunk.dsp and splunk.dsp.enable | bool"
 
 - include_tasks: start_splunk.yml
 

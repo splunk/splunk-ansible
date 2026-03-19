@@ -28,5 +28,4 @@
       when: splunk.build_location is match(".*\.deb$")
   when:
     - splunk_build_type is not defined
-    - splunk_build_type is not none
     - splunk.build_location is not none

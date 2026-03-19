@@ -393,11 +393,11 @@ def getDistributedTopology(vars_scope):
     """
     Parse and set parameters to define topology if this is a distributed environment
     """
-    license_master_url = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url", ""))
+    license_master_url = os.environ.get("SPLUNK_LICENSE_MASTER_URL", vars_scope["splunk"].get("license_master_url"))
     vars_scope["splunk"]["license_master_url"] = parseUrl(license_master_url, vars_scope)
-    vars_scope["splunk"]["deployer_url"] = os.environ.get("SPLUNK_DEPLOYER_URL", vars_scope["splunk"].get("deployer_url", ""))
-    vars_scope["splunk"]["cluster_master_url"] = os.environ.get("SPLUNK_CLUSTER_MASTER_URL", vars_scope["splunk"].get("cluster_master_url", ""))
-    vars_scope["splunk"]["search_head_captain_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL", vars_scope["splunk"].get("search_head_captain_url", ""))
+    vars_scope["splunk"]["deployer_url"] = os.environ.get("SPLUNK_DEPLOYER_URL", vars_scope["splunk"].get("deployer_url"))
+    vars_scope["splunk"]["cluster_master_url"] = os.environ.get("SPLUNK_CLUSTER_MASTER_URL", vars_scope["splunk"].get("cluster_master_url"))
+    vars_scope["splunk"]["search_head_captain_url"] = os.environ.get("SPLUNK_SEARCH_HEAD_CAPTAIN_URL", vars_scope["splunk"].get("search_head_captain_url"))
     if not vars_scope["splunk"]["search_head_captain_url"] and "search_head_cluster_url" in vars_scope["splunk"]:
         vars_scope["splunk"]["search_head_captain_url"] = vars_scope["splunk"]["search_head_cluster_url"]
 
@@ -754,7 +754,7 @@ def parseUrl(url, vars_scope):
     Parses role URL to handle non-default schemes, ports, etc. 
     """
     if not url:
-        return ""
+        return None
     scheme = vars_scope.get("cert_prefix", "https")
     port = vars_scope["splunk"].get("svc_port", 8089)
     parsed = urlparse(url)
