@@ -739,7 +739,7 @@ def getIPv6(vars_scope):
     """
     Set specific environment variables to apply IPv6 configurations
     """
-    vars_scope["splunk"]["listen_on_ipv6"] = os.environ.get("SPLUNK_LISTEN_ON_IPV6", False)
+    vars_scope["splunk"]["listen_on_ipv6"] = os.environ.get("SPLUNK_LISTEN_ON_IPV6", "").lower() == "true"
 
 
 def getRandomString():
