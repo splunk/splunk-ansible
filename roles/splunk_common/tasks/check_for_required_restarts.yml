@@ -15,3 +15,8 @@
   delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
+
+- name: Set fact if restart was triggered
+  set_fact:
+    splunk_restart_triggered: true
+  when: restart_required.status == 200
