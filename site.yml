@@ -39,6 +39,7 @@
 
         - name: Check all instances for required restarts
           include_tasks: ./roles/splunk_common/tasks/check_for_required_restarts.yml
+          when: splunk_restart_triggered is not defined or not splunk_restart_triggered
 
         - name: Flush restart handlers
           meta: flush_handlers
