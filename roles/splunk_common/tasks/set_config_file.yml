@@ -7,6 +7,16 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
+- name: Remove stale {{ conf_file }} before writing config map values
+  file:
+    path: "{{ conf_directory }}/{{ conf_file }}"
+    state: absent
+  when:
+    - conf_directory is defined
+    - conf_stanzas | length > 0
+  become: yes
+  become_user: "{{ splunk.user }}"
+
 - include_tasks: set_config_stanza.yml
   vars:
     stanza_name: "{{ stanza.key }}"
