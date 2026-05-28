@@ -1,8 +1,8 @@
 ---
 # Configure Splunk server certificate from operator-mounted TLS secret.
 # Input: /mnt/tls/splunk-server-tls-cert/{tls.crt, tls.key, ca.crt}
-# Output: bundled PEM at /opt/splunk/etc/auth/server-bundle.pem
-#         CA at /opt/splunk/etc/auth/splunk-ca.pem
+# Output: bundled PEM at /opt/splunk/etc/auth/splunk-server-bundle.pem
+#         CA at /opt/splunk/etc/auth/splunk-server-ca.pem
 #         server.conf [sslConfig] configured
 
 - name: Generate ephemeral SSL passphrase
@@ -35,7 +35,7 @@
       passphrase = sys.argv[1].encode()
       key_path   = '/mnt/tls/splunk-server-tls-cert/tls.key'
       cert_path  = '/mnt/tls/splunk-server-tls-cert/tls.crt'
-      out_path   = sys.argv[2] + '/etc/auth/server-bundle.pem'
+      out_path   = sys.argv[2] + '/etc/auth/splunk-server-bundle.pem'
 
       with open(key_path, 'rb') as f:
           key = load_pem_private_key(f.read(), password=None)
@@ -66,7 +66,7 @@
 
 - name: Set bundle permissions
   file:
-    path: "{{ splunk.home }}/etc/auth/server-bundle.pem"
+    path: "{{ splunk.home }}/etc/auth/splunk-server-bundle.pem"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     mode: '0600'
@@ -76,7 +76,7 @@
 - name: Copy CA certificate
   copy:
     src: /mnt/tls/splunk-server-tls-cert/ca.crt
-    dest: "{{ splunk.home }}/etc/auth/splunk-ca.pem"
+    dest: "{{ splunk.home }}/etc/auth/splunk-server-ca.pem"
     remote_src: yes
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
@@ -89,7 +89,7 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: serverCert
-    value: "{{ splunk.home }}/etc/auth/server-bundle.pem"
+    value: "{{ splunk.home }}/etc/auth/splunk-server-bundle.pem"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   become: yes
@@ -113,7 +113,7 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: sslRootCAPath
-    value: "{{ splunk.home }}/etc/auth/splunk-ca.pem"
+    value: "{{ splunk.home }}/etc/auth/splunk-server-ca.pem"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   become: yes
