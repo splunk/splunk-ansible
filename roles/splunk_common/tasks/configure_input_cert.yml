@@ -1,0 +1,120 @@
+---
+# Configure Splunk input (S2S) certificate from operator-mounted TLS secret.
+# Input: /mnt/tls/splunk-input-tls-cert/{tls.crt, tls.key, ca.crt}
+# Output: bundled PEM at /opt/splunk/etc/auth/input-bundle.pem
+#         CA at /opt/splunk/etc/auth/splunk-input-ca.pem
+#         inputs.conf [SSL] configured
+
+- name: Generate ephemeral SSL passphrase for input cert
+  command: >
+    python3 -c
+    "import secrets, base64; print(base64.b64encode(secrets.token_bytes(40)).decode())"
+  register: input_ssl_passphrase
+  changed_when: false
+  no_log: true
+
+- name: Ensure Splunk auth directory exists
+  file:
+    path: "{{ splunk.home }}/etc/auth"
+    state: directory
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: '0700'
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Write input cert bundle script
+  copy:
+    dest: /tmp/splunk_bundle_input_cert.py
+    content: |
+      from cryptography.hazmat.primitives.serialization import (
+          load_pem_private_key, Encoding, PrivateFormat, BestAvailableEncryption
+      )
+      import sys
+
+      passphrase = sys.argv[1].encode()
+      key_path   = '/mnt/tls/splunk-input-tls-cert/tls.key'
+      cert_path  = '/mnt/tls/splunk-input-tls-cert/tls.crt'
+      out_path   = sys.argv[2] + '/etc/auth/input-bundle.pem'
+
+      with open(key_path, 'rb') as f:
+          key = load_pem_private_key(f.read(), password=None)
+
+      enc_key_pem = key.private_bytes(
+          Encoding.PEM,
+          PrivateFormat.PKCS8,
+          BestAvailableEncryption(passphrase)
+      )
+
+      with open(cert_path, 'rb') as f:
+          cert_pem = f.read()
+
+      with open(out_path, 'wb') as f:
+          f.write(cert_pem)
+          if not cert_pem.endswith(b'\n'):
+              f.write(b'\n')
+          f.write(enc_key_pem)
+    mode: '0700'
+
+- name: Encrypt private key and build input cert bundle
+  command: >
+    python3 /tmp/splunk_bundle_input_cert.py
+    {{ input_ssl_passphrase.stdout }} {{ splunk.home }}
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
+- name: Set input bundle permissions
+  file:
+    path: "{{ splunk.home }}/etc/auth/input-bundle.pem"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: '0600'
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Copy input CA certificate
+  copy:
+    src: /mnt/tls/splunk-input-tls-cert/ca.crt
+    dest: "{{ splunk.home }}/etc/auth/splunk-input-ca.pem"
+    remote_src: yes
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: '0644'
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Configure serverCert in inputs.conf [SSL]
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    option: serverCert
+    value: "{{ splunk.home }}/etc/auth/input-bundle.pem"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Configure sslPassword in inputs.conf [SSL]
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    option: sslPassword
+    value: "{{ input_ssl_passphrase.stdout }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+  changed_when: false
+
+- name: Configure sslRootCAPath in inputs.conf [SSL]
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    option: sslRootCAPath
+    value: "{{ splunk.home }}/etc/auth/splunk-input-ca.pem"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
