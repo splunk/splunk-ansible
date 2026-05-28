@@ -8,17 +8,17 @@
       multisite_master_uri: "{{ cert_prefix }}://{{ splunk.multisite_master }}:{{ splunk.svc_port }}"
 
 # CSPL-4006: Check if SSL replication port is configured in server.conf
-# If SSL port exists, we should NOT use -replication_port flag as it will overwrite the SSL config
-- name: Check if SSL replication port is configured in server.conf (multisite)
+- name: Check if SSL replication port is configured in server.conf
   set_fact:
-    has_ssl_replication_port_in_conf_multisite: "{{ 'conf' in splunk and 'server' in splunk.conf and 'content' in splunk.conf.server and (splunk.conf.server.content.keys() | select('match', '^replication_port-ssl://') | list | length > 0) }}"
+    has_ssl_replication_port_in_conf: "{{ 'conf' in splunk and 'server' in splunk.conf and 'content' in splunk.conf.server and (splunk.conf.server.content.keys() | select('match', '^replication_port-ssl://') | list | length > 0) }}"
 
-# Determine if SSL replication should be used (either via flag or detected in config)
-- name: Determine SSL replication mode (multisite)
+- name: Determine SSL replication mode
   set_fact:
-    use_ssl_replication_multisite: "{{ (splunk.idxc.replication_ssl | default(false) | bool) or (has_ssl_replication_port_in_conf_multisite | default(false) | bool) }}"
+    use_ssl_replication: "{{ (splunk.idxc.replication_ssl | default(false) | bool) or (has_ssl_replication_port_in_conf | default(false) | bool) }}"
 
-- name: Setup Peers with Associated Site (non-SSL replication)
+# CSPL-4006: Always pass -replication_port (Splunk REST API requires it regardless of SSL mode).
+# For SSL deployments the re-apply task below restores the SSL stanza after the CLI overwrites it.
+- name: Setup Peers with Associated Site
   command: "{{ splunk.exec }} edit cluster-config -mode slave -site {{ splunk.site }} -master_uri {{ multisite_master_uri }} -replication_port {{ splunk.idxc.replication_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.idxc.pass4SymmKey }}"
   become: yes
   become_user: "{{ splunk.user }}"
@@ -27,35 +27,19 @@
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
-  when: not use_ssl_replication_multisite | bool
   notify:
       - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
-- name: Setup Peers with Associated Site (SSL replication)
-  command: "{{ splunk.exec }} edit cluster-config -mode slave -site {{ splunk.site }} -master_uri {{ multisite_master_uri }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.idxc.pass4SymmKey }}"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: task_result_ssl
-  changed_when: task_result_ssl.rc == 0
-  until: task_result_ssl.rc == 0
-  retries: "{{ retry_num }}"
-  delay: "{{ retry_delay }}"
-  when: use_ssl_replication_multisite | bool
-  notify:
-      - Restart the splunkd service
-  no_log: "{{ hide_password }}"
-
-# CSPL-4006: Re-apply SSL replication port config after cluster join
-# This ensures the SSL config isn't lost if edit cluster-config modifies server.conf
-- name: Re-apply SSL replication port configuration (multisite)
+# CSPL-4006: Re-apply SSL replication port config after cluster join.
+- name: Re-apply SSL replication port configuration
   include_tasks: ../../../roles/splunk_common/tasks/set_config_file.yml
   vars:
     conf_file: "server.conf"
     conf_directory: "{{ splunk.home }}/etc/system/local"
     conf_stanzas: "{{ splunk.conf.server.content }}"
   when:
-    - has_ssl_replication_port_in_conf_multisite | default(false) | bool
+    - use_ssl_replication | bool
     - "'conf' in splunk"
     - "'server' in splunk.conf"
     - "'content' in splunk.conf.server"
