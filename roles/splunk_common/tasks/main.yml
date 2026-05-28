@@ -105,6 +105,9 @@
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
     - splunk.http_enableSSL | bool
 
+- include_tasks: configure_splunk_certs.yml
+  when: ansible_system is match("Linux")
+
 - include_tasks: enable_splunkd_ssl.yml
   when: "'ssl' in splunk and splunk.ssl"
 
