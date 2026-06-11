@@ -1,0 +1,120 @@
+---
+# Configure Splunk server certificate from operator-mounted TLS secret.
+# Input: /mnt/tls/splunk-server-tls-cert/{tls.crt, tls.key, ca.crt}
+# Output: bundled PEM at /opt/splunk/etc/auth/splunk-server-bundle.pem
+#         CA at /opt/splunk/etc/auth/splunk-server-ca.pem
+#         server.conf [sslConfig] configured
+
+- name: Generate ephemeral SSL passphrase
+  command: >
+    python3 -c
+    "import secrets, base64; print(base64.b64encode(secrets.token_bytes(40)).decode())"
+  register: ssl_passphrase
+  changed_when: false
+  no_log: true
+
+- name: Ensure Splunk auth directory exists
+  file:
+    path: "{{ splunk.home }}/etc/auth"
+    state: directory
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: '0700'
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Write cert bundle script
+  copy:
+    dest: /tmp/splunk_bundle_cert.py
+    content: |
+      from cryptography.hazmat.primitives.serialization import (
+          load_pem_private_key, Encoding, PrivateFormat, BestAvailableEncryption
+      )
+      import sys
+
+      passphrase = sys.argv[1].encode()
+      key_path   = '/mnt/tls/splunk-server-tls-cert/tls.key'
+      cert_path  = '/mnt/tls/splunk-server-tls-cert/tls.crt'
+      out_path   = sys.argv[2] + '/etc/auth/splunk-server-bundle.pem'
+
+      with open(key_path, 'rb') as f:
+          key = load_pem_private_key(f.read(), password=None)
+
+      enc_key_pem = key.private_bytes(
+          Encoding.PEM,
+          PrivateFormat.PKCS8,
+          BestAvailableEncryption(passphrase)
+      )
+
+      with open(cert_path, 'rb') as f:
+          cert_pem = f.read()
+
+      with open(out_path, 'wb') as f:
+          f.write(cert_pem)
+          if not cert_pem.endswith(b'\n'):
+              f.write(b'\n')
+          f.write(enc_key_pem)
+    mode: '0700'
+
+- name: Encrypt private key and build server cert bundle
+  command: >
+    python3 /tmp/splunk_bundle_cert.py
+    {{ ssl_passphrase.stdout }} {{ splunk.home }}
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
+- name: Set bundle permissions
+  file:
+    path: "{{ splunk.home }}/etc/auth/splunk-server-bundle.pem"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: '0600'
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Copy CA certificate
+  copy:
+    src: /mnt/tls/splunk-server-tls-cert/ca.crt
+    dest: "{{ splunk.home }}/etc/auth/splunk-server-ca.pem"
+    remote_src: yes
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: '0644'
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Configure serverCert in server.conf
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: serverCert
+    value: "{{ splunk.home }}/etc/auth/splunk-server-bundle.pem"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Configure sslPassword in server.conf
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: sslPassword
+    value: "{{ ssl_passphrase.stdout }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+  changed_when: false
+
+- name: Configure sslRootCAPath in server.conf
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: sslConfig
+    option: sslRootCAPath
+    value: "{{ splunk.home }}/etc/auth/splunk-server-ca.pem"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"

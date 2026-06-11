@@ -1,0 +1,21 @@
+---
+# Dispatcher for operator-driven cert configuration.
+# Each cert type is handled only when its mount directory exists.
+
+- name: Check for server cert mount
+  stat:
+    path: /mnt/tls/splunk-server-tls-cert
+  register: server_cert_dir
+
+- name: Configure Splunk server certificate
+  include_tasks: configure_server_cert.yml
+  when: server_cert_dir.stat.exists and server_cert_dir.stat.isdir
+
+- name: Check for input cert mount
+  stat:
+    path: /mnt/tls/splunk-input-tls-cert
+  register: input_cert_dir
+
+- name: Configure Splunk input certificate
+  include_tasks: configure_input_cert.yml
+  when: input_cert_dir.stat.exists and input_cert_dir.stat.isdir
