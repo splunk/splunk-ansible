@@ -94,6 +94,14 @@ def test_inputs_conf(host):
     assert f.contains("[splunktcp://9997]")
     assert f.contains("disabled = 0")
 
+def test_postgres_disabled(host):
+    f = host.file("{}/etc/system/local/server.conf".format(SPLUNK_HOME))
+    assert f.exists
+    assert f.user == SPLUNK_USER
+    assert f.group == SPLUNK_GROUP
+    assert f.contains("[postgres]")
+    assert f.contains("disabled = true")
+
 def test_splunk_ports(host):
     output = host.run("netstat -tuln")
     assert "0.0.0.0:8000" in output.stdout

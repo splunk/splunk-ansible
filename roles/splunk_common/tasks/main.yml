@@ -116,6 +116,10 @@
     - "'connection_timeout' in splunk and splunk.connection_timeout"
     - splunk.connection_timeout | int > 0
 
+- include_tasks: disable_postgres.yml
+  when:
+    - splunk.role != "splunk_universal_forwarder"
+
 - include_tasks: set_config_file.yml
   vars:
     conf_file: "{{ item.key }}.conf"
