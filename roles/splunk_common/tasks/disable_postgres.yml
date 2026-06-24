@@ -4,7 +4,7 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: postgres
     option: disabled
-    value: "true"
+    value: "{{ splunk_postgres_disabled | default(true) | bool | ternary('true', 'false') }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   become: yes
