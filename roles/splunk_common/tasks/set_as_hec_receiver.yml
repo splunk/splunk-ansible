@@ -55,6 +55,28 @@
   when:
     - ('hec' in splunk and 'token' in splunk.hec and splunk.hec.token) or ('hec_token' in splunk and splunk.hec_token)
 
+- name: Build global HEC body
+  set_fact:
+    hec_global_body: >-
+      {{
+        {
+          'disabled': '0' if (('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool)) else '1',
+          'port': splunk.hec.port if ('hec' in splunk and 'port' in splunk.hec and splunk.hec.port) else (splunk.hec_port if ('hec_port' in splunk and splunk.hec_port) else '8088'),
+          'serverCert': splunk.hec.cert if ('hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert) else '',
+          'sslPassword': splunk.hec.password if ('hec' in splunk and 'password' in splunk.hec and splunk.hec.password) else ''
+        }
+        | combine(
+            {'enableSSL': '1' if splunk.hec.ssl | bool else '0'}
+            if ('hec' in splunk and 'ssl' in splunk.hec and splunk.hec.ssl is not none)
+            else ({'enableSSL': '1' if splunk.hec_enableSSL | bool else '0'} if ('hec_enableSSL' in splunk) else {})
+          )
+      }}
+  when: >-
+    ('hec' in splunk and ('enable' in splunk.hec or 'ssl' in splunk.hec or 'port' in splunk.hec or 'cert' in splunk.hec or 'password' in splunk.hec))
+    or ('hec_disabled' in splunk)
+    or ('hec_enableSSL' in splunk)
+    or ('hec_port' in splunk)
+
 - name: Setup global HEC
   splunk_api:
     url: "/services/data/inputs/http/http"
@@ -63,11 +85,7 @@
     username: "{{ splunk.admin_user }}"
     password: "{{ splunk.password }}"
     svc_port: "{{ splunk.svc_port }}"
-    body:
-      disabled: "{% if ('hec' in splunk and 'enable' in splunk.hec and splunk.hec.enable | bool) or ('hec_disabled' in splunk and not splunk.hec_disabled | bool) %}0{% else %}1{% endif %}"
-      enableSSL: "{% if ('hec' in splunk and 'ssl' in splunk.hec and splunk.hec.ssl | bool) or ('hec_enableSSL' in splunk and splunk.hec_enableSSL | bool) %}1{% else %}0{% endif %}"
-      port: "{% if 'hec' in splunk and 'port' in splunk.hec and splunk.hec.port %}{{ splunk.hec.port }}{% elif 'hec_port' in splunk and splunk.hec_port %}{{ splunk.hec_port }}{% else %}8088{% endif %}"
-      serverCert: "{% if 'hec' in splunk and 'cert' in splunk.hec and splunk.hec.cert %}{{ splunk.hec.cert }}{% endif %}"
-      sslPassword: "{% if 'hec' in splunk and 'password' in splunk.hec and splunk.hec.password %}{{ splunk.hec.password }}{% endif %}"
+    body: "{{ hec_global_body }}"
     body_format: "form-urlencoded"
   register: sample
+  when: hec_global_body is defined
