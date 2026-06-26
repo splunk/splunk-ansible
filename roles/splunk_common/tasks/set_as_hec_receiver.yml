@@ -68,11 +68,11 @@
         | combine(
             {'enableSSL': '1' if splunk.hec.ssl | bool else '0'}
             if ('hec' in splunk and 'ssl' in splunk.hec and splunk.hec.ssl is not none)
-            else ({'enableSSL': '1'} if ('hec_enableSSL' in splunk and splunk.hec_enableSSL | bool) else {})
+            else ({'enableSSL': '1' if splunk.hec_enableSSL | bool else '0'} if ('hec_enableSSL' in splunk) else {})
           )
       }}
   when: >-
-    ('hec' in splunk and ('enable' in splunk.hec or 'ssl' in splunk.hec or 'port' in splunk.hec or 'cert' in splunk.hec))
+    ('hec' in splunk and ('enable' in splunk.hec or 'ssl' in splunk.hec or 'port' in splunk.hec or 'cert' in splunk.hec or 'password' in splunk.hec))
     or ('hec_disabled' in splunk)
     or ('hec_enableSSL' in splunk)
     or ('hec_port' in splunk)
