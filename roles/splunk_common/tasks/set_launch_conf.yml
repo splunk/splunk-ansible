@@ -8,3 +8,9 @@
   become: yes
   become_user: "{{ splunk.user }}"
   with_dict: "{{ splunk.launch }}"
+
+- name: Fix splunk-launch.conf POSIX ACL mask (Windows)
+  command: setfacl -m mask::rwx "{{ splunk.home }}/etc/splunk-launch.conf"
+  become: yes
+  become_user: "{{ privileged_user }}"
+  when: ansible_system is match("CYGWIN*|Win32NT")
