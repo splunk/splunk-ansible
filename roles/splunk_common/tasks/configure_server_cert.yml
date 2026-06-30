@@ -1,6 +1,6 @@
 ---
 # Configure Splunk server certificate from operator-mounted TLS secret.
-# Input: /mnt/tls/splunk-server-tls-cert/{tls.crt, tls.key, ca.crt}
+# Input: /mnt/tls/splunk-server-tls-cert/{tls.crt, tls.key[, ca.crt]}
 # Output: bundled PEM at /opt/splunk/etc/auth/splunk-server-bundle.pem
 #         CA at /opt/splunk/etc/auth/splunk-server-ca.pem
 #         server.conf [sslConfig] configured
@@ -73,7 +73,12 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Copy CA certificate
+- name: Check if ca.crt is present in server cert mount
+  stat:
+    path: /mnt/tls/splunk-server-tls-cert/ca.crt
+  register: server_ca_file
+
+- name: Copy CA certificate from secret
   copy:
     src: /mnt/tls/splunk-server-tls-cert/ca.crt
     dest: "{{ splunk.home }}/etc/auth/splunk-server-ca.pem"
@@ -83,6 +88,17 @@
     mode: '0644'
   become: yes
   become_user: "{{ splunk.user }}"
+  when: server_ca_file.stat.exists
+
+- name: Set sslRootCAPath to system bundle when ca.crt is absent
+  set_fact:
+    server_ca_path: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+  when: not server_ca_file.stat.exists
+
+- name: Set sslRootCAPath to secret-provided CA
+  set_fact:
+    server_ca_path: "{{ splunk.home }}/etc/auth/splunk-server-ca.pem"
+  when: server_ca_file.stat.exists
 
 - name: Configure serverCert in server.conf
   ini_file:
@@ -113,7 +129,7 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: sslRootCAPath
-    value: "{{ splunk.home }}/etc/auth/splunk-server-ca.pem"
+    value: "{{ server_ca_path }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   become: yes
