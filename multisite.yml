@@ -13,6 +13,6 @@
         when:
           - splunk.role is defined
         vars:
-          - splunk_install: false
-          - splunk_upgrade: false
-          - first_run: false
+          splunk_install: false
+          splunk_upgrade: false
+          first_run: false
