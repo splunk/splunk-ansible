@@ -1,6 +1,6 @@
 ---
 # Configure Splunk input (S2S) certificate from operator-mounted TLS secret.
-# Input: /mnt/tls/splunk-input-tls-cert/{tls.crt, tls.key, ca.crt}
+# Input: /mnt/tls/splunk-input-tls-cert/{tls.crt, tls.key[, ca.crt]}
 # Output: bundled PEM at /opt/splunk/etc/auth/input-bundle.pem
 #         CA at /opt/splunk/etc/auth/splunk-input-ca.pem
 #         inputs.conf [SSL] configured
@@ -73,7 +73,12 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Copy input CA certificate
+- name: Check if ca.crt is present in input cert mount
+  stat:
+    path: /mnt/tls/splunk-input-tls-cert/ca.crt
+  register: input_ca_file
+
+- name: Copy input CA certificate from secret
   copy:
     src: /mnt/tls/splunk-input-tls-cert/ca.crt
     dest: "{{ splunk.home }}/etc/auth/splunk-input-ca.pem"
@@ -83,6 +88,17 @@
     mode: '0644'
   become: yes
   become_user: "{{ splunk.user }}"
+  when: input_ca_file.stat.exists
+
+- name: Set sslRootCAPath to system bundle when ca.crt is absent
+  set_fact:
+    input_ca_path: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+  when: not input_ca_file.stat.exists
+
+- name: Set sslRootCAPath to secret-provided CA
+  set_fact:
+    input_ca_path: "{{ splunk.home }}/etc/auth/splunk-input-ca.pem"
+  when: input_ca_file.stat.exists
 
 - name: Configure serverCert in inputs.conf [SSL]
   ini_file:
@@ -113,7 +129,7 @@
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: SSL
     option: sslRootCAPath
-    value: "{{ splunk.home }}/etc/auth/splunk-input-ca.pem"
+    value: "{{ input_ca_path }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   become: yes
