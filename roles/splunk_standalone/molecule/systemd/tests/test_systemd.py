@@ -134,5 +134,5 @@ def test_splunkd_systemd_file(host):
     assert f.is_file
     assert f.user == "root"
     assert f.group == "root"
-    assert f.contains('ExecStartPost=/bin/bash -c "chown -R .* /sys/fs/cgroup/cpu/.*"$')
-    assert f.contains('^ExecStartPost=/bin/bash -c "chown -R .* /sys/fs/cgroup/memory/.*"$')
+    assert f.contains('^ExecStartPost=/bin/bash -c "\\[ -f /sys/fs/cgroup/cgroup\\.controllers \\] \\|\\| chown -R .* /sys/fs/cgroup/cpu/.*"$')
+    assert f.contains('^ExecStartPost=/bin/bash -c "\\[ -f /sys/fs/cgroup/cgroup\\.controllers \\] \\|\\| chown -R .* /sys/fs/cgroup/memory/.*"$')
