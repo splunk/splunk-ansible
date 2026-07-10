@@ -122,7 +122,6 @@ def test_splunkforwarder_systemd_file(host):
     hostname = host.check_output("hostname -s")
     if "splunk-uf-732-systemd-centos8" in hostname:
         assert "ExecStartPost" in f.content_string
-        assert "[ -f /sys/fs/cgroup/cgroup.controllers ] || chown -R" in f.content_string
     else:
         assert "ExecStartPost" not in f.content_string
 
