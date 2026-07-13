@@ -15,8 +15,8 @@ Delegate=true
 MemoryLimit=100G
 CPUShares=1024
 PermissionsStartOnly=true
-ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/cpu/system.slice/%n"
-ExecStartPost=/bin/bash -c "chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/memory/system.slice/%n"
+ExecStartPost=/bin/bash -c "[ -f /sys/fs/cgroup/cgroup.controllers ] || chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/cpu/system.slice/%n"
+ExecStartPost=/bin/bash -c "[ -f /sys/fs/cgroup/cgroup.controllers ] || chown -R {{ splunk.user }}:{{ splunk.group }} /sys/fs/cgroup/memory/system.slice/%n"
 
 [Install]
 WantedBy=multi-user.target
