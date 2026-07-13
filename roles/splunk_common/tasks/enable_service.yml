@@ -71,11 +71,11 @@
       - installed_splunk_version[0] is version("8.0.0", ">=")
       - installed_splunk_version[0] is version("8.1.0", "<")
 
-  - name: Remove init.scope pathing
+  - name: Normalize cgroup pathing and skip cgroup v1 chown under cgroup v2
     replace:
       path: "/etc/systemd/system/{{ splunk_service_name }}"
-      regexp: '^(ExecStartPost=.*?)\/init.scope\/(.*)'
-      replace: '\1/\2'
+      regexp: '^(ExecStartPost=.*?\/bin\/bash -c ")(?!\[ -f \/sys\/fs\/cgroup\/cgroup.controllers \] \|\| )(.*?\/sys\/fs\/cgroup(?:(?!\/init\.scope\/).)*)(?:\/init\.scope)?(\/(?:(?!\/init\.scope\/).)*)$'
+      replace: '\1[ -f /sys/fs/cgroup/cgroup.controllers ] || \2\3'
 
 - name: "Reload daemons via systemctl - Linux (systemd)"
   become: yes
