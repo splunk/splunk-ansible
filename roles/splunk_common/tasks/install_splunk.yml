@@ -3,12 +3,12 @@
   file:
     path: "{{ item.path }}"
     state: "absent"
+  when: splunk_target_version not in (item.path | basename)
   ignore_errors: yes
   become: yes
   become_user: "{{ privileged_user }}"
   with_items:
   - "{{ manifests.files }}"
-  when: splunk_upgrade | bool and splunk_preinstall is not defined
 
 - name: Remove old directories
   file:
