@@ -59,11 +59,11 @@
     - "/tmp/splunk.msi"
     - splunk_downloaded_build_location
 
-- name: Remove old manifest file
+- name: Remove old manifest file(s)
   file:
-    dest: "{{ splunk.home }}/{{ splunk_current_manifest }}"
+    dest: "{{ item.path }}"
     state: "absent"
-  ignore_errors: yes
+  when: splunk_target_version not in (item.path | basename)
   become: yes
   become_user: "{{ privileged_user }}"
-  when: splunk_current_manifest is defined and splunk_current_manifest != '0'
+  loop: manifests.files
