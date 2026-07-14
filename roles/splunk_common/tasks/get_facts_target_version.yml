@@ -7,7 +7,7 @@
 # Extracting the numbers from the Splunk installer file name allows us to know the version we are targeting.
 - name: "Set target version fact (file)"
   set_fact:
-    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1') | default('0') }}"
+    splunk_target_version: "{{ splunk.build_location | regex_search(regexp, '\\1') | first | default('0') }}"
   vars:
     regexp: 'splunk\D*?-(\d+\.\d+\.\d+(\.\d+)?)'
   when: "splunk_build_type is defined and splunk_build_type is match('(tgz|msi|rpm|deb)')"
