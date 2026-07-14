@@ -66,4 +66,4 @@
   when: splunk_target_version not in (item.path | basename)
   become: yes
   become_user: "{{ privileged_user }}"
-  loop: manifests.files
+  loop: "{{ manifests.files }}"
