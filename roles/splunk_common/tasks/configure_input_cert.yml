@@ -78,11 +78,76 @@
     path: /mnt/tls/splunk-input-tls-cert/ca.crt
   register: input_ca_file
 
-- name: Copy input CA certificate from secret
+- name: Set sslRootCAPath to system bundle when ca.crt is absent
+  set_fact:
+    input_ca_path: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+  when: not input_ca_file.stat.exists
+
+- name: Write CA trust bundle script
   copy:
-    src: /mnt/tls/splunk-input-tls-cert/ca.crt
-    dest: "{{ splunk.home }}/etc/auth/splunk-input-ca.pem"
-    remote_src: yes
+    dest: /tmp/splunk_build_input_ca_bundle.py
+    content: |
+      # tls.crt from the operator-mounted secret may contain intermediate
+      # certs that are not repeated in ca.crt (e.g. Vault PKI issuers put
+      # only the root in ca.crt). Splunk requires the full chain to be
+      # present locally in sslRootCAPath -- it does not complete the chain
+      # using intermediates presented by the peer during the handshake.
+      # Assemble tls.crt's non-leaf certs + ca.crt into one deduplicated
+      # trust bundle.
+      import sys
+
+      tls_crt_path = '/mnt/tls/splunk-input-tls-cert/tls.crt'
+      ca_crt_path = '/mnt/tls/splunk-input-tls-cert/ca.crt'
+      out_path = sys.argv[1] + '/etc/auth/splunk-input-ca.pem'
+
+      def split_pem_certs(data):
+          certs = []
+          current = []
+          for line in data.splitlines(keepends=True):
+              if line.strip() == b'-----BEGIN CERTIFICATE-----':
+                  current = [line]
+              elif line.strip() == b'-----END CERTIFICATE-----':
+                  current.append(line)
+                  certs.append(b''.join(current))
+                  current = []
+              elif current:
+                  current.append(line)
+          return certs
+
+      with open(tls_crt_path, 'rb') as f:
+          tls_certs = split_pem_certs(f.read())
+      chain_certs = tls_certs[1:]  # drop the leaf; keep any presented intermediates/root
+
+      with open(ca_crt_path, 'rb') as f:
+          ca_certs = split_pem_certs(f.read())
+
+      seen = set()
+      ordered = []
+      for cert in chain_certs + ca_certs:
+          if cert not in seen:
+              seen.add(cert)
+              ordered.append(cert)
+
+      with open(out_path, 'wb') as f:
+          for cert in ordered:
+              f.write(cert)
+              if not cert.endswith(b'\n'):
+                  f.write(b'\n')
+    mode: '0700'
+  when: input_ca_file.stat.exists
+
+- name: Build input CA trust bundle
+  command: >
+    python3 /tmp/splunk_build_input_ca_bundle.py
+    {{ splunk.home }}
+  become: yes
+  become_user: "{{ splunk.user }}"
+  changed_when: true
+  when: input_ca_file.stat.exists
+
+- name: Set CA trust bundle permissions
+  file:
+    path: "{{ splunk.home }}/etc/auth/splunk-input-ca.pem"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     mode: '0644'
@@ -90,12 +155,7 @@
   become_user: "{{ splunk.user }}"
   when: input_ca_file.stat.exists
 
-- name: Set sslRootCAPath to system bundle when ca.crt is absent
-  set_fact:
-    input_ca_path: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-  when: not input_ca_file.stat.exists
-
-- name: Set sslRootCAPath to secret-provided CA
+- name: Set sslRootCAPath to the assembled CA trust bundle
   set_fact:
     input_ca_path: "{{ splunk.home }}/etc/auth/splunk-input-ca.pem"
   when: input_ca_file.stat.exists
@@ -129,6 +189,21 @@
     dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
     section: SSL
     option: sslRootCAPath
+    value: "{{ input_ca_path }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+# enable_s2s.yml (legacy S2S flow) may have already written the deprecated
+# rootCA key to this same [SSL] stanza, pointing at $SPLUNK_HOME/etc/auth/cacert.pem
+# regardless of the operator-mounted cert. Overwrite it here so the two SSL
+# trust settings in inputs.conf agree.
+- name: Configure rootCA in inputs.conf [SSL] to match sslRootCAPath
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/inputs.conf"
+    section: SSL
+    option: rootCA
     value: "{{ input_ca_path }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
