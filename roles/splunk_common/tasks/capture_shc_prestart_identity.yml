@@ -1,16 +1,17 @@
 ---
-- name: Read existing SHC configuration before defaults are reconciled
-  command:
-    argv:
-      - "{{ splunk.exec }}"
-      - "btool"
-      - "server"
-      - "list"
-      - "shclustering"
-      - "--no-log"
-  register: shc_prestart_existing_btool
+- name: Inspect the existing local server configuration
+  stat:
+    path: "{{ splunk.home }}/etc/system/local/server.conf"
+  register: shc_prestart_existing_server_conf_stat
   changed_when: false
-  failed_when: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Read the existing local server configuration
+  slurp:
+    src: "{{ splunk.home }}/etc/system/local/server.conf"
+  register: shc_prestart_existing_server_conf
+  when: shc_prestart_existing_server_conf_stat.stat.exists
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: true
@@ -20,7 +21,11 @@
     shc_prestart_cluster_id: >-
       {{
         (
-          shc_prestart_existing_btool.stdout
+          (
+            shc_prestart_existing_server_conf.content
+            | default("")
+            | b64decode
+          )
           | default("")
           | regex_findall("(?m)^id\\s*=\\s*([^\\r\\n]+?)\\s*$")
           | first
