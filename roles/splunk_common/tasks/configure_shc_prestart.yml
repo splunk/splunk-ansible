@@ -4,6 +4,7 @@
     shc_prestart_mgmt_uri: "{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}"
     shc_prestart_deployer_uri: "{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}"
     shc_prestart_server_conf: "{{ splunk.home }}/etc/system/local/server.conf"
+    shc_prestart_defer_initial_restart: "{{ first_run | bool }}"
 
 - name: Validate pre-start SHC configuration inputs
   assert:
