@@ -141,6 +141,12 @@
     - splunk.role != "splunk_universal_forwarder"
     - splunk.cloud_build
 
+- include_tasks: configure_shc_prestart.yml
+  when:
+    - splunk.role == "splunk_search_head" or splunk.role == "splunk_search_head_captain"
+    - splunk_search_head_cluster | bool
+    - splunk.shc.prestart_config | default(false) | bool
+
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml

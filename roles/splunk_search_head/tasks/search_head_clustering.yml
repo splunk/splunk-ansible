@@ -15,6 +15,7 @@
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
+  when: not (splunk.shc.prestart_config | default(false) | bool)
 
 - name: Set desired preferred captaincy
   splunk_api:
@@ -40,6 +41,7 @@
 
 - name: Flush restart handlers
   meta: flush_handlers
+  when: not (splunk.shc.prestart_config | default(false) | bool)
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_process.yml
 

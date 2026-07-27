@@ -537,6 +537,11 @@ splunk:
   * Default: true
 
   shc:
+    prestart_config: <bool>
+    * Experimental feature flag that writes a fresh Search Head member's SHC configuration before the first Splunk start and skips repeated `init shcluster-config` calls.
+    * Existing persistent members are validated but their SHC identity and generated cluster `id` are not rewritten.
+    * Default: false
+
     label: <str>
     * Provide a label for search head clustering configuration
     * Default: shc_label

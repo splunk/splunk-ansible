@@ -149,6 +149,8 @@ def test_getIndexerClustering(default_yml, os_env, output):
                 ({}, {"SPLUNK_SHC_SECRET": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": "abcd", "replication_factor": 1}),
                 ({}, {"SPLUNK_SHC_PASS4SYMMKEY": "abcd"}, {"pass4SymmKey": "abcd", "label": None, "secret": "abcd", "replication_factor": 1}),
                 ({}, {"SPLUNK_SHC_REPLICATION_FACTOR": "2"}, {"pass4SymmKey": None, "label": None, "secret": None, "replication_factor": 2}),
+                ({}, {"SPLUNK_SHC_PRESTART_CONFIG": "true"}, {"pass4SymmKey": None, "label": None, "prestart_config": True, "secret": None, "replication_factor": 1}),
+                ({}, {"SPLUNK_SHC_PRESTART_CONFIG": "false"}, {"pass4SymmKey": None, "label": None, "prestart_config": False, "secret": None, "replication_factor": 1}),
                 # Check the union combination of default.yml + environment variables and order of precedence when overwriting
                 ({"shc": {"label": "1234"}}, {"SPLUNK_SHC_LABEL": "abcd"}, {"pass4SymmKey": None, "label": "abcd", "secret": None, "replication_factor": 1}),
                 ({"shc": {"secret": "abcd"}}, {"SPLUNK_SHC_SECRET": "1234"}, {"pass4SymmKey": "1234", "label": None, "secret": "1234", "replication_factor": 1}),
@@ -163,6 +165,13 @@ def test_getSearchHeadClustering(default_yml, os_env, output):
             environ.getSearchHeadClustering(vars_scope)
     assert type(vars_scope["splunk"]["shc"]) == dict
     assert vars_scope["splunk"]["shc"] == output
+
+def test_getSearchHeadClustering_rejects_invalid_prestart_config():
+    vars_scope = {"splunk": {}}
+    with patch("environ.inventory", {"splunk_search_head": {"hosts": ["a", "b"]}}):
+        with patch("os.environ", new={"SPLUNK_SHC_PRESTART_CONFIG": "sometimes"}):
+            with pytest.raises(Exception, match="must be true or false"):
+                environ.getSearchHeadClustering(vars_scope)
 
 @pytest.mark.parametrize(("sites", "result"),
             [

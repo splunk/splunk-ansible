@@ -246,6 +246,11 @@ def getSearchHeadClustering(vars_scope):
         vars_scope["splunk"]["shc"] = {}
     shc_vars = vars_scope["splunk"]["shc"]
     shc_vars["label"] = os.environ.get("SPLUNK_SHC_LABEL", shc_vars.get("label"))
+    prestart_config = os.environ.get("SPLUNK_SHC_PRESTART_CONFIG")
+    if prestart_config is not None:
+        if prestart_config.lower() not in ("true", "false"):
+            raise Exception("SPLUNK_SHC_PRESTART_CONFIG must be true or false")
+        shc_vars["prestart_config"] = prestart_config.lower() == "true"
     shc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_SHC_PASS4SYMMKEY", shc_vars.get("pass4SymmKey")) # Control flow for issue #316 backwards-compatibility
     if shc_vars["pass4SymmKey"]:
         shc_vars["secret"] = shc_vars["pass4SymmKey"]
