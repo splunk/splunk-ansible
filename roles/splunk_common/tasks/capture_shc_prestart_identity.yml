@@ -1,0 +1,31 @@
+---
+- name: Read existing SHC configuration before defaults are reconciled
+  command:
+    argv:
+      - "{{ splunk.exec }}"
+      - "btool"
+      - "server"
+      - "list"
+      - "shclustering"
+      - "--no-log"
+  register: shc_prestart_existing_btool
+  changed_when: false
+  failed_when: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
+- name: Preserve the existing SHC cluster identity
+  set_fact:
+    shc_prestart_cluster_id: >-
+      {{
+        (
+          shc_prestart_existing_btool.stdout
+          | default("")
+          | regex_findall("(?m)^id\\s*=\\s*([^\\r\\n]+?)\\s*$")
+          | first
+        )
+        | default("")
+        | trim
+      }}
+  no_log: true
