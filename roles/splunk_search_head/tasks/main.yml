@@ -74,3 +74,7 @@
     - splunk.dfs.enable | bool
 
 - include_tasks: ../../../roles/splunk_common/tasks/check_for_required_restarts.yml
+  when:
+    - not (splunk_search_head_cluster | bool and
+           first_run | bool and
+           splunk.shc.prestart_config | default(false) | bool)
