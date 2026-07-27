@@ -1,6 +1,12 @@
 ---
 - include_tasks: get_facts.yml
 
+- include_tasks: capture_shc_prestart_identity.yml
+  when:
+    - splunk.role == "splunk_search_head" or splunk.role == "splunk_search_head_captain"
+    - splunk_search_head_cluster | bool
+    - splunk.shc.prestart_config | default(false) | bool
+
 - include_tasks: install_python_requirements.yml
 
 - include_tasks: change_splunk_directory_owner.yml
@@ -115,12 +121,6 @@
   when:
     - "'connection_timeout' in splunk and splunk.connection_timeout"
     - splunk.connection_timeout | int > 0
-
-- include_tasks: capture_shc_prestart_identity.yml
-  when:
-    - splunk.role == "splunk_search_head" or splunk.role == "splunk_search_head_captain"
-    - splunk_search_head_cluster | bool
-    - splunk.shc.prestart_config | default(false) | bool
 
 - include_tasks: set_config_file.yml
   vars:
