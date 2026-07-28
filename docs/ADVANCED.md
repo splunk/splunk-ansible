@@ -55,7 +55,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_SHC_PASS4SYMMKEY | Password for the Search Head Clustering shared secret | no | yes | no |
 | SPLUNK_SHC_LABEL | Search head clustering label | no | yes | no |
 | SPLUNK_SHC_REPLICATION_FACTOR | Configure search head clustering replication factor | no | no | no |
-| SPLUNK_SHC_PRESTART_CONFIG | Experimental: initialize a fresh Search Head member's writable `server.conf` before the first Splunk start and skip repeated `init shcluster-config` calls. Defaults to `false`. | no | no | no |
+| SPLUNK_SHC_PRESTART_CONFIG | Experimental: reconcile Search Head member-local SHC settings in writable `server.conf` before each Splunk start and skip `init shcluster-config`. Splunk remains responsible for generated cluster identity and live membership. Defaults to `false`. | no | no | no |
 | SPLUNK_PREFERRED_CAPTAINCY | Set up search head clustering with preferred captaincy, typically pinned to the instance designated as `splunk_search_head_captain` | no | no | no |
 | SPLUNK_IDXC_SECRET | Indexer Clustering shared Secret (deprecated in favor of `SPLUNK_SHC_PASS4SYMMKEY`) | no | no | no |
 | SPLUNK_IDXC_PASS4SYMMKEY | Password for the Indexer Clustering shared Secret | no | no | yes |
