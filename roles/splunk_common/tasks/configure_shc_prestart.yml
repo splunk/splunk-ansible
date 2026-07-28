@@ -83,22 +83,6 @@
       become_user: "{{ splunk.user }}"
       when: splunk.shc.label | default("") | length > 0
 
-    - name: Restore the existing SHC cluster identity
-      ini_file:
-        path: "{{ shc_prestart_server_conf }}"
-        section: "shclustering"
-        option: "id"
-        value: "{{ shc_prestart_cluster_id }}"
-        allow_no_value: false
-        state: present
-        mode: 0660
-        owner: "{{ splunk.user }}"
-        group: "{{ splunk.group }}"
-      become: yes
-      become_user: "{{ splunk.user }}"
-      when: shc_prestart_cluster_id | default("") | length > 0
-      no_log: true
-
     - name: Write the pre-start SHC replication port
       lineinfile:
         path: "{{ shc_prestart_server_conf }}"
@@ -150,7 +134,6 @@
       - ("conf_deploy_fetch_url = " ~ shc_prestart_deployer_uri) in shc_prestart_btool.stdout
       - (shc_prestart_btool.stdout | regex_search("(?m)^pass4SymmKey\\s*=\\s*\\S+\\s*$")) is not none
       - splunk.shc.label | default("") | length == 0 or ("shcluster_label = " ~ splunk.shc.label) in shc_prestart_btool.stdout
-      - shc_prestart_cluster_id | default("") | length == 0 or ("id = " ~ shc_prestart_cluster_id) in shc_prestart_btool.stdout
       - ("[replication_port://" ~ (splunk.shc.replication_port | string) ~ "]") in shc_prestart_replication_port_btool.stdout
     fail_msg: "Effective pre-start SHC configuration does not match the requested member identity."
   no_log: true
