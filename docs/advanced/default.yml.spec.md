@@ -538,7 +538,7 @@ splunk:
 
   shc:
     prestart_config: <bool>
-    * Experimental feature flag that reconciles Search Head member-local SHC configuration before each Splunk start and skips `init shcluster-config`.
+    * Experimental feature flag that reconciles Search Head member-local SHC and primary indexer-cluster peering configuration before each Splunk start. It skips `init shcluster-config` and the equivalent post-start primary cluster-manager peering command.
     * Fresh and retained persistent members receive the same desired member-local settings. Generated cluster `id`, Raft state, and live membership remain Splunk-managed and are not written by Ansible.
     * During initial cluster formation, restarts requested by live SHC bootstrap are deferred to Kubernetes lifecycle orchestration so that the nascent captain is not stopped before all members join.
     * Default: false

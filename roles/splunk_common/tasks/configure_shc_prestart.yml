@@ -3,6 +3,13 @@
   set_fact:
     shc_prestart_mgmt_uri: "{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}"
     shc_prestart_deployer_uri: "{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}"
+    shc_prestart_cluster_manager_uri: "{{ cert_prefix }}://{{ splunk.cluster_master_url | default('') }}:{{ splunk.svc_port }}"
+    shc_prestart_indexer_peer_enabled: >-
+      {{
+        (splunk_indexer_cluster | bool)
+        and (splunk.multisite_master is not defined)
+        and (splunk.set_search_peers | default(false) | bool)
+      }}
     shc_prestart_server_conf: "{{ splunk.home }}/etc/system/local/server.conf"
     shc_prestart_defer_initial_restart: "{{ first_run | bool }}"
 
@@ -21,6 +28,15 @@
       - splunk.shc.replication_port | int != splunk.s2s.port | int
       - splunk.shc.replication_port | int != splunk.kvstore.port | int
     fail_msg: "Pre-start SHC configuration requires valid, non-conflicting endpoints, ports, replication factor, and shared secret."
+  no_log: true
+
+- name: Validate pre-start indexer-cluster peering inputs
+  assert:
+    that:
+      - splunk.cluster_master_url | default("") | length > 0
+      - splunk.idxc.pass4SymmKey | default("") | length > 0
+    fail_msg: "Pre-start indexer-cluster peering requires a cluster manager endpoint and shared secret."
+  when: shc_prestart_indexer_peer_enabled | bool
   no_log: true
 
 - name: Configure the SHC member before Splunk starts
@@ -95,6 +111,29 @@
       become: yes
       become_user: "{{ splunk.user }}"
 
+    - name: Write pre-start indexer-cluster peering configuration
+      ini_file:
+        path: "{{ shc_prestart_server_conf }}"
+        section: "clustering"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        allow_no_value: false
+        state: present
+        mode: 0660
+        owner: "{{ splunk.user }}"
+        group: "{{ splunk.group }}"
+      loop:
+        - option: "mode"
+          value: "searchhead"
+        - option: "master_uri"
+          value: "{{ shc_prestart_cluster_manager_uri }}"
+        - option: "pass4SymmKey"
+          value: "{{ splunk.idxc.pass4SymmKey }}"
+      when: shc_prestart_indexer_peer_enabled | bool
+      become: yes
+      become_user: "{{ splunk.user }}"
+      no_log: true
+
 - name: Read effective pre-start SHC configuration
   command:
     argv:
@@ -125,6 +164,22 @@
   become_user: "{{ splunk.user }}"
   no_log: true
 
+- name: Read effective pre-start indexer-cluster peering configuration
+  command:
+    argv:
+      - "{{ splunk.exec }}"
+      - "btool"
+      - "server"
+      - "list"
+      - "clustering"
+      - "--no-log"
+  register: shc_prestart_indexer_peer_btool
+  changed_when: false
+  when: shc_prestart_indexer_peer_enabled | bool
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
 - name: Validate effective pre-start SHC configuration
   assert:
     that:
@@ -137,3 +192,18 @@
       - ("[replication_port://" ~ (splunk.shc.replication_port | string) ~ "]") in shc_prestart_replication_port_btool.stdout
     fail_msg: "Effective pre-start SHC configuration does not match the requested member identity."
   no_log: true
+
+- name: Validate effective pre-start indexer-cluster peering configuration
+  assert:
+    that:
+      - (shc_prestart_indexer_peer_btool.stdout | regex_search("(?m)^mode\\s*=\\s*searchhead\\s*$")) is not none
+      - ("master_uri = " ~ shc_prestart_cluster_manager_uri) in shc_prestart_indexer_peer_btool.stdout
+      - (shc_prestart_indexer_peer_btool.stdout | regex_search("(?m)^pass4SymmKey\\s*=\\s*\\S+\\s*$")) is not none
+    fail_msg: "Effective pre-start indexer-cluster peering configuration does not match the requested cluster manager."
+  when: shc_prestart_indexer_peer_enabled | bool
+  no_log: true
+
+- name: Record declarative indexer-cluster peering
+  set_fact:
+    shc_prestart_indexer_peer_configured: true
+  when: shc_prestart_indexer_peer_enabled | bool

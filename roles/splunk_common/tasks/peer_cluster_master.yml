@@ -2,13 +2,17 @@
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ splunk.cluster_master_url }}"
+  when:
+    - not (shc_prestart_indexer_peer_configured | default(false) | bool) or (splunk.auxiliary_cluster_masters | default([]) | length > 0)
 
 # http://docs.splunk.com/Documentation/Splunk/latest/DistSearch/SHCandindexercluster#Integrate_with_a_single-site_indexer_cluster
 - name: Peer cluster master TCP
   command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: not uds_enabled | bool
+  when:
+    - not uds_enabled | bool
+    - not (shc_prestart_indexer_peer_configured | default(false) | bool)
   register: peer_cluster_master
   until: peer_cluster_master.rc == 0 or "Cannot edit this searchhead" in peer_cluster_master.stderr
   changed_when: peer_cluster_master.rc == 0
@@ -24,7 +28,9 @@
   command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri http+unix://{{ splunk.uds_socket_path_url }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: uds_enabled | bool
+  when:
+    - uds_enabled | bool
+    - not (shc_prestart_indexer_peer_configured | default(false) | bool)
   register: peer_cluster_master
   until: peer_cluster_master.rc == 0 or "Cannot edit this searchhead" in peer_cluster_master.stderr
   changed_when: peer_cluster_master.rc == 0
