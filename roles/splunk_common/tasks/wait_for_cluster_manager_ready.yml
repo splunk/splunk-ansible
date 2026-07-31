@@ -1,0 +1,24 @@
+---
+# Confirms the cluster manager has actually finished initializing as a
+# manager (not just that its management port is reachable) before this
+# search head attempts to join it. wait_for_splunk_instance.yml only
+# checks that some HTTP response comes back, which succeeds even while
+# the splunk_cluster_master role's own mode-switch restart is still in
+# progress. This polls the same /services/cluster/master/info endpoint
+# that `edit cluster-config` itself depends on internally, so the join
+# is only attempted once it can actually succeed.
+- name: Wait for cluster manager to be ready
+  uri:
+    url: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}/services/cluster/master/info?output_mode=json"
+    method: GET
+    user: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    force_basic_auth: yes
+    validate_certs: false
+    use_proxy: no
+    status_code: [200]
+  register: cluster_manager_ready
+  until: cluster_manager_ready.status == 200
+  retries: "{{ wait_for_splunk_retry_num }}"
+  delay: "{{ retry_delay }}"
+  no_log: "{{ hide_password }}"

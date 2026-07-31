@@ -3,6 +3,15 @@
   vars:
     splunk_instance_address: "{{ splunk.cluster_master_url }}"
 
+# wait_for_splunk_instance.yml above only confirms the cluster manager's
+# management port answers HTTP; it can return 200 while the manager is
+# still mid-restart from its own `edit cluster-config -mode manager` call
+# and not yet accepting peer/searchhead registrations. Wait for the
+# cluster-specific endpoint to be ready too, so the join below isn't
+# attempted against a manager that can't yet service it.
+- include_tasks: ../../../roles/splunk_common/tasks/wait_for_cluster_manager_ready.yml
+  when: not uds_enabled | bool
+
 # http://docs.splunk.com/Documentation/Splunk/latest/DistSearch/SHCandindexercluster#Integrate_with_a_single-site_indexer_cluster
 - name: Peer cluster master TCP
   command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri {{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
