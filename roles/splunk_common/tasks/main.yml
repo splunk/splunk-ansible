@@ -53,6 +53,16 @@
 - include_tasks: set_general_symmkey_password.yml
   when: "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
 
+# Write [noahService] pass4SymmKey before enable_admin_auth so that splunk cmd splunkd rest
+# sees consistent pass4SymmKey values in both [general] and [noahService] and does not abort.
+- include_tasks: set_noah_symmkey_password.yml
+  when:
+    - "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
+    - "'conf' in splunk and splunk.conf"
+    - "splunk.conf.server is defined"
+    - "splunk.conf.server.content is defined"
+    - "splunk.conf.server.content.noahService is defined"
+
 - include_tasks: enable_admin_auth.yml
 
 - include_tasks: configure_mgmt_port.yml
@@ -144,3 +154,6 @@
 
 - include_tasks: set_server_name.yml
   when: "'server_name' in splunk and splunk.server_name is not none"
+
+- include_tasks: set_noah_advertised_addr.yml
+  when: "'noah_advertised_addr' in splunk and splunk.noah_advertised_addr is not none"
