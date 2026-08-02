@@ -1,6 +1,15 @@
 SHELL := /bin/bash
+SHC_LINT_VENV ?= .venv-shc-lint
+SHC_LINT_PYTHON_BIN ?= python3
+SHC_ANSIBLE_LINT := $(SHC_LINT_VENV)/bin/ansible-lint
+SHC_ANSIBLE_PLAYBOOK := $(SHC_LINT_VENV)/bin/ansible-playbook
+SHC_LINT_PYTHON := $(SHC_LINT_VENV)/bin/python
+SHC_LINT_FILES := \
+	roles/splunk_common/tasks/configure_shc_prestart.yml \
+	roles/splunk_common/tasks/peer_cluster_master.yml \
+	roles/splunk_search_head/tasks/search_head_clustering.yml
 
-.PHONY: tests 
+.PHONY: tests shc-check shc-lint shc-unit-test shc-lint-setup shc-lint-clean
 
 test-setup:
 	@echo 'Install test requirements'
@@ -10,6 +19,24 @@ test-setup:
 py3k-test-setup:
 	pip3 install --upgrade pip
 	pip3 install -r $(shell pwd)/tests/requirements.txt --upgrade
+
+$(SHC_ANSIBLE_LINT): tests/requirements-shc-lint.txt
+	"$(SHC_LINT_PYTHON_BIN)" -m venv "$(SHC_LINT_VENV)"
+	"$(SHC_LINT_PYTHON)" -m pip install -r tests/requirements-shc-lint.txt
+
+shc-lint-setup: $(SHC_ANSIBLE_LINT)
+
+shc-lint: shc-lint-setup
+	"$(SHC_ANSIBLE_LINT)" -v -c ./tests/ansible-lint-shc.cfg $(SHC_LINT_FILES)
+	"$(SHC_ANSIBLE_PLAYBOOK)" --syntax-check -i 'localhost,' site.yml
+
+shc-unit-test: shc-lint-setup
+	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_environ.py -k SearchHeadClustering
+
+shc-check: shc-lint shc-unit-test
+
+shc-lint-clean:
+	rm -rf "$(SHC_LINT_VENV)"
 
 lint: test-setup
 	ansible-lint -v -c ./tests/ansible-lint.cfg site.yml roles/**/**/*.yml roles/**/**/**/*.yml

@@ -1,0 +1,8 @@
+# Reproduces the legacy numeric lint rules and focused SHC unit-test environment.
+# Keep this isolated from the runtime Ansible version used by Docker-Splunk.
+ansible==5.10.0
+ansible-lint==4.3.7
+mock==5.1.0
+pytest==7.4.4
+requests==2.31.0
+rich==9.13.0

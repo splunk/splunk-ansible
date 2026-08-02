@@ -24,3 +24,4 @@ test*.xml
 .pytest_cache
 version.txt
 env
+.venv-shc-lint/
