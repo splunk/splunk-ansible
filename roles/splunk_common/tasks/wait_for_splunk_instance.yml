@@ -5,11 +5,17 @@
   uri:
     url: "{{ scheme | default(cert_prefix) }}://{{ splunk_instance_address }}:{{ port | default(splunk.svc_port) }}"
     method: GET
+    # The management root can require authentication.  A 401 response proves
+    # that splunkd is accepting requests and is therefore a successful liveness
+    # observation for this unauthenticated dependency check.
+    status_code:
+      - 200
+      - 401
     validate_certs: false
     use_proxy: no
   register: task_response
   until:
-    - task_response.status == 200
+    - task_response.status in [200, 401]
   retries: "{{ wait_for_splunk_retry_num }}"
   delay: "{{ retry_delay }}"
   ignore_errors: true
