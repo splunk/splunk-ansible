@@ -7,6 +7,7 @@ SHC_LINT_PYTHON := $(SHC_LINT_VENV)/bin/python
 SHC_LINT_FILES := \
 	roles/splunk_common/tasks/configure_shc_prestart.yml \
 	roles/splunk_common/tasks/peer_cluster_master.yml \
+	roles/splunk_common/tasks/start_splunk.yml \
 	roles/splunk_search_head/tasks/search_head_clustering.yml
 
 .PHONY: tests shc-check shc-lint shc-unit-test shc-lint-setup shc-lint-clean
@@ -32,6 +33,7 @@ shc-lint: shc-lint-setup
 
 shc-unit-test: shc-lint-setup
 	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_environ.py -k SearchHeadClustering
+	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_start_splunk_tasks.py
 
 shc-check: shc-lint shc-unit-test
 

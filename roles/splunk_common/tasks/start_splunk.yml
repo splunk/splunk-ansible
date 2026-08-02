@@ -25,10 +25,26 @@
     command: "{{ splunk.exec }} start --accept-license --answer-yes --no-prompt"
     register: start_splunk
     changed_when: start_splunk.rc == 0 and 'already running' not in start_splunk.stdout
+    failed_when: false
     when: not splunk.enable_service
-    until: start_splunk.rc == 0
-    retries: 5
-    delay: 10
+    become: yes
+    become_user: "{{ splunk.user }}"
+
+  # A failed `splunk start` can leave splunkd and mongod running while Splunk
+  # completes a slow KV Store startup. Reissuing `splunk start` in that state
+  # turns the live KV Store listener into a false port-conflict failure. Poll
+  # the process started by the first command instead of starting it again.
+  - name: "Wait for Splunk after a non-zero CLI start"
+    command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+    register: start_splunk_status
+    changed_when: false
+    failed_when: false
+    until: start_splunk_status.rc == 0
+    retries: "{{ wait_for_splunk_retry_num }}"
+    delay: "{{ retry_delay }}"
+    when:
+      - not splunk.enable_service
+      - start_splunk.rc | default(0) != 0
     become: yes
     become_user: "{{ splunk.user }}"
 
