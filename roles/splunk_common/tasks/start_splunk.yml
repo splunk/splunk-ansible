@@ -38,7 +38,7 @@
     command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
     register: start_splunk_status
     changed_when: false
-    failed_when: false
+    failed_when: start_splunk_status.rc != 0
     until: start_splunk_status.rc == 0
     retries: "{{ wait_for_splunk_retry_num }}"
     delay: "{{ retry_delay }}"

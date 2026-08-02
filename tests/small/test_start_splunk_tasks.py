@@ -44,5 +44,6 @@ def test_nonzero_start_waits_for_the_existing_process():
         "start_splunk.rc | default(0) != 0",
     ]
     assert task["until"] == "start_splunk_status.rc == 0"
+    assert task["failed_when"] == "start_splunk_status.rc != 0"
     assert task["retries"] == "{{ wait_for_splunk_retry_num }}"
     assert task["delay"] == "{{ retry_delay }}"
