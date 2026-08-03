@@ -3,13 +3,13 @@
   set_fact:
     splunk_search_head_captain: false
 
-- name: Determine captaincy
+- name: Extract subdomain from hostname
   set_fact:
-    splunk_search_head_captain: true
-  when: ansible_hostname == splunk.search_head_captain_url or
-        ansible_fqdn == splunk.search_head_captain_url or
-        splunk.hostname == splunk.search_head_captain_url or
-        splunk.role == "splunk_search_head_captain"
+    splunk_hostname_subdomain: "{{ splunk.hostname.split('.')[0] }}"
+
+- name: Splunk FQDN hostname with mesh endpoint
+  set_fact:
+    splunk_hostname_mesh: "{{ splunk.hostname | replace('cluster.local','mesh.sfdc.net') }}"
 
 - include_tasks: search_head_clustering.yml
   when:
