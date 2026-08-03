@@ -488,6 +488,10 @@ splunk:
     * Determine the secret used to enable indexer discovery (for any forwarding clients connecting to the cluster master). This is pass4SymmKey in the `[indexer_discovery]` stanza of server.conf.
     * Default: null
 
+    register_search_address: <str>
+    * Register the host or IP that clustered Search Heads use to contact this indexer. The value is written to `server.conf/[clustering]/register_search_address` before Splunk starts.
+    * Default: null
+
   multisite_master:
   * Specify the location of the multisite cluster
   * Default: null

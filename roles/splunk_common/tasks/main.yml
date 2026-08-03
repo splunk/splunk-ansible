@@ -147,6 +147,12 @@
     - splunk_search_head_cluster | bool
     - splunk.shc.prestart_config | default(false) | bool
 
+- include_tasks: configure_indexer_search_address_prestart.yml
+  when:
+    - splunk.role == "splunk_indexer"
+    - splunk_indexer_cluster | bool
+    - splunk.idxc.register_search_address | default("") | length > 0
+
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml

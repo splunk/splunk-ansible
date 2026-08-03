@@ -5,6 +5,7 @@ SHC_ANSIBLE_LINT := $(SHC_LINT_VENV)/bin/ansible-lint
 SHC_ANSIBLE_PLAYBOOK := $(SHC_LINT_VENV)/bin/ansible-playbook
 SHC_LINT_PYTHON := $(SHC_LINT_VENV)/bin/python
 SHC_LINT_FILES := \
+	roles/splunk_common/tasks/configure_indexer_search_address_prestart.yml \
 	roles/splunk_common/tasks/configure_shc_prestart.yml \
 	roles/splunk_common/tasks/peer_cluster_master.yml \
 	roles/splunk_common/tasks/start_splunk.yml \
@@ -32,7 +33,8 @@ shc-lint: shc-lint-setup
 	"$(SHC_ANSIBLE_PLAYBOOK)" --syntax-check -i 'localhost,' site.yml
 
 shc-unit-test: shc-lint-setup
-	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_environ.py -k SearchHeadClustering
+	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_environ.py -k 'SearchHeadClustering or IndexerClustering'
+	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_indexer_search_address_tasks.py
 	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_start_splunk_tasks.py
 
 shc-check: shc-lint shc-unit-test

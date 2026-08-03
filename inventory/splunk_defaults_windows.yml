@@ -96,6 +96,7 @@ splunk:
         replication_factor: 3
         replication_port: 9887
         replication_ssl: False
+        register_search_address:
     multisite_replication_factor_origin: 2
     multisite_replication_factor_total: 3
     multisite_replication_factor_sites:

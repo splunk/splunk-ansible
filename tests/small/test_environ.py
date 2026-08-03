@@ -125,6 +125,36 @@ def test_getIndexerClustering(default_yml, os_env, output):
     assert type(vars_scope["splunk"]["idxc"]) == dict
     assert vars_scope["splunk"]["idxc"] == output
 
+@pytest.mark.parametrize(("configured", "expected"),
+                         [
+                             ("indexer-0.indexer-headless.splunk.svc.cluster.local",
+                              "indexer-0.indexer-headless.splunk.svc.cluster.local"),
+                             ("10.0.0.10", "10.0.0.10"),
+                             ("", ""),
+                         ])
+def test_getIndexerClustering_register_search_address(configured, expected):
+    vars_scope = {"splunk": {}}
+    with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}):
+        with patch("os.environ", new={"SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS": configured}):
+            environ.getIndexerClustering(vars_scope)
+    assert vars_scope["splunk"]["idxc"]["register_search_address"] == expected
+
+def test_getIndexerClustering_register_search_address_auto_uses_fqdn():
+    vars_scope = {"splunk": {}}
+    with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}):
+        with patch("os.environ", new={"SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS": "auto"}):
+            with patch("environ.socket.getfqdn", return_value="indexer-0.indexer-headless.splunk.svc.cluster.local"):
+                environ.getIndexerClustering(vars_scope)
+    assert vars_scope["splunk"]["idxc"]["register_search_address"] == \
+        "indexer-0.indexer-headless.splunk.svc.cluster.local"
+
+def test_getIndexerClustering_register_search_address_default_can_be_overridden():
+    vars_scope = {"splunk": {"idxc": {"register_search_address": "configured.example"}}}
+    with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}):
+        with patch("os.environ", new={"SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS": "override.example"}):
+            environ.getIndexerClustering(vars_scope)
+    assert vars_scope["splunk"]["idxc"]["register_search_address"] == "override.example"
+
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [
                 # Check null parameters

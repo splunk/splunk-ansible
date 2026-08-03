@@ -1,0 +1,44 @@
+---
+- name: Validate the registered indexer search address
+  assert:
+    that:
+      - splunk.idxc.register_search_address | length <= 253
+      - splunk.idxc.register_search_address is not search("\\s")
+      - "'://' not in splunk.idxc.register_search_address"
+    fail_msg: "The indexer search address must be a host or IP address without a scheme, port, or whitespace."
+
+- name: Configure the stable indexer search address before Splunk starts
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "clustering"
+    option: "register_search_address"
+    value: "{{ splunk.idxc.register_search_address }}"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Read the effective registered indexer search address
+  command:
+    argv:
+      - "{{ splunk.exec }}"
+      - "btool"
+      - "server"
+      - "list"
+      - "clustering"
+      - "--no-log"
+  register: indexer_search_address_btool
+  changed_when: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Verify the effective registered indexer search address
+  assert:
+    that:
+      - >-
+        ('register_search_address = ' ~ splunk.idxc.register_search_address)
+        in indexer_search_address_btool.stdout
+    fail_msg: "The effective Splunk configuration does not contain the requested indexer search address."

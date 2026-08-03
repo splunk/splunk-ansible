@@ -63,6 +63,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_IDXC_LABEL | Indexer clustering label | no | no | yes |
 | SPLUNK_IDXC_REPLICATION_FACTOR | Configure indexer clustering data replication factor | no | no | no |
 | SPLUNK_IDXC_SEARCH_FACTOR | Configure indexer clustering search factor | no | no | no |
+| SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS | Register the address that clustered Search Heads use to contact this indexer. Set an explicit reachable host/IP, or `auto` to use `SPLUNK_HOSTNAME` and then the system FQDN. The value is written before Splunk starts. | no | no | no |
 | SPLUNK_OPT | Location where Splunk Enterprise will be installed (not recommended to change). Default: `/opt` | no | no | no |
 | SPLUNK_HOME | Location of Splunk Enterprise home directory (not recommended to change). Default: `/opt/splunk` | no | no | no |
 | SPLUNK_EXEC | Location of Splunk Enterprise executable (not recommended to change). Default: `/opt/splunk/bin/splunk` | no | no | no |
