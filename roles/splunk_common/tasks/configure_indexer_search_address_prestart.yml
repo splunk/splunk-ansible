@@ -56,7 +56,11 @@
 - name: Classify the effective indexer search address
   set_fact:
     indexer_search_address_exists: >-
-      {{ 'register_search_address =' in indexer_search_address_before.stdout }}
+      {{
+        indexer_search_address_before.stdout_lines |
+          select('match', '^register_search_address = .+$') |
+          list | length > 0
+      }}
     indexer_search_address_owned: >-
       {{
         indexer_search_address_marker_before.stat.exists and
@@ -64,7 +68,7 @@
         (
           'register_search_address = ' ~
             indexer_search_address_marker_value
-        ) in indexer_search_address_before.stdout
+        ) in indexer_search_address_before.stdout_lines
       }}
 
 - name: Select stable indexer search-address action
@@ -76,8 +80,7 @@
           indexer_search_address_mode == 'auto' and
           (
             indexer_search_address_owned or
-            'register_search_address =' not in
-              indexer_search_address_before.stdout
+            not indexer_search_address_exists
           )
         )
       }}
@@ -158,7 +161,7 @@
     that:
       - >-
         ('register_search_address = ' ~ splunk.idxc.register_search_address)
-        in indexer_search_address_btool.stdout
+        in indexer_search_address_btool.stdout_lines
     fail_msg: "The effective Splunk configuration does not contain the requested indexer search address."
   when:
     - indexer_search_address_mode != "absent"

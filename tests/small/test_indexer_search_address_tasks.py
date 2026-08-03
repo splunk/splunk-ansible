@@ -44,7 +44,7 @@ def test_automatic_value_preserves_unmanaged_effective_configuration():
     expression = action["set_fact"]["indexer_search_address_should_manage"]
     assert "indexer_search_address_mode == 'auto'" in expression
     assert "indexer_search_address_owned" in expression
-    assert "'register_search_address =' not in" in expression
+    assert "not indexer_search_address_exists" in expression
     assert verify["when"] == [
         'indexer_search_address_mode == "auto"',
         "indexer_search_address_exists | bool",
@@ -99,7 +99,7 @@ def test_ownership_requires_effective_value_to_match_marker():
     assert "indexer_search_address_marker_before.stat.exists" in expression
     assert "indexer_search_address_marker_value" in expression
     assert "indexer_search_address_marker_value | length > 0" in expression
-    assert "indexer_search_address_before.stdout" in expression
+    assert "indexer_search_address_before.stdout_lines" in expression
     assert preserve["when"] == [
         'indexer_search_address_mode == "absent"',
         "indexer_search_address_exists | bool",
@@ -119,6 +119,9 @@ def test_effective_configuration_is_verified_before_start():
     assert names.index("Read the effective registered indexer search address") < names.index(
         "Verify the managed registered indexer search address"
     )
+
+    verify = _task("Verify the managed registered indexer search address")
+    assert "indexer_search_address_btool.stdout_lines" in verify["assert"]["that"][0]
 
 
 def test_common_role_runs_configuration_before_splunk_start():
