@@ -98,6 +98,7 @@ def test_ownership_requires_effective_value_to_match_marker():
     expression = classify["set_fact"]["indexer_search_address_owned"]
     assert "indexer_search_address_marker_before.stat.exists" in expression
     assert "indexer_search_address_marker_value" in expression
+    assert "indexer_search_address_marker_value | length > 0" in expression
     assert "indexer_search_address_before.stdout" in expression
     assert preserve["when"] == [
         'indexer_search_address_mode == "absent"',

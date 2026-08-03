@@ -60,6 +60,7 @@
     indexer_search_address_owned: >-
       {{
         indexer_search_address_marker_before.stat.exists and
+        indexer_search_address_marker_value | length > 0 and
         (
           'register_search_address = ' ~
             indexer_search_address_marker_value

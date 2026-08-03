@@ -187,3 +187,14 @@ def test_absent_preserves_customer_change_after_prior_ownership(tmp_path):
 
     assert harness.get_address() == "customer.example"
     assert not harness.marker.exists()
+
+
+def test_absent_preserves_customer_value_when_marker_is_empty(tmp_path):
+    harness = SearchAddressHarness(tmp_path)
+    harness.set_address("customer.example")
+    harness.marker.write_text("", encoding="utf-8")
+
+    harness.run("absent", "absent")
+
+    assert harness.get_address() == "customer.example"
+    assert not harness.marker.exists()

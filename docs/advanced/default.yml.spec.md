@@ -489,7 +489,7 @@ splunk:
     * Default: null
 
     register_search_address: <str>
-    * Register the host or IP that clustered Search Heads use to contact this indexer before Splunk starts. An explicit value becomes Ansible-managed. `auto` selects a non-empty `SPLUNK_HOSTNAME` and then the system FQDN only when no unmanaged effective value exists. Ownership records the last managed value; a different effective customer value is preserved and stale ownership is relinquished. `absent` removes only a current value that still matches that ownership record. Undefined, null, and empty values leave configuration unmanaged.
+    * Register the host or IP that clustered Search Heads use to contact this indexer before Splunk starts. An explicit value becomes Ansible-managed. `auto` selects a non-empty `SPLUNK_HOSTNAME` and then the system FQDN only when no unmanaged effective value exists. Ownership records the last managed value; a different effective customer value is preserved and stale ownership is relinquished. An empty ownership record is treated as unowned. `absent` removes only a current value that still matches a valid ownership record. Undefined, null, and empty values leave configuration unmanaged.
     * Default: null
 
   multisite_master:
