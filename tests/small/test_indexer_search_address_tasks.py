@@ -28,6 +28,17 @@ def test_stable_search_address_is_written_without_requesting_a_restart():
     assert task["ini_file"]["option"] == "register_search_address"
     assert task["ini_file"]["value"] == "{{ splunk.idxc.register_search_address }}"
     assert "notify" not in task
+    assert task["when"] == 'splunk.idxc.register_search_address != "absent"'
+
+
+def test_absent_value_removes_only_the_registered_search_address():
+    task = _task("Remove the registered indexer search address before Splunk starts")
+
+    assert task["ini_file"]["section"] == "clustering"
+    assert task["ini_file"]["option"] == "register_search_address"
+    assert task["ini_file"]["state"] == "absent"
+    assert "notify" not in task
+    assert task["when"] == 'splunk.idxc.register_search_address == "absent"'
 
 
 def test_effective_configuration_is_verified_before_start():
@@ -40,6 +51,15 @@ def test_effective_configuration_is_verified_before_start():
     assert names.index("Read the effective registered indexer search address") < names.index(
         "Verify the effective registered indexer search address"
     )
+
+
+def test_absent_value_is_verified_before_start():
+    task = _task("Verify the registered indexer search address is absent")
+
+    assert task["when"] == 'splunk.idxc.register_search_address == "absent"'
+    assert task["assert"]["that"] == [
+        "'register_search_address =' not in indexer_search_address_btool.stdout"
+    ]
 
 
 def test_common_role_runs_configuration_before_splunk_start():

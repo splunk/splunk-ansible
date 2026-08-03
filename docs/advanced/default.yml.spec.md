@@ -489,7 +489,7 @@ splunk:
     * Default: null
 
     register_search_address: <str>
-    * Register the host or IP that clustered Search Heads use to contact this indexer. The value is written to `server.conf/[clustering]/register_search_address` before Splunk starts.
+    * Register the host or IP that clustered Search Heads use to contact this indexer. The value is written to `server.conf/[clustering]/register_search_address` before Splunk starts. Use `absent` to remove the option during a controlled rollback. Undefined, null, and empty values leave existing configuration unmanaged.
     * Default: null
 
   multisite_master:
