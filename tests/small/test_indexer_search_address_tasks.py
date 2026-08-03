@@ -57,5 +57,5 @@ def test_common_role_runs_configuration_before_splunk_start():
     assert task["when"] == [
         'splunk.role == "splunk_indexer"',
         "splunk_indexer_cluster | bool",
-        'splunk.idxc.register_search_address | default("") | length > 0',
+        'splunk.idxc.register_search_address | default("", true) | length > 0',
     ]

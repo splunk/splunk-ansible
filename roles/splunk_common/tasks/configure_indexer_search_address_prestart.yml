@@ -5,7 +5,7 @@
       - splunk.idxc.register_search_address | length <= 253
       - splunk.idxc.register_search_address is not search("\\s")
       - "'://' not in splunk.idxc.register_search_address"
-    fail_msg: "The indexer search address must be a host or IP address without a scheme, port, or whitespace."
+    fail_msg: "The indexer search address must be a host or IP address without a URL scheme or whitespace."
 
 - name: Configure the stable indexer search address before Splunk starts
   ini_file:
