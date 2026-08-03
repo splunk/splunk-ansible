@@ -220,7 +220,7 @@ def getIndexerClustering(vars_scope):
     register_search_address_mode = "explicit"
     if register_search_address == "auto":
         register_search_address_mode = "auto"
-        register_search_address = os.environ.get("SPLUNK_HOSTNAME", socket.getfqdn())
+        register_search_address = os.environ.get("SPLUNK_HOSTNAME") or socket.getfqdn()
     elif register_search_address == "absent":
         register_search_address_mode = "absent"
     if register_search_address is not None:

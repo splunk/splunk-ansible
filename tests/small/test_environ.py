@@ -150,6 +150,19 @@ def test_getIndexerClustering_register_search_address_auto_uses_fqdn():
         "indexer-0.indexer-headless.splunk.svc.cluster.local"
     assert vars_scope["splunk"]["idxc"]["register_search_address_mode"] == "auto"
 
+def test_getIndexerClustering_register_search_address_auto_ignores_empty_hostname():
+    vars_scope = {"splunk": {}}
+    with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}):
+        with patch("os.environ", new={
+                "SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS": "auto",
+                "SPLUNK_HOSTNAME": "",
+        }):
+            with patch("environ.socket.getfqdn", return_value="indexer-0.indexer-headless.splunk.svc.cluster.local"):
+                environ.getIndexerClustering(vars_scope)
+    assert vars_scope["splunk"]["idxc"]["register_search_address"] == \
+        "indexer-0.indexer-headless.splunk.svc.cluster.local"
+    assert vars_scope["splunk"]["idxc"]["register_search_address_mode"] == "auto"
+
 def test_getIndexerClustering_register_search_address_absent_tracks_rollback_mode():
     vars_scope = {"splunk": {}}
     with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}):
