@@ -1,0 +1,36 @@
+---
+- name: Set CPU limit
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/limits.conf"
+    section: default
+    option: "total_cpus"
+    value: "{{ splunk.total_cpus }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.total_cpus is defined
+    - splunk.total_cpus != 0
+
+- name: Set vCPU limit
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/limits.conf"
+    section: default
+    option: "total_vcpus"
+    value: "{{ splunk.total_vcpus }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.total_vcpus is defined
+    - splunk.total_vcpus != 0
+
+- name: Set system memory limit
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/limits.conf"
+    section: default
+    option: "total_sys_memory"
+    value: "{{ splunk.total_sys_memory }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.total_sys_memory is defined
+    - splunk.total_sys_memory != 0
