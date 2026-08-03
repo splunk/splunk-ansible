@@ -217,10 +217,15 @@ def getIndexerClustering(vars_scope):
         "SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS",
         idxc_vars.get("register_search_address"),
     )
+    register_search_address_mode = "explicit"
     if register_search_address == "auto":
+        register_search_address_mode = "auto"
         register_search_address = os.environ.get("SPLUNK_HOSTNAME", socket.getfqdn())
+    elif register_search_address == "absent":
+        register_search_address_mode = "absent"
     if register_search_address is not None:
         idxc_vars["register_search_address"] = register_search_address
+        idxc_vars["register_search_address_mode"] = register_search_address_mode
     idxc_vars["secret"] = os.environ.get("SPLUNK_IDXC_SECRET", idxc_vars.get("secret"))
     idxc_vars["pass4SymmKey"] = os.environ.get("SPLUNK_IDXC_PASS4SYMMKEY", idxc_vars.get("pass4SymmKey")) # Control flow for issue #316 backwards-compatibility
     if idxc_vars["pass4SymmKey"]:

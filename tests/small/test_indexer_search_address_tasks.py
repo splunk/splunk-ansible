@@ -16,9 +16,12 @@ TASK_FILE = (
 COMMON_MAIN = REPO_ROOT / "roles" / "splunk_common" / "tasks" / "main.yml"
 
 
+def _tasks():
+    return yaml.safe_load(TASK_FILE.read_text(encoding="utf-8"))
+
+
 def _task(name):
-    tasks = yaml.safe_load(TASK_FILE.read_text(encoding="utf-8"))
-    return next(task for task in tasks if task.get("name") == name)
+    return next(task for task in _tasks() if task.get("name") == name)
 
 
 def test_stable_search_address_is_written_without_requesting_a_restart():
@@ -28,38 +31,75 @@ def test_stable_search_address_is_written_without_requesting_a_restart():
     assert task["ini_file"]["option"] == "register_search_address"
     assert task["ini_file"]["value"] == "{{ splunk.idxc.register_search_address }}"
     assert "notify" not in task
-    assert task["when"] == 'splunk.idxc.register_search_address != "absent"'
+    assert task["when"] == [
+        'indexer_search_address_mode != "absent"',
+        "indexer_search_address_should_manage | bool",
+    ]
 
 
-def test_absent_value_removes_only_the_registered_search_address():
-    task = _task("Remove the registered indexer search address before Splunk starts")
+def test_automatic_value_preserves_unmanaged_effective_configuration():
+    action = _task("Select stable indexer search-address action")
+    verify = _task("Verify an existing customer indexer search address is preserved")
 
-    assert task["ini_file"]["section"] == "clustering"
-    assert task["ini_file"]["option"] == "register_search_address"
-    assert task["ini_file"]["state"] == "absent"
-    assert "notify" not in task
-    assert task["when"] == 'splunk.idxc.register_search_address == "absent"'
+    expression = action["set_fact"]["indexer_search_address_should_manage"]
+    assert "indexer_search_address_mode == 'auto'" in expression
+    assert "indexer_search_address_marker_before.stat.exists" in expression
+    assert "'register_search_address =' not in" in expression
+    assert verify["when"] == [
+        'indexer_search_address_mode == "auto"',
+        "indexer_search_address_exists | bool",
+        "not indexer_search_address_marker_before.stat.exists",
+    ]
+    assert verify["assert"]["that"] == [
+        "indexer_search_address_before.stdout == indexer_search_address_btool.stdout"
+    ]
+
+
+def test_managed_value_records_persistent_ownership():
+    task = _task("Record stable indexer search-address ownership")
+
+    assert task["copy"]["dest"] == "{{ indexer_search_address_marker }}"
+    assert task["copy"]["content"] == "{{ splunk.idxc.register_search_address }}\n"
+    assert task["copy"]["mode"] == 0o600
+    assert task["when"] == [
+        'indexer_search_address_mode != "absent"',
+        "indexer_search_address_should_manage | bool",
+    ]
+
+
+def test_absent_value_removes_only_an_owned_setting():
+    remove = _task("Remove the managed indexer search address before Splunk starts")
+    marker = _task("Remove stable indexer search-address ownership marker")
+    verify = _task("Verify controlled rollback removed only managed ownership")
+
+    assert remove["ini_file"]["section"] == "clustering"
+    assert remove["ini_file"]["option"] == "register_search_address"
+    assert remove["ini_file"]["state"] == "absent"
+    assert "notify" not in remove
+    expected_when = [
+        'indexer_search_address_mode == "absent"',
+        "indexer_search_address_marker_before.stat.exists",
+    ]
+    assert remove["when"] == expected_when
+    assert marker["when"] == expected_when
+    assert verify["when"] == 'indexer_search_address_mode == "absent"'
+    assert verify["assert"]["that"] == [
+        "not indexer_search_address_marker_after.stat.exists"
+    ]
 
 
 def test_effective_configuration_is_verified_before_start():
-    tasks = yaml.safe_load(TASK_FILE.read_text(encoding="utf-8"))
-    names = [task.get("name") for task in tasks]
+    names = [task.get("name") for task in _tasks()]
 
+    assert names.index("Read the existing effective indexer search address") < names.index(
+        "Configure the stable indexer search address before Splunk starts"
+    )
     assert names.index("Configure the stable indexer search address before Splunk starts") < names.index(
         "Read the effective registered indexer search address"
     )
     assert names.index("Read the effective registered indexer search address") < names.index(
-        "Verify the effective registered indexer search address"
+        "Verify the managed registered indexer search address"
     )
-
-
-def test_absent_value_is_verified_before_start():
-    task = _task("Verify the registered indexer search address is absent")
-
-    assert task["when"] == 'splunk.idxc.register_search_address == "absent"'
-    assert task["assert"]["that"] == [
-        "'register_search_address =' not in indexer_search_address_btool.stdout"
-    ]
 
 
 def test_common_role_runs_configuration_before_splunk_start():

@@ -138,6 +138,7 @@ def test_getIndexerClustering_register_search_address(configured, expected):
         with patch("os.environ", new={"SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS": configured}):
             environ.getIndexerClustering(vars_scope)
     assert vars_scope["splunk"]["idxc"]["register_search_address"] == expected
+    assert vars_scope["splunk"]["idxc"]["register_search_address_mode"] == "explicit"
 
 def test_getIndexerClustering_register_search_address_auto_uses_fqdn():
     vars_scope = {"splunk": {}}
@@ -147,6 +148,15 @@ def test_getIndexerClustering_register_search_address_auto_uses_fqdn():
                 environ.getIndexerClustering(vars_scope)
     assert vars_scope["splunk"]["idxc"]["register_search_address"] == \
         "indexer-0.indexer-headless.splunk.svc.cluster.local"
+    assert vars_scope["splunk"]["idxc"]["register_search_address_mode"] == "auto"
+
+def test_getIndexerClustering_register_search_address_absent_tracks_rollback_mode():
+    vars_scope = {"splunk": {}}
+    with patch("environ.inventory", {"splunk_indexer": {"hosts": ["a", "b"]}}):
+        with patch("os.environ", new={"SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS": "absent"}):
+            environ.getIndexerClustering(vars_scope)
+    assert vars_scope["splunk"]["idxc"]["register_search_address"] == "absent"
+    assert vars_scope["splunk"]["idxc"]["register_search_address_mode"] == "absent"
 
 def test_getIndexerClustering_register_search_address_default_can_be_overridden():
     vars_scope = {"splunk": {"idxc": {"register_search_address": "configured.example"}}}
@@ -154,6 +164,7 @@ def test_getIndexerClustering_register_search_address_default_can_be_overridden(
         with patch("os.environ", new={"SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS": "override.example"}):
             environ.getIndexerClustering(vars_scope)
     assert vars_scope["splunk"]["idxc"]["register_search_address"] == "override.example"
+    assert vars_scope["splunk"]["idxc"]["register_search_address_mode"] == "explicit"
 
 @pytest.mark.parametrize(("default_yml", "os_env", "output"),
             [

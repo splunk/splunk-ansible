@@ -1,4 +1,11 @@
 ---
+- name: Define stable indexer search-address ownership
+  set_fact:
+    indexer_search_address_mode: >-
+      {{ splunk.idxc.register_search_address_mode | default('explicit') }}
+    indexer_search_address_marker: >-
+      {{ splunk.home }}/etc/.splunk-ansible-register-search-address-managed
+
 - name: Validate the registered indexer search address
   assert:
     that:
@@ -6,9 +13,47 @@
       - splunk.idxc.register_search_address is not search("\\s")
       - "'://' not in splunk.idxc.register_search_address"
     fail_msg: "The indexer search address must be a host or IP address without a URL scheme or whitespace."
-  when: splunk.idxc.register_search_address != "absent"
+  when: indexer_search_address_mode != "absent"
 
-- name: Remove the registered indexer search address before Splunk starts
+- name: Read the existing effective indexer search address
+  command:
+    argv:
+      - "{{ splunk.exec }}"
+      - "btool"
+      - "server"
+      - "list"
+      - "clustering"
+      - "--no-log"
+  register: indexer_search_address_before
+  changed_when: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Check stable indexer search-address ownership
+  stat:
+    path: "{{ indexer_search_address_marker }}"
+  register: indexer_search_address_marker_before
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Select stable indexer search-address action
+  set_fact:
+    indexer_search_address_exists: >-
+      {{ 'register_search_address =' in indexer_search_address_before.stdout }}
+    indexer_search_address_should_manage: >-
+      {{
+        indexer_search_address_mode == 'explicit' or
+        (
+          indexer_search_address_mode == 'auto' and
+          (
+            indexer_search_address_marker_before.stat.exists or
+            'register_search_address =' not in
+              indexer_search_address_before.stdout
+          )
+        )
+      }}
+
+- name: Remove the managed indexer search address before Splunk starts
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/server.conf"
     section: "clustering"
@@ -19,7 +64,19 @@
     group: "{{ splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: splunk.idxc.register_search_address == "absent"
+  when:
+    - indexer_search_address_mode == "absent"
+    - indexer_search_address_marker_before.stat.exists
+
+- name: Remove stable indexer search-address ownership marker
+  file:
+    path: "{{ indexer_search_address_marker }}"
+    state: absent
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when:
+    - indexer_search_address_mode == "absent"
+    - indexer_search_address_marker_before.stat.exists
 
 - name: Configure the stable indexer search address before Splunk starts
   ini_file:
@@ -34,7 +91,22 @@
     group: "{{ splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  when: splunk.idxc.register_search_address != "absent"
+  when:
+    - indexer_search_address_mode != "absent"
+    - indexer_search_address_should_manage | bool
+
+- name: Record stable indexer search-address ownership
+  copy:
+    dest: "{{ indexer_search_address_marker }}"
+    content: "{{ splunk.idxc.register_search_address }}\n"
+    mode: 0600
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when:
+    - indexer_search_address_mode != "absent"
+    - indexer_search_address_should_manage | bool
 
 - name: Read the effective registered indexer search address
   command:
@@ -50,18 +122,37 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Verify the effective registered indexer search address
+- name: Verify the managed registered indexer search address
   assert:
     that:
       - >-
         ('register_search_address = ' ~ splunk.idxc.register_search_address)
         in indexer_search_address_btool.stdout
     fail_msg: "The effective Splunk configuration does not contain the requested indexer search address."
-  when: splunk.idxc.register_search_address != "absent"
+  when:
+    - indexer_search_address_mode != "absent"
+    - indexer_search_address_should_manage | bool
 
-- name: Verify the registered indexer search address is absent
+- name: Verify an existing customer indexer search address is preserved
   assert:
     that:
-      - "'register_search_address =' not in indexer_search_address_btool.stdout"
-    fail_msg: "The effective Splunk configuration still contains an indexer search address."
-  when: splunk.idxc.register_search_address == "absent"
+      - indexer_search_address_before.stdout == indexer_search_address_btool.stdout
+    fail_msg: "Automatic stable addressing changed an existing customer indexer search address."
+  when:
+    - indexer_search_address_mode == "auto"
+    - indexer_search_address_exists | bool
+    - not indexer_search_address_marker_before.stat.exists
+
+- name: Check stable indexer search-address ownership after reconciliation
+  stat:
+    path: "{{ indexer_search_address_marker }}"
+  register: indexer_search_address_marker_after
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Verify controlled rollback removed only managed ownership
+  assert:
+    that:
+      - not indexer_search_address_marker_after.stat.exists
+    fail_msg: "The managed indexer search-address ownership marker still exists."
+  when: indexer_search_address_mode == "absent"

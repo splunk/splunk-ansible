@@ -63,7 +63,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_IDXC_LABEL | Indexer clustering label | no | no | yes |
 | SPLUNK_IDXC_REPLICATION_FACTOR | Configure indexer clustering data replication factor | no | no | no |
 | SPLUNK_IDXC_SEARCH_FACTOR | Configure indexer clustering search factor | no | no | no |
-| SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS | Register the address that clustered Search Heads use to contact this indexer. Set an explicit reachable host/IP, `auto` to use `SPLUNK_HOSTNAME` and then the system FQDN, or `absent` to remove this option during a controlled rollback. Undefined, null, and empty values leave existing configuration unmanaged. The change is applied before Splunk starts. | no | no | no |
+| SPLUNK_IDXC_REGISTER_SEARCH_ADDRESS | Register the address that clustered Search Heads use to contact this indexer. An explicit host/IP becomes Ansible-managed. `auto` uses `SPLUNK_HOSTNAME` and then the system FQDN only when no unmanaged effective value exists; an existing customer value is preserved. `absent` removes only a value previously owned by this feature. Undefined, null, and empty values leave configuration unmanaged. Reconciliation occurs before Splunk starts. | no | no | no |
 | SPLUNK_OPT | Location where Splunk Enterprise will be installed (not recommended to change). Default: `/opt` | no | no | no |
 | SPLUNK_HOME | Location of Splunk Enterprise home directory (not recommended to change). Default: `/opt/splunk` | no | no | no |
 | SPLUNK_EXEC | Location of Splunk Enterprise executable (not recommended to change). Default: `/opt/splunk/bin/splunk` | no | no | no |

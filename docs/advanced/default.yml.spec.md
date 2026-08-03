@@ -489,7 +489,7 @@ splunk:
     * Default: null
 
     register_search_address: <str>
-    * Register the host or IP that clustered Search Heads use to contact this indexer. The value is written to `server.conf/[clustering]/register_search_address` before Splunk starts. Use `absent` to remove the option during a controlled rollback. Undefined, null, and empty values leave existing configuration unmanaged.
+    * Register the host or IP that clustered Search Heads use to contact this indexer before Splunk starts. An explicit value becomes Ansible-managed. `auto` selects `SPLUNK_HOSTNAME` and then the system FQDN only when no unmanaged effective value exists, preserving existing customer configuration. `absent` removes only a value previously owned by this feature. Undefined, null, and empty values leave configuration unmanaged.
     * Default: null
 
   multisite_master:
