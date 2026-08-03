@@ -43,12 +43,12 @@ def test_automatic_value_preserves_unmanaged_effective_configuration():
 
     expression = action["set_fact"]["indexer_search_address_should_manage"]
     assert "indexer_search_address_mode == 'auto'" in expression
-    assert "indexer_search_address_marker_before.stat.exists" in expression
+    assert "indexer_search_address_owned" in expression
     assert "'register_search_address =' not in" in expression
     assert verify["when"] == [
         'indexer_search_address_mode == "auto"',
         "indexer_search_address_exists | bool",
-        "not indexer_search_address_marker_before.stat.exists",
+        "not indexer_search_address_should_manage | bool",
     ]
     assert verify["assert"]["that"] == [
         "indexer_search_address_before.stdout == indexer_search_address_btool.stdout"
@@ -69,7 +69,7 @@ def test_managed_value_records_persistent_ownership():
 
 def test_absent_value_removes_only_an_owned_setting():
     remove = _task("Remove the managed indexer search address before Splunk starts")
-    marker = _task("Remove stable indexer search-address ownership marker")
+    marker = _task("Remove obsolete stable indexer search-address ownership marker")
     verify = _task("Verify controlled rollback removed only managed ownership")
 
     assert remove["ini_file"]["section"] == "clustering"
@@ -78,13 +78,31 @@ def test_absent_value_removes_only_an_owned_setting():
     assert "notify" not in remove
     expected_when = [
         'indexer_search_address_mode == "absent"',
-        "indexer_search_address_marker_before.stat.exists",
+        "indexer_search_address_owned | bool",
     ]
     assert remove["when"] == expected_when
-    assert marker["when"] == expected_when
+    assert marker["when"] == [
+        "indexer_search_address_marker_before.stat.exists",
+        'indexer_search_address_mode == "absent" or not indexer_search_address_owned | bool',
+    ]
     assert verify["when"] == 'indexer_search_address_mode == "absent"'
     assert verify["assert"]["that"] == [
         "not indexer_search_address_marker_after.stat.exists"
+    ]
+
+
+def test_ownership_requires_effective_value_to_match_marker():
+    classify = _task("Classify the effective indexer search address")
+    preserve = _task("Verify controlled rollback preserved an unowned customer value")
+
+    expression = classify["set_fact"]["indexer_search_address_owned"]
+    assert "indexer_search_address_marker_before.stat.exists" in expression
+    assert "indexer_search_address_marker_value" in expression
+    assert "indexer_search_address_before.stdout" in expression
+    assert preserve["when"] == [
+        'indexer_search_address_mode == "absent"',
+        "indexer_search_address_exists | bool",
+        "not indexer_search_address_owned | bool",
     ]
 
 

@@ -36,17 +36,45 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Select stable indexer search-address action
+- name: Read stable indexer search-address ownership value
+  slurp:
+    path: "{{ indexer_search_address_marker }}"
+  register: indexer_search_address_marker_content
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: indexer_search_address_marker_before.stat.exists
+
+- name: Decode stable indexer search-address ownership value
+  set_fact:
+    indexer_search_address_marker_value: >-
+      {{
+        (indexer_search_address_marker_content.content | b64decode | trim)
+        if indexer_search_address_marker_before.stat.exists
+        else ''
+      }}
+
+- name: Classify the effective indexer search address
   set_fact:
     indexer_search_address_exists: >-
       {{ 'register_search_address =' in indexer_search_address_before.stdout }}
+    indexer_search_address_owned: >-
+      {{
+        indexer_search_address_marker_before.stat.exists and
+        (
+          'register_search_address = ' ~
+            indexer_search_address_marker_value
+        ) in indexer_search_address_before.stdout
+      }}
+
+- name: Select stable indexer search-address action
+  set_fact:
     indexer_search_address_should_manage: >-
       {{
         indexer_search_address_mode == 'explicit' or
         (
           indexer_search_address_mode == 'auto' and
           (
-            indexer_search_address_marker_before.stat.exists or
+            indexer_search_address_owned or
             'register_search_address =' not in
               indexer_search_address_before.stdout
           )
@@ -66,17 +94,19 @@
   become_user: "{{ splunk.user }}"
   when:
     - indexer_search_address_mode == "absent"
-    - indexer_search_address_marker_before.stat.exists
+    - indexer_search_address_owned | bool
 
-- name: Remove stable indexer search-address ownership marker
+- name: Remove obsolete stable indexer search-address ownership marker
   file:
     path: "{{ indexer_search_address_marker }}"
     state: absent
   become: yes
   become_user: "{{ splunk.user }}"
   when:
-    - indexer_search_address_mode == "absent"
     - indexer_search_address_marker_before.stat.exists
+    - >-
+      indexer_search_address_mode == "absent" or
+      not indexer_search_address_owned | bool
 
 - name: Configure the stable indexer search address before Splunk starts
   ini_file:
@@ -141,7 +171,17 @@
   when:
     - indexer_search_address_mode == "auto"
     - indexer_search_address_exists | bool
-    - not indexer_search_address_marker_before.stat.exists
+    - not indexer_search_address_should_manage | bool
+
+- name: Verify controlled rollback preserved an unowned customer value
+  assert:
+    that:
+      - indexer_search_address_before.stdout == indexer_search_address_btool.stdout
+    fail_msg: "Controlled rollback changed an unowned customer indexer search address."
+  when:
+    - indexer_search_address_mode == "absent"
+    - indexer_search_address_exists | bool
+    - not indexer_search_address_owned | bool
 
 - name: Check stable indexer search-address ownership after reconciliation
   stat:

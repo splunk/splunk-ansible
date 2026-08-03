@@ -35,6 +35,7 @@ shc-lint: shc-lint-setup
 shc-unit-test: shc-lint-setup
 	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_environ.py -k 'SearchHeadClustering or IndexerClustering'
 	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_indexer_search_address_tasks.py
+	SHC_ANSIBLE_PLAYBOOK="$(SHC_ANSIBLE_PLAYBOOK)" "$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_indexer_search_address_behavior.py
 	"$(SHC_LINT_PYTHON)" -m pytest -q tests/small/test_start_splunk_tasks.py
 
 shc-check: shc-lint shc-unit-test
