@@ -7,15 +7,12 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Remove stale {{ conf_file }} before writing config map values
-  file:
-    path: "{{ conf_directory }}/{{ conf_file }}"
-    state: absent
+- name: Remove stale ConfigMap-owned values from {{ conf_file }}
+  include_tasks: reconcile_config_map_values.yml
   when:
-    - conf_directory is defined
+    - reconcile_config_map_values | default(false) | bool
     - conf_stanzas | length > 0
-  become: yes
-  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
 
 - include_tasks: set_config_stanza.yml
   vars:
@@ -24,4 +21,18 @@
   with_dict: "{{ conf_stanzas }}"
   loop_control:
     loop_var: stanza
+  no_log: "{{ hide_password }}"
+
+- name: Record ConfigMap-owned values in {{ conf_file }}
+  copy:
+    content: "{{ conf_stanzas | to_nice_yaml }}"
+    dest: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: '0660'
+  when:
+    - reconcile_config_map_values | default(false) | bool
+    - conf_stanzas | length > 0
+  become: yes
+  become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"

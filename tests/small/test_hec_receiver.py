@@ -207,31 +207,49 @@ def test_build_hec_global_body(splunk, expected_body):
 
 
 # ---------------------------------------------------------------------------
-# Stale config-file removal guard
+# ConfigMap-owned config reconciliation
 # ---------------------------------------------------------------------------
 
-def should_remove_conf_file(conf_directory, conf_stanzas):
+def config_map_options_to_remove(previous_stanzas):
     '''
-    Mirror the `when` guard on "Remove stale <conf_file> before writing
-    config map values" in set_config_file.yml.
+    Mirror the stale-value removal input in reconcile_config_map_values.yml.
 
-    The task removes the file only when conf_directory is defined AND
-    conf_stanzas is non-empty.
+    All values from the previous ConfigMap ownership manifest are removed
+    before the current ConfigMap values are applied. This removes stale keys
+    without deleting settings that were never ConfigMap-owned.
     '''
-    return conf_directory is not None and len(conf_stanzas) > 0
+    return {
+        (stanza_name, option_name)
+        for stanza_name, options in previous_stanzas.items()
+        for option_name in options
+    }
 
 
-@pytest.mark.parametrize(('conf_directory', 'conf_stanzas', 'expected'), [
-    # conf_directory undefined — never remove
-    (None, {}, False),
-    (None, {'stanza1': {'key': 'val'}}, False),
+def test_config_map_reconciliation_preserves_unowned_general_key():
+    previous_config_map_stanzas = {
+        'kvstore': {'disabled': True},
+    }
 
-    # conf_directory defined but no stanzas — skip removal (nothing to write)
-    ('/opt/splunk/etc/system/local', {}, False),
+    options_to_remove = config_map_options_to_remove(previous_config_map_stanzas)
 
-    # conf_directory defined and stanzas present — remove stale file
-    ('/opt/splunk/etc/system/local', {'stanza1': {'key': 'val'}}, True),
-    ('/opt/splunk/etc/system/local', {'a': {}, 'b': {}}, True),
-])
-def test_should_remove_conf_file(conf_directory, conf_stanzas, expected):
-    assert should_remove_conf_file(conf_directory, conf_stanzas) == expected
+    assert ('kvstore', 'disabled') in options_to_remove
+    assert ('general', 'pass4SymmKey') not in options_to_remove
+
+
+def test_config_map_reconciliation_removes_stale_option_before_applying_current_value():
+    previous_config_map_stanzas = {
+        'kvstore': {'disabled': True, 'port': 8191},
+    }
+    current_config_map_stanzas = {
+        'kvstore': {'disabled': False},
+    }
+
+    options_to_remove = config_map_options_to_remove(previous_config_map_stanzas)
+
+    assert ('kvstore', 'disabled') in options_to_remove
+    assert ('kvstore', 'port') in options_to_remove
+    assert current_config_map_stanzas['kvstore']['disabled'] is False
+
+
+def test_config_map_reconciliation_has_no_stale_values_on_first_run():
+    assert config_map_options_to_remove({}) == set()

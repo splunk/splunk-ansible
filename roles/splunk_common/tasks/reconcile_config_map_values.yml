@@ -1,0 +1,29 @@
+---
+- name: Check for previous ConfigMap-owned values in {{ conf_file }}
+  stat:
+    path: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
+  register: config_map_managed_values_file
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Load previous ConfigMap-owned values in {{ conf_file }}
+  include_vars:
+    file: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
+    name: previous_config_map_stanzas
+  when: config_map_managed_values_file.stat.exists
+  no_log: "{{ hide_password }}"
+
+- name: Initialize previous ConfigMap-owned values in {{ conf_file }}
+  set_fact:
+    previous_config_map_stanzas: {}
+  when: not config_map_managed_values_file.stat.exists
+
+- name: Remove previous ConfigMap-owned values from {{ conf_file }}
+  include_tasks: remove_config_map_stanza.yml
+  vars:
+    config_map_stanza_name: "{{ previous_stanza.key }}"
+    config_map_stanza_settings: "{{ previous_stanza.value | default({}) }}"
+  with_dict: "{{ previous_config_map_stanzas }}"
+  loop_control:
+    loop_var: previous_stanza
+  no_log: "{{ hide_password }}"
