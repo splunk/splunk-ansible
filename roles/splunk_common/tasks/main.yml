@@ -121,6 +121,7 @@
     conf_file: "{{ item.key }}.conf"
     conf_directory: "{{ item.value.directory | default(splunk.home + '/etc/system/local', true) }}"
     conf_stanzas: "{{ item.value.content | default({}) }}"
+    reconcile_config_map_values: true
   with_items: "{% if splunk.conf is mapping %}{{ splunk.conf | dict2items }}{% else %}{{ splunk.conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
   no_log: "{{ hide_password }}"

@@ -1,0 +1,15 @@
+---
+- name: Remove ConfigMap-owned options in {{ config_map_stanza_name }}
+  ini_file:
+    path: "{{ conf_directory }}/{{ conf_file }}"
+    section: "{{ config_map_stanza_name }}"
+    option: "{{ config_map_stanza_setting.key }}"
+    state: absent
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_dict: "{{ config_map_stanza_settings }}"
+  loop_control:
+    loop_var: config_map_stanza_setting
+  when: config_map_stanza_name and config_map_stanza_settings
