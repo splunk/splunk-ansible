@@ -634,6 +634,25 @@ def test_getDSP(default_yml, os_env, result):
             environ.getDSP(vars_scope)
     assert vars_scope["splunk"]["dsp"] == result
 
+@pytest.mark.parametrize(("os_env", "result"),
+            [
+                # Unset or empty -> key is not injected at all
+                ({}, {}),
+                ({"SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED": ""}, {}),
+                # Explicit values -> boolean stored
+                ({"SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED": "true"}, {"node_sidecar_postgres_disabled": True}),
+                ({"SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED": "TRUE"}, {"node_sidecar_postgres_disabled": True}),
+                ({"SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED": "false"}, {"node_sidecar_postgres_disabled": False}),
+                ({"SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED": "yes"}, {"node_sidecar_postgres_disabled": False}),
+            ]
+        )
+def test_getNodeSidecarPostgres(os_env, result):
+    vars_scope = {"splunk": {}}
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getNodeSidecarPostgres(vars_scope)
+    assert vars_scope["splunk"] == result
+
 @pytest.mark.parametrize(("es_enablement", "os_env", "result"),
             [
                 (None, {}, ""),

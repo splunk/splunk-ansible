@@ -1,0 +1,14 @@
+---
+# Toggle the co-hosted Postgres node sidecar via server.conf.
+# Driven by SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED; SOK injects this by
+# default on CMP-K deployments and users may override it via spec.extraEnv.
+- name: Configure Postgres node sidecar
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: postgres
+    option: disabled
+    value: "{{ splunk.node_sidecar_postgres_disabled | bool | lower }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"

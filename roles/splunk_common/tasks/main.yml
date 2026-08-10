@@ -37,6 +37,9 @@
 - include_tasks: enable_ipv6.yml
   when: splunk.listen_on_ipv6 | bool
 
+- include_tasks: set_postgres_sidecar.yml
+  when: "'node_sidecar_postgres_disabled' in splunk"
+
 - include_tasks: enable_asan.yml
   when:
     - "'asan' in splunk and splunk.asan | bool"

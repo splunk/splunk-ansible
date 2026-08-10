@@ -176,6 +176,7 @@ def getDefaultVars():
     getESSplunkVariables(defaultVars)
     getDSP(defaultVars)
     getIPv6(defaultVars)
+    getNodeSidecarPostgres(defaultVars)
     return defaultVars
 
 def getServiceName(vars_scope):
@@ -741,6 +742,17 @@ def getIPv6(vars_scope):
     Set specific environment variables to apply IPv6 configurations
     """
     vars_scope["splunk"]["listen_on_ipv6"] = os.environ.get("SPLUNK_LISTEN_ON_IPV6", "").lower() == "true"
+
+def getNodeSidecarPostgres(vars_scope):
+    """
+    Honor SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED to toggle the co-hosted
+    Postgres node sidecar via the server.conf [postgres] disabled setting.
+    The stanza is only injected when the env var is explicitly set, so
+    deployments that do not set it are left untouched.
+    """
+    val = os.environ.get("SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED")
+    if val is not None and val != "":
+        vars_scope["splunk"]["node_sidecar_postgres_disabled"] = val.lower() == "true"
 
 
 def getRandomString():

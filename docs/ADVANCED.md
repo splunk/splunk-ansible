@@ -122,6 +122,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPARK_MASTER_WEBUI_PORT | Identifies the port for the Spark master web UI. | no | no | no |
 | DMC_FORWARDER_MONITORING | Enables forwarder monitoring on all standalone and search head instances. Default: `False` | no | no | no |
 | DMC_ASSET_INTERVAL | Cron schedule that determines how often forwarder assets are re-built. Default: `"3,18,33,48 * * * *"` = every 15 minutes) | no | no | no |
+| SPLUNK_NODE_SIDECAR_POSTGRES_DISABLED | Toggles the co-hosted Postgres node sidecar by writing `[postgres] disabled` to `server.conf`. Set to `true` to disable the sidecar (injected by default on SOK/CMP-K deployments), or `false` to re-enable it. When unset, the stanza is not written. **Deprecation notice:** this override may be removed in a future SOK release. | no | no | no |
 | SPLUNK_ENABLE_ASAN | Internally used trigger to handle special provisioning of debug builds of Splunk Enterprise | no | no | no |
 | SPLUNK_DEFAULTS_URL | URL to a remote `default.yml` file - when fetched, this will get merged into a consolidated mapping of variables | no | no | no |
 | SPLUNK_DEFAULTS_HTTP_MAX_TIMEOUT | When fetching a remote `default.yml`, specify the timeout of the request | no | no | no |
