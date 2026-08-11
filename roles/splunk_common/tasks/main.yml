@@ -103,6 +103,13 @@
     - splunk.kvstore.kvservice_connection_string is not none
     - splunk.kvstore.kvservice_connection_string | length > 0
 
+- include_tasks: set_default_kvstore_type.yml
+  when:
+    - "'kvstore' in splunk and 'default_kvstore_type' in splunk.kvstore"
+    - splunk.kvstore.default_kvstore_type is not none
+    - splunk.kvstore.default_kvstore_type | length > 0
+    - splunk.role != "splunk_universal_forwarder"
+
 - include_tasks: enable_splunkweb_ssl.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"

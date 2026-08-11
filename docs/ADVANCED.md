@@ -86,6 +86,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNKD_SSL_CA | Path to custom CA certificate used for Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNKD_SSL_PASSWORD | Custom SSL password used with Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNK_KVSTORE_PORT | Port to run Splunk KVStore. Default: `8191` | no | no | no |
+| SPLUNK_KVSTORE_DEFAULT_TYPE | Configures `[kvstore] defaultKVStoreType` in `server.conf` when explicitly set. Allowed values are `cohosted` and `local`; when set to `local`, Ansible also writes `[kvstore] postgresMigrateOnStartup=false`. SOK injects `local` for supported CMP-K deployments. | no | no | no |
 | SPLUNK_APPSERVER_PORT | Port to run Splunk appserver. Default: `8065` | no | no | no |
 | SPLUNK_SET_SEARCH_PEERS | Boolean to configure whether search heads should connect to search peers. Default: `True`. Not recommended to change | no | no | no |
 | SPLUNK_SITE | For multisite topologies, define the site of this particular Splunk Enterprise instance | no | no | no |

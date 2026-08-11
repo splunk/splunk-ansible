@@ -176,6 +176,7 @@ def getDefaultVars():
     getESSplunkVariables(defaultVars)
     getDSP(defaultVars)
     getIPv6(defaultVars)
+    getDefaultKVStoreType(defaultVars)
     getNodeSidecarPostgres(defaultVars)
     return defaultVars
 
@@ -742,6 +743,20 @@ def getIPv6(vars_scope):
     Set specific environment variables to apply IPv6 configurations
     """
     vars_scope["splunk"]["listen_on_ipv6"] = os.environ.get("SPLUNK_LISTEN_ON_IPV6", "").lower() == "true"
+
+def getDefaultKVStoreType(vars_scope):
+    """
+    Honor SPLUNK_KVSTORE_DEFAULT_TYPE to configure server.conf
+    [kvstore] defaultKVStoreType when explicitly provided.
+    """
+    kvstore = vars_scope["splunk"].get("kvstore", {})
+    val = os.environ.get("SPLUNK_KVSTORE_DEFAULT_TYPE", kvstore.get("default_kvstore_type"))
+    if val is None or val == "":
+        return
+
+    default_kvstore_type = val.lower()
+    vars_scope["splunk"].setdefault("kvstore", {})
+    vars_scope["splunk"]["kvstore"]["default_kvstore_type"] = default_kvstore_type
 
 def getNodeSidecarPostgres(vars_scope):
     """
