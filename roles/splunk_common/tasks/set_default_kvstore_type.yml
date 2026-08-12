@@ -5,6 +5,32 @@
       - splunk.kvstore.default_kvstore_type in ["cohosted", "local"]
     fail_msg: "splunk.kvstore.default_kvstore_type must be either 'cohosted' or 'local'"
 
+- name: Retrieve installed Splunk version for local KV Store
+  command: "{{ splunk.exec }} version --accept-license --answer-yes --no-prompt"
+  register: kvstore_installed_splunk_version_cmd
+  become: yes
+  become_user: "{{ splunk.user }}"
+  changed_when: false
+  when: splunk.kvstore.default_kvstore_type == "local"
+
+- name: Set installed Splunk version fact for local KV Store
+  set_fact:
+    kvstore_installed_splunk_version: "{{ kvstore_installed_splunk_version_cmd.stdout | regex_search(regexp, '\\1') | default(['0'], true) }}"
+  vars:
+    regexp: 'Splunk(?:\sUniversal\sForwarder)?\s((\d+)\.(\d+)\.(\d+)(?:\.\d+)?).*'
+  when: splunk.kvstore.default_kvstore_type == "local"
+
+- name: Set local KV Store support fact
+  set_fact:
+    kvstore_local_supported: "{{ kvstore_installed_splunk_version[0] is version('10.6.0', '>=') }}"
+  when: splunk.kvstore.default_kvstore_type == "local"
+
+- name: Skip local KV Store type for unsupported Splunk version
+  debug:
+    msg: "Skipping splunk.kvstore.default_kvstore_type=local because it requires Splunk Enterprise 10.6.0 or later. Installed version is {{ kvstore_installed_splunk_version[0] | default('unknown') }}."
+  when: splunk.kvstore.default_kvstore_type == "local"
+    and not kvstore_local_supported | default(false) | bool
+
 - name: Set default KV Store type
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
@@ -13,6 +39,8 @@
     value: "{{ splunk.kvstore.default_kvstore_type }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+  when: splunk.kvstore.default_kvstore_type != "local"
+    or kvstore_local_supported | default(false) | bool
 
 - name: Disable Postgres migrate on startup for local KV Store
   ini_file:
@@ -22,4 +50,6 @@
     value: "false"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  when: splunk.kvstore.default_kvstore_type == "local"
+  when:
+    - splunk.kvstore.default_kvstore_type == "local"
+    - kvstore_local_supported | default(false) | bool
