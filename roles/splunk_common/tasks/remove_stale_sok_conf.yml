@@ -1,0 +1,15 @@
+---
+# Remove stale local outputs.conf/inputs.conf files that may have been left behind
+# by the Splunk Operator for Kubernetes (SOK) apps, to prevent conflicting configuration
+# from persisting across runs.
+- name: "Remove stale SOK local outputs.conf/inputs.conf files"
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ splunk.home }}/etc/apps/100-sok/local/outputs.conf"
+    - "{{ splunk.home }}/etc/apps/100-sok/local/inputs.conf"
+    - "{{ splunk.home }}/etc/apps/101-sok-secrets/local/inputs.conf"
+    - "{{ splunk.home }}/etc/apps/101-sok-secrets/local/outputs.conf"
+  become: yes
+  become_user: "{{ splunk.user }}"
