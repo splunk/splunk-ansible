@@ -653,6 +653,24 @@ def test_getNodeSidecarPostgres(os_env, result):
             environ.getNodeSidecarPostgres(vars_scope)
     assert vars_scope["splunk"] == result
 
+@pytest.mark.parametrize(("default_yml", "os_env", "result"),
+            [
+                ({}, {}, {}),
+                ({"default_kvstore_type": "cohosted"}, {}, {"default_kvstore_type": "cohosted"}),
+                ({"default_kvstore_type": "local"}, {}, {"default_kvstore_type": "local"}),
+                ({}, {"SPLUNK_KVSTORE_DEFAULT_TYPE": ""}, {}),
+                ({}, {"SPLUNK_KVSTORE_DEFAULT_TYPE": "local"}, {"default_kvstore_type": "local"}),
+                ({}, {"SPLUNK_KVSTORE_DEFAULT_TYPE": "LOCAL"}, {"default_kvstore_type": "local"}),
+            ]
+        )
+def test_getDefaultKVStoreType(default_yml, os_env, result):
+    vars_scope = {"splunk": {"kvstore": {}}}
+    vars_scope["splunk"]["kvstore"].update(default_yml)
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getDefaultKVStoreType(vars_scope)
+    assert vars_scope["splunk"]["kvstore"] == result
+
 @pytest.mark.parametrize(("es_enablement", "os_env", "result"),
             [
                 (None, {}, ""),
