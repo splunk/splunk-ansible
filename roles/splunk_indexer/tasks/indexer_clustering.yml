@@ -14,7 +14,10 @@
   set_fact:
     use_ssl_replication: "{{ (splunk.idxc.replication_ssl | default(false) | bool) or (has_ssl_replication_port_in_conf | default(false) | bool) }}"
 
-- name: Set current node as indexer cluster peer (non-SSL replication)
+# CSPL-4006: Always pass -replication_port (Splunk REST API requires it regardless of SSL mode).
+# For SSL deployments the -replication_port value gets overwritten by Splunk CLI into a non-SSL
+# stanza; the re-apply task below restores the SSL stanza immediately after.
+- name: Set current node as indexer cluster peer
   command: "{{ splunk.exec }} edit cluster-config -mode slave -master_uri '{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}' -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
   become: yes
   become_user: "{{ splunk.user }}"
@@ -23,29 +26,14 @@
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
-  when: not use_ssl_replication | bool
   ignore_errors: yes
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
-- name: Set current node as indexer cluster peer (SSL replication)
-  command: "{{ splunk.exec }} edit cluster-config -mode slave -master_uri '{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}' -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
-  become: yes
-  become_user: "{{ splunk.user }}"
-  register: task_result_ssl
-  changed_when: task_result_ssl.rc == 0
-  until: task_result_ssl.rc == 0
-  retries: "{{ retry_num }}"
-  delay: "{{ retry_delay }}"
-  when: use_ssl_replication | bool
-  ignore_errors: yes
-  notify:
-    - Restart the splunkd service
-  no_log: "{{ hide_password }}"
-
-# CSPL-4006: Re-apply SSL replication port config after cluster join
-# This ensures the SSL config isn't lost if edit cluster-config modifies server.conf
+# CSPL-4006: Re-apply SSL replication port config after cluster join.
+# edit cluster-config overwrites the SSL stanza with a plain [replication_port://PORT] entry;
+# this task restores the customer's SSL stanza so it persists on first startup.
 - name: Re-apply SSL replication port configuration
   include_tasks: ../../../roles/splunk_common/tasks/set_config_file.yml
   vars:
@@ -53,7 +41,7 @@
     conf_directory: "{{ splunk.home }}/etc/system/local"
     conf_stanzas: "{{ splunk.conf.server.content }}"
   when:
-    - has_ssl_replication_port_in_conf | default(false) | bool
+    - use_ssl_replication | bool
     - "'conf' in splunk"
     - "'server' in splunk.conf"
     - "'content' in splunk.conf.server"
