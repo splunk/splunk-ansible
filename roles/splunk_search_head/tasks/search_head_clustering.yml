@@ -47,6 +47,26 @@
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
 
+# Wait for all other SHC members to be reachable before attempting captain bootstrap.
+# Without this wait, the bootstrap command fails when other pods haven't finished starting
+# Splunk yet (first boot takes ~8-10 minutes). The default retry_num (60 × 6s = 360s)
+# is shorter than the first-boot Splunk start time, causing the ansible run to exit with
+# code 2 and triggering an unnecessary pod restart that adds ~16 minutes to SHC readiness.
+# Using shc_sync_retry_num (60 × 6s default) here — can be raised independently if needed.
+- name: Wait for all SHC members to be reachable before captain bootstrap
+  uri:
+    url: "{{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }}"
+    method: GET
+    validate_certs: false
+    use_proxy: no
+  register: task_response
+  until: task_response.status == 200
+  retries: "{{ shc_sync_retry_num }}"
+  delay: "{{ retry_delay }}"
+  loop: "{{ groups['splunk_search_head'] | difference([inventory_hostname]) }}"
+  when: splunk_search_head_captain | bool
+  no_log: "{{ hide_password }}"
+
 #INFRA-38882: Update exec command?
 - name: Boostrap SHC captain
   command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}{{ cert_prefix }}://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
