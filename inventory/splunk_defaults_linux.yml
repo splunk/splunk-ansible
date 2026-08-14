@@ -7,7 +7,7 @@ restart_retry_delay: 30
 retry_num: 60
 hide_password: false
 wait_for_splunk_retry_num: 60
-shc_sync_retry_num: 60
+shc_sync_retry_num: 100
 
 config:
     max_retries: 3
