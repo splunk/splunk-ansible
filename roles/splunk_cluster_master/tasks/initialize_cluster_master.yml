@@ -30,7 +30,7 @@
   delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
-  become: yes
+  become: no
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
 

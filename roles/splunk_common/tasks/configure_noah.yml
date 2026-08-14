@@ -1,0 +1,225 @@
+---
+# Noah indexer and search-head configuration.
+#
+# Included from main.yml before enable_admin_auth.yml, gated on noahService being defined
+# in spec.defaults. Running before enable_admin_auth ensures all [noahService] writes are
+# in place before "splunk cmd splunkd rest --noauth" starts a full mini-splunkd under
+# SPLUNK_DECLARATIVE_ADMIN_PASSWORD — that mini-splunkd calls
+# NoahConfiguration::loadNoahServiceFromConfFilesReloadable and crashes if it sees
+# disabled=false without a consistent pass4SymmKey or a missing heartbeatPeriod.
+#
+# Task order:
+# 1. Write [noahService] fields (disabled=true for pre-auth, heartbeatPeriod, pass4SymmKey).
+# 2. Write [general] serverName and SHC fields early so set_server_name.yml is idempotent.
+# 3. Write [noahService] advertisedAddr — the FQDN Noah stores for distributed search routing.
+
+# 1a. Write all [noahService] fields from spec.defaults, forcing disabled=true so the
+#     mini-splunkd during Apply-admin-password stays dormant. set_config_file.yml (after
+#     enable_admin_auth.yml) restores disabled=false from the operator defaults ConfigMap.
+- name: Write noahService conf fields with disabled=true for pre-auth splunkd startup
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "noahService"
+    option: "{{ item.key }}"
+    value: "{{ 'true' if item.key == 'disabled' else item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  with_dict: "{{ splunk.conf.server.content.noahService }}"
+  no_log: "{{ hide_password }}"
+
+# 1b. Write heartbeatPeriod to prevent "Cannot parse 'heartbeatPeriod'" crash when the
+#     mini-splunkd starts. heartbeatPeriod has no compile-time default in NoahConfiguration
+#     so it must be present. ini_file never removes keys, so this value persists across
+#     subsequent set_config_file.yml writes; 30 is a safe default for indexers.
+- name: Write noahService heartbeatPeriod to prevent parse crash on pre-auth splunkd start
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "noahService"
+    option: "heartbeatPeriod"
+    value: "30"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+
+# 1c. Write pass4SymmKey in plaintext. splunkd encrypts it after the first full start; the
+#     operator init container strips the encrypted $7$... value before each subsequent restart
+#     so that ini_file can write a fresh plaintext value without failing on the encrypted form.
+- name: Write noahService pass4SymmKey
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "noahService"
+    option: "pass4SymmKey"
+    value: "{{ splunk.pass4SymmKey }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
+  no_log: "{{ hide_password }}"
+
+# 2a. Write [general] serverName early so set_server_name.yml (which runs after splunkd
+#     starts) sees the value as already correct and returns 'ok'. Without this pre-write,
+#     set_server_name.yml returns 'changed' on every restart and notifies restart_splunk.yml,
+#     triggering validatedb (~10 min) and OOM-kills (exit 137 at 8Gi container limit).
+- name: Write general serverName early to make set_server_name.yml idempotent
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "general"
+    option: "serverName"
+    value: "{{ splunk.server_name }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: "'server_name' in splunk and splunk.server_name is not none"
+
+# 2b. Write shcclustering register_replication_address early for SHC members.
+- name: Write shcclustering register_replication_address early
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "register_replication_address"
+    value: "{{ splunk.server_name }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - "'server_name' in splunk and splunk.server_name is not none"
+    - "splunk.role == 'splunk_search_head'"
+
+# 2c. Write shcclustering search_head_uri early for SHC members.
+- name: Write shcclustering search_head_uri early
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "search_head_uri"
+    value: "{{ splunk.server_name }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - "'server_name' in splunk and splunk.server_name is not none"
+    - "splunk.role == 'splunk_search_head'"
+
+# 3. Write [noahService] advertisedAddr — the FQDN Noah stores as this peer's address for
+#    distributed search routing. Computed by environ.py from:
+#      POD_NAME + SPLUNK_HEADLESS_SERVICE_NAME + POD_NAMESPACE → "https://<fqdn>:8089"
+#    No restart needed: splunkd already has its FQDN from environ.py. Writing this to
+#    server.conf persists the value so it survives the next boot when environ.py re-derives it.
+- name: Write noahService advertisedAddr for distributed search routing
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "noahService"
+    option: "advertisedAddr"
+    value: "{{ splunk.noah_advertised_addr }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: "'noah_advertised_addr' in splunk and splunk.noah_advertised_addr is not none"
+
+# 4. Pre-start [shcclustering] writes for SHC members.
+#
+#    "splunk init shcluster-config" always returns rc=0 (success), and search_head_clustering.yml
+#    uses "changed_when: task_result.rc == 0" — so it unconditionally fires the
+#    "Restart the splunkd service" handler, adding ~537s to every pod restart.
+#
+#    Writing the same [shcclustering] fields here, BEFORE "splunk start", makes
+#    "splunk init shcluster-config" a no-op: splunkd already has the config on disk when it
+#    starts, so no state changes and search_head_clustering.yml's "changed_when: false" (see
+#    that file) prevents the restart from firing.
+#
+#    The init-etc init container (operator side) strips [shcclustering].pass4SymmKey on each
+#    restart so that ini_file can overwrite the splunkd-encrypted $7$... value with fresh
+#    plaintext here, matching the existing pattern for [noahService].pass4SymmKey.
+- name: Write shcclustering pass4SymmKey pre-start to make init shcluster-config idempotent
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "pass4SymmKey"
+    value: "{{ splunk.shc.pass4SymmKey }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"
+    - "'pass4SymmKey' in splunk.shc and splunk.shc.pass4SymmKey is not none"
+  no_log: "{{ hide_password }}"
+
+- name: Write shcclustering shcluster_label pre-start
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "shcluster_label"
+    value: "{{ splunk.shc.label }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"
+    - "'label' in splunk.shc and splunk.shc.label is not none"
+
+- name: Write shcclustering conf_replication_port pre-start
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "conf_replication_port"
+    value: "{{ splunk.shc.replication_port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"
+    - "'replication_port' in splunk.shc and splunk.shc.replication_port is not none"
+
+- name: Write shcclustering replication_factor pre-start
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "replication_factor"
+    value: "{{ splunk.shc.replication_factor }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"
+    - "'replication_factor' in splunk.shc and splunk.shc.replication_factor is not none"
+
+- name: Write shcclustering conf_deploy_fetch_url pre-start
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "conf_deploy_fetch_url"
+    value: "{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"
+    - "'deployer_url' in splunk and splunk.deployer_url is not none"
+
+- name: Write shcclustering mgmt_uri pre-start
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "mgmt_uri"
+    value: "{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"
+    - "'hostname' in splunk and splunk.hostname is not none"
+
+- name: Write shcclustering disabled=false pre-start to activate SHC on first start
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shcclustering"
+    option: "disabled"
+    value: "false"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"
+
+# All [shcclustering] fields are now in server.conf before splunkd starts, so
+# bootstrap shcluster-captain is a no-op API call (no restart needed).
+# This fact is checked by search_head_clustering.yml to suppress the handler.
+- name: Signal SHC prestart config complete
+  set_fact:
+    noah_shc_prestart_configured: true
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"

@@ -27,6 +27,11 @@
   with_items: "{{ distsearch_server_info['json']['entry'][0]['content']['servers'].split(',') }}"
   when: distsearch_server_info['json']['entry'][0]['content']['servers'] is defined and (distsearch_server_info['json']['entry'][0]['content']['servers']| length > 0)
 
+- name: Normalize current peers
+  set_fact:
+    current_group_list: "{{ current_group_list | map('regex_replace', '^https?://', '') | map('regex_replace', '/.*$', '') | map('regex_replace', ':[0-9]+$', '') | map('regex_replace', '^(.*)$', cert_prefix ~ '://\\1:' ~ splunk.svc_port) | list }}"
+  when: current_group_list is defined and (current_group_list | length > 0)
+
 - name: Create list of peers
   set_fact:
     group_list: "{{ (groups['splunk_indexer'] | default([])) + (groups['splunk_search_head'] | default([])) + (groups['splunk_search_head_captain'] | default([])) + (groups['splunk_cluster_master'] | default([])) + (groups['splunk_deployment_server']| default([])) + (groups['splunk_license_master'] | default([])) + (groups['splunk_standalone'] | default([])) + (splunk['manual_monitor_list'] | default([])) }}"
@@ -48,9 +53,25 @@
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
 
+- name: Create list of down peers
+  set_fact:
+    down_peer_list: "{{ existing_peers['json']['entry'] | selectattr('content.status', 'search', 'Down') | map(attribute='content.peerName') | list }}"
+  when: existing_peers['json']['entry'] is defined
+
+- name: Normalize down peers
+  set_fact:
+    down_peer_list: "{{ down_peer_list | map('regex_replace', '^https?://', '') | map('regex_replace', '/.*$', '') | map('regex_replace', ':[0-9]+$', '') | map('regex_replace', '^(.*)$', cert_prefix ~ '://\\1:' ~ splunk.svc_port) | list }}"
+  when: down_peer_list is defined and (down_peer_list | length > 0)
+
+- name: Create list of existing peer hosts
+  set_fact:
+    existing_peer_hosts: "{{ existing_peers['json']['entry'] | selectattr('content.status', 'search', 'Up') | map(attribute='content.peerName') | map('regex_replace', '^https?://', '') | map('regex_replace', '/.*$', '') | map('regex_replace', ':[0-9]+$', '') | list }}"
+  when: existing_peers['json']['entry'] is defined
+
 - name: Remove existing peers from group_list
   set_fact:
-    group_list: "{{ group_list | difference(existing_peers['json']['entry'] | selectattr('content.status', 'search', 'Up') | map(attribute='content.peerName') | list) }}"
+    group_list: "{{ group_list | difference(existing_peer_hosts) }}"
+  when: existing_peer_hosts is defined
 
 - name: Update group_list
   vars:
@@ -66,16 +87,26 @@
   with_items: "{{ current_group_list }}"
   when: item not in updated_group_list and current_group_list is defined and (current_group_list| length > 0)
 
+- name: Add down peers to remove list
+  set_fact:
+    remove_peer_list: "{{ remove_peer_list + down_peer_list }}"
+  when: down_peer_list is defined and (down_peer_list | length > 0)
+
+- name: Deduplicate remove list
+  set_fact:
+    remove_peer_list: "{{ remove_peer_list | unique }}"
+  when: remove_peer_list is defined and (remove_peer_list | length > 0)
+
 - name: Remove search peers
   command: "{{ splunk.exec }} remove search-server {{ item }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -remoteUsername {{ splunk.admin_user }} -remotePassword {{ splunk.password }}"
   become: yes
   become_user: "{{ splunk.user }}"
   register: remove_as_peer
-  until: remove_as_peer.rc == 0 or 'already exists' in remove_as_peer.stderr
+  until: remove_as_peer.rc == 0 or 'already exists' in remove_as_peer.stderr or 'This peer is a part of a cluster' in remove_as_peer.stderr or 'There is no search peer with a URI' in (remove_as_peer.stderr | default('') ~ remove_as_peer.stdout | default(''))
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
   changed_when: remove_as_peer.rc == 0
-  failed_when: remove_as_peer.rc != 0 and 'already exists' not in remove_as_peer.stderr
+  failed_when: remove_as_peer.rc != 0 and 'already exists' not in remove_as_peer.stderr and 'This peer is a part of a cluster' not in remove_as_peer.stderr and 'There is no search peer with a URI' not in (remove_as_peer.stderr | default('') ~ remove_as_peer.stdout | default(''))
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
