@@ -73,7 +73,11 @@
   when: splunk_search_head_captain | bool
   register: task_result
   until: task_result.rc == 0 or "already joined another cluster" in ((task_result.stdout | default('') ~ task_result.stderr | default('')) | lower)
-  changed_when: task_result.rc == 0
+  # configure_noah.yml pre-writes all [shcclustering] fields before splunkd starts, so
+  # bootstrap shcluster-captain is a no-op — suppress the restart handler in that case.
+  changed_when:
+    - task_result.rc == 0
+    - not (noah_shc_prestart_configured | default(false) | bool)
   failed_when: task_result.rc !=0 and "already joined another cluster" not in ((task_result.stdout | default('') ~ task_result.stderr | default('')) | lower)
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"

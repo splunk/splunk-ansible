@@ -213,3 +213,13 @@
   when:
     - splunk.role == 'splunk_search_head'
     - "'shc' in splunk and splunk.shc is defined"
+
+# All [shcclustering] fields are now in server.conf before splunkd starts, so
+# bootstrap shcluster-captain is a no-op API call (no restart needed).
+# This fact is checked by search_head_clustering.yml to suppress the handler.
+- name: Signal SHC prestart config complete
+  set_fact:
+    noah_shc_prestart_configured: true
+  when:
+    - splunk.role == 'splunk_search_head'
+    - "'shc' in splunk and splunk.shc is defined"
