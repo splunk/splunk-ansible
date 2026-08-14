@@ -98,7 +98,10 @@
     - task_result.rc == 0
     - not (noah_shc_prestart_configured | default(false) | bool)
   failed_when: task_result.rc !=0 and "already joined another cluster" not in ((task_result.stdout | default('') ~ task_result.stderr | default('')) | lower)
-  retries: "{{ retry_num }}"
+  # Use shc_sync_retry_num (100 × 6s = 600s) instead of retry_num (60 × 6s = 360s).
+  # Port 8089 opens before Splunk is fully ready for SHC cluster operations, so other
+  # members may reject bootstrap for a few minutes after their REST becomes reachable.
+  retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
   environment:
     SPLUNK_URI: "https://127.0.0.1:{{ splunk.svc_port }}"
