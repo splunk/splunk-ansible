@@ -8,12 +8,13 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
-  changed_when: task_result.rc == 0
+  # changed_when: false — configure_noah.yml writes all [shcclustering] fields to server.conf
+  # before "splunk start", so this call is a no-op verification. Reporting it as never-changed
+  # prevents the "Restart the splunkd service" handler from firing (~537s saved per pod restart).
+  changed_when: false
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
-  notify:
-    - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
 - name: Set desired preferred captaincy
