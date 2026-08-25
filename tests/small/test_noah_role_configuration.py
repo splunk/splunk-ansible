@@ -10,6 +10,7 @@ from jinja2 import Template
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 COMMON_TASKS = REPO_ROOT / "roles" / "splunk_common" / "tasks"
+COMMON_HANDLERS = REPO_ROOT / "roles" / "splunk_common" / "handlers"
 
 
 def load_tasks(name):
@@ -110,3 +111,26 @@ def test_role_configuration_runs_after_defaults_and_before_splunk_start():
     role_index = includes.index("configure_noah_role.yml")
     start_index = includes.index("start_splunk.yml")
     assert defaults_index < role_index < start_index
+
+
+def test_noah_cli_restart_uses_bounded_stop_start_without_changing_classic():
+    with (COMMON_HANDLERS / "restart_splunk.yml").open() as handler_file:
+        handlers = yaml.safe_load(handler_file)
+
+    noah_restart = task_named(
+        handlers,
+        "Restart Noah-managed splunkd service - Via bounded CLI stop and start",
+    )
+    assert "shell" in noah_restart
+    assert " stop --answer-yes" in noah_restart["shell"]
+    assert " start --answer-yes --accept-license" in noah_restart["shell"]
+    assert " restart " not in noah_restart["shell"]
+    assert "splunk.conf.server.content.noahService is defined" in noah_restart["when"]
+
+    classic_restart = task_named(
+        handlers, "Restart classic splunkd service - Via CLI"
+    )
+    assert classic_restart["command"].endswith(
+        "restart --answer-yes --accept-license"
+    )
+    assert any("noahService is defined" in condition for condition in classic_restart["when"])

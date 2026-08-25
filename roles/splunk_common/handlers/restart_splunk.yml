@@ -1,5 +1,22 @@
 ---
-- name: "Restart the splunkd service - Via CLI"
+- name: "Restart Noah-managed splunkd service - Via bounded CLI stop and start"
+  shell: >-
+    {{ splunk.exec }} stop --answer-yes &&
+    {{ splunk.exec }} start --answer-yes --accept-license
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: "{{ restart_retry_delay }}"
+  when:
+    - not splunk.enable_service
+    - "'conf' in splunk and splunk.conf"
+    - "splunk.conf.server is defined"
+    - "splunk.conf.server.content is defined"
+    - "splunk.conf.server.content.noahService is defined"
+
+- name: "Restart classic splunkd service - Via CLI"
   command: "{{ splunk.exec }} restart --answer-yes --accept-license"
   become: no
   become_user: "{{ splunk.user }}"
@@ -7,7 +24,14 @@
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ restart_retry_delay }}"
-  when: not splunk.enable_service
+  when:
+    - not splunk.enable_service
+    - not (
+        'conf' in splunk and splunk.conf and
+        splunk.conf.server is defined and
+        splunk.conf.server.content is defined and
+        splunk.conf.server.content.noahService is defined
+      )
 
 - name: "Restart the splunkd service - Via Linux systemd or init"
   service:
