@@ -1,0 +1,46 @@
+---
+# Configure how each Splunk role participates in Noah after the operator's
+# server.conf defaults have been written and before the full splunkd start.
+#
+# Indexers heartbeat and are eligible to own bucket-map partitions. Search
+# heads fetch peers and bucket maps but must not heartbeat into the indexer
+# membership pool. Deployers do not serve buckets and must not heartbeat either.
+
+- name: Set role-specific Noah heartbeat period
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "noahService"
+    option: "heartbeatPeriod"
+    value: "{{ '0' if splunk.role in ['splunk_search_head', 'splunk_deployer'] else '30' }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+
+- name: Enable Noah peer discovery for search heads
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "noahService"
+    option: "usePeers"
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: splunk.role == "splunk_search_head"
+
+- name: Enable decoupled search and indexing for Noah search heads
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "decouple_search_indexing"
+    option: "decoupleSearchIndexing"
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: splunk.role == "splunk_search_head"
+
+- name: Select the decoupled Noah search-head role
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "decouple_search_indexing"
+    option: "role"
+    value: "search_head"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: splunk.role == "splunk_search_head"

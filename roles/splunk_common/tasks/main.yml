@@ -126,6 +126,16 @@
   when: "'conf' in splunk and splunk.conf"
   no_log: "{{ hide_password }}"
 
+# Apply role-specific Noah client behavior only after set_config_file.yml has
+# restored the requested noahService stanza. Search heads consume bucket maps
+# without heartbeating as indexer peers; deployers also stay out of membership.
+- include_tasks: configure_noah_role.yml
+  when:
+    - "'conf' in splunk and splunk.conf"
+    - "splunk.conf.server is defined"
+    - "splunk.conf.server.content is defined"
+    - "splunk.conf.server.content.noahService is defined"
+
 # Generate outputs.conf before splunk starts to prevent data being indexed locally
 - include_tasks: enable_forwarding.yml
   when:
