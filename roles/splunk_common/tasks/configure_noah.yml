@@ -150,12 +150,12 @@
     - "'shc' in splunk and splunk.shc is defined"
     - "'label' in splunk.shc and splunk.shc.label is not none"
 
-- name: Write shclustering conf_replication_port pre-start
+- name: Write SHC replication port listener pre-start
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: "shclustering"
-    option: "conf_replication_port"
-    value: "{{ splunk.shc.replication_port }}"
+    section: "replication_port://{{ splunk.shc.replication_port }}"
+    option: "disabled"
+    value: "false"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when:

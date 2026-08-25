@@ -74,7 +74,6 @@ def test_prestart_shc_configuration_uses_the_splunk_shclustering_stanza():
             "register_replication_address",
             "search_head_uri",
             "shcluster_label",
-            "conf_replication_port",
             "replication_factor",
             "conf_deploy_fetch_url",
             "mgmt_uri",
@@ -85,6 +84,19 @@ def test_prestart_shc_configuration_uses_the_splunk_shclustering_stanza():
         "shclustering"
     }
     assert "shcclustering" not in (COMMON_TASKS / "configure_noah.yml").read_text()
+
+
+def test_prestart_shc_configuration_creates_a_replication_listener_stanza():
+    tasks = load_tasks("configure_noah.yml")
+    listener = task_named(tasks, "Write SHC replication port listener pre-start")
+    assert listener["ini_file"]["section"] == (
+        "replication_port://{{ splunk.shc.replication_port }}"
+    )
+    assert listener["ini_file"]["option"] == "disabled"
+    assert listener["ini_file"]["value"] == "false"
+    assert "conf_replication_port" not in (
+        COMMON_TASKS / "configure_noah.yml"
+    ).read_text()
 
 
 def test_role_configuration_runs_after_defaults_and_before_splunk_start():
