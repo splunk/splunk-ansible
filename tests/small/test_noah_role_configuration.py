@@ -62,6 +62,31 @@ def test_search_heads_fetch_peers_without_joining_indexer_membership():
     assert role["when"] == 'splunk.role == "splunk_search_head"'
 
 
+def test_prestart_shc_configuration_uses_the_splunk_shclustering_stanza():
+    tasks = load_tasks("configure_noah.yml")
+    shc_tasks = [
+        task
+        for task in tasks
+        if isinstance(task, dict)
+        and isinstance(task.get("ini_file"), dict)
+        and task["ini_file"].get("option")
+        in {
+            "register_replication_address",
+            "search_head_uri",
+            "shcluster_label",
+            "conf_replication_port",
+            "replication_factor",
+            "conf_deploy_fetch_url",
+            "mgmt_uri",
+        }
+    ]
+    assert shc_tasks
+    assert {task["ini_file"]["section"] for task in shc_tasks} == {
+        "shclustering"
+    }
+    assert "shcclustering" not in (COMMON_TASKS / "configure_noah.yml").read_text()
+
+
 def test_role_configuration_runs_after_defaults_and_before_splunk_start():
     tasks = load_tasks("main.yml")
     includes = [
