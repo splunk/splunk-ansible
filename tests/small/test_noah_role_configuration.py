@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Contract tests for explicit Noah provisioning and classic-mode isolation."""
+"""Contract tests for Noah provisioning and shared SHC startup behavior."""
 
 from __future__ import absolute_import
 
@@ -70,6 +70,18 @@ def test_common_role_calls_noah_at_the_two_lifecycle_boundaries():
     assert config_index < post_index < start_index
 
 
+def test_common_role_configures_every_stopped_shc_before_splunkd_start():
+    tasks = load_yaml("roles/splunk_common/tasks/main.yml")
+    prestart = named_task(tasks, "Configure SHC before splunkd starts")
+
+    assert prestart["include_tasks"] == "configure_shc_prestart.yml"
+    assert "splunk_search_head_cluster | bool" in prestart["when"]
+    assert "splunk_noah_enabled" not in str(prestart["when"])
+    assert tasks.index(prestart) < next(
+        i for i, task in enumerate(tasks) if task.get("include_tasks") == "start_splunk.yml"
+    )
+
+
 def test_pre_auth_keeps_noah_disabled_and_writes_a_safe_heartbeat():
     text = read_file("roles/splunk_noah/tasks/pre_auth.yml")
     assert "'true' if item.key == 'disabled'" in text
@@ -89,25 +101,47 @@ def test_each_supported_role_has_only_its_intended_noah_behavior():
 
     assert 'key: usePeers, value: "true"' in search_head
     assert "decouple_search_indexing" in search_head
-    assert "noah_shc_prestart_configured: true" in search_head
     assert "advertisedAddr" not in search_head
+    assert "shclustering" not in search_head
+    assert "replication_port://" not in search_head
 
     assert 'key: disabled, value: "true"' in deployer
     assert 'key: usePeers, value: "false"' in deployer
     assert "decouple_search_indexing" not in deployer
 
 
-def test_search_head_uses_valid_splunk_stanzas_for_prestart_configuration():
-    tasks = load_yaml("roles/splunk_noah/tasks/search_head.yml")
-    shc = named_task(tasks, "Configure stable SHC identity and formation before splunkd starts")
-    listener = named_task(tasks, "Configure the SHC replication listener before splunkd starts")
+def test_search_head_prestart_configuration_is_shared_by_classic_and_noah():
+    text = read_file("roles/splunk_common/tasks/configure_shc_prestart.yml")
 
-    assert shc["ini_file"]["section"] == "shclustering"
-    assert listener["ini_file"]["section"] == "replication_port://{{ splunk.shc.replication_port }}"
-    assert "shcclustering" not in read_file("roles/splunk_noah/tasks/search_head.yml")
+    assert 'section: "shclustering"' in text
+    assert 'section: "replication_port://{{ splunk.shc.replication_port }}"' in text
+    assert 'option: "register_replication_address"' in text
+    assert 'option: "search_head_uri"' in text
+    assert "shc_prestart_configured: true" in text
+    assert "shc_prestart_defer_initial_restart: true" in text
+    assert "not (splunk_noah_enabled | default(false) | bool)" in text
+    assert "shcclustering" not in text
 
 
-def test_shc_noah_retries_are_gated_and_classic_retry_value_is_preserved():
+def test_prestart_secret_is_only_written_for_a_fresh_etc_volume():
+    tasks = load_yaml("roles/splunk_common/tasks/configure_shc_prestart.yml")
+    secret = named_task(tasks, "Write the SHC symmetric key before the first splunkd start")
+
+    assert secret["when"] == "first_run | bool"
+    assert secret["no_log"] is True
+
+
+def test_classic_indexer_peering_is_declarative_before_initial_start():
+    prestart = read_file("roles/splunk_common/tasks/configure_shc_prestart.yml")
+    peer_tasks = load_yaml("roles/splunk_common/tasks/peer_cluster_master.yml")
+    peer_tcp = named_task(peer_tasks, "Peer cluster master TCP")
+
+    assert 'section: "clustering"' in prestart
+    assert 'value: "searchhead"' in prestart
+    assert any("shc_prestart_indexer_peer_configured" in condition for condition in peer_tcp["when"])
+
+
+def test_shc_retries_are_mode_specific_but_restart_elimination_is_shared():
     tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
     initialize = named_task(tasks, "Initialize SHC cluster config")
     wait_members = named_task(tasks, "Wait for all Noah SHC members before captain bootstrap")
@@ -117,8 +151,27 @@ def test_shc_noah_retries_are_gated_and_classic_retry_value_is_preserved():
     assert initialize["retries"] == expected_retries
     assert bootstrap["retries"] == expected_retries
     assert "splunk_noah_enabled | default(false) | bool" in wait_members["when"]
-    assert "not (noah_shc_prestart_configured | default(false) | bool)" in initialize["changed_when"]
-    assert "not (noah_shc_prestart_configured | default(false) | bool)" in bootstrap["changed_when"]
+    assert "not (shc_prestart_configured | default(false) | bool)" in initialize["when"]
+    assert "not (shc_prestart_configured | default(false) | bool)" in bootstrap["changed_when"]
+
+
+def test_initial_shc_restart_check_is_deferred_in_role_and_top_level_play():
+    role_tasks = load_yaml("roles/splunk_search_head/tasks/main.yml")
+    restart_check = next(
+        task for task in role_tasks
+        if task.get("include_tasks") == "../../../roles/splunk_common/tasks/check_for_required_restarts.yml"
+    )
+    site = read_file("site.yml")
+
+    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in restart_check["when"]
+    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in site
+
+
+def test_late_server_name_reconciliation_uses_the_real_shc_stanza():
+    text = read_file("roles/splunk_common/tasks/set_server_name.yml")
+
+    assert "section: shclustering" in text
+    assert "section: shcclustering" not in text
 
 
 def test_restart_handler_keeps_the_existing_notification_contract():
