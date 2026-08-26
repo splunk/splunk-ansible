@@ -1,5 +1,24 @@
 ---
-- name: "Restart the splunkd service - Via CLI"
+- name: "Restart Noah-managed splunkd - Via bounded CLI stop and start"
+  shell: |
+    set -e
+    if {{ splunk.exec }} status >/dev/null 2>&1; then
+      {{ splunk.exec }} stop --answer-yes
+    fi
+    {{ splunk.exec }} start --answer-yes --accept-license
+  args:
+    executable: /bin/sh
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: task_result
+  until: task_result.rc == 0
+  retries: "{{ retry_num }}"
+  delay: "{{ restart_retry_delay }}"
+  when:
+    - not splunk.enable_service
+    - splunk_noah_enabled | default(false) | bool
+
+- name: "Restart classic splunkd service - Via CLI"
   command: "{{ splunk.exec }} restart --answer-yes --accept-license"
   become: yes
   become_user: "{{ splunk.user }}"
@@ -7,7 +26,9 @@
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ restart_retry_delay }}"
-  when: not splunk.enable_service
+  when:
+    - not splunk.enable_service
+    - not (splunk_noah_enabled | default(false) | bool)
 
 - name: "Restart the splunkd service - Via Linux systemd or init"
   service:

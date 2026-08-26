@@ -348,7 +348,6 @@ def test_getNoahAdvertisedAddr_rejects_an_over_length_dns_name():
         with pytest.raises(ValueError, match="derived Noah advertised address"):
             environ.getNoahAdvertisedAddr(noah_vars_scope())
 
-
 @pytest.mark.parametrize(("regex", "result"),
                          [
                              (r"(FOOBAR)", {"foobar": "123"}),
