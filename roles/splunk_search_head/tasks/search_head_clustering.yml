@@ -8,15 +8,14 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
-  changed_when:
-    - task_result.rc == 0
-    - not (noah_shc_prestart_configured | default(false) | bool)
+  changed_when: task_result.rc == 0
   until: task_result.rc == 0
   retries: "{{ shc_sync_retry_num if (splunk_noah_enabled | default(false) | bool) else retry_num }}"
   delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
   no_log: "{{ hide_password }}"
+  when: not (shc_prestart_configured | default(false) | bool)
 
 - name: Set desired preferred captaincy
   splunk_api:
@@ -42,6 +41,7 @@
 
 - name: Flush restart handlers
   meta: flush_handlers
+  when: not (shc_prestart_configured | default(false) | bool)
 
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_process.yml
 
@@ -75,7 +75,7 @@
   until: task_result.rc == 0 or "node seems to have already joined another cluster" in task_result.stderr
   changed_when:
     - task_result.rc == 0
-    - not (noah_shc_prestart_configured | default(false) | bool)
+    - not (shc_prestart_configured | default(false) | bool)
   failed_when: task_result.rc !=0 and "node seems to have already joined another cluster" not in task_result.stderr
   retries: "{{ shc_sync_retry_num if (splunk_noah_enabled | default(false) | bool) else retry_num }}"
   delay: "{{ retry_delay }}"

@@ -2,20 +2,9 @@
 - name: Validate Noah search-head bootstrap inputs
   assert:
     that:
-      - splunk.server_name is defined
-      - splunk.server_name | length > 0
-      - splunk.hostname is defined
-      - splunk.deployer_url is defined
-      - splunk.deployer_url | length > 0
-      - splunk.shc is defined
-      - splunk.shc.pass4SymmKey is defined
-      - splunk.shc.pass4SymmKey
-      - splunk.shc.label is defined
-      - splunk.shc.replication_port is defined
-      - splunk.shc.replication_factor is defined
+      - splunk.role == "splunk_search_head"
     fail_msg: >-
-      Noah search heads require stable Kubernetes identity plus the deployer,
-      SHC symmetric key, label, replication port, and replication factor.
+      The Noah search-client configuration is only valid for a search-head role.
 
 - name: Configure the Noah search client
   ini_file:
@@ -41,43 +30,3 @@
   loop:
     - { key: decoupleSearchIndexing, value: "true" }
     - { key: role, value: search_head }
-
-- name: Write the SHC symmetric key before splunkd starts
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: shclustering
-    option: pass4SymmKey
-    value: "{{ splunk.shc.pass4SymmKey }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-  no_log: true
-
-- name: Configure stable SHC identity and formation before splunkd starts
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: shclustering
-    option: "{{ item.key }}"
-    value: "{{ item.value }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-  loop:
-    - { key: register_replication_address, value: "{{ splunk.server_name }}" }
-    - { key: search_head_uri, value: "{{ splunk.server_name }}" }
-    - { key: shcluster_label, value: "{{ splunk.shc.label }}" }
-    - { key: replication_factor, value: "{{ splunk.shc.replication_factor }}" }
-    - { key: conf_deploy_fetch_url, value: "{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}" }
-    - { key: mgmt_uri, value: "{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}" }
-    - { key: disabled, value: "false" }
-
-- name: Configure the SHC replication listener before splunkd starts
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: "replication_port://{{ splunk.shc.replication_port }}"
-    option: disabled
-    value: "false"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-
-- name: Record that Noah SHC configuration was completed before startup
-  set_fact:
-    noah_shc_prestart_configured: true

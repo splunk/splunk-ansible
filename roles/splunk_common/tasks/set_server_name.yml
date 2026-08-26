@@ -22,7 +22,7 @@
 
 - ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: shcclustering
+    section: shclustering
     option: "{{ item }}"
     value: "{{ splunk.server_name }}"
     owner: "{{ splunk.user }}"

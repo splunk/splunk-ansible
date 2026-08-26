@@ -142,6 +142,14 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | POD_NAMESPACE | Defines the namespace of the current pod in a k8s environment | no | no | no |
 | CLUSTER_DOMAIN | Defines the domain name for DNS resolution in a k8s cluster (default: cluster.local) | no | no | no |
 
+For Linux search-head cluster members, Ansible now writes the SHC member,
+replication-listener, stable server-name, and (for classic deployments)
+Cluster Manager peering configuration while splunkd is stopped. This applies
+to both classic and Noah deployments. The later SHC commands still form and
+verify the cluster, but they do not request duplicate restarts when the
+effective pre-start configuration already matches. If splunkd is already
+running, Ansible keeps the established live-configuration and restart path.
+
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 
 #### Additional Splunk Universal Forwarder variables

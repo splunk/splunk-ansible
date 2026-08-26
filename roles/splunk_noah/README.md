@@ -18,7 +18,7 @@ Provisioning has two deliberate entry points:
    configuration is rendered and before the first full splunkd start.
 
 Unsupported Splunk roles fail validation when Noah mode is enabled. With Noah
-mode disabled, existing classic provisioning follows its original path.
+mode disabled, Noah client configuration is not written.
 
 The SOK controller owns the shared `[noahService]` values such as `uri`,
 `tenant`, and the desired enabled state. Kubernetes identity variables provide
@@ -28,7 +28,9 @@ key in an environment variable. If the standard docker-splunk
 `splunk.pass4SymmKey` value is also present, the pre-auth path writes it using
 `no_log` so existing deployments retain their current behavior.
 
-Search-head cluster settings remain in the search-head lifecycle role. This
-role only writes their first-start configuration before splunkd starts, which
-lets the existing SHC commands verify or form the cluster without an
-unnecessary configuration restart.
+Search-head cluster formation is deliberately shared rather than implemented
+inside this Noah role. The common Linux SHC pre-start task writes the stable
+member and replication configuration while splunkd is stopped for both classic
+and Noah deployments. Classic mode also writes its Cluster Manager peering;
+Noah mode writes only the Noah search-client settings here. The later SHC
+commands form and verify the cluster without scheduling duplicate restarts.

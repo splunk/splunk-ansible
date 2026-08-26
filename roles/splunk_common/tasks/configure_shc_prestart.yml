@@ -1,0 +1,186 @@
+---
+- name: Set expected pre-start SHC configuration
+  set_fact:
+    shc_prestart_server_name: "{{ splunk.server_name | default(splunk.hostname, true) }}"
+    shc_prestart_mgmt_uri: "{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}"
+    shc_prestart_deployer_uri: "{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}"
+    shc_prestart_server_conf: "{{ splunk.home }}/etc/system/local/server.conf"
+    shc_prestart_indexer_peer_enabled: >-
+      {{
+        not (splunk_noah_enabled | default(false) | bool)
+        and (splunk_indexer_cluster | bool)
+        and (splunk.multisite_master is not defined)
+        and (splunk.set_search_peers | default(false) | bool)
+      }}
+
+- name: Validate pre-start SHC configuration inputs
+  assert:
+    that:
+      - cert_prefix in ["http", "https"]
+      - shc_prestart_server_name | length > 0
+      - splunk.hostname | default("") | length > 0
+      - splunk.deployer_url | default("") | length > 0
+      - splunk.shc.pass4SymmKey | default("") | length > 0
+      - splunk.shc.replication_factor | int > 0
+      - splunk.shc.replication_port | int > 0
+      - splunk.shc.replication_port | int <= 65535
+      - splunk.shc.replication_port | int != splunk.svc_port | int
+      - splunk.shc.replication_port | int != splunk.http_port | int
+      - splunk.shc.replication_port | int != splunk.s2s.port | int
+      - splunk.shc.replication_port | int != splunk.kvstore.port | int
+    fail_msg: >-
+      Pre-start SHC configuration requires stable identity, valid non-conflicting
+      ports, a deployer endpoint, replication factor, and shared secret.
+  no_log: true
+
+- name: Validate classic pre-start indexer peering inputs
+  assert:
+    that:
+      - splunk.cluster_master_url | default("") | length > 0
+      - splunk.idxc.pass4SymmKey | default("") | length > 0
+    fail_msg: >-
+      Classic SHC pre-start indexer peering requires a Cluster Manager endpoint
+      and indexer-cluster shared secret.
+  when: shc_prestart_indexer_peer_enabled | bool
+  no_log: true
+
+- name: Create the local Splunk configuration directory
+  file:
+    path: "{{ splunk.home }}/etc/system/local"
+    state: directory
+    mode: 0770
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Configure stable SHC identity before splunkd starts
+  ini_file:
+    path: "{{ shc_prestart_server_conf }}"
+    section: "general"
+    option: "serverName"
+    value: "{{ shc_prestart_server_name }}"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Configure SHC formation before splunkd starts
+  ini_file:
+    path: "{{ shc_prestart_server_conf }}"
+    section: "shclustering"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - option: "disabled"
+      value: "false"
+    - option: "mgmt_uri"
+      value: "{{ shc_prestart_mgmt_uri }}"
+    - option: "replication_factor"
+      value: "{{ splunk.shc.replication_factor }}"
+    - option: "conf_deploy_fetch_url"
+      value: "{{ shc_prestart_deployer_uri }}"
+    - option: "shcluster_label"
+      value: "{{ splunk.shc.label }}"
+    - option: "register_replication_address"
+      value: "{{ shc_prestart_server_name }}"
+    - option: "search_head_uri"
+      value: "{{ shc_prestart_server_name }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Write the SHC symmetric key before the first splunkd start
+  ini_file:
+    path: "{{ shc_prestart_server_conf }}"
+    section: "shclustering"
+    option: "pass4SymmKey"
+    value: "{{ splunk.shc.pass4SymmKey }}"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: first_run | bool
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
+- name: Configure the SHC replication listener before splunkd starts
+  ini_file:
+    path: "{{ shc_prestart_server_conf }}"
+    section: "replication_port://{{ splunk.shc.replication_port }}"
+    option: "disabled"
+    value: "false"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Configure classic indexer-cluster peering before splunkd starts
+  ini_file:
+    path: "{{ shc_prestart_server_conf }}"
+    section: "clustering"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - option: "mode"
+      value: "searchhead"
+    - option: "master_uri"
+      value: "{{ cert_prefix }}://{{ splunk.cluster_master_url }}:{{ splunk.svc_port }}"
+    - option: "pass4SymmKey"
+      value: "{{ splunk.idxc.pass4SymmKey }}"
+  when: shc_prestart_indexer_peer_enabled | bool
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
+- name: Read effective pre-start SHC configuration
+  command:
+    argv:
+      - "{{ splunk.exec }}"
+      - "btool"
+      - "server"
+      - "list"
+      - "--no-log"
+  register: shc_prestart_btool
+  changed_when: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
+- name: Validate effective pre-start SHC configuration
+  assert:
+    that:
+      - (shc_prestart_btool.stdout | regex_search("(?m)^serverName\\s*=\\s*" ~ (shc_prestart_server_name | regex_escape) ~ "\\s*$")) is not none
+      - (shc_prestart_btool.stdout | regex_search("(?m)^disabled\\s*=\\s*(0|false)\\s*$")) is not none
+      - ("mgmt_uri = " ~ shc_prestart_mgmt_uri) in shc_prestart_btool.stdout
+      - ("replication_factor = " ~ (splunk.shc.replication_factor | string)) in shc_prestart_btool.stdout
+      - ("conf_deploy_fetch_url = " ~ shc_prestart_deployer_uri) in shc_prestart_btool.stdout
+      - (shc_prestart_btool.stdout | regex_search("(?m)^pass4SymmKey\\s*=\\s*\\S+\\s*$")) is not none
+      - ("register_replication_address = " ~ shc_prestart_server_name) in shc_prestart_btool.stdout
+      - ("search_head_uri = " ~ shc_prestart_server_name) in shc_prestart_btool.stdout
+      - ("[replication_port://" ~ (splunk.shc.replication_port | string) ~ "]") in shc_prestart_btool.stdout
+    fail_msg: "Effective pre-start SHC configuration does not match the requested member configuration."
+  no_log: true
+
+- name: Record declarative SHC pre-start configuration
+  set_fact:
+    shc_prestart_configured: true
+    shc_prestart_defer_initial_restart: true
+    shc_prestart_indexer_peer_configured: "{{ shc_prestart_indexer_peer_enabled | bool }}"
