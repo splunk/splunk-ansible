@@ -8,9 +8,11 @@
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
-  changed_when: task_result.rc == 0
+  changed_when:
+    - task_result.rc == 0
+    - not (noah_shc_prestart_configured | default(false) | bool)
   until: task_result.rc == 0
-  retries: "{{ retry_num }}"
+  retries: "{{ shc_sync_retry_num if (splunk_noah_enabled | default(false) | bool) else retry_num }}"
   delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
@@ -47,6 +49,22 @@
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
 
+- name: Wait for all Noah SHC members before captain bootstrap
+  uri:
+    url: "{{ cert_prefix }}://{{ item }}:{{ splunk.svc_port }}"
+    method: GET
+    validate_certs: false
+    use_proxy: no
+  register: noah_shc_member_ready
+  until: noah_shc_member_ready.status == 200
+  retries: "{{ shc_sync_retry_num }}"
+  delay: "{{ retry_delay }}"
+  loop: "{{ groups['splunk_search_head'] | difference([inventory_hostname]) }}"
+  when:
+    - splunk_noah_enabled | default(false) | bool
+    - splunk_search_head_captain | bool
+  no_log: "{{ hide_password }}"
+
 #INFRA-38882: Update exec command?
 - name: Boostrap SHC captain
   command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for host in groups['splunk_search_head'] %}{{ cert_prefix }}://{{ host }}:{{ splunk.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
@@ -55,9 +73,11 @@
   when: splunk_search_head_captain | bool
   register: task_result
   until: task_result.rc == 0 or "node seems to have already joined another cluster" in task_result.stderr
-  changed_when: task_result.rc == 0
+  changed_when:
+    - task_result.rc == 0
+    - not (noah_shc_prestart_configured | default(false) | bool)
   failed_when: task_result.rc !=0 and "node seems to have already joined another cluster" not in task_result.stderr
-  retries: "{{ retry_num }}"
+  retries: "{{ shc_sync_retry_num if (splunk_noah_enabled | default(false) | bool) else retry_num }}"
   delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
