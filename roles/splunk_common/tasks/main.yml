@@ -150,11 +150,11 @@
     tasks_from: post_config
   when: splunk_noah_enabled | default(false) | bool
 
-- name: Check SHC process state before declarative configuration
+- name: Check SHC participant process state before declarative configuration
   include_tasks: get_splunk_status.yml
   when:
     - ansible_system is match("Linux")
-    - splunk.role == "splunk_search_head" or splunk.role == "splunk_search_head_captain"
+    - splunk.role in ["splunk_search_head", "splunk_search_head_captain", "splunk_deployer"]
     - splunk_search_head_cluster | bool
 
 - name: Configure SHC before splunkd starts
@@ -163,6 +163,15 @@
     - ansible_system is match("Linux")
     - splunk.role == "splunk_search_head" or splunk.role == "splunk_search_head_captain"
     - splunk_search_head_cluster | bool
+    - splunk_status.rc != 0
+
+- name: Configure SHC deployer before splunkd starts
+  include_tasks: configure_deployer_prestart.yml
+  when:
+    - ansible_system is match("Linux")
+    - splunk.role == "splunk_deployer"
+    - splunk_search_head_cluster | bool
+    - first_run | bool
     - splunk_status.rc != 0
 
 # Generate outputs.conf before splunk starts to prevent data being indexed locally

@@ -1,0 +1,69 @@
+---
+- name: Validate pre-start SHC deployer configuration inputs
+  assert:
+    that:
+      - splunk.shc.pass4SymmKey | default("") | length > 0
+      - splunk.shc.label | default("") | length > 0
+    fail_msg: >-
+      Pre-start SHC deployer configuration requires the SHC label and shared
+      symmetric key.
+  no_log: true
+
+- name: Create the local Splunk configuration directory for the SHC deployer
+  file:
+    path: "{{ splunk.home }}/etc/system/local"
+    state: directory
+    mode: 0770
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Configure the SHC deployer before the first splunkd start
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "shclustering"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - option: "pass4SymmKey"
+      value: "{{ splunk.shc.pass4SymmKey }}"
+    - option: "shcluster_label"
+      value: "{{ splunk.shc.label }}"
+  loop_control:
+    label: "{{ item.option }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
+- name: Read effective pre-start SHC deployer configuration
+  command:
+    argv:
+      - "{{ splunk.exec }}"
+      - "btool"
+      - "server"
+      - "list"
+      - "shclustering"
+      - "--no-log"
+  register: deployer_prestart_btool
+  changed_when: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: true
+
+- name: Validate effective pre-start SHC deployer configuration
+  assert:
+    that:
+      - (deployer_prestart_btool.stdout | regex_search("(?m)^pass4SymmKey\\s*=\\s*\\S+\\s*$")) is not none
+      - ("shcluster_label = " ~ splunk.shc.label) in deployer_prestart_btool.stdout
+    fail_msg: "Effective pre-start SHC deployer configuration does not match the requested SHC."
+  no_log: true
+
+- name: Record declarative SHC deployer pre-start configuration
+  set_fact:
+    deployer_prestart_configured: true

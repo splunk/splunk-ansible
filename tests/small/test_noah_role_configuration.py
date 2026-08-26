@@ -82,6 +82,33 @@ def test_common_role_configures_every_stopped_shc_before_splunkd_start():
     )
 
 
+def test_common_role_configures_a_fresh_deployer_before_splunkd_start():
+    tasks = load_yaml("roles/splunk_common/tasks/main.yml")
+    status = named_task(tasks, "Check SHC participant process state before declarative configuration")
+    prestart = named_task(tasks, "Configure SHC deployer before splunkd starts")
+    deployer_tasks = load_yaml("roles/splunk_deployer/tasks/main.yml")
+    late_reconcile = named_task(deployer_tasks, "Set deployer SHC key and label")
+
+    assert "splunk_deployer" in status["when"][1]
+    assert prestart["include_tasks"] == "configure_deployer_prestart.yml"
+    assert "first_run | bool" in prestart["when"]
+    assert "splunk_status.rc != 0" in prestart["when"]
+    assert tasks.index(prestart) < next(
+        i for i, task in enumerate(tasks) if task.get("include_tasks") == "start_splunk.yml"
+    )
+    assert "deployer_prestart_configured" in late_reconcile["when"]
+
+
+def test_deployer_prestart_writes_and_validates_the_shc_contract():
+    text = read_file("roles/splunk_common/tasks/configure_deployer_prestart.yml")
+
+    assert 'section: "shclustering"' in text
+    assert 'option: "pass4SymmKey"' in text
+    assert 'option: "shcluster_label"' in text
+    assert 'deployer_prestart_configured: true' in text
+    assert "Restart the splunkd service" not in text
+
+
 def test_pre_auth_keeps_noah_disabled_and_writes_a_safe_heartbeat():
     text = read_file("roles/splunk_noah/tasks/pre_auth.yml")
     assert "'true' if item.key == 'disabled'" in text
