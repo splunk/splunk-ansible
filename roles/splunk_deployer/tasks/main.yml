@@ -17,6 +17,7 @@
   no_log: "{{ hide_password }}"
   notify:
     - Restart the splunkd service
+  when: not (deployer_prestart_configured | default(false) | bool)
 
 # https://docs.splunk.com/Documentation/Splunk/latest/DistSearch/PropagateSHCconfigurationchanges#Set_the_deployer_push_mode
 - name: Set deployer push mode

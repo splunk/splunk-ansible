@@ -1,0 +1,31 @@
+---
+- name: Require a stable advertised address for a Noah indexer
+  assert:
+    that:
+      - splunk.noah_advertised_addr is defined
+      - splunk.noah_advertised_addr | length > 0
+    fail_msg: >-
+      Noah indexers require POD_NAME, POD_NAMESPACE, and
+      SPLUNK_HEADLESS_SERVICE_NAME to construct their stable advertised address.
+
+- name: Configure Noah indexer membership
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - { key: disabled, value: "false" }
+    - { key: heartbeatPeriod, value: "{{ splunk_noah_client_profile.heartbeat_period }}" }
+    - { key: usePeers, value: "false" }
+
+- name: Configure the stable address advertised by the Noah indexer
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: advertisedAddr
+    value: "{{ splunk.noah_advertised_addr }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
