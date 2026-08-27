@@ -1,0 +1,57 @@
+---
+- name: Create a dependency file
+  file:
+    path: /usr/share/man/man1
+    state: directory
+  when:
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'Ubuntu'
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Download the Java distribution
+  unarchive:
+    src: "{{ java_download_url }}"
+    dest: /opt/container_artifact
+    remote_src: yes
+  retries: "{{ retry_num }}"
+  delay: "{{ retry_delay }}"
+  when:
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'Ubuntu'
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Install openjdk for CentOS
+  yum:
+    name: java-21-openjdk
+    state: present
+  when:
+    - ansible_distribution == 'CentOS'
+  become: yes
+  become_user: "{{ privileged_user }}"
+
+- name: Create symlinks for java/javac
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  with_items:
+    - { "src": "/opt/container_artifact/jdk-{{ java_update_version }}/bin/java", "dest": "/usr/bin/java"}
+    - { "src": "/opt/container_artifact/jdk-{{ java_update_version }}/bin/javac", "dest": "/usr/bin/javac"}
+  become: yes
+  become_user: "{{ privileged_user }}"
+  ignore_errors: true
+  when:
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'Ubuntu'
+
+- name: Set JAVA_HOME in splunk-launch.conf
+  become: yes
+  become_user: "{{ privileged_user }}"
+  lineinfile:
+    path: "{{ splunk.home }}/etc/splunk-launch.conf"
+    regexp: '^JAVA_HOME'
+    line: "JAVA_HOME=/opt/container_artifact/jdk-{{ java_update_version }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    create: yes
+  when:
+    - ansible_distribution == 'Debian' or ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Ubuntu'

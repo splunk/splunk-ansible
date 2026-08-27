@@ -39,7 +39,7 @@ HERE = os.path.dirname(os.path.normpath(__file__))
 _PLATFORM = platform.platform().lower()
 PLATFORM = "windows" if ("windows" in _PLATFORM or "cygwin" in _PLATFORM) else "linux"
 HOSTNAME = os.uname()[1]
-JAVA_VERSION_WHITELIST = frozenset(("oracle:8", "openjdk:8", "openjdk:9", "openjdk:11"))
+JAVA_VERSION_WHITELIST = frozenset(("oracle:8", "openjdk:8", "openjdk:9", "openjdk:11", "openjdk:21"))
 
 roleNames = [
     'splunk_cluster_master', # (if it exists, set up indexer clustering)
@@ -440,6 +440,12 @@ def getJava(vars_scope):
             raise Exception("Invalid Java download URL format")
     elif java_version == "openjdk:11":
         vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz")
+        try:
+            vars_scope["java_update_version"] = re.search(r"openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", vars_scope["java_download_url"]).group(1)
+        except:
+            raise Exception("Invalid Java download URL format")
+    elif java_version == "openjdk:21":
+        vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz")
         try:
             vars_scope["java_update_version"] = re.search(r"openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", vars_scope["java_download_url"]).group(1)
         except:

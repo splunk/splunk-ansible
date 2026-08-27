@@ -22,3 +22,9 @@
   when:
     - java_version == "openjdk:9"
     - ansible_system is match("CYGWIN*|Win32NT")
+
+- name: Install Openjdk21 JDK
+  include_tasks: java_tasks/install_openjdk21_jdk.yml
+  when:
+    - java_version == "openjdk:21"
+    - ansible_system is match("Linux")
