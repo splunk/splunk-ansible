@@ -3,21 +3,28 @@
 # for that process, but write every required field so its config parser is safe.
 - include_tasks: validate.yml
 
+- name: Extract the noahService stanza from splunk.conf (dict format)
+  set_fact:
+    noah_service_stanza: >-
+      {{ splunk.conf.server.content.noahService }}
+  when: splunk.conf is mapping
+
+- name: Extract the noahService stanza from splunk.conf (list format)
+  set_fact:
+    noah_service_stanza: >-
+      {{ (splunk.conf | selectattr('key', 'equalto', 'server') | first | default({})).get('value', {}).get('content', {}).get('noahService', {}) }}
+  when: splunk.conf is not mapping
+
 - name: Validate the operator-provided Noah service configuration
   assert:
     that:
-      - >-
-        (((splunk.conf | default({})).get('server', {})).get('content', {})).get('noahService')
-        is mapping
-      - >-
-        (((splunk.conf | default({})).get('server', {})).get('content', {})).get('noahService', {}).get('uri', '')
-        | length > 0
-      - >-
-        (((splunk.conf | default({})).get('server', {})).get('content', {})).get('noahService', {}).get('tenant', '')
-        | length > 0
+      - noah_service_stanza is mapping
+      - noah_service_stanza | length > 0
+      - noah_service_stanza.get('uri', '') | length > 0
+      - noah_service_stanza.get('tenant', '') | length > 0
     fail_msg: >-
-      SPLUNK_NOAH_ENABLED=true requires splunk.conf.server.content.noahService
-      in the docker-splunk defaults.
+      SPLUNK_NOAH_ENABLED=true requires splunk.conf to contain a server entry
+      with content.noahService including at least 'uri' and 'tenant'.
 
 - name: Write Noah service configuration for temporary authentication startup
   ini_file:
@@ -27,7 +34,7 @@
     value: "{{ 'true' if item.key == 'disabled' else item.value }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  with_dict: "{{ splunk.conf.server.content.noahService }}"
+  with_dict: "{{ noah_service_stanza }}"
   no_log: "{{ hide_password }}"
 
 - name: Keep Noah disabled during temporary authentication startup
