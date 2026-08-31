@@ -13,9 +13,30 @@
   set_fact:
       multisite_master_uri: "{{ cert_prefix }}://{{ splunk.multisite_master }}:{{ splunk.svc_port }}"
 
-- name: Check if SSL replication port is configured in server.conf
+# CSPL-4006: Check if SSL replication port is configured in server.conf
+# If SSL port exists, we should NOT use -replication_port flag as it will overwrite the SSL config
+- name: Extract server.conf content from splunk.conf (dict format, multisite)
   set_fact:
-    has_ssl_replication_port_in_conf: "{{ 'conf' in splunk and 'server' in splunk.conf and 'content' in splunk.conf.server and (splunk.conf.server.content.keys() | select('match', '^replication_port-ssl://') | list | length > 0) }}"
+    multisite_server_conf_content: "{{ splunk.conf.server.content }}"
+  when:
+    - "'conf' in splunk and splunk.conf"
+    - splunk.conf is mapping
+    - "'server' in splunk.conf"
+    - "'content' in splunk.conf.server"
+
+- name: Extract server.conf content from splunk.conf (list format, multisite)
+  set_fact:
+    multisite_server_conf_content: >-
+      {{ (splunk.conf | selectattr('key', 'equalto', 'server') | first | default({})).get('value', {}).get('content', {}) }}
+  when:
+    - "'conf' in splunk and splunk.conf"
+    - splunk.conf is not mapping
+
+- name: Check if SSL replication port is configured in server.conf (multisite)
+  set_fact:
+    has_ssl_replication_port_in_conf_multisite: >-
+      {{ (multisite_server_conf_content | default({})).keys()
+         | select('match', '^replication_port-ssl://') | list | length > 0 }}
 
 - name: Determine SSL replication mode
   set_fact:
@@ -48,24 +69,14 @@
     - use_ssl_replication | bool
     - not (idxc_cluster_preseeded | default(false) | bool)
 
-# set_config_stanza.yml is used here (not set_config_file.yml) because some base images'
-# set_config_file.yml rewrites the whole server.conf, wiping the [clustering]/site= just written.
-- name: Re-apply SSL replication port configuration
-  include_tasks: ../../../roles/splunk_common/tasks/set_config_stanza.yml
+- name: Re-apply SSL replication port configuration (multisite)
+  include_tasks: ../../../roles/splunk_common/tasks/set_config_file.yml
   vars:
     conf_file: "server.conf"
     conf_directory: "{{ splunk.home }}/etc/system/local"
-    stanza_name: "{{ stanza.key }}"
-    stanza_settings: "{{ stanza.value | default({}) }}"
-  with_dict: "{{ splunk.conf.server.content }}"
-  loop_control:
-    loop_var: stanza
+    conf_stanzas: "{{ multisite_server_conf_content }}"
   when:
-    - use_ssl_replication | bool
-    - not (idxc_cluster_preseeded | default(false) | bool)
-    - "'conf' in splunk"
-    - "'server' in splunk.conf"
-    - "'content' in splunk.conf.server"
-  no_log: "{{ hide_password }}"
+    - has_ssl_replication_port_in_conf_multisite | default(false) | bool
+    - multisite_server_conf_content | default({}) | length > 0
 
 #INFRA-38882: Update
