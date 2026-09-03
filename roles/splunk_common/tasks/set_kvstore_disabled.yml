@@ -1,0 +1,12 @@
+---
+- ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: "disabled"
+    value: "{{ splunk.kvstore.disabled | bool | lower }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  register: set_kvstore_disabled
+
+- include_tasks: ../handlers/restart_splunk.yml
+  when: set_kvstore_disabled is changed

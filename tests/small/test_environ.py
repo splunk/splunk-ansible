@@ -671,6 +671,25 @@ def test_getDefaultKVStoreType(default_yml, os_env, result):
             environ.getDefaultKVStoreType(vars_scope)
     assert vars_scope["splunk"]["kvstore"] == result
 
+@pytest.mark.parametrize(("default_yml", "os_env", "result"),
+            [
+                ({}, {}, {}),
+                ({"disabled": True}, {}, {"disabled": True}),
+                ({"disabled": False}, {}, {"disabled": False}),
+                ({}, {"SPLUNK_KVSTORE_DISABLED": ""}, {}),
+                ({}, {"SPLUNK_KVSTORE_DISABLED": "true"}, {"disabled": True}),
+                ({}, {"SPLUNK_KVSTORE_DISABLED": "TRUE"}, {"disabled": True}),
+                ({}, {"SPLUNK_KVSTORE_DISABLED": "false"}, {"disabled": False}),
+            ]
+        )
+def test_getKVStoreDisabled(default_yml, os_env, result):
+    vars_scope = {"splunk": {"kvstore": {}}}
+    vars_scope["splunk"]["kvstore"].update(default_yml)
+    with patch("environ.inventory") as mock_inven:
+        with patch("os.environ", new=os_env):
+            environ.getKVStoreDisabled(vars_scope)
+    assert vars_scope["splunk"]["kvstore"] == result
+
 @pytest.mark.parametrize(("es_enablement", "os_env", "result"),
             [
                 (None, {}, ""),
