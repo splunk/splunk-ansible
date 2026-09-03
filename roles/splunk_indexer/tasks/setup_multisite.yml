@@ -9,9 +9,28 @@
 
 # CSPL-4006: Check if SSL replication port is configured in server.conf
 # If SSL port exists, we should NOT use -replication_port flag as it will overwrite the SSL config
+- name: Extract server.conf content from splunk.conf (dict format, multisite)
+  set_fact:
+    multisite_server_conf_content: "{{ splunk.conf.server.content }}"
+  when:
+    - "'conf' in splunk and splunk.conf"
+    - splunk.conf is mapping
+    - "'server' in splunk.conf"
+    - "'content' in splunk.conf.server"
+
+- name: Extract server.conf content from splunk.conf (list format, multisite)
+  set_fact:
+    multisite_server_conf_content: >-
+      {{ (splunk.conf | selectattr('key', 'equalto', 'server') | first | default({})).get('value', {}).get('content', {}) }}
+  when:
+    - "'conf' in splunk and splunk.conf"
+    - splunk.conf is not mapping
+
 - name: Check if SSL replication port is configured in server.conf (multisite)
   set_fact:
-    has_ssl_replication_port_in_conf_multisite: "{{ 'conf' in splunk and 'server' in splunk.conf and 'content' in splunk.conf.server and (splunk.conf.server.content.keys() | select('match', '^replication_port-ssl://') | list | length > 0) }}"
+    has_ssl_replication_port_in_conf_multisite: >-
+      {{ (multisite_server_conf_content | default({})).keys()
+         | select('match', '^replication_port-ssl://') | list | length > 0 }}
 
 # Determine if SSL replication should be used (either via flag or detected in config)
 - name: Determine SSL replication mode (multisite)
@@ -53,11 +72,9 @@
   vars:
     conf_file: "server.conf"
     conf_directory: "{{ splunk.home }}/etc/system/local"
-    conf_stanzas: "{{ splunk.conf.server.content }}"
+    conf_stanzas: "{{ multisite_server_conf_content }}"
   when:
     - has_ssl_replication_port_in_conf_multisite | default(false) | bool
-    - "'conf' in splunk"
-    - "'server' in splunk.conf"
-    - "'content' in splunk.conf.server"
+    - multisite_server_conf_content | default({}) | length > 0
 
 #INFRA-38882: Update

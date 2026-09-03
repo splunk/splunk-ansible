@@ -114,7 +114,10 @@ def test_pre_auth_keeps_noah_disabled_and_writes_a_safe_heartbeat():
     assert "'true' if item.key == 'disabled'" in text
     assert "Keep Noah disabled during temporary authentication startup" in text
     assert "splunk_noah_client_profile.heartbeat_period" in text
-    assert "splunk.conf.server.content.noahService" in text
+    assert "noah_service_stanza" in text
+    assert "splunk.conf is mapping" in text
+    assert "splunk.conf is not mapping" in text
+    assert "selectattr('key', 'equalto', 'server')" in text
 
 
 def test_each_supported_role_has_only_its_intended_noah_behavior():
