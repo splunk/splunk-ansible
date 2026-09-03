@@ -7,6 +7,8 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   register: set_kvstore_disabled
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - include_tasks: ../handlers/restart_splunk.yml
   when: set_kvstore_disabled is changed
