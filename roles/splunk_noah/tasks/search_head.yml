@@ -1,0 +1,32 @@
+---
+- name: Validate Noah search-head bootstrap inputs
+  assert:
+    that:
+      - splunk.role == "splunk_search_head"
+    fail_msg: >-
+      The Noah search-client configuration is only valid for a search-head role.
+
+- name: Configure the Noah search client
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - { key: disabled, value: "false" }
+    - { key: heartbeatPeriod, value: "{{ splunk_noah_client_profile.heartbeat_period }}" }
+    - { key: usePeers, value: "true" }
+
+- name: Configure decoupled search and indexing
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: decouple_search_indexing
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - { key: decoupleSearchIndexing, value: "true" }
+    - { key: role, value: search_head }

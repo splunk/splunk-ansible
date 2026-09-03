@@ -1,0 +1,12 @@
+---
+- name: Validate the Splunk role supported by Noah mode
+  assert:
+    that:
+      - splunk.role in splunk_noah_role_profiles
+    fail_msg: >-
+      Noah mode does not support SPLUNK_ROLE={{ splunk.role }}.
+      Supported roles are splunk_indexer, splunk_search_head, and splunk_deployer.
+
+- name: Select the Noah client profile for this Splunk role
+  set_fact:
+    splunk_noah_client_profile: "{{ splunk_noah_role_profiles[splunk.role] }}"
