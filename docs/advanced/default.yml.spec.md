@@ -418,6 +418,11 @@ splunk:
     * Determine the port used for Splunk Key-Value store
     * Default: 8191
 
+    disabled: <bool>
+    * When explicitly set, writes [kvstore] disabled in server.conf. Splunk indexers and
+      forwarders can run without the KV Store; this lets a deployment opt out of it.
+    * Default: null (not written; Splunk's own default of enabled stands)
+
   launch: null
   * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null

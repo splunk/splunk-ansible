@@ -177,6 +177,7 @@ def getDefaultVars():
     getDSP(defaultVars)
     getIPv6(defaultVars)
     getDefaultKVStoreType(defaultVars)
+    getKVStoreDisabled(defaultVars)
     getNodeSidecarPostgres(defaultVars)
     return defaultVars
 
@@ -763,6 +764,19 @@ def getDefaultKVStoreType(vars_scope):
     default_kvstore_type = val.lower()
     vars_scope["splunk"].setdefault("kvstore", {})
     vars_scope["splunk"]["kvstore"]["default_kvstore_type"] = default_kvstore_type
+
+def getKVStoreDisabled(vars_scope):
+    """
+    Honor SPLUNK_KVSTORE_DISABLED to configure server.conf
+    [kvstore] disabled when explicitly provided.
+    """
+    kvstore = vars_scope["splunk"].get("kvstore", {})
+    val = os.environ.get("SPLUNK_KVSTORE_DISABLED", kvstore.get("disabled"))
+    if val is None or val == "":
+        return
+
+    vars_scope["splunk"].setdefault("kvstore", {})
+    vars_scope["splunk"]["kvstore"]["disabled"] = str(val).lower() == "true"
 
 def getNodeSidecarPostgres(vars_scope):
     """

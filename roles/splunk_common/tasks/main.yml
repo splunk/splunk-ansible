@@ -112,6 +112,11 @@
     - splunk.kvstore.default_kvstore_type | length > 0
     - splunk.role != "splunk_universal_forwarder"
 
+- include_tasks: set_kvstore_disabled.yml
+  when:
+    - "'kvstore' in splunk and 'disabled' in splunk.kvstore"
+    - splunk.kvstore.disabled is not none
+
 - include_tasks: enable_splunkweb_ssl.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
