@@ -37,6 +37,7 @@
     value: "{{ splunk.s2s.password }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
+  when: "'password' in splunk.s2s"
   register: splunktcp_ssl_pass_configured
 
 - name: Configure SSL root CA
