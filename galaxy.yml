@@ -1,0 +1,19 @@
+namespace: "splunk"
+name: "splunk_ansible"
+version: "1.0.0"
+readme: "README.md"
+authors:
+    - "Splunk"
+description: >-
+    Ansible collection for installing, configuring, and managing Splunk
+    Enterprise and Universal Forwarder deployments.
+license:
+    - "Apache-2.0"
+tags:
+    - splunk
+    - monitoring
+    - logging
+repository: "https://github.com/splunk/splunk-ansible.git"
+documentation: "https://splunk.github.io/splunk-ansible/"
+homepage: "https://github.com/splunk/splunk-ansible"
+issues: "https://github.com/splunk/splunk-ansible/issues"
