@@ -130,6 +130,7 @@ def getDefaultVars():
     defaultVars = loadDefaults()
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', defaultVars["splunk"].get("role") or "splunk_standalone")
     overrideEnvironmentVars(defaultVars)
+    getNoah(defaultVars)
     getAnsibleContext(defaultVars)
     getASan(defaultVars)
     getDisablePopups(defaultVars)
@@ -192,7 +193,22 @@ def getServiceName(vars_scope):
     if serviceName != "" and namespace != "":
         vars_scope["splunk"]["issuer_uri"] = "{}.{}.svc.{}".format(serviceName, namespace, clusterDomain)
     if headlessServiceName != "" and namespace != "":
-        vars_scope["splunk"]["server_name"] = "{}.{}.{}.svc.{}".format(podName, headlessServiceName, namespace, clusterDomain)
+        server_name = "{}.{}.{}.svc.{}".format(podName, headlessServiceName, namespace, clusterDomain)
+        vars_scope["splunk"]["server_name"] = server_name
+        if vars_scope.get("splunk_noah_enabled", False):
+            vars_scope["splunk"]["noah_advertised_addr"] = "https://{}:{}".format(server_name, vars_scope["splunk"]["svc_port"])
+
+def getNoah(vars_scope):
+    """Enable Noah provisioning only when explicitly requested."""
+    value = os.environ.get("SPLUNK_NOAH_ENABLED", vars_scope.get("splunk_noah_enabled", False))
+    if isinstance(value, bool):
+        vars_scope["splunk_noah_enabled"] = value
+        return
+
+    normalized = str(value).strip().lower()
+    if normalized not in ("true", "false"):
+        raise ValueError("SPLUNK_NOAH_ENABLED must be either 'true' or 'false'")
+    vars_scope["splunk_noah_enabled"] = normalized == "true"
 
 def getSplunkPaths(vars_scope):
     """

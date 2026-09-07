@@ -8,6 +8,7 @@ retry_num: 60
 hide_password: false
 wait_for_splunk_retry_num: 60
 shc_sync_retry_num: 60
+splunk_noah_enabled: false
 
 config:
     max_retries: 3

@@ -58,6 +58,12 @@
 - include_tasks: set_general_symmkey_password.yml
   when: "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
 
+- name: Configure Noah safely before temporary authentication startup
+  include_role:
+    name: splunk_noah
+    tasks_from: pre_auth
+  when: splunk_noah_enabled | default(false) | bool
+
 - include_tasks: enable_admin_auth.yml
 
 - include_tasks: configure_mgmt_port.yml
@@ -137,6 +143,36 @@
   with_items: "{% if splunk.conf is mapping %}{{ splunk.conf | dict2items }}{% else %}{{ splunk.conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
   no_log: "{{ hide_password }}"
+
+- name: Configure the Noah client role before full splunkd startup
+  include_role:
+    name: splunk_noah
+    tasks_from: post_config
+  when: splunk_noah_enabled | default(false) | bool
+
+- name: Check SHC participant process state before declarative configuration
+  include_tasks: get_splunk_status.yml
+  when:
+    - ansible_system is match("Linux")
+    - splunk.role in ["splunk_search_head", "splunk_search_head_captain", "splunk_deployer"]
+    - splunk_search_head_cluster | bool
+
+- name: Configure SHC before splunkd starts
+  include_tasks: configure_shc_prestart.yml
+  when:
+    - ansible_system is match("Linux")
+    - splunk.role == "splunk_search_head" or splunk.role == "splunk_search_head_captain"
+    - splunk_search_head_cluster | bool
+    - splunk_status.rc != 0
+
+- name: Configure SHC deployer before splunkd starts
+  include_tasks: configure_deployer_prestart.yml
+  when:
+    - ansible_system is match("Linux")
+    - splunk.role == "splunk_deployer"
+    - splunk_search_head_cluster | bool
+    - first_run | bool
+    - splunk_status.rc != 0
 
 # Generate outputs.conf before splunk starts to prevent data being indexed locally
 - include_tasks: enable_forwarding.yml

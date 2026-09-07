@@ -19,6 +19,47 @@ sys.path.append(os.path.join(REPO_DIR, "inventory"))
 
 import environ
 
+
+@pytest.mark.parametrize(("value", "expected"), [
+    ("true", True),
+    ("TRUE", True),
+    ("false", False),
+    (True, True),
+    (False, False),
+])
+def test_getNoah(value, expected):
+    vars_scope = {"splunk_noah_enabled": False}
+    with patch("os.environ", new={"SPLUNK_NOAH_ENABLED": value}):
+        environ.getNoah(vars_scope)
+    assert vars_scope["splunk_noah_enabled"] is expected
+
+
+def test_getNoah_rejects_invalid_value():
+    with patch("os.environ", new={"SPLUNK_NOAH_ENABLED": "sometimes"}):
+        with pytest.raises(ValueError, match="must be either 'true' or 'false'"):
+            environ.getNoah({"splunk_noah_enabled": False})
+
+
+def test_getServiceName_builds_noah_advertised_address_only_in_noah_mode():
+    environment = {
+        "POD_NAME": "idxc-site1-0",
+        "POD_NAMESPACE": "splunk",
+        "SPLUNK_HEADLESS_SERVICE_NAME": "idxc-headless",
+        "CLUSTER_DOMAIN": "cluster.local",
+    }
+    vars_scope = {"splunk_noah_enabled": True, "splunk": {"svc_port": 8089}}
+    with patch("os.environ", new=environment):
+        environ.getServiceName(vars_scope)
+
+    expected_name = "idxc-site1-0.idxc-headless.splunk.svc.cluster.local"
+    assert vars_scope["splunk"]["server_name"] == expected_name
+    assert vars_scope["splunk"]["noah_advertised_addr"] == "https://{}:8089".format(expected_name)
+
+    classic_vars = {"splunk_noah_enabled": False, "splunk": {"svc_port": 8089}}
+    with patch("os.environ", new=environment):
+        environ.getServiceName(classic_vars)
+    assert "noah_advertised_addr" not in classic_vars["splunk"]
+
 @pytest.mark.parametrize(("regex", "result"),
                          [
                              (r"(FOOBAR)", {"foobar": "123"}),

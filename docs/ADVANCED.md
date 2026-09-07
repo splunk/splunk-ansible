@@ -137,9 +137,18 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNK_ES_SSL_ENABLEMENT | Set the ssl-enablement flag in ES.  Valid values are 'auto', 'strict', and 'ignore'. Defaults to auto when present. | no | no | no |
 | SPLUNK_SERVICE_NAME | Used alongside `POD_NAMESPACE` and `CLUSTER_DOMAIN` to construct a k8s-supported `issuer_uri` value for oauth2 configurations | no | no | no |
 | SPLUNK_HEADLESS_SERVICE_NAME | Used alongside `POD_NAME`, `POD_NAMESPACE`, and `CLUSTER_DOMAIN` to construct a k8s-supported `serverName` value. This is also used for the `search_head_uri` and `register_replication_address` settings when clustering is enabled. | no | no | no |
+| SPLUNK_NOAH_ENABLED | Explicitly enables Noah-specific provisioning for supported indexer, search-head, and deployer roles. Defaults to `false`; a `noahService` stanza alone does not enable Noah mode. | no | no | no |
 | POD_NAME | Defines the current pod name in a k8s environment | no | no | no |
 | POD_NAMESPACE | Defines the namespace of the current pod in a k8s environment | no | no | no |
 | CLUSTER_DOMAIN | Defines the domain name for DNS resolution in a k8s cluster (default: cluster.local) | no | no | no |
+
+For Linux search-head cluster members, Ansible now writes the SHC member,
+replication-listener, stable server-name, and (for classic deployments)
+Cluster Manager peering configuration while splunkd is stopped. This applies
+to both classic and Noah deployments. The later SHC commands still form and
+verify the cluster, but they do not request duplicate restarts when the
+effective pre-start configuration already matches. If splunkd is already
+running, Ansible keeps the established live-configuration and restart path.
 
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 
