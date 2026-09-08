@@ -22,11 +22,10 @@ mode disabled, Noah client configuration is not written.
 
 The SOK controller owns the shared `[noahService]` values such as `uri`,
 `tenant`, and the desired enabled state. Kubernetes identity variables provide
-the indexer's advertised address. Authentication material is staged in
-`server.conf` from a Kubernetes Secret; this role does not require the Noah
-key in an environment variable. If the standard docker-splunk
-`splunk.pass4SymmKey` value is also present, the pre-auth path writes it using
-`no_log` so existing deployments retain their current behavior.
+the indexer's advertised address. The Noah `pass4SymmKey` is delivered
+exclusively through `splunk.conf.server.content.noahService.pass4SymmKey`
+(from a Kubernetes Secret); it is intentionally separate from
+`splunk.pass4SymmKey`, which is the Splunk-to-Splunk `[general]` key.
 
 Search-head cluster formation is deliberately shared rather than implemented
 inside this Noah role. The common Linux SHC pre-start task writes the stable
