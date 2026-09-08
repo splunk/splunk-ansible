@@ -118,6 +118,11 @@ def test_pre_auth_keeps_noah_disabled_and_writes_a_safe_heartbeat():
     assert "splunk.conf is mapping" in text
     assert "splunk.conf is not mapping" in text
     assert "selectattr('key', 'equalto', 'server')" in text
+    # The Noah pass4SymmKey must come exclusively from
+    # splunk.conf.server.content.noahService.pass4SymmKey (delivered via a
+    # Kubernetes Secret). It must never fall back to splunk.pass4SymmKey,
+    # which is the Splunk-to-Splunk [general] key — a different credential.
+    assert "splunk.pass4SymmKey" not in text
 
 
 def test_each_supported_role_has_only_its_intended_noah_behavior():

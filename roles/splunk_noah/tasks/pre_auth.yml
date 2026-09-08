@@ -55,15 +55,7 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
 
-- name: Write the Noah symmetric key when supplied through docker-splunk defaults
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: noahService
-    option: pass4SymmKey
-    value: "{{ splunk.pass4SymmKey }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
-  when:
-    - splunk.pass4SymmKey is defined
-    - splunk.pass4SymmKey
-  no_log: true
+# The Noah symmetric key is delivered exclusively through
+# splunk.conf.server.content.noahService (written by the with_dict loop
+# above). It must NOT fall back to the Splunk-to-Splunk [general] key,
+# which is a different credential.
