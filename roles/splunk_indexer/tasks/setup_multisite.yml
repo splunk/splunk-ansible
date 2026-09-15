@@ -31,6 +31,18 @@
       - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
+# CSPL-4006: edit cluster-config leaves a plain [replication_port://PORT] stanza behind even
+# when a [replication_port-ssl://PORT] stanza already exists. splunkd loads the non-SSL stanza
+# first, so replication silently falls back to plaintext unless this stale stanza is removed.
+- name: Remove stale non-SSL replication port stanza left by cluster join
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: "replication_port://{{ splunk.idxc.replication_port }}"
+    state: absent
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: use_ssl_replication | bool
+
 # CSPL-4006: Re-apply SSL replication port config after cluster join.
 - name: Re-apply SSL replication port configuration
   include_tasks: ../../../roles/splunk_common/tasks/set_config_file.yml
