@@ -130,6 +130,7 @@ def getDefaultVars():
     defaultVars = loadDefaults()
     defaultVars["splunk"]["role"] = os.environ.get('SPLUNK_ROLE', defaultVars["splunk"].get("role") or "splunk_standalone")
     overrideEnvironmentVars(defaultVars)
+    getNoah(defaultVars)
     getAnsibleContext(defaultVars)
     getASan(defaultVars)
     getDisablePopups(defaultVars)
@@ -164,6 +165,7 @@ def getDefaultVars():
     defaultVars["splunk"]["hostname"] = os.environ.get('SPLUNK_HOSTNAME', socket.getfqdn())
 
     getServiceName(defaultVars)
+    getNoahAdvertisedAddr(defaultVars)
     getJava(defaultVars)
     getSplunkBuild(defaultVars)
     getSplunkbaseToken(defaultVars)
@@ -193,6 +195,185 @@ def getServiceName(vars_scope):
         vars_scope["splunk"]["issuer_uri"] = "{}.{}.svc.{}".format(serviceName, namespace, clusterDomain)
     if headlessServiceName != "" and namespace != "":
         vars_scope["splunk"]["server_name"] = "{}.{}.{}.svc.{}".format(podName, headlessServiceName, namespace, clusterDomain)
+
+def getNoah(vars_scope):
+    """Enable Noah provisioning only when explicitly requested."""
+    value = os.environ.get("SPLUNK_NOAH_ENABLED", vars_scope.get("splunk_noah_enabled", False))
+    if isinstance(value, bool):
+        vars_scope["splunk_noah_enabled"] = value
+        return
+
+    normalized = str(value).strip().lower()
+    if normalized not in ("true", "false"):
+        raise ValueError("SPLUNK_NOAH_ENABLED must be either 'true' or 'false'")
+    vars_scope["splunk_noah_enabled"] = normalized == "true"
+
+def getNoahAdvertisedAddr(vars_scope):
+    """
+    Resolve the address a Noah indexer advertises to the Noah service.
+
+    Precedence is SPLUNK_NOAH_ADVERTISED_ADDR, then a defaults-file
+    splunk.noah_advertised_addr, then derivation from the Kubernetes pod
+    identity. Only indexers advertise an address; search heads and deployers
+    carry their own stable identity settings, so resolving for them would
+    demand pod identity they never use.
+    """
+    if not vars_scope.get("splunk_noah_enabled", False):
+        return
+    if vars_scope["splunk"].get("role") != "splunk_indexer":
+        return
+
+    explicit = os.environ.get("SPLUNK_NOAH_ADVERTISED_ADDR", "")
+    if explicit.strip():
+        vars_scope["splunk"]["noah_advertised_addr"] = validateNoahAdvertisedAddr(
+            explicit.strip(), "SPLUNK_NOAH_ADVERTISED_ADDR")
+        return
+
+    from_defaults = vars_scope["splunk"].get("noah_advertised_addr") or ""
+    if str(from_defaults).strip():
+        vars_scope["splunk"]["noah_advertised_addr"] = validateNoahAdvertisedAddr(
+            str(from_defaults).strip(), "splunk.noah_advertised_addr")
+        return
+
+    vars_scope["splunk"]["noah_advertised_addr"] = deriveNoahAdvertisedAddr(vars_scope)
+
+def getNoahManagementScheme(vars_scope):
+    """
+    Return the scheme of the splunkd management endpoint, honouring
+    SPLUNK_CERT_PREFIX, SPLUNKD_SSL_ENABLE and a defaults-file
+    splunk.ssl.enable. A management endpoint without TLS yields http, so a peer
+    is never advertised at a scheme Noah cannot reach.
+    """
+    ssl_enable = vars_scope["splunk"].get("ssl", {}).get("enable", True)
+    if isinstance(ssl_enable, str):
+        ssl_enable = ssl_enable.strip().lower() != "false"
+    if not ssl_enable:
+        return "http"
+
+    scheme = str(vars_scope.get("cert_prefix", "https")).strip().lower()
+    if scheme not in ("http", "https"):
+        raise ValueError(
+            "cannot advertise a Noah indexer: unsupported management scheme "
+            "'{}', expected http or https".format(scheme))
+    return scheme
+
+def deriveNoahAdvertisedAddr(vars_scope):
+    """
+    Build the advertised address from the Kubernetes pod identity. Every
+    component is required: a partially derived address would register a peer
+    that Noah cannot reach.
+    """
+    pod_name = os.environ.get("POD_NAME", "")
+    headless_service_name = os.environ.get("SPLUNK_HEADLESS_SERVICE_NAME", "")
+    namespace = os.environ.get("POD_NAMESPACE", "")
+    cluster_domain = os.environ.get("CLUSTER_DOMAIN", "").strip() or "cluster.local"
+
+    missing = [name for name, value in (
+        ("POD_NAME", pod_name),
+        ("SPLUNK_HEADLESS_SERVICE_NAME", headless_service_name),
+        ("POD_NAMESPACE", namespace),
+    ) if not value.strip()]
+    if missing:
+        raise ValueError(
+            "cannot derive the Noah advertised address: set "
+            "SPLUNK_NOAH_ADVERTISED_ADDR explicitly, or supply {}".format(
+                ", ".join(missing)))
+
+    port = vars_scope["splunk"].get("svc_port")
+    if port in (None, ""):
+        raise ValueError(
+            "cannot derive the Noah advertised address: splunk.svc_port is unset")
+
+    # Validated like an operator-supplied value: svc_port and CLUSTER_DOMAIN are
+    # unvalidated environment input, so an unusable port or host would otherwise
+    # reach server.conf and register an unreachable peer.
+    return validateNoahAdvertisedAddr(
+        "{}://{}.{}.{}.svc.{}:{}".format(
+            getNoahManagementScheme(vars_scope), pod_name.strip(),
+            headless_service_name.strip(), namespace.strip(), cluster_domain, port),
+        "the derived Noah advertised address")
+
+def redactNoahAdvertisedAddr(address):
+    """
+    Strip any userinfo before an address reaches an error message or a log. A
+    Noah advertised address never carries credentials, but a misconfigured one
+    might, and this value is echoed back to the operator on failure.
+    """
+    if "@" not in address:
+        return address
+    scheme, separator, remainder = address.partition("://")
+    # Split on the last "@": a password may itself contain one, and splitting on
+    # the first would echo the rest of the credential back to the operator.
+    if not separator:
+        return "<redacted>@{}".format(address.rpartition("@")[2])
+    return "{}://<redacted>@{}".format(scheme, remainder.rpartition("@")[2])
+
+def validateNoahAdvertisedAddr(address, source):
+    """
+    Confirm a supplied address carries a supported scheme, a host and a numeric
+    port, and nothing else. Userinfo is rejected rather than forwarded: splunkd
+    would treat it as part of the address, and it can carry a credential.
+    """
+    safe = redactNoahAdvertisedAddr(address)
+
+    def reject(problem):
+        return ValueError("{} must {}, got '{}'".format(source, problem, safe))
+
+    # urlparse silently strips tabs and newlines, so a value containing them
+    # would validate and then be written to server.conf verbatim, corrupting the
+    # stanza or injecting another setting. str.isprintable() is Python 3 only.
+    if any(character not in string.printable or character in string.whitespace
+           for character in address):
+        raise reject("not contain control characters")
+
+    parsed = urlparse(address)
+    if parsed.scheme not in ("http", "https"):
+        raise reject("use http or https")
+    # urlparse lowercases the scheme, so the raw value is the only way to see
+    # that the operator supplied one splunkd will not match.
+    if not address.startswith(parsed.scheme + "://"):
+        raise reject("use a lowercase scheme")
+    if "@" in parsed.netloc:
+        raise reject("not embed credentials")
+    try:
+        port = parsed.port
+    except ValueError:
+        raise reject("use a numeric port between 1 and 65535")
+    if not parsed.hostname:
+        raise reject("include a host")
+    if parsed.hostname.endswith("."):
+        raise reject("use a host without a trailing dot")
+    # urlparse accepts any character in a host, so spaces and underscores reach
+    # server.conf unnoticed. It also lowercases parsed.hostname, so only the raw
+    # netloc reveals a mixed-case host that splunkd would not match.
+    if parsed.netloc != parsed.netloc.lower():
+        raise reject("use a lowercase host")
+    if not isValidNoahHost(parsed.hostname):
+        raise reject("use a DNS name or IP literal")
+    if port is None:
+        raise reject("include the splunkd management port")
+    if not 1 <= port <= 65535:
+        raise reject("use a port between 1 and 65535")
+    if parsed.path or parsed.query or parsed.fragment or parsed.params:
+        raise reject("be a scheme, host and port only")
+    return address
+
+def isValidNoahHost(host):
+    """
+    Accept an IPv6 literal, or a DNS name whose labels carry only the characters
+    splunkd and Kubernetes DNS both resolve.
+    """
+    if ":" in host:
+        try:
+            socket.inet_pton(socket.AF_INET6, host)
+        except (socket.error, ValueError):
+            return False
+        return True
+    if len(host) > 253:
+        return False
+    labels = host.split(".")
+    return all(re.match(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", label) and len(label) <= 63
+               for label in labels)
 
 def getSplunkPaths(vars_scope):
     """
