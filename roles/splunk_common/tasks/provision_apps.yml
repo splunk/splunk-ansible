@@ -3,6 +3,10 @@
   vars:
     app_url: "{{ item }}"
   loop: "{{ app_list }}"
+  when:
+    - '("missioncontrol" not in item) or 
+    (("ta_missioncontrol" in item) and (splunk.role == "splunk_indexer")) or 
+    (("ta_missioncontrol" not in item) and ("missioncontrol" in item) and (splunk.role == "splunk_search_head"))'
 
 - name: Flush restart handlers
   meta: flush_handlers
