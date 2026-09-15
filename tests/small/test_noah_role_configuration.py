@@ -4,12 +4,16 @@
 from __future__ import absolute_import
 
 import os
+import sys
 
 import yaml
 
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_DIR = os.path.join(FILE_DIR, "..", "..")
+sys.path.insert(0, os.path.join(REPO_DIR, "roles", "splunk_noah", "filter_plugins"))
+
+splunk_conf = __import__("splunk_conf")
 
 
 def load_yaml(relative_path):
@@ -117,12 +121,49 @@ def test_pre_auth_keeps_noah_disabled_and_writes_a_safe_heartbeat():
     assert "noah_service_stanza" in text
     assert "splunk.conf is mapping" in text
     assert "splunk.conf is not mapping" in text
-    assert "selectattr('key', 'equalto', 'server')" in text
+    assert "combine(item.value.content.noahService, recursive=true)" in text
+    assert "| first" not in text
+    assert "item.get('value', {}).get('directory')" in text
+    assert "normalize_splunk_conf_path" in text
+    assert "noah_service_stanza.get('pass4SymmKey', '')" in text
+    assert 'loop: "{{ splunk_conf_effective }}"' in text
     # The Noah pass4SymmKey must come exclusively from
     # splunk.conf.server.content.noahService.pass4SymmKey (delivered via a
     # Kubernetes Secret). It must never fall back to splunk.pass4SymmKey,
     # which is the Splunk-to-Splunk [general] key — a different credential.
     assert "splunk.pass4SymmKey" not in text
+
+
+def test_noah_role_normalizes_effective_server_files_for_shared_writer():
+    pre_auth = load_yaml("roles/splunk_noah/tasks/pre_auth.yml")
+    normalization = load_yaml("roles/splunk_noah/tasks/normalize_conf.yml")
+    common = read_file("roles/splunk_common/tasks/main.yml")
+
+    include = named_task(pre_auth, "Normalize list-form server.conf at the Noah role boundary")
+    assert include["include_tasks"] == "normalize_conf.yml"
+    assert include["when"] == "splunk.conf is not mapping"
+
+    normalize = named_task(normalization, "Normalize list-form server.conf entries by effective file")
+    assert "normalize_splunk_conf_entries" in normalize["set_fact"]["splunk_conf_effective"]
+    assert normalize["no_log"] is True
+
+    # This is the value consumed by the generic config writer. Using a separate
+    # fact also works when splunk.conf itself came from immutable extra-vars.
+    assert "splunk_conf_effective | default(splunk.conf)" in common
+
+    for task_file in (
+        "roles/splunk_indexer/tasks/indexer_clustering.yml",
+        "roles/splunk_indexer/tasks/setup_multisite.yml",
+    ):
+        assert "splunk_conf_effective | default(splunk.conf)" in read_file(task_file)
+
+
+def test_noah_filters_expose_shared_normalization_and_path_identity():
+    filters = splunk_conf.FilterModule().filters()
+    assert "normalize_splunk_conf_entries" in filters
+    assert filters["normalize_splunk_conf_path"](
+        "/opt//splunk/etc/./system/local/"
+    ) == "/opt/splunk/etc/system/local"
 
 
 def test_each_supported_role_has_only_its_intended_noah_behavior():

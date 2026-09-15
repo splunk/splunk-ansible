@@ -3,17 +3,41 @@
 # for that process, but write every required field so its config parser is safe.
 - include_tasks: validate.yml
 
+- name: Normalize list-form server.conf at the Noah role boundary
+  include_tasks: normalize_conf.yml
+  when: splunk.conf is not mapping
+
 - name: Extract the noahService stanza from splunk.conf (dict format)
   set_fact:
     noah_service_stanza: >-
       {{ splunk.conf.server.content.noahService }}
   when: splunk.conf is mapping
+  no_log: true
 
-- name: Extract the noahService stanza from splunk.conf (list format)
+- name: Initialize the noahService stanza for list-form splunk.conf
+  set_fact:
+    noah_service_stanza: {}
+  when: splunk.conf is not mapping
+  no_log: true
+
+- name: Merge the noahService stanza from list-form splunk.conf
   set_fact:
     noah_service_stanza: >-
-      {{ (splunk.conf | selectattr('key', 'equalto', 'server') | first | default({})).get('value', {}).get('content', {}).get('noahService', {}) }}
-  when: splunk.conf is not mapping
+      {{ noah_service_stanza | combine(item.value.content.noahService, recursive=true) }}
+  loop: "{{ splunk_conf_effective }}"
+  when:
+    - splunk.conf is not mapping
+    - item is mapping
+    - item.get('key') == 'server'
+    - item.get('value', {}) is mapping
+    - item.get('value', {}).get('content', {}) is mapping
+    - item.get('value', {}).get('content', {}).get('noahService', {}) is mapping
+    - >-
+      (item.get('value', {}).get('directory')
+      | default(splunk.home + '/etc/system/local', true)
+      | normalize_splunk_conf_path) ==
+      ((splunk.home + '/etc/system/local') | normalize_splunk_conf_path)
+  no_log: true
 
 - name: Validate the operator-provided Noah service configuration
   assert:
@@ -22,9 +46,11 @@
       - noah_service_stanza | length > 0
       - noah_service_stanza.get('uri', '') | length > 0
       - noah_service_stanza.get('tenant', '') | length > 0
+      - noah_service_stanza.get('pass4SymmKey', '') | length > 0
     fail_msg: >-
       SPLUNK_NOAH_ENABLED=true requires splunk.conf to contain a server entry
-      with content.noahService including at least 'uri' and 'tenant'.
+      for {{ splunk.home }}/etc/system/local with content.noahService including
+      'uri', 'tenant', and 'pass4SymmKey'.
 
 - name: Write Noah service configuration for temporary authentication startup
   ini_file:

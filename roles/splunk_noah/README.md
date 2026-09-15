@@ -27,6 +27,17 @@ exclusively through `splunk.conf.server.content.noahService.pass4SymmKey`
 (from a Kubernetes Secret); it is intentionally separate from
 `splunk.pass4SymmKey`, which is the Splunk-to-Splunk `[general]` key.
 
+When Noah is enabled, list-form `splunk.conf` entries for the same effective
+`server.conf` are recursively merged before any Ansible role consumes them.
+The effective file identity includes both the file key and output directory;
+later source values take precedence, while same-named files in different
+directories remain independent. This opt-in allows SOK to supply structural
+`[noahService]` values through a ConfigMap and `pass4SymmKey` through a Secret.
+Dictionary-form configuration and list entries for other files are unchanged.
+The Noah role repeats this normalization at its boundary and exposes the result
+to the shared configuration writer, covering static inventory, extra variables,
+and configuration overrides that bypass the dynamic inventory script.
+
 Search-head cluster formation is deliberately shared rather than implemented
 inside this Noah role. The common Linux SHC pre-start task writes the stable
 member and replication configuration while splunkd is stopped for both classic
