@@ -40,6 +40,193 @@ def test_getNoah_rejects_invalid_value():
             environ.getNoah({"splunk_noah_enabled": False})
 
 
+def test_normalizeConfEntries_merges_duplicate_effective_files_recursively():
+    entries = [
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "uri": "https://noah.example",
+                        "tenant": "tenant-a",
+                        "heartbeatPeriod": "30",
+                    },
+                    "general": {"serverName": "indexer-0"},
+                }
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "pass4SymmKey": "noah-secret",
+                        "heartbeatPeriod": "60",
+                    }
+                }
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert len(normalized) == 1
+    assert normalized[0]["value"]["content"] == {
+        "noahService": {
+            "uri": "https://noah.example",
+            "tenant": "tenant-a",
+            "heartbeatPeriod": "60",
+            "pass4SymmKey": "noah-secret",
+        },
+        "general": {"serverName": "indexer-0"},
+    }
+    # The helper must not mutate data retained by defaults-loading callers.
+    assert len(entries) == 2
+    assert "pass4SymmKey" not in entries[0]["value"]["content"]["noahService"]
+
+
+def test_normalizeConfEntries_uses_effective_directory_in_file_identity():
+    default_directory = "/opt/splunk/etc/system/local"
+    entries = [
+        {"key": "server", "value": {"content": {"one": {"a": "1"}}}},
+        {
+            "key": "server",
+            "value": {
+                "directory": "/opt//splunk/etc/./system/local/",
+                "content": {"one": {"b": "2"}},
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "directory": "/opt/splunk/etc/apps/custom/local",
+                "content": {"one": {"c": "3"}},
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(entries, default_directory)
+
+    assert len(normalized) == 2
+    assert normalized[0]["value"]["content"]["one"] == {"a": "1", "b": "2"}
+    assert normalized[1]["value"]["content"]["one"] == {"c": "3"}
+
+
+def test_normalizeConfEntries_preserves_merge_dict_edge_case_semantics():
+    entries = [
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "uri": "https://noah.example",
+                        "tenant": "tenant-a",
+                    },
+                    "preserved": {"setting": "value"},
+                }
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": [{"pass4SymmKey": "noah-secret"}],
+                    "preserved": None,
+                }
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert normalized[0]["value"]["content"] == {
+        "noahService": {
+            "uri": "https://noah.example",
+            "tenant": "tenant-a",
+            "pass4SymmKey": "noah-secret",
+        },
+        "preserved": {"setting": "value"},
+    }
+
+
+def test_normalizeConfEntries_only_merges_selected_file_keys():
+    entries = [
+        {"key": "server", "value": {"content": {"one": {"a": "1"}}}},
+        {"key": "web", "value": {"content": {"settings": {"a": "1"}}}},
+        {"key": "server", "value": {"content": {"one": {"b": "2"}}}},
+        {"key": "web", "value": {"content": {"settings": {"b": "2"}}}},
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert [entry["key"] for entry in normalized] == ["server", "web", "web"]
+    assert normalized[0]["value"]["content"]["one"] == {"a": "1", "b": "2"}
+    assert normalized[1]["value"]["content"]["settings"] == {"a": "1"}
+    assert normalized[2]["value"]["content"]["settings"] == {"b": "2"}
+
+
+def test_normalizeNoahConf_updates_list_form_server_config_only_in_noah_mode():
+    conf_entries = [
+        {
+            "key": "server",
+            "value": {"content": {"noahService": {"uri": "https://noah.example"}}},
+        },
+        {
+            "key": "server",
+            "value": {"content": {"noahService": {"pass4SymmKey": "noah-secret"}}},
+        },
+    ]
+    vars_scope = {
+        "splunk_noah_enabled": True,
+        "splunk": {"home": "/opt/splunk", "conf": conf_entries},
+    }
+
+    environ.normalizeNoahConf(vars_scope)
+
+    assert len(vars_scope["splunk"]["conf"]) == 1
+    assert vars_scope["splunk"]["conf"][0]["value"]["content"]["noahService"] == {
+        "uri": "https://noah.example",
+        "pass4SymmKey": "noah-secret",
+    }
+
+    classic_vars = {
+        "splunk_noah_enabled": False,
+        "splunk": {"home": "/opt/splunk", "conf": conf_entries},
+    }
+    environ.normalizeNoahConf(classic_vars)
+    assert classic_vars["splunk"]["conf"] is conf_entries
+
+    dict_conf = {
+        "server": {
+            "content": {
+                "noahService": {
+                    "uri": "https://noah.example",
+                    "pass4SymmKey": "noah-secret",
+                }
+            }
+        }
+    }
+    dict_vars = {
+        "splunk_noah_enabled": True,
+        "splunk": {"home": "/opt/splunk", "conf": dict_conf},
+    }
+    environ.normalizeNoahConf(dict_vars)
+    assert dict_vars["splunk"]["conf"] is dict_conf
+    assert vars_scope["splunk"]["conf"][0]["value"] == dict_conf["server"]
+
+
 def test_getServiceName_builds_noah_advertised_address_only_in_noah_mode():
     environment = {
         "POD_NAME": "idxc-site1-0",

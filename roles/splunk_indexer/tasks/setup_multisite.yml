@@ -27,7 +27,9 @@
 - name: Extract server.conf content from splunk.conf (list format, multisite)
   set_fact:
     multisite_server_conf_content: >-
-      {{ (splunk.conf | selectattr('key', 'equalto', 'server') | first | default({})).get('value', {}).get('content', {}) }}
+      {{ ((splunk_conf_effective | default(splunk.conf))
+          | selectattr('key', 'equalto', 'server') | first | default({}))
+          .get('value', {}).get('content', {}) }}
   when:
     - "'conf' in splunk and splunk.conf"
     - splunk.conf is not mapping
