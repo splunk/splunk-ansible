@@ -217,7 +217,7 @@ def test_classic_indexer_peering_is_declarative_before_initial_start():
     assert any("shc_prestart_indexer_peer_configured" in condition for condition in peer_tcp["when"])
 
 
-def test_shc_retries_are_mode_specific_but_restart_elimination_is_shared():
+def test_shc_retries_are_mode_specific_but_early_restart_is_suppressed():
     tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
     initialize = named_task(tasks, "Initialize SHC cluster config")
     wait_members = named_task(tasks, "Wait for all Noah SHC members before captain bootstrap")
@@ -231,16 +231,32 @@ def test_shc_retries_are_mode_specific_but_restart_elimination_is_shared():
     assert "not (shc_prestart_configured | default(false) | bool)" in bootstrap["changed_when"]
 
 
-def test_initial_shc_restart_check_is_deferred_in_role_and_top_level_play():
+def test_shc_prestart_checks_for_restart_after_cluster_convergence():
     role_tasks = load_yaml("roles/splunk_search_head/tasks/main.yml")
-    restart_check = next(
+    cluster_formation = next(
+        task for task in role_tasks
+        if task.get("include_tasks") == "search_head_clustering.yml"
+    )
+    role_restart_check = next(
         task for task in role_tasks
         if task.get("include_tasks") == "../../../roles/splunk_common/tasks/check_for_required_restarts.yml"
     )
-    site = read_file("site.yml")
+    cluster_tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
+    early_flush = named_task(cluster_tasks, "Flush restart handlers")
+    site_tasks = load_yaml("site.yml")[0]["tasks"][0]["block"]
+    global_restart_check = named_task(site_tasks, "Check all instances for required restarts")
+    restart_tasks = load_yaml("roles/splunk_common/tasks/check_for_required_restarts.yml")
+    required_restart = named_task(restart_tasks, "Check for required restarts")
+    restart_fact = named_task(restart_tasks, "Set fact if restart was triggered")
 
-    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in restart_check["when"]
-    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in site
+    assert role_tasks.index(cluster_formation) < role_tasks.index(role_restart_check)
+    assert "when" not in role_restart_check
+    assert early_flush["when"] == "not (shc_prestart_configured | default(false) | bool)"
+    assert "splunk_restart_triggered is not defined or not splunk_restart_triggered" in global_restart_check["when"]
+    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in global_restart_check["when"]
+    assert required_restart["changed_when"] == "restart_required.status == 200"
+    assert restart_fact["set_fact"]["splunk_restart_triggered"] is True
+    assert restart_fact["when"] == "restart_required.status == 200"
 
 
 def test_late_server_name_reconciliation_uses_the_real_shc_stanza():
