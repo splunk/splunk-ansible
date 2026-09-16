@@ -109,3 +109,38 @@
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
   no_log: "{{ hide_password }}"
+
+# A successful resync command can return before the member finishes its
+# add-peer response. Splunk adopts the captain's common splunk.secret and
+# re-encrypts protected fields before this health endpoint can report a numeric
+# result. Requiring zero unpublished changes also proves that the member found a
+# common configuration baseline. This prevents a restart from racing the
+# asynchronous secret adoption and avoids relying on a fixed sleep.
+- name: Wait for Noah SHC member configuration to converge
+  splunk_api:
+    method: GET
+    url: "/services/replication/configuration/health?unpublished=1&output_mode=json"
+    username: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    svc_port: "{{ splunk.svc_port }}"
+    cert_prefix: "{{ cert_prefix }}"
+    status_code: [200]
+    timeout: 10
+    use_proxy: no
+    return_content: yes
+  register: noah_shc_convergence
+  changed_when: false
+  until:
+    - noah_shc_convergence.status == 200
+    - noah_shc_convergence.json is mapping
+    - noah_shc_convergence.json.entry is defined
+    - noah_shc_convergence.json.entry | length > 0
+    - noah_shc_convergence.json.entry[0].name | default('') == 'unpublished'
+    - noah_shc_convergence.json.entry[0].content is defined
+    - noah_shc_convergence.json.entry[0].content['Number of unpublished changes'] | default('') is match('^0$')
+  retries: "{{ shc_sync_retry_num }}"
+  delay: "{{ retry_delay }}"
+  when:
+    - splunk_noah_enabled | default(false) | bool
+    - not splunk_search_head_captain | bool
+  no_log: "{{ hide_password }}"

@@ -243,6 +243,7 @@ def test_shc_prestart_checks_for_restart_after_cluster_convergence():
     )
     cluster_tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
     early_flush = named_task(cluster_tasks, "Flush restart handlers")
+    convergence = named_task(cluster_tasks, "Wait for Noah SHC member configuration to converge")
     site_tasks = load_yaml("site.yml")[0]["tasks"][0]["block"]
     global_restart_check = named_task(site_tasks, "Check all instances for required restarts")
     restart_tasks = load_yaml("roles/splunk_common/tasks/check_for_required_restarts.yml")
@@ -252,6 +253,20 @@ def test_shc_prestart_checks_for_restart_after_cluster_convergence():
     assert role_tasks.index(cluster_formation) < role_tasks.index(role_restart_check)
     assert "when" not in role_restart_check
     assert early_flush["when"] == "not (shc_prestart_configured | default(false) | bool)"
+    assert convergence["splunk_api"]["url"] == (
+        "/services/replication/configuration/health?unpublished=1&output_mode=json"
+    )
+    assert convergence["changed_when"] is False
+    assert "splunk_noah_enabled | default(false) | bool" in convergence["when"]
+    assert "not splunk_search_head_captain | bool" in convergence["when"]
+    assert convergence["retries"] == "{{ shc_sync_retry_num }}"
+    assert convergence["delay"] == "{{ retry_delay }}"
+    convergence_contract = " ".join(str(condition) for condition in convergence["until"])
+    assert "status == 200" in convergence_contract
+    assert "entry[0].name" in convergence_contract
+    assert "unpublished" in convergence_contract
+    assert "Number of unpublished changes" in convergence_contract
+    assert "match('^0$')" in convergence_contract
     assert "splunk_restart_triggered is not defined or not splunk_restart_triggered" in global_restart_check["when"]
     assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in global_restart_check["when"]
     assert required_restart["changed_when"] == "restart_required.status == 200"
