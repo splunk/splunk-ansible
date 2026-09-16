@@ -7,7 +7,6 @@
   set_fact:
       multisite_master_uri: "{{ cert_prefix }}://{{ splunk.multisite_master }}:{{ splunk.svc_port }}"
 
-# CSPL-4006: Check if SSL replication port is configured in server.conf
 - name: Check if SSL replication port is configured in server.conf
   set_fact:
     has_ssl_replication_port_in_conf: "{{ 'conf' in splunk and 'server' in splunk.conf and 'content' in splunk.conf.server and (splunk.conf.server.content.keys() | select('match', '^replication_port-ssl://') | list | length > 0) }}"
@@ -16,8 +15,7 @@
   set_fact:
     use_ssl_replication: "{{ (splunk.idxc.replication_ssl | default(false) | bool) or (has_ssl_replication_port_in_conf | default(false) | bool) }}"
 
-# CSPL-4006: Always pass -replication_port (Splunk REST API requires it regardless of SSL mode).
-# For SSL deployments the re-apply task below restores the SSL stanza after the CLI overwrites it.
+# -replication_port is required by the REST API even in SSL mode; the SSL stanza is restored below.
 - name: Setup Peers with Associated Site
   command: "{{ splunk.exec }} edit cluster-config -mode slave -site {{ splunk.site }} -master_uri {{ multisite_master_uri }} -replication_port {{ splunk.idxc.replication_port }} -auth {{ splunk.admin_user }}:{{ splunk.password }} -secret {{ splunk.idxc.pass4SymmKey }}"
   become: yes
@@ -31,9 +29,7 @@
       - Restart the splunkd service
   no_log: "{{ hide_password }}"
 
-# CSPL-4006: edit cluster-config leaves a plain [replication_port://PORT] stanza behind even
-# when a [replication_port-ssl://PORT] stanza already exists. splunkd loads the non-SSL stanza
-# first, so replication silently falls back to plaintext unless this stale stanza is removed.
+# splunkd loads the non-SSL stanza first, so it must be removed or replication falls back to plaintext.
 - name: Remove stale non-SSL replication port stanza left by cluster join
   ini_file:
     path: "{{ splunk.home }}/etc/system/local/server.conf"
@@ -43,11 +39,8 @@
   become_user: "{{ splunk.user }}"
   when: use_ssl_replication | bool
 
-# CSPL-4006: Re-apply SSL replication port config after cluster join.
-# Uses set_config_stanza.yml (surgical ini_file/lineinfile upsert) directly rather than
-# set_config_file.yml, because some published splunk/splunk base images ship a
-# set_config_file.yml that deletes and fully rewrites server.conf, which would wipe out
-# the [clustering] stanza and site= setting this task's caller just wrote moments earlier.
+# set_config_stanza.yml is used here (not set_config_file.yml) because some base images'
+# set_config_file.yml rewrites the whole server.conf, wiping the [clustering]/site= just written.
 - name: Re-apply SSL replication port configuration
   include_tasks: ../../../roles/splunk_common/tasks/set_config_stanza.yml
   vars:
