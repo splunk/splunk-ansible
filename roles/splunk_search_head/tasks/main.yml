@@ -12,9 +12,14 @@
         splunk.role == "splunk_search_head_captain"
 
 - include_tasks: search_head_clustering.yml
+  # search_head_clustering.yml itself no longer requires deployer_url (it
+  # skips the deployer-specific steps when unset), but for now still gate
+  # deployer-less bootstrap to Noah specifically as a safety measure, since
+  # this is not yet proven safe for every splunk_search_head_cluster
+  # deployment. Remove the splunk_noah_enabled condition once it is.
   when:
     - splunk_search_head_cluster | bool
-    - "'deployer_url' in splunk and splunk.deployer_url"
+    - (splunk_noah_enabled | default(false) | bool) or ('deployer_url' in splunk and splunk.deployer_url)
 
 ## Indexer Clustering Scenario
 - include_tasks: ../../splunk_common/tasks/peer_cluster_master.yml

@@ -2,9 +2,12 @@
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
+  when: "'deployer_url' in splunk and splunk.deployer_url"
 #INFRA-38882: Update exec command?
 - name: Initialize SHC cluster config
-  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ splunk.shc.replication_factor }} -conf_deploy_fetch_url '{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}' -secret '{{ splunk.shc.pass4SymmKey }}' -shcluster_label '{{ splunk.shc.label }}'"
+  vars:
+    conf_deploy_fetch_url_arg: "{{ ('-conf_deploy_fetch_url ' ~ cert_prefix ~ '://' ~ splunk.deployer_url ~ ':' ~ splunk.svc_port) if ('deployer_url' in splunk and splunk.deployer_url) else '' }}"
+  command: "{{ splunk.exec }} init shcluster-config -auth '{{ splunk.admin_user }}:{{ splunk.password }}' -mgmt_uri '{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}' -replication_port {{ splunk.shc.replication_port }} -replication_factor {{ splunk.shc.replication_factor }} {{ conf_deploy_fetch_url_arg }} -secret '{{ splunk.shc.pass4SymmKey }}' -shcluster_label '{{ splunk.shc.label }}'"
   become: yes
   become_user: "{{ splunk.user }}"
   register: task_result
@@ -48,6 +51,7 @@
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ splunk.deployer_url }}"
+  when: "'deployer_url' in splunk and splunk.deployer_url"
 
 - name: Wait for all Noah SHC members before captain bootstrap
   uri:
