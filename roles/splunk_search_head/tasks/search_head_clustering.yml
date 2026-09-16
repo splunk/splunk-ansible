@@ -144,3 +144,35 @@
     - splunk_noah_enabled | default(false) | bool
     - not splunk_search_head_captain | bool
   no_log: "{{ hide_password }}"
+
+- name: Check whether the Noah SHC common secret is newer than splunkd
+  shell: |
+    set -eu
+    splunkd_pid="$(pgrep -o splunkd)"
+    test -d "/proc/${splunkd_pid}"
+    test "{{ splunk.home }}/etc/auth/splunk.secret" -nt "/proc/${splunkd_pid}"
+  args:
+    executable: /bin/sh
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: noah_shc_secret_newer_than_splunkd
+  changed_when: false
+  failed_when: noah_shc_secret_newer_than_splunkd.rc not in [0, 1]
+  when:
+    - splunk_noah_enabled | default(false) | bool
+    - not splunk_search_head_captain | bool
+
+- name: Restart Noah SHC member after common-secret convergence
+  include_tasks: ../../../roles/splunk_common/handlers/restart_splunk.yml
+  when:
+    - splunk_noah_enabled | default(false) | bool
+    - not splunk_search_head_captain | bool
+    - noah_shc_secret_newer_than_splunkd.rc | default(1) == 0
+
+- name: Record the Noah SHC post-convergence restart
+  set_fact:
+    splunk_restart_triggered: true
+  when:
+    - splunk_noah_enabled | default(false) | bool
+    - not splunk_search_head_captain | bool
+    - noah_shc_secret_newer_than_splunkd.rc | default(1) == 0

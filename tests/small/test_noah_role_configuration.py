@@ -244,6 +244,11 @@ def test_shc_prestart_checks_for_restart_after_cluster_convergence():
     cluster_tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
     early_flush = named_task(cluster_tasks, "Flush restart handlers")
     convergence = named_task(cluster_tasks, "Wait for Noah SHC member configuration to converge")
+    secret_age = named_task(cluster_tasks, "Check whether the Noah SHC common secret is newer than splunkd")
+    post_convergence_restart = named_task(
+        cluster_tasks, "Restart Noah SHC member after common-secret convergence"
+    )
+    restart_record = named_task(cluster_tasks, "Record the Noah SHC post-convergence restart")
     site_tasks = load_yaml("site.yml")[0]["tasks"][0]["block"]
     global_restart_check = named_task(site_tasks, "Check all instances for required restarts")
     restart_tasks = load_yaml("roles/splunk_common/tasks/check_for_required_restarts.yml")
@@ -267,6 +272,19 @@ def test_shc_prestart_checks_for_restart_after_cluster_convergence():
     assert "unpublished" in convergence_contract
     assert "Number of unpublished changes" in convergence_contract
     assert "match('^0$')" in convergence_contract
+    assert "pgrep -o splunkd" in secret_age["shell"]
+    assert 'splunk.secret" -nt "/proc/${splunkd_pid}"' in secret_age["shell"]
+    assert secret_age["changed_when"] is False
+    assert secret_age["failed_when"] == "noah_shc_secret_newer_than_splunkd.rc not in [0, 1]"
+    assert post_convergence_restart["include_tasks"] == (
+        "../../../roles/splunk_common/handlers/restart_splunk.yml"
+    )
+    assert "noah_shc_secret_newer_than_splunkd.rc | default(1) == 0" in post_convergence_restart["when"]
+    assert restart_record["set_fact"]["splunk_restart_triggered"] is True
+    assert "noah_shc_secret_newer_than_splunkd.rc | default(1) == 0" in restart_record["when"]
+    assert cluster_tasks.index(convergence) < cluster_tasks.index(secret_age)
+    assert cluster_tasks.index(secret_age) < cluster_tasks.index(post_convergence_restart)
+    assert cluster_tasks.index(post_convergence_restart) < cluster_tasks.index(restart_record)
     assert "splunk_restart_triggered is not defined or not splunk_restart_triggered" in global_restart_check["when"]
     assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in global_restart_check["when"]
     assert required_restart["changed_when"] == "restart_required.status == 200"
