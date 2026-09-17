@@ -112,11 +112,11 @@
 
 # A successful resync command can return before the member finishes its
 # add-peer response. Splunk adopts the captain's common splunk.secret and
-# re-encrypts protected fields before this health endpoint can report a numeric
-# result. Requiring zero unpublished changes also proves that the member found a
-# common configuration baseline. This prevents a restart from racing the
-# asynchronous secret adoption and avoids relying on a fixed sleep.
-- name: Wait for Noah SHC member configuration to converge
+# re-encrypts protected fields before this health endpoint can report zero
+# unpublished changes. During captain failover, the same local state is reported
+# with a captain suffix. This is a local key-adoption barrier; end-to-end search
+# validation is still required to prove cluster-wide convergence.
+- name: Wait for Noah SHC member key adoption
   splunk_api:
     method: GET
     url: "/services/replication/configuration/health?unpublished=1&output_mode=json"
@@ -137,7 +137,7 @@
     - noah_shc_convergence.json.entry | length > 0
     - noah_shc_convergence.json.entry[0].name | default('') == 'unpublished'
     - noah_shc_convergence.json.entry[0].content is defined
-    - noah_shc_convergence.json.entry[0].content['Number of unpublished changes'] | default('') is match('^0$')
+    - (noah_shc_convergence.json.entry[0].content['Number of unpublished changes'] | default('')) in ['0', '0 (this instance is the captain)']
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
   when:
@@ -145,29 +145,40 @@
     - not splunk_search_head_captain | bool
   no_log: "{{ hide_password }}"
 
-- name: Check whether the Noah SHC common secret is newer than splunkd
-  shell: |
-    set -eu
-    splunkd_pid="$(pgrep -o splunkd)"
-    test -d "/proc/${splunkd_pid}"
-    test "{{ splunk.home }}/etc/auth/splunk.secret" -nt "/proc/${splunkd_pid}"
-  args:
-    executable: /bin/sh
+- name: Read Noah SHC common-secret metadata
+  stat:
+    path: "{{ splunk.home }}/etc/auth/splunk.secret"
+    get_checksum: false
   become: yes
   become_user: "{{ splunk.user }}"
-  register: noah_shc_secret_newer_than_splunkd
+  register: noah_shc_common_secret
   changed_when: false
-  failed_when: noah_shc_secret_newer_than_splunkd.rc not in [0, 1]
+  failed_when: not noah_shc_common_secret.stat.exists
   when:
     - splunk_noah_enabled | default(false) | bool
     - not splunk_search_head_captain | bool
+  no_log: true
+
+- name: Read current splunkd PID-file metadata
+  stat:
+    path: "{{ splunk.home }}/var/run/splunk/splunkd.pid"
+    get_checksum: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: noah_shc_splunkd_pid_file
+  changed_when: false
+  failed_when: not noah_shc_splunkd_pid_file.stat.exists
+  when:
+    - splunk_noah_enabled | default(false) | bool
+    - not splunk_search_head_captain | bool
+  no_log: true
 
 - name: Restart Noah SHC member after common-secret convergence
   include_tasks: ../../../roles/splunk_common/handlers/restart_splunk.yml
   when:
     - splunk_noah_enabled | default(false) | bool
     - not splunk_search_head_captain | bool
-    - noah_shc_secret_newer_than_splunkd.rc | default(1) == 0
+    - (noah_shc_common_secret.stat.mtime | default(0) | float) >= (noah_shc_splunkd_pid_file.stat.mtime | default(1) | float)
 
 - name: Record the Noah SHC post-convergence restart
   set_fact:
@@ -175,4 +186,4 @@
   when:
     - splunk_noah_enabled | default(false) | bool
     - not splunk_search_head_captain | bool
-    - noah_shc_secret_newer_than_splunkd.rc | default(1) == 0
+    - (noah_shc_common_secret.stat.mtime | default(0) | float) >= (noah_shc_splunkd_pid_file.stat.mtime | default(1) | float)
