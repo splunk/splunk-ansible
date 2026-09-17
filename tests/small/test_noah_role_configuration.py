@@ -242,7 +242,7 @@ def test_shc_retries_are_mode_specific_but_early_restart_is_suppressed():
     assert "not (shc_prestart_configured | default(false) | bool)" in bootstrap["changed_when"]
 
 
-def test_shc_prestart_checks_for_restart_after_cluster_convergence():
+def test_shc_prestart_defers_generic_restart_checks_during_initial_formation():
     role_tasks = load_yaml("roles/splunk_search_head/tasks/main.yml")
     cluster_formation = next(
         task for task in role_tasks
@@ -268,6 +268,15 @@ def test_shc_prestart_checks_for_restart_after_cluster_convergence():
     assert required_restart["changed_when"] == "restart_required.status == 200"
     assert restart_fact["set_fact"]["splunk_restart_triggered"] is True
     assert restart_fact["when"] == "restart_required.status == 200"
+
+
+def test_splunk_secret_tasks_redact_the_encryption_key():
+    tasks = load_yaml("roles/splunk_common/tasks/set_splunk_secret.yml")
+    legacy_secret = named_task(tasks, "Set the Splunk secret from splunk.secret")
+    shared_secret = named_task(tasks, "Set the Splunk secret from splunk.splunk_secret")
+
+    assert legacy_secret["no_log"] is True
+    assert shared_secret["no_log"] is True
 
 
 def test_late_server_name_reconciliation_uses_the_real_shc_stanza():
