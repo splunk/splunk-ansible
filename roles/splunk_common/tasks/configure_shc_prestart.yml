@@ -5,6 +5,13 @@
     shc_prestart_mgmt_uri: "{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}"
     shc_prestart_deployer_uri: "{{ cert_prefix }}://{{ splunk.deployer_url }}:{{ splunk.svc_port }}"
     shc_prestart_server_conf: "{{ splunk.home }}/etc/system/local/server.conf"
+    shc_prestart_preferred_captain: >-
+      {{
+        ansible_hostname == (splunk.search_head_captain_url | default(""))
+        or ansible_fqdn == (splunk.search_head_captain_url | default(""))
+        or splunk.hostname == (splunk.search_head_captain_url | default(""))
+        or splunk.role == "splunk_search_head_captain"
+      }}
     shc_prestart_indexer_peer_enabled: >-
       {{
         not (splunk_noah_enabled | default(false) | bool)
@@ -113,6 +120,21 @@
   become_user: "{{ splunk.user }}"
   no_log: true
 
+- name: Configure preferred captaincy before splunkd starts
+  ini_file:
+    path: "{{ shc_prestart_server_conf }}"
+    section: "shclustering"
+    option: "preferred_captain"
+    value: "{{ shc_prestart_preferred_captain | bool | lower }}"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when: splunk.preferred_captaincy | default(false) | bool
+  become: yes
+  become_user: "{{ splunk.user }}"
+
 - name: Configure the SHC replication listener before splunkd starts
   ini_file:
     path: "{{ shc_prestart_server_conf }}"
@@ -173,6 +195,7 @@
       - ("replication_factor = " ~ (splunk.shc.replication_factor | string)) in shc_prestart_btool.stdout
       - ("conf_deploy_fetch_url = " ~ shc_prestart_deployer_uri) in shc_prestart_btool.stdout
       - (shc_prestart_btool.stdout | regex_search("(?m)^pass4SymmKey\\s*=\\s*\\S+\\s*$")) is not none
+      - not (splunk.preferred_captaincy | default(false) | bool) or ("preferred_captain = " ~ (shc_prestart_preferred_captain | bool | lower)) in shc_prestart_btool.stdout
       - ("register_replication_address = " ~ shc_prestart_server_name) in shc_prestart_btool.stdout
       - ("search_head_uri = " ~ shc_prestart_server_name) in shc_prestart_btool.stdout
       - ("[replication_port://" ~ (splunk.shc.replication_port | string) ~ "]") in shc_prestart_btool.stdout

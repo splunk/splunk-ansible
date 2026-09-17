@@ -38,6 +38,7 @@
   no_log: "{{ hide_password }}"
   when:
     - splunk_search_head_captain is defined and splunk.preferred_captaincy | bool
+    - not (shc_prestart_configured | default(false) | bool)
 
 - name: Flush restart handlers
   meta: flush_handlers
