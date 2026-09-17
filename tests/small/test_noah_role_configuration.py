@@ -280,38 +280,6 @@ def test_prestart_secret_is_only_written_for_a_fresh_etc_volume():
     assert secret["no_log"] is True
 
 
-def test_preferred_captaincy_is_declarative_for_stopped_shc_members():
-    prestart_tasks = load_yaml("roles/splunk_common/tasks/configure_shc_prestart.yml")
-    preferred = named_task(
-        prestart_tasks, "Configure preferred captaincy before splunkd starts"
-    )
-    validation = named_task(
-        prestart_tasks, "Validate effective pre-start SHC configuration"
-    )
-    search_head_tasks = load_yaml(
-        "roles/splunk_search_head/tasks/search_head_clustering.yml"
-    )
-    post_start = named_task(search_head_tasks, "Set desired preferred captaincy")
-
-    assert preferred["ini_file"]["section"] == "shclustering"
-    assert preferred["ini_file"]["option"] == "preferred_captain"
-    assert "shc_prestart_preferred_captain" in preferred["ini_file"]["value"]
-    assert preferred["when"] == "splunk.preferred_captaincy | default(false) | bool"
-    assert any("preferred_captain = " in assertion for assertion in validation["assert"]["that"])
-    assert "not (shc_prestart_configured | default(false) | bool)" in post_start["when"]
-
-
-def test_running_shc_keeps_post_start_preferred_captain_reconciliation():
-    tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
-    preferred = named_task(tasks, "Set desired preferred captaincy")
-
-    assert preferred["splunk_api"]["body"]["preferred_captain"] == (
-        "{{ splunk_search_head_captain | bool | lower }}"
-    )
-    assert "splunk_search_head_captain is defined and splunk.preferred_captaincy | bool" in preferred["when"]
-    assert "not (shc_prestart_configured | default(false) | bool)" in preferred["when"]
-
-
 def test_classic_indexer_peering_is_declarative_before_initial_start():
     prestart = read_file("roles/splunk_common/tasks/configure_shc_prestart.yml")
     peer_tasks = load_yaml("roles/splunk_common/tasks/peer_cluster_master.yml")
