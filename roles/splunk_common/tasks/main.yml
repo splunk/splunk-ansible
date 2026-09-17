@@ -174,6 +174,23 @@
     - first_run | bool
     - splunk_status.rc != 0
 
+- name: Check Splunk process state before declarative license configuration
+  include_tasks: get_splunk_status.yml
+  when:
+    - ansible_system is match("Linux")
+    - splunk.role != "splunk_license_master"
+    - splunk.license_master_url is defined
+    - splunk.license_master_url
+
+- name: Configure the license peer before splunkd starts
+  include_tasks: configure_license_peer_prestart.yml
+  when:
+    - ansible_system is match("Linux")
+    - splunk.role != "splunk_license_master"
+    - splunk.license_master_url is defined
+    - splunk.license_master_url
+    - splunk_status.rc != 0
+
 # Generate outputs.conf before splunk starts to prevent data being indexed locally
 - include_tasks: enable_forwarding.yml
   when:

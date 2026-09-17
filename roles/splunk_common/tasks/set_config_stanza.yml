@@ -29,4 +29,6 @@
   loop_control:
     loop_var: stanza_setting
   when: stanza_name and stanza_settings
-  no_log: "{{ hide_password }}"
+  # A noahService stanza can carry its authentication key through this generic
+  # writer. Redact only that secret item unless global password hiding is on.
+  no_log: "{{ (hide_password | bool) or stanza_setting.key == 'pass4SymmKey' }}"

@@ -21,3 +21,4 @@
     - Restart the splunkd service
   ignore_errors: yes
   no_log: "{{ hide_password }}"
+  when: not (license_peer_prestart_configured | default(false) | bool)

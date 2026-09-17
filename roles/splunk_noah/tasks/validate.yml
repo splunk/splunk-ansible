@@ -7,6 +7,21 @@
       Noah mode does not support SPLUNK_ROLE={{ splunk.role }}.
       Supported roles are splunk_indexer, splunk_search_head, and splunk_deployer.
 
+# SHC formation replaces each member's local splunk.secret with the captain's
+# common value. Noah credentials are encrypted before that formation step, so
+# every member must start with the same operator-provided encryption secret.
+# This prevents a running member from retaining credentials encrypted with the
+# pre-formation key and avoids an unsafe, uncoordinated post-formation restart.
+- name: Require a pre-shared encryption secret for Noah search heads
+  assert:
+    that:
+      - >-
+        (splunk.splunk_secret | default(splunk.secret | default(''), true) | string | length) > 0
+    fail_msg: >-
+      Noah-enabled search heads require one shared splunk_secret before first
+      startup. Provide it to every SHC member from the same Kubernetes Secret.
+  when: splunk.role == "splunk_search_head"
+
 - name: Select the Noah client profile for this Splunk role
   set_fact:
     splunk_noah_client_profile: "{{ splunk_noah_role_profiles[splunk.role] }}"

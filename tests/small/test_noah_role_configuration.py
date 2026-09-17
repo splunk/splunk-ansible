@@ -50,9 +50,20 @@ def test_noah_role_matrix_is_explicit_and_complete():
         },
     }
 
-    validation = read_file("roles/splunk_noah/tasks/validate.yml")
-    assert "splunk.role in splunk_noah_role_profiles" in validation
-    assert "does not support SPLUNK_ROLE" in validation
+    validation = load_yaml("roles/splunk_noah/tasks/validate.yml")
+    role_validation = named_task(validation, "Validate the Splunk role supported by Noah mode")
+    shared_secret_validation = named_task(
+        validation, "Require a pre-shared encryption secret for Noah search heads"
+    )
+
+    assert "splunk.role in splunk_noah_role_profiles" in role_validation["assert"]["that"]
+    assert "does not support SPLUNK_ROLE" in role_validation["assert"]["fail_msg"]
+    shared_secret_contract = " ".join(shared_secret_validation["assert"]["that"])
+    assert "splunk.splunk_secret" in shared_secret_contract
+    assert "splunk.secret" in shared_secret_contract
+    assert "length" in shared_secret_contract
+    assert shared_secret_validation["when"] == 'splunk.role == "splunk_search_head"'
+    assert "same Kubernetes Secret" in shared_secret_validation["assert"]["fail_msg"]
 
 
 def test_common_role_calls_noah_at_the_two_lifecycle_boundaries():
@@ -101,6 +112,68 @@ def test_common_role_configures_a_fresh_deployer_before_splunkd_start():
         i for i, task in enumerate(tasks) if task.get("include_tasks") == "start_splunk.yml"
     )
     assert "deployer_prestart_configured" in late_reconcile["when"]
+
+
+def test_common_role_configures_a_stopped_license_peer_before_splunkd_start():
+    tasks = load_yaml("roles/splunk_common/tasks/main.yml")
+    status = named_task(
+        tasks, "Check Splunk process state before declarative license configuration"
+    )
+    prestart = named_task(tasks, "Configure the license peer before splunkd starts")
+    start_index = next(
+        i for i, task in enumerate(tasks)
+        if task.get("include_tasks") == "start_splunk.yml"
+    )
+
+    assert status["include_tasks"] == "get_splunk_status.yml"
+    assert 'splunk.role != "splunk_license_master"' in status["when"]
+    assert "splunk.license_master_url is defined" in status["when"]
+    assert prestart["include_tasks"] == "configure_license_peer_prestart.yml"
+    assert "first_run | bool" not in prestart["when"]
+    assert "splunk_status.rc != 0" in prestart["when"]
+    assert 'splunk.role != "splunk_license_master"' in prestart["when"]
+    assert "splunk.license_master_url is defined" in prestart["when"]
+    assert "splunk_noah_enabled" not in str(prestart["when"])
+    assert tasks.index(prestart) < start_index
+
+
+def test_fresh_license_peer_is_declarative_and_skips_the_post_start_edit():
+    prestart_tasks = load_yaml(
+        "roles/splunk_common/tasks/configure_license_peer_prestart.yml"
+    )
+    writer = named_task(prestart_tasks, "Write the license manager URI before splunkd starts")
+    old_alias = named_task(
+        prestart_tasks, "Remove the incompatible license manager URI alias"
+    )
+    version = named_task(
+        prestart_tasks, "Select the supported license manager URI setting"
+    )
+    validation = named_task(
+        prestart_tasks, "Validate effective pre-start license configuration"
+    )
+    recorded = named_task(
+        prestart_tasks, "Record declarative pre-start license configuration"
+    )
+    license_tasks = load_yaml("roles/splunk_common/tasks/add_splunk_license.yml")
+    post_start_include = named_task(license_tasks, "Set as license slave")
+    post_start_tasks = load_yaml("roles/splunk_common/tasks/set_as_license_slave.yml")
+    post_start_edit = named_task(post_start_tasks, "Set node as license slave")
+
+    assert writer["ini_file"]["section"] == "license"
+    assert writer["ini_file"]["option"] == "{{ license_peer_uri_option }}"
+    assert writer["ini_file"]["value"] == "{{ splunk.license_master_url }}"
+    assert old_alias["ini_file"]["state"] == "absent"
+    assert "license_peer_uri_option == 'manager_uri'" in old_alias["ini_file"]["option"]
+    assert "version('9.0.0', '>=')" in version["set_fact"]["license_peer_uri_option"]
+    assert "manager_uri" in version["set_fact"]["license_peer_uri_option"]
+    assert "master_uri" in version["set_fact"]["license_peer_uri_option"]
+    assert "license_peer_uri_option" in validation["assert"]["that"][0]
+    assert recorded["set_fact"]["license_peer_prestart_configured"] is True
+    assert "license_peer_prestart_configured" not in str(post_start_include["when"])
+    assert (
+        "not (license_peer_prestart_configured | default(false) | bool)"
+        == post_start_edit["when"]
+    )
 
 
 def test_deployer_prestart_writes_and_validates_the_shc_contract():
@@ -217,7 +290,7 @@ def test_classic_indexer_peering_is_declarative_before_initial_start():
     assert any("shc_prestart_indexer_peer_configured" in condition for condition in peer_tcp["when"])
 
 
-def test_shc_retries_are_mode_specific_but_restart_elimination_is_shared():
+def test_shc_retries_are_mode_specific_but_early_restart_is_suppressed():
     tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
     initialize = named_task(tasks, "Initialize SHC cluster config")
     wait_members = named_task(tasks, "Wait for all Noah SHC members before captain bootstrap")
@@ -231,16 +304,75 @@ def test_shc_retries_are_mode_specific_but_restart_elimination_is_shared():
     assert "not (shc_prestart_configured | default(false) | bool)" in bootstrap["changed_when"]
 
 
-def test_initial_shc_restart_check_is_deferred_in_role_and_top_level_play():
+def test_shc_prestart_runs_one_post_formation_conditional_restart_check():
     role_tasks = load_yaml("roles/splunk_search_head/tasks/main.yml")
-    restart_check = next(
+    cluster_formation = next(
+        task for task in role_tasks
+        if task.get("include_tasks") == "search_head_clustering.yml"
+    )
+    role_restart_check = next(
         task for task in role_tasks
         if task.get("include_tasks") == "../../../roles/splunk_common/tasks/check_for_required_restarts.yml"
     )
-    site = read_file("site.yml")
+    cluster_tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
+    early_flush = named_task(cluster_tasks, "Flush restart handlers")
+    site_tasks = load_yaml("site.yml")[0]["tasks"][0]["block"]
+    global_restart_check = named_task(site_tasks, "Check all instances for required restarts")
+    restart_tasks = load_yaml("roles/splunk_common/tasks/check_for_required_restarts.yml")
+    required_restart = named_task(restart_tasks, "Check for required restarts")
+    restart_fact = named_task(restart_tasks, "Set fact if restart was triggered")
 
-    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in restart_check["when"]
-    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in site
+    assert role_tasks.index(cluster_formation) < role_tasks.index(role_restart_check)
+    # Keep one check after SHC formation. It only notifies the restart handler
+    # when Splunk reports HTTP 200; HTTP 404 means the pre-start configuration
+    # is already complete and the member remains running.
+    assert "when" not in role_restart_check
+    assert early_flush["when"] == "not (shc_prestart_configured | default(false) | bool)"
+    assert "splunk_restart_triggered is not defined or not splunk_restart_triggered" in global_restart_check["when"]
+    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in global_restart_check["when"]
+
+
+def test_running_shc_reconciliation_keeps_http_200_conditional_restart_check():
+    role_tasks = load_yaml("roles/splunk_search_head/tasks/main.yml")
+    role_restart_check = next(
+        task for task in role_tasks
+        if task.get("include_tasks") == "../../../roles/splunk_common/tasks/check_for_required_restarts.yml"
+    )
+    restart_tasks = load_yaml("roles/splunk_common/tasks/check_for_required_restarts.yml")
+    required_restart = named_task(restart_tasks, "Check for required restarts")
+    restart_fact = named_task(restart_tasks, "Set fact if restart was triggered")
+
+    assert "when" not in role_restart_check
+    assert required_restart["changed_when"] == "restart_required.status == 200"
+    assert restart_fact["set_fact"]["splunk_restart_triggered"] is True
+    assert restart_fact["when"] == "restart_required.status == 200"
+
+
+def test_splunk_secret_tasks_redact_the_encryption_key():
+    tasks = load_yaml("roles/splunk_common/tasks/set_splunk_secret.yml")
+    legacy_secret = named_task(tasks, "Set the Splunk secret from splunk.secret")
+    shared_secret = named_task(tasks, "Set the Splunk secret from splunk.splunk_secret")
+
+    assert legacy_secret["no_log"] is True
+    assert shared_secret["no_log"] is True
+
+
+def test_noah_pass4symmkey_loop_items_are_redacted():
+    pre_auth_tasks = load_yaml("roles/splunk_noah/tasks/pre_auth.yml")
+    pre_auth_writer = named_task(
+        pre_auth_tasks,
+        "Write Noah service configuration for temporary authentication startup",
+    )
+    stanza_tasks = load_yaml("roles/splunk_common/tasks/set_config_stanza.yml")
+    stanza_writer = next(
+        task for task in stanza_tasks
+        if str(task.get("name", "")).startswith("Set options in")
+    )
+
+    assert "item.key == 'pass4SymmKey'" in pre_auth_writer["no_log"]
+    assert "stanza_setting.key == 'pass4SymmKey'" in stanza_writer["no_log"]
+    assert "hide_password" in pre_auth_writer["no_log"]
+    assert "hide_password" in stanza_writer["no_log"]
 
 
 def test_late_server_name_reconciliation_uses_the_real_shc_stanza():
