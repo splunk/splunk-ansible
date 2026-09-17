@@ -4,10 +4,12 @@ Unit tests for inventory/environ.py
 '''
 from __future__ import absolute_import
 
+import json
 import os
 import sys
 import pytest
 import requests
+import yaml
 from mock import MagicMock, patch, mock_open
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -51,6 +53,193 @@ def test_getNoah_rejects_an_ambiguous_value():
     with patch("os.environ", new={"SPLUNK_NOAH_ENABLED": "yes"}):
         with pytest.raises(ValueError, match="SPLUNK_NOAH_ENABLED"):
             environ.getNoah({})
+
+
+def test_normalizeConfEntries_merges_duplicate_effective_files_recursively():
+    entries = [
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "uri": "https://noah.example",
+                        "tenant": "tenant-a",
+                        "heartbeatPeriod": "30",
+                    },
+                    "general": {"serverName": "indexer-0"},
+                }
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "pass4SymmKey": "noah-secret",
+                        "heartbeatPeriod": "60",
+                    }
+                }
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert len(normalized) == 1
+    assert normalized[0]["value"]["content"] == {
+        "noahService": {
+            "uri": "https://noah.example",
+            "tenant": "tenant-a",
+            "heartbeatPeriod": "60",
+            "pass4SymmKey": "noah-secret",
+        },
+        "general": {"serverName": "indexer-0"},
+    }
+    # The helper must not mutate data retained by defaults-loading callers.
+    assert len(entries) == 2
+    assert "pass4SymmKey" not in entries[0]["value"]["content"]["noahService"]
+
+
+def test_normalizeConfEntries_uses_effective_directory_in_file_identity():
+    default_directory = "/opt/splunk/etc/system/local"
+    entries = [
+        {"key": "server", "value": {"content": {"one": {"a": "1"}}}},
+        {
+            "key": "server",
+            "value": {
+                "directory": "/opt//splunk/etc/./system/local/",
+                "content": {"one": {"b": "2"}},
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "directory": "/opt/splunk/etc/apps/custom/local",
+                "content": {"one": {"c": "3"}},
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(entries, default_directory)
+
+    assert len(normalized) == 2
+    assert normalized[0]["value"]["content"]["one"] == {"a": "1", "b": "2"}
+    assert normalized[1]["value"]["content"]["one"] == {"c": "3"}
+
+
+def test_normalizeConfEntries_preserves_merge_dict_edge_case_semantics():
+    entries = [
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "uri": "https://noah.example",
+                        "tenant": "tenant-a",
+                    },
+                    "preserved": {"setting": "value"},
+                }
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": [{"pass4SymmKey": "noah-secret"}],
+                    "preserved": None,
+                }
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert normalized[0]["value"]["content"] == {
+        "noahService": {
+            "uri": "https://noah.example",
+            "tenant": "tenant-a",
+            "pass4SymmKey": "noah-secret",
+        },
+        "preserved": {"setting": "value"},
+    }
+
+
+def test_normalizeConfEntries_only_merges_selected_file_keys():
+    entries = [
+        {"key": "server", "value": {"content": {"one": {"a": "1"}}}},
+        {"key": "web", "value": {"content": {"settings": {"a": "1"}}}},
+        {"key": "server", "value": {"content": {"one": {"b": "2"}}}},
+        {"key": "web", "value": {"content": {"settings": {"b": "2"}}}},
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert [entry["key"] for entry in normalized] == ["server", "web", "web"]
+    assert normalized[0]["value"]["content"]["one"] == {"a": "1", "b": "2"}
+    assert normalized[1]["value"]["content"]["settings"] == {"a": "1"}
+    assert normalized[2]["value"]["content"]["settings"] == {"b": "2"}
+
+
+def test_normalizeNoahConf_updates_list_form_server_config_only_in_noah_mode():
+    conf_entries = [
+        {
+            "key": "server",
+            "value": {"content": {"noahService": {"uri": "https://noah.example"}}},
+        },
+        {
+            "key": "server",
+            "value": {"content": {"noahService": {"pass4SymmKey": "noah-secret"}}},
+        },
+    ]
+    vars_scope = {
+        "splunk_noah_enabled": True,
+        "splunk": {"home": "/opt/splunk", "conf": conf_entries},
+    }
+
+    environ.normalizeNoahConf(vars_scope)
+
+    assert len(vars_scope["splunk"]["conf"]) == 1
+    assert vars_scope["splunk"]["conf"][0]["value"]["content"]["noahService"] == {
+        "uri": "https://noah.example",
+        "pass4SymmKey": "noah-secret",
+    }
+
+    classic_vars = {
+        "splunk_noah_enabled": False,
+        "splunk": {"home": "/opt/splunk", "conf": conf_entries},
+    }
+    environ.normalizeNoahConf(classic_vars)
+    assert classic_vars["splunk"]["conf"] is conf_entries
+
+    dict_conf = {
+        "server": {
+            "content": {
+                "noahService": {
+                    "uri": "https://noah.example",
+                    "pass4SymmKey": "noah-secret",
+                }
+            }
+        }
+    }
+    dict_vars = {
+        "splunk_noah_enabled": True,
+        "splunk": {"home": "/opt/splunk", "conf": dict_conf},
+    }
+    environ.normalizeNoahConf(dict_vars)
+    assert dict_vars["splunk"]["conf"] is dict_conf
+    assert vars_scope["splunk"]["conf"][0]["value"] == dict_conf["server"]
 
 
 POD_ENVIRONMENT = {
@@ -347,7 +536,6 @@ def test_getNoahAdvertisedAddr_rejects_an_over_length_dns_name():
     with patch("os.environ", new=environment):
         with pytest.raises(ValueError, match="derived Noah advertised address"):
             environ.getNoahAdvertisedAddr(noah_vars_scope())
-
 
 @pytest.mark.parametrize(("regex", "result"),
                          [
@@ -1788,14 +1976,160 @@ def test_loadHostDefaults(config, output):
                 ({"all": {"vars": {"splunk": {}}}}, {"all": {"vars": {"splunk": {}}}}),
                 # Verify individual keys to obfuscate
                 ({"all": {"vars": {"splunk": {"password": "helloworld"}}}}, {"all": {"vars": {"splunk": {"password": "**************"}}}}),
+                ({"all": {"vars": {"splunk": {"pass4SymmKey": "helloworld"}}}}, {"all": {"vars": {"splunk": {"pass4SymmKey": "**************"}}}}),
                 ({"all": {"vars": {"splunk": {"shc": {"secret": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"shc": {"secret": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"shc": {"pass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"shc": {"pass4SymmKey": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"secret": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"secret": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"pass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"pass4SymmKey": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"discoveryPass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"discoveryPass4SymmKey": "**************"}}}}}),
                 ({"all": {"vars": {"splunk": {"smartstore": {"index": []}}}}}, {"all": {"vars": {"splunk": {"smartstore": {"index": []}}}}}),
                 ({"all": {"vars": {"splunk": {"smartstore": {"index": [{"s3": {"access_key": "1234", "secret_key": "abcd"}}]}}}}}, {"all": {"vars": {"splunk": {"smartstore": {"index": [{"s3": {"access_key": "**************", "secret_key": "**************"}}]}}}}}),
+                # Verify empty/absent splunk.conf is tolerated
+                ({"all": {"vars": {"splunk": {"conf": None}}}}, {"all": {"vars": {"splunk": {"conf": None}}}}),
+                ({"all": {"vars": {"splunk": {"conf": {}}}}}, {"all": {"vars": {"splunk": {"conf": {}}}}}),
+                ({"all": {"vars": {"splunk": {"conf": []}}}}, {"all": {"vars": {"splunk": {"conf": []}}}}),
+                # Verify dictionary-form splunk.conf redacts the Noah credential
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"noahService": {"pass4SymmKey": "helloworld"}}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"noahService": {"pass4SymmKey": "**************"}}}}}}}},
+                ),
+                # Verify list-form splunk.conf redacts the Noah credential
+                (
+                    {"all": {"vars": {"splunk": {"conf": [{"key": "server", "content": {"noahService": {"pass4SymmKey": "helloworld"}}}]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [{"key": "server", "content": {"noahService": {"pass4SymmKey": "**************"}}}]}}}},
+                ),
+                # Verify every duplicate list-form entry for the same file is redacted, not just the first match
+                (
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                        {"key": "server", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                    ]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                        {"key": "server", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                    ]}}}},
+                ),
+                # Verify the same filename in distinct directories is redacted in each directory
+                (
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "directory": "/opt/splunk/etc/system/local", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                        {"key": "server", "directory": "/opt/splunk/etc/apps/noah/local", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                    ]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "directory": "/opt/splunk/etc/system/local", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                        {"key": "server", "directory": "/opt/splunk/etc/apps/noah/local", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                    ]}}}},
+                ),
+                # Verify the redacted key set applies to any stanza of any configuration file
+                (
+                    {"all": {"vars": {"splunk": {"conf": {
+                        "server": {"content": {
+                            "general": {"pass4SymmKey": "helloworld"},
+                            "clustering": {"pass4SymmKey": "helloworld"},
+                        }},
+                        "authentication": {"content": {"bindDN": {"password": "helloworld"}}},
+                    }}}}},
+                    {"all": {"vars": {"splunk": {"conf": {
+                        "server": {"content": {
+                            "general": {"pass4SymmKey": "**************"},
+                            "clustering": {"pass4SymmKey": "**************"},
+                        }},
+                        "authentication": {"content": {"bindDN": {"password": "**************"}}},
+                    }}}}},
+                ),
+                # Verify dotted SmartStore credentials are matched on their final component
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"indexes": {"content": {"default": {
+                        "remote.s3.access_key": "helloworld",
+                        "remote.s3.secret_key": "helloworld",
+                        "remote.s3.endpoint": "https://s3.example",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"indexes": {"content": {"default": {
+                        "remote.s3.access_key": "**************",
+                        "remote.s3.secret_key": "**************",
+                        "remote.s3.endpoint": "https://s3.example",
+                    }}}}}}}},
+                ),
+                # Verify settings that merely contain a credential word are not redacted
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"someStanza": {
+                        "enableNewPassword": "true",
+                        "obfuscateToken": "false",
+                        "hide_password": "true",
+                        "minPasswordLength": "8",
+                        "requireSecretKey": "true",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"someStanza": {
+                        "enableNewPassword": "true",
+                        "obfuscateToken": "false",
+                        "hide_password": "true",
+                        "minPasswordLength": "8",
+                        "requireSecretKey": "true",
+                    }}}}}}}},
+                ),
+                # Verify non-sensitive diagnostic context survives redaction untouched
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"directory": "/opt/splunk/etc/system/local", "content": {"noahService": {
+                        "uri": "https://noah.example:8089",
+                        "tenant": "acme",
+                        "heartbeatInterval": "60",
+                        "minPasswordLength": "8",
+                        "pass4SymmKey": "helloworld",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"directory": "/opt/splunk/etc/system/local", "content": {"noahService": {
+                        "uri": "https://noah.example:8089",
+                        "tenant": "acme",
+                        "heartbeatInterval": "60",
+                        "minPasswordLength": "8",
+                        "pass4SymmKey": "**************",
+                    }}}}}}}},
+                ),
             ]
         )
 def test_obfuscate_vars(inputInventory, outputInventory):
     result = environ.obfuscate_vars(inputInventory)
     assert result == outputInventory
+
+SENTINEL = "s3nt1nel-cr3d-do-not-leak"
+
+def sentinel_inventory():
+    return {"all": {"vars": {
+        "ansible_ssh_user": "splunk",
+        "splunk": {
+            "home": "/opt/splunk",
+            "admin_user": "admin",
+            "password": SENTINEL,
+            "pass4SymmKey": SENTINEL,
+            "app_paths": {},
+            "ssl": {"password": SENTINEL},
+            "s2s": {"password": SENTINEL},
+            "hec": {"token": "notredacted", "password": SENTINEL},
+            "shc": {"secret": SENTINEL, "pass4SymmKey": SENTINEL, "label": "shc_label"},
+            "idxc": {"secret": SENTINEL, "pass4SymmKey": SENTINEL, "discoveryPass4SymmKey": SENTINEL, "label": "idxc_label"},
+            "smartstore": {"index": [{"s3": {"access_key": SENTINEL, "secret_key": SENTINEL}}]},
+            "conf": [
+                {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                {"key": "server", "content": {"noahService": {"pass4SymmKey": SENTINEL}}},
+                {"key": "indexes", "content": {"default": {"remote.s3.secret_key": SENTINEL}}},
+            ],
+        },
+    }}}
+
+def test_obfuscate_vars_leaves_no_plaintext_in_written_inventory():
+    inventory = sentinel_inventory()
+    serialized = json.dumps(environ.obfuscate_vars(inventory), sort_keys=True)
+    assert SENTINEL not in serialized
+    # Non-sensitive diagnostic context is still available for debugging
+    assert "noah.example" in serialized
+    assert "idxc_label" in serialized
+
+def test_main_write_to_stdout_leaves_no_plaintext_in_output(capsys):
+    inventory = sentinel_inventory()
+    with patch.object(environ, "inventory", inventory), \
+         patch.object(environ, "getSplunkInventory", MagicMock()), \
+         patch.object(sys, "argv", ["environ.py", "--write-to-stdout"]):
+        environ.main()
+    assert SENTINEL not in capsys.readouterr().out
 
 @pytest.mark.skip(reason="TODO")
 def test_create_parser():
