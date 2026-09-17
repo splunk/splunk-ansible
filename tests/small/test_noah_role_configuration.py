@@ -244,10 +244,19 @@ def test_shc_prestart_restarts_only_after_local_key_adoption():
     cluster_tasks = load_yaml("roles/splunk_search_head/tasks/search_head_clustering.yml")
     early_flush = named_task(cluster_tasks, "Flush restart handlers")
     convergence = named_task(cluster_tasks, "Wait for Noah SHC member key adoption")
+    captain_state = named_task(cluster_tasks, "Record whether this Noah SHC member is the elected captain")
     secret_metadata = named_task(cluster_tasks, "Read Noah SHC common-secret metadata")
     pid_metadata = named_task(cluster_tasks, "Read current splunkd PID-file metadata")
+    secret_version = named_task(cluster_tasks, "Build the Noah SHC common-secret version marker")
+    marker_metadata = named_task(cluster_tasks, "Check for a previously loaded Noah SHC common-secret version")
+    marker_contents = named_task(cluster_tasks, "Read the previously loaded Noah SHC common-secret version")
+    restart_decision = named_task(cluster_tasks, "Decide whether this Noah SHC member must reload the common secret")
+    captain_guard = named_task(cluster_tasks, "Defer an uncoordinated restart of the elected Noah SHC captain")
     post_convergence_restart = named_task(
         cluster_tasks, "Restart Noah SHC member after common-secret convergence"
+    )
+    version_record = named_task(
+        cluster_tasks, "Record the common-secret version loaded by this Noah SHC member"
     )
     restart_record = named_task(cluster_tasks, "Record the Noah SHC post-convergence restart")
     site_tasks = load_yaml("site.yml")[0]["tasks"][0]["block"]
@@ -273,29 +282,47 @@ def test_shc_prestart_restarts_only_after_local_key_adoption():
     assert "unpublished" in convergence_contract
     assert "Number of unpublished changes" in convergence_contract
     assert "['0', '0 (this instance is the captain)']" in convergence_contract
+    assert "0 (this instance is the captain)" in captain_state["set_fact"]["noah_shc_local_is_current_captain"]
     assert secret_metadata["stat"]["path"] == "{{ splunk.home }}/etc/auth/splunk.secret"
     assert secret_metadata["stat"]["get_checksum"] is False
     assert secret_metadata["changed_when"] is False
     assert secret_metadata["failed_when"] == "not noah_shc_common_secret.stat.exists"
     assert secret_metadata["no_log"] is True
-    assert pid_metadata["stat"]["path"] == "{{ splunk.home }}/var/run/splunk/splunkd.pid"
+    assert pid_metadata["stat"]["path"] == "{{ splunk.pid }}"
     assert pid_metadata["stat"]["get_checksum"] is False
     assert pid_metadata["changed_when"] is False
     assert pid_metadata["failed_when"] == "not noah_shc_splunkd_pid_file.stat.exists"
     assert pid_metadata["no_log"] is True
+    assert "stat.inode" in secret_version["set_fact"]["noah_shc_common_secret_version"]
+    assert "stat.mtime" in secret_version["set_fact"]["noah_shc_common_secret_version"]
+    assert marker_metadata["stat"]["path"] == "{{ splunk.pid }}.noah-shc-secret-version"
+    assert marker_metadata["stat"]["get_checksum"] is False
+    assert marker_contents["slurp"]["src"] == "{{ splunk.pid }}.noah-shc-secret-version"
+    assert "noah_shc_secret_version_marker.stat.exists | default(false)" in marker_contents["when"]
+    decision = restart_decision["set_fact"]["noah_shc_common_secret_restart_required"]
+    assert "noah_shc_common_secret.stat.mtime" in decision
+    assert "noah_shc_splunkd_pid_file.stat.mtime" in decision
+    assert ">=" in decision
+    assert "noah_shc_loaded_secret_version.content" in decision
+    assert "noah_shc_common_secret_version" in decision
+    assert "noah_shc_local_is_current_captain | default(false) | bool" in captain_guard["when"]
+    assert "noah_shc_common_secret_restart_required | default(false) | bool" in captain_guard["when"]
     assert post_convergence_restart["include_tasks"] == (
         "../../../roles/splunk_common/handlers/restart_splunk.yml"
     )
-    restart_condition = " ".join(str(condition) for condition in post_convergence_restart["when"])
-    assert "noah_shc_common_secret.stat.mtime" in restart_condition
-    assert "noah_shc_splunkd_pid_file.stat.mtime" in restart_condition
-    assert ">=" in restart_condition
+    assert "not (noah_shc_local_is_current_captain | default(false) | bool)" in post_convergence_restart["when"]
+    assert "noah_shc_common_secret_restart_required | default(false) | bool" in post_convergence_restart["when"]
+    assert version_record["copy"]["dest"] == "{{ splunk.pid }}.noah-shc-secret-version"
+    assert version_record["copy"]["mode"] == "0600"
     assert restart_record["set_fact"]["splunk_restart_triggered"] is True
     assert post_convergence_restart["when"] == restart_record["when"]
     assert cluster_tasks.index(convergence) < cluster_tasks.index(secret_metadata)
     assert cluster_tasks.index(secret_metadata) < cluster_tasks.index(pid_metadata)
-    assert cluster_tasks.index(pid_metadata) < cluster_tasks.index(post_convergence_restart)
-    assert cluster_tasks.index(post_convergence_restart) < cluster_tasks.index(restart_record)
+    assert cluster_tasks.index(pid_metadata) < cluster_tasks.index(restart_decision)
+    assert cluster_tasks.index(restart_decision) < cluster_tasks.index(captain_guard)
+    assert cluster_tasks.index(captain_guard) < cluster_tasks.index(post_convergence_restart)
+    assert cluster_tasks.index(post_convergence_restart) < cluster_tasks.index(version_record)
+    assert cluster_tasks.index(version_record) < cluster_tasks.index(restart_record)
     assert "splunk_restart_triggered is not defined or not splunk_restart_triggered" in global_restart_check["when"]
     assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in global_restart_check["when"]
     assert required_restart["changed_when"] == "restart_required.status == 200"
