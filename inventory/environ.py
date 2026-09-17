@@ -1153,32 +1153,41 @@ def loadHostDefaults(config):
     urls = config["host"]["url"].split(",")
     return [{"key": "host", "src": url} for url in urls]
 
+# Exact key names, lowercased. Matching on substrings or suffixes would also redact
+# unrelated settings such as hide_password, minPasswordLength or enableNewPassword.
+SENSITIVE_KEYS = frozenset([
+    "access_key",
+    "discoverypass4symmkey",
+    "pass4symmkey",
+    "password",
+    "secret",
+    "secret_key",
+])
+
+def redact_sensitive_keys(node, stars):
+    """
+    Recursively replace the value of any sensitive key with stars. Walking the whole
+    tree covers arbitrary user-supplied structures such as splunk.conf stanzas, in
+    both the dictionary and list forms accepted by the configuration writer.
+    """
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if isinstance(value, (dict, list)):
+                redact_sensitive_keys(value, stars)
+            # Dotted settings such as remote.s3.access_key match on their last component
+            elif value and str(key).lower().rsplit(".", 1)[-1] in SENSITIVE_KEYS:
+                node[key] = stars
+    elif isinstance(node, list):
+        for item in node:
+            redact_sensitive_keys(item, stars)
+
 def obfuscate_vars(inventory):
     """
     Remove sensitive variables when dumping inventory out to stdout or file
     """
     stars = "*"*14
     splunkVars = inventory.get("all", {}).get("vars", {}).get("splunk", {})
-    if splunkVars.get("password"):
-        splunkVars["password"] = stars
-    if splunkVars.get("pass4SymmKey"):
-        splunkVars["pass4SymmKey"] = stars
-    if splunkVars.get("shc") and splunkVars["shc"].get("secret"):
-        splunkVars["shc"]["secret"] = stars
-    if splunkVars.get("shc") and splunkVars["shc"].get("pass4SymmKey"):
-        splunkVars["shc"]["pass4SymmKey"] = stars
-    if splunkVars.get("idxc") and splunkVars["idxc"].get("secret"):
-        splunkVars["idxc"]["secret"] = stars
-    if splunkVars.get("idxc") and splunkVars["idxc"].get("pass4SymmKey"):
-        splunkVars["idxc"]["pass4SymmKey"] = stars
-    if splunkVars.get("smartstore") and splunkVars["smartstore"].get("index"):
-        splunkIndexes = splunkVars["smartstore"]["index"]
-        for idx in range(0, len(splunkIndexes)):
-            if splunkIndexes[idx].get("s3"):
-                if splunkIndexes[idx]["s3"].get("access_key"):
-                    splunkIndexes[idx]["s3"]["access_key"] = stars
-                if splunkIndexes[idx]["s3"].get("secret_key"):
-                    splunkIndexes[idx]["s3"]["secret_key"] = stars
+    redact_sensitive_keys(splunkVars, stars)
     return inventory
 
 def create_parser():
@@ -1235,7 +1244,7 @@ def main():
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True, indent=4, ensure_ascii=False)
     elif args.write_to_stdout:
         #remove keys we don't want to print
-        inventory_to_dump = prep_for_yaml_out(inventory)
+        inventory_to_dump = prep_for_yaml_out(obfuscate_vars(inventory))
         print("---")
         print(yaml.dump(inventory_to_dump, default_flow_style=False))
     else:
