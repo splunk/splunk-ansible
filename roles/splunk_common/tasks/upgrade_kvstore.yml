@@ -1,0 +1,40 @@
+---
+# Splunk needs to be stopped for KVStore upgrade
+- include_tasks: stop_splunk.yml
+
+# Splunk version 9.1 does not ship with MongoDB 3.6, 
+# so we need to upgrade mongo before we do anything.
+- name: Upgrade MongoDB version from 3.6 to 4.0
+  command: "{{ splunk.exec }} migrate migrate-kvstore-36-40"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when:
+    - splunk_current_version is version('9', '>=')
+
+- block:
+  - name: Configure storageEngineMigration if on version 8.x
+    ini_file:
+      dest: "{{ splunk.home }}/etc/system/local/server.conf"
+      section: kvstore
+      option: "storageEngineMigration"
+      value: "true"
+      owner: "{{ splunk.user }}"
+      group: "{{ splunk.group }}"
+    when:
+      - splunk_current_version is version('9', '<')
+      - not wiredtiger_file.stat.exists
+
+- name: Upgrade KVStore to wiredTiger
+  command: "{{ splunk.exec }} migrate kvstore-storage-engine --target-engine wiredTiger"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when:
+    - not wiredtiger_file.stat.exists
+
+# Always migrate to the latest version
+- name: Upgrade KVStire to latest version
+  command: "{{ splunk.exec }} migrate migrate-kvstore"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- include_tasks: start_splunk.yml
