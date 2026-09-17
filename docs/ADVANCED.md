@@ -3,6 +3,7 @@
 * [Inventory Script](#inventory-script)
     * [Supported environment variables](#supported-environment-variables)
     * [Additional Splunk Universal Forwarder variables](#additional-splunk-universal-forwarder-variables)
+    * [Debug output](#debug-output)
 * [Defaults](#defaults)
     * [Loading defaults through file](#loading-defaults-through-file)
     * [Loading defaults through URL](#loading-defaults-through-url)
@@ -170,6 +171,12 @@ For Splunk search cluster configuration, we suggest passing in the environment v
 The dynamic inventory script will assign the value of `SPLUNK_HOSTNAME` if defined or `socket.getfqdn()` to the <!-- {% raw %} -->`{{ splunk.hostname }}`<!-- {% endraw %} --> Ansible variable, which will be used to init search head cluster member. `SPLUNK_SEARCH_HEAD_URL` will be used as the `--server_list` argument of search cluster captain bootstrap command, and it requires that each member in `--server_list` must be exactly the same as the <!-- {% raw %} -->`{{ splunk.hostname }}`<!-- {% endraw %} --> specified earlier.
 
 To be consistent, we suggest passing in the environment variables `SPLUNK_SEARCH_HEAD_CAPTAIN_URL`, `SPLUNK_INDEXER_URL` and `SPLUNK_DEPLOYER_URL` with fully qualified domain names as well.
+
+### Debug output
+
+The inventory script can emit the resolved inventory for troubleshooting. `--write-to-file` writes `/opt/container_artifact/ansible_inventory.json`, and `--write-to-stdout` prints the current variables as YAML.
+
+Known credential values are redacted from both, including credentials supplied as `splunk.conf` stanza settings. Redaction covers a fixed set of recognised credential names only - the output may still contain secrets under names outside that set, as well as non-secret configuration such as service URIs, hostnames, cluster labels, and object store paths. Treat these artifacts as internal and review them before sharing.
 
 ## Defaults
 For security purposes, we do not ship with a standard `default.yml`. However, it is a required component when running these Ansible playbooks in this codebase. This file can be created manually, but for a quick shortcut you can run:

@@ -4,10 +4,12 @@ Unit tests for inventory/environ.py
 '''
 from __future__ import absolute_import
 
+import json
 import os
 import sys
 import pytest
 import requests
+import yaml
 from mock import MagicMock, patch, mock_open
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -1688,14 +1690,160 @@ def test_loadHostDefaults(config, output):
                 ({"all": {"vars": {"splunk": {}}}}, {"all": {"vars": {"splunk": {}}}}),
                 # Verify individual keys to obfuscate
                 ({"all": {"vars": {"splunk": {"password": "helloworld"}}}}, {"all": {"vars": {"splunk": {"password": "**************"}}}}),
+                ({"all": {"vars": {"splunk": {"pass4SymmKey": "helloworld"}}}}, {"all": {"vars": {"splunk": {"pass4SymmKey": "**************"}}}}),
                 ({"all": {"vars": {"splunk": {"shc": {"secret": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"shc": {"secret": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"shc": {"pass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"shc": {"pass4SymmKey": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"secret": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"secret": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"pass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"pass4SymmKey": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"discoveryPass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"discoveryPass4SymmKey": "**************"}}}}}),
                 ({"all": {"vars": {"splunk": {"smartstore": {"index": []}}}}}, {"all": {"vars": {"splunk": {"smartstore": {"index": []}}}}}),
                 ({"all": {"vars": {"splunk": {"smartstore": {"index": [{"s3": {"access_key": "1234", "secret_key": "abcd"}}]}}}}}, {"all": {"vars": {"splunk": {"smartstore": {"index": [{"s3": {"access_key": "**************", "secret_key": "**************"}}]}}}}}),
+                # Verify empty/absent splunk.conf is tolerated
+                ({"all": {"vars": {"splunk": {"conf": None}}}}, {"all": {"vars": {"splunk": {"conf": None}}}}),
+                ({"all": {"vars": {"splunk": {"conf": {}}}}}, {"all": {"vars": {"splunk": {"conf": {}}}}}),
+                ({"all": {"vars": {"splunk": {"conf": []}}}}, {"all": {"vars": {"splunk": {"conf": []}}}}),
+                # Verify dictionary-form splunk.conf redacts the Noah credential
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"noahService": {"pass4SymmKey": "helloworld"}}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"noahService": {"pass4SymmKey": "**************"}}}}}}}},
+                ),
+                # Verify list-form splunk.conf redacts the Noah credential
+                (
+                    {"all": {"vars": {"splunk": {"conf": [{"key": "server", "content": {"noahService": {"pass4SymmKey": "helloworld"}}}]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [{"key": "server", "content": {"noahService": {"pass4SymmKey": "**************"}}}]}}}},
+                ),
+                # Verify every duplicate list-form entry for the same file is redacted, not just the first match
+                (
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                        {"key": "server", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                    ]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                        {"key": "server", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                    ]}}}},
+                ),
+                # Verify the same filename in distinct directories is redacted in each directory
+                (
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "directory": "/opt/splunk/etc/system/local", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                        {"key": "server", "directory": "/opt/splunk/etc/apps/noah/local", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                    ]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "directory": "/opt/splunk/etc/system/local", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                        {"key": "server", "directory": "/opt/splunk/etc/apps/noah/local", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                    ]}}}},
+                ),
+                # Verify the redacted key set applies to any stanza of any configuration file
+                (
+                    {"all": {"vars": {"splunk": {"conf": {
+                        "server": {"content": {
+                            "general": {"pass4SymmKey": "helloworld"},
+                            "clustering": {"pass4SymmKey": "helloworld"},
+                        }},
+                        "authentication": {"content": {"bindDN": {"password": "helloworld"}}},
+                    }}}}},
+                    {"all": {"vars": {"splunk": {"conf": {
+                        "server": {"content": {
+                            "general": {"pass4SymmKey": "**************"},
+                            "clustering": {"pass4SymmKey": "**************"},
+                        }},
+                        "authentication": {"content": {"bindDN": {"password": "**************"}}},
+                    }}}}},
+                ),
+                # Verify dotted SmartStore credentials are matched on their final component
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"indexes": {"content": {"default": {
+                        "remote.s3.access_key": "helloworld",
+                        "remote.s3.secret_key": "helloworld",
+                        "remote.s3.endpoint": "https://s3.example",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"indexes": {"content": {"default": {
+                        "remote.s3.access_key": "**************",
+                        "remote.s3.secret_key": "**************",
+                        "remote.s3.endpoint": "https://s3.example",
+                    }}}}}}}},
+                ),
+                # Verify settings that merely contain a credential word are not redacted
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"someStanza": {
+                        "enableNewPassword": "true",
+                        "obfuscateToken": "false",
+                        "hide_password": "true",
+                        "minPasswordLength": "8",
+                        "requireSecretKey": "true",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"someStanza": {
+                        "enableNewPassword": "true",
+                        "obfuscateToken": "false",
+                        "hide_password": "true",
+                        "minPasswordLength": "8",
+                        "requireSecretKey": "true",
+                    }}}}}}}},
+                ),
+                # Verify non-sensitive diagnostic context survives redaction untouched
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"directory": "/opt/splunk/etc/system/local", "content": {"noahService": {
+                        "uri": "https://noah.example:8089",
+                        "tenant": "acme",
+                        "heartbeatInterval": "60",
+                        "minPasswordLength": "8",
+                        "pass4SymmKey": "helloworld",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"directory": "/opt/splunk/etc/system/local", "content": {"noahService": {
+                        "uri": "https://noah.example:8089",
+                        "tenant": "acme",
+                        "heartbeatInterval": "60",
+                        "minPasswordLength": "8",
+                        "pass4SymmKey": "**************",
+                    }}}}}}}},
+                ),
             ]
         )
 def test_obfuscate_vars(inputInventory, outputInventory):
     result = environ.obfuscate_vars(inputInventory)
     assert result == outputInventory
+
+SENTINEL = "s3nt1nel-cr3d-do-not-leak"
+
+def sentinel_inventory():
+    return {"all": {"vars": {
+        "ansible_ssh_user": "splunk",
+        "splunk": {
+            "home": "/opt/splunk",
+            "admin_user": "admin",
+            "password": SENTINEL,
+            "pass4SymmKey": SENTINEL,
+            "app_paths": {},
+            "ssl": {"password": SENTINEL},
+            "s2s": {"password": SENTINEL},
+            "hec": {"token": "notredacted", "password": SENTINEL},
+            "shc": {"secret": SENTINEL, "pass4SymmKey": SENTINEL, "label": "shc_label"},
+            "idxc": {"secret": SENTINEL, "pass4SymmKey": SENTINEL, "discoveryPass4SymmKey": SENTINEL, "label": "idxc_label"},
+            "smartstore": {"index": [{"s3": {"access_key": SENTINEL, "secret_key": SENTINEL}}]},
+            "conf": [
+                {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                {"key": "server", "content": {"noahService": {"pass4SymmKey": SENTINEL}}},
+                {"key": "indexes", "content": {"default": {"remote.s3.secret_key": SENTINEL}}},
+            ],
+        },
+    }}}
+
+def test_obfuscate_vars_leaves_no_plaintext_in_written_inventory():
+    inventory = sentinel_inventory()
+    serialized = json.dumps(environ.obfuscate_vars(inventory), sort_keys=True)
+    assert SENTINEL not in serialized
+    # Non-sensitive diagnostic context is still available for debugging
+    assert "noah.example" in serialized
+    assert "idxc_label" in serialized
+
+def test_main_write_to_stdout_leaves_no_plaintext_in_output(capsys):
+    inventory = sentinel_inventory()
+    with patch.object(environ, "inventory", inventory), \
+         patch.object(environ, "getSplunkInventory", MagicMock()), \
+         patch.object(sys, "argv", ["environ.py", "--write-to-stdout"]):
+        environ.main()
+    assert SENTINEL not in capsys.readouterr().out
 
 @pytest.mark.skip(reason="TODO")
 def test_create_parser():
