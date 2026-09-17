@@ -61,7 +61,9 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   with_dict: "{{ noah_service_stanza }}"
-  no_log: "{{ hide_password }}"
+  # Keep normal Noah configuration visible for troubleshooting, but never log
+  # the symmetric-key loop item when global password hiding is disabled.
+  no_log: "{{ (hide_password | bool) or item.key == 'pass4SymmKey' }}"
 
 - name: Keep Noah disabled during temporary authentication startup
   ini_file:

@@ -1,0 +1,75 @@
+---
+- name: Read the installed Splunk version for license setting compatibility
+  slurp:
+    src: "{{ splunk.home }}/etc/splunk.version"
+  register: license_peer_version_file
+
+- name: Select the supported license manager URI setting
+  set_fact:
+    license_peer_splunk_version: >-
+      {{
+        license_peer_version_file.content
+        | b64decode
+        | regex_findall('(?m)^VERSION=([0-9.]+)$')
+        | first
+      }}
+    license_peer_uri_option: >-
+      {{
+        'manager_uri'
+        if (
+          license_peer_version_file.content
+          | b64decode
+          | regex_findall('(?m)^VERSION=([0-9.]+)$')
+          | first
+        ) is version('9.0.0', '>=')
+        else 'master_uri'
+      }}
+
+- name: Write the license manager URI before splunkd starts
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: license
+    option: "{{ license_peer_uri_option }}"
+    value: "{{ splunk.license_master_url }}"
+    allow_no_value: false
+    state: present
+    mode: 0660
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Remove the incompatible license manager URI alias
+  ini_file:
+    path: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: license
+    option: "{{ 'master_uri' if license_peer_uri_option == 'manager_uri' else 'manager_uri' }}"
+    state: absent
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Read effective pre-start license configuration
+  command:
+    argv:
+      - "{{ splunk.exec }}"
+      - btool
+      - server
+      - list
+      - license
+      - --no-log
+  register: license_peer_prestart_btool
+  changed_when: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Validate effective pre-start license configuration
+  assert:
+    that:
+      - (license_peer_uri_option ~ " = " ~ splunk.license_master_url) in license_peer_prestart_btool.stdout
+    fail_msg: >-
+      Effective pre-start license configuration does not contain the requested
+      license manager URI for Splunk {{ license_peer_splunk_version }}.
+
+- name: Record declarative pre-start license configuration
+  set_fact:
+    license_peer_prestart_configured: true
