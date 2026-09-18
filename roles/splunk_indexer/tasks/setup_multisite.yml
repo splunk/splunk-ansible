@@ -1,7 +1,13 @@
 ---
+# CSPL-4136: when configure_indexer_cluster_prestart.yml already wrote cluster
+# membership and site into server.conf before the first splunkd start, splunkd is
+# already a peer and this post-start join is unnecessary. Retained as a fallback for
+# the cases where the pre-seed could not be applied or verified, since any server.conf
+# write after splunkd is running sets restart_required and forces a second startup.
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
     splunk_instance_address: "{{ splunk.multisite_master }}"
+  when: not (idxc_cluster_preseeded | default(false) | bool)
 
 - name: Convert Extrenal Cluster Master Name into Internal URI
   set_fact:
@@ -25,6 +31,7 @@
   until: task_result.rc == 0
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
+  when: not (idxc_cluster_preseeded | default(false) | bool)
   notify:
       - Restart the splunkd service
   no_log: "{{ hide_password }}"
@@ -37,7 +44,9 @@
     state: absent
   become: yes
   become_user: "{{ splunk.user }}"
-  when: use_ssl_replication | bool
+  when:
+    - use_ssl_replication | bool
+    - not (idxc_cluster_preseeded | default(false) | bool)
 
 # set_config_stanza.yml is used here (not set_config_file.yml) because some base images'
 # set_config_file.yml rewrites the whole server.conf, wiping the [clustering]/site= just written.
@@ -53,6 +62,7 @@
     loop_var: stanza
   when:
     - use_ssl_replication | bool
+    - not (idxc_cluster_preseeded | default(false) | bool)
     - "'conf' in splunk"
     - "'server' in splunk.conf"
     - "'content' in splunk.conf.server"

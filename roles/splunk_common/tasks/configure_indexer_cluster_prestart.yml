@@ -1,0 +1,149 @@
+---
+# CSPL-4136: write indexer-cluster membership into server.conf before the initial
+# splunkd start, so splunkd comes up already clustered.
+#
+# `splunk edit cluster-config` is a wrapper around POST /services/cluster/config/config
+# and therefore needs a live, authenticated splunkd - it cannot run before the first
+# start. Running it afterwards sets restart_required, which costs a second splunkd
+# startup on every provisioning run. Writing the same values directly avoids that.
+#
+# The CLI mutates exactly these five things (verified by clean-slate diff on a live
+# peer), all of which are reproduced below:
+#   [replication_port://PORT]        (bare stanza)
+#   [clustering] master_uri
+#   [clustering] mode = peer         (the CLI's -mode slave)
+#   [clustering] pass4SymmKey        (splunkd encrypts it on startup)
+#   [general] site                   (only when -site is passed)
+#
+# Ordering: the replication port stanza is written BEFORE [clustering]. splunkd
+# aborts with 'clustering initialization failed err="need to specify replication
+# port"' when [clustering] exists without one, and etc/ is a persistent volume, so
+# a partially applied run must never leave [clustering] without its prerequisite.
+
+- name: Resolve cluster manager host for pre-start clustering
+  set_fact:
+    idxc_prestart_cm_host: >-
+      {{ splunk.multisite_master
+         if (splunk.multisite_master is defined and splunk.multisite_master)
+         else splunk.cluster_master_url }}
+
+# Guard: without a cluster manager or a cluster secret there is nothing safe to
+# write. Leave idxc_cluster_preseeded unset so the post-start `edit cluster-config`
+# fallback in the indexer role still runs.
+- name: Determine whether pre-start clustering can be applied
+  set_fact:
+    idxc_prestart_inputs_ok: >-
+      {{ (idxc_prestart_cm_host is defined and idxc_prestart_cm_host | default('', true) | length > 0)
+         and (splunk.idxc.pass4SymmKey | default('', true) | length > 0) }}
+
+- name: Skip pre-start clustering when required inputs are missing
+  debug:
+    msg: >-
+      CSPL-4136: skipping pre-start clustering (cluster manager or idxc.pass4SymmKey
+      not set); falling back to post-start 'splunk edit cluster-config'.
+  when: not idxc_prestart_inputs_ok | bool
+
+- name: Apply pre-start indexer cluster configuration
+  when: idxc_prestart_inputs_ok | bool
+  block:
+    - name: Determine SSL replication mode before start
+      set_fact:
+        idxc_prestart_ssl_replication: >-
+          {{ (splunk.idxc.replication_ssl | default(false) | bool)
+             or ('conf' in splunk and splunk.conf is mapping
+                 and 'server' in splunk.conf
+                 and splunk.conf.server is mapping
+                 and 'content' in splunk.conf.server
+                 and (splunk.conf.server.content.keys()
+                      | select('match', '^replication_port-ssl://')
+                      | list | length > 0)) }}
+
+    # Mirrors cert_prefix without a running splunkd. set_certificate_prefix.yml
+    # derives the scheme by probing the local splunkd after start; enable_splunkd_ssl.yml
+    # (already run) only writes enableSplunkdSSL=false when splunk.ssl.enable is falsy,
+    # so splunkd serves https unless SSL was explicitly disabled. Deriving this from
+    # config avoids a network probe that could fall back to the wrong scheme and write
+    # an unreachable master_uri.
+    - name: Resolve cluster manager URI for pre-start clustering
+      set_fact:
+        idxc_prestart_master_uri: >-
+          {{ ('https' if (splunk.ssl.enable | default(true) | bool) else 'http')
+             ~ '://' ~ idxc_prestart_cm_host ~ ':' ~ splunk.svc_port }}
+
+    # SSL peers already have [replication_port-ssl://PORT] from splunk.conf.server.content,
+    # which satisfies splunkd on its own. Only non-SSL peers need the bare stanza.
+    # allow_no_value is required: without it ini_file refuses to create a valueless
+    # stanza and fails the task.
+    - name: Pre-seed non-SSL replication port stanza
+      ini_file:
+        path: "{{ splunk.home }}/etc/system/local/server.conf"
+        section: "replication_port://{{ splunk.idxc.replication_port }}"
+        state: present
+        allow_no_value: true
+        owner: "{{ splunk.user }}"
+        group: "{{ splunk.group }}"
+        mode: '0600'
+      when: not idxc_prestart_ssl_replication | bool
+      become: yes
+      become_user: "{{ splunk.user }}"
+
+    - name: Pre-seed site assignment in server.conf
+      ini_file:
+        path: "{{ splunk.home }}/etc/system/local/server.conf"
+        section: general
+        option: site
+        value: "{{ splunk.site }}"
+        owner: "{{ splunk.user }}"
+        group: "{{ splunk.group }}"
+        mode: '0600'
+      when:
+        - splunk.site is defined
+        - splunk.site
+      become: yes
+      become_user: "{{ splunk.user }}"
+
+    - name: Pre-seed clustering configuration in server.conf
+      ini_file:
+        path: "{{ splunk.home }}/etc/system/local/server.conf"
+        section: clustering
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        owner: "{{ splunk.user }}"
+        group: "{{ splunk.group }}"
+        mode: '0600'
+      loop:
+        - { option: 'master_uri', value: '{{ idxc_prestart_master_uri }}' }
+        - { option: 'mode', value: 'peer' }
+        - { option: 'pass4SymmKey', value: '{{ splunk.idxc.pass4SymmKey }}' }
+      become: yes
+      become_user: "{{ splunk.user }}"
+      no_log: "{{ hide_password }}"
+
+    # Only claim the pre-seed succeeded if server.conf really contains the required
+    # stanzas. A partially applied run must not suppress the post-start fallback.
+    - name: Read back server.conf to verify pre-start clustering
+      slurp:
+        src: "{{ splunk.home }}/etc/system/local/server.conf"
+      register: idxc_prestart_verify
+      become: yes
+      become_user: "{{ splunk.user }}"
+      no_log: true
+
+    - name: Record whether clustering was successfully pre-seeded
+      set_fact:
+        idxc_cluster_preseeded: >-
+          {{ ('[clustering]' in _conf)
+             and ('master_uri = ' in _conf)
+             and ('mode = peer' in _conf)
+             and (('[replication_port-ssl://' in _conf) or ('[replication_port://' in _conf))
+             and ((splunk.site is not defined) or (not splunk.site) or ('site = ' in _conf)) }}
+      vars:
+        _conf: "{{ idxc_prestart_verify.content | b64decode }}"
+      no_log: true
+
+    - name: Report pre-start clustering result
+      debug:
+        msg: >-
+          CSPL-4136: pre-start clustering applied={{ idxc_cluster_preseeded }}
+          (post-start 'splunk edit cluster-config' will
+          {{ 'be skipped' if idxc_cluster_preseeded | bool else 'run as fallback' }})
