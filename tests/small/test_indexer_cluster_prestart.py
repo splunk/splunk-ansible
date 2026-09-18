@@ -42,9 +42,9 @@ def prestart_ssl_replication(splunk):
     return any(str(k).startswith('replication_port-ssl://') for k in content)
 
 
-def prestart_master_uri(splunk):
+def prestart_manager_uri(splunk):
     '''
-    Mirror idxc_prestart_master_uri.
+    Mirror idxc_prestart_manager_uri.
 
     cert_prefix is only set after start_splunk, by probing the local splunkd.
     enable_splunkd_ssl.yml disables SSL only when splunk.ssl.enable is falsy, so
@@ -105,8 +105,8 @@ def test_prestart_ssl_replication(splunk, expected):
     ({'cluster_master_url': 'cm', 'svc_port': 8089, 'ssl': {'enable': False}}, 'http://cm:8089'),
     ({'multisite_master': 'ms', 'svc_port': 8089}, 'https://ms:8089'),
 ])
-def test_prestart_master_uri(splunk, expected):
-    assert prestart_master_uri(splunk) == expected
+def test_prestart_manager_uri(splunk, expected):
+    assert prestart_manager_uri(splunk) == expected
 
 
 SSL_CONF = (

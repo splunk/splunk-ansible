@@ -10,8 +10,8 @@
 # The CLI mutates exactly these five things (verified by clean-slate diff on a live
 # peer), all of which are reproduced below:
 #   [replication_port://PORT]        (bare stanza)
-#   [clustering] master_uri
-#   [clustering] mode = peer         (the CLI's -mode slave)
+#   [clustering] master_uri          (cluster manager URI)
+#   [clustering] mode = peer
 #   [clustering] pass4SymmKey        (splunkd encrypts it on startup)
 #   [general] site                   (only when -site is passed)
 #
@@ -63,10 +63,10 @@
     # (already run) only writes enableSplunkdSSL=false when splunk.ssl.enable is falsy,
     # so splunkd serves https unless SSL was explicitly disabled. Deriving this from
     # config avoids a network probe that could fall back to the wrong scheme and write
-    # an unreachable master_uri.
+    # an unreachable cluster manager URI.
     - name: Resolve cluster manager URI for pre-start clustering
       set_fact:
-        idxc_prestart_master_uri: >-
+        idxc_prestart_manager_uri: >-
           {{ ('https' if (splunk.ssl.enable | default(true) | bool) else 'http')
              ~ '://' ~ idxc_prestart_cm_host ~ ':' ~ splunk.svc_port }}
 
@@ -112,7 +112,7 @@
         group: "{{ splunk.group }}"
         mode: '0600'
       loop:
-        - { option: 'master_uri', value: '{{ idxc_prestart_master_uri }}' }
+        - { option: 'master_uri', value: '{{ idxc_prestart_manager_uri }}' }
         - { option: 'mode', value: 'peer' }
         - { option: 'pass4SymmKey', value: '{{ splunk.idxc.pass4SymmKey }}' }
       become: yes
