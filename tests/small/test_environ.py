@@ -991,6 +991,8 @@ def test_getNodeSidecarPostgres(os_env, result):
                 ({}, {"SPLUNK_KVSTORE_DEFAULT_TYPE": ""}, {}),
                 ({}, {"SPLUNK_KVSTORE_DEFAULT_TYPE": "local"}, {"default_kvstore_type": "local"}),
                 ({}, {"SPLUNK_KVSTORE_DEFAULT_TYPE": "LOCAL"}, {"default_kvstore_type": "local"}),
+                ({}, {"SPLUNK_KVSTORE_DEFAULT_TYPE": "external"}, {"default_kvstore_type": "external"}),
+                ({}, {"SPLUNK_KVSTORE_DEFAULT_TYPE": "EXTERNAL"}, {"default_kvstore_type": "external"}),
             ]
         )
 def test_getDefaultKVStoreType(default_yml, os_env, result):
