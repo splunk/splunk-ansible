@@ -2,8 +2,8 @@
 - name: Validate default KV Store type
   assert:
     that:
-      - splunk.kvstore.default_kvstore_type in ["cohosted", "local"]
-    fail_msg: "splunk.kvstore.default_kvstore_type must be either 'cohosted' or 'local'"
+      - splunk.kvstore.default_kvstore_type in ["cohosted", "external", "local"]
+    fail_msg: "splunk.kvstore.default_kvstore_type must be 'cohosted', 'external', or 'local'"
 
 - name: Retrieve installed Splunk version for default KV Store type
   command: "{{ splunk.exec }} version --accept-license --answer-yes --no-prompt"
