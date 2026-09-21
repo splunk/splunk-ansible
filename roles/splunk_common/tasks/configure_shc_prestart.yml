@@ -5,7 +5,7 @@
     shc_prestart_mgmt_uri: "{{ cert_prefix }}://{{ splunk.hostname }}:{{ splunk.svc_port }}"
     shc_prestart_deployer_uri: >-
       {{ (cert_prefix ~ "://" ~ splunk.deployer_url ~ ":" ~ splunk.svc_port)
-         if (splunk.deployer_url | default("") | length > 0)
+         if (splunk.deployer_url | default("", true) | length > 0)
          else "" }}
     shc_prestart_server_conf: "{{ splunk.home }}/etc/system/local/server.conf"
     shc_prestart_indexer_peer_enabled: >-
