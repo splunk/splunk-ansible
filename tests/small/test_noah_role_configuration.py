@@ -176,7 +176,7 @@ def test_each_supported_role_has_only_its_intended_noah_behavior():
     assert "decouple_search_indexing" not in indexer
 
     assert 'key: usePeers, value: "true"' in search_head
-    assert "decouple_search_indexing" not in search_head
+    assert "decouple_search_indexing" in search_head
     assert "advertisedAddr" not in search_head
     assert "shclustering" not in search_head
     assert "replication_port://" not in search_head

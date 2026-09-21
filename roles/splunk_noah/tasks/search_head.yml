@@ -18,3 +18,15 @@
     - { key: disabled, value: "false" }
     - { key: heartbeatPeriod, value: "{{ splunk_noah_client_profile.heartbeat_period }}" }
     - { key: usePeers, value: "true" }
+
+- name: Configure decoupled search and indexing
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: decouple_search_indexing
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - { key: decoupleSearchIndexing, value: "true" }
+    - { key: role, value: search_head }
