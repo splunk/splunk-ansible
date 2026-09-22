@@ -154,6 +154,16 @@
     - splunk.role != "splunk_universal_forwarder"
     - splunk.cloud_build
 
+# CSPL-4136: seed cluster membership before the first splunkd start so splunkd comes
+# up already clustered. Applying it afterwards via `splunk edit cluster-config` sets
+# restart_required and costs a second splunkd startup.
+- include_tasks: configure_indexer_cluster_prestart.yml
+  when:
+    - splunk.role == "splunk_indexer"
+    - splunk_indexer_cluster | bool
+    - (splunk.multisite_master is defined and splunk.multisite_master) or
+      (splunk.cluster_master_url is defined and splunk.cluster_master_url)
+
 - include_tasks: start_splunk.yml
 
 - include_tasks: set_certificate_prefix.yml
