@@ -33,6 +33,8 @@ import requests
 import urllib3
 import yaml
 
+from splunk_config import merge_dict, normalize_conf_entries
+
 urllib3.disable_warnings()
 
 HERE = os.path.dirname(os.path.normpath(__file__))
@@ -137,6 +139,7 @@ def getDefaultVars():
     getHEC(defaultVars)
     getSecrets(defaultVars)
     getSplunkPaths(defaultVars)
+    normalizeNoahConf(defaultVars)
     getIndexerClustering(defaultVars)
     getSearchHeadClustering(defaultVars)
     # getMultisite() must be called after getIndexerClustering() + getSearchHeadClustering()
@@ -194,7 +197,22 @@ def getServiceName(vars_scope):
     if serviceName != "" and namespace != "":
         vars_scope["splunk"]["issuer_uri"] = "{}.{}.svc.{}".format(serviceName, namespace, clusterDomain)
     if headlessServiceName != "" and namespace != "":
-        vars_scope["splunk"]["server_name"] = "{}.{}.{}.svc.{}".format(podName, headlessServiceName, namespace, clusterDomain)
+        server_name = "{}.{}.{}.svc.{}".format(podName, headlessServiceName, namespace, clusterDomain)
+        vars_scope["splunk"]["server_name"] = server_name
+        if vars_scope.get("splunk_noah_enabled", False):
+            vars_scope["splunk"]["noah_advertised_addr"] = "https://{}:{}".format(server_name, vars_scope["splunk"]["svc_port"])
+
+def getNoah(vars_scope):
+    """Enable Noah provisioning only when explicitly requested."""
+    value = os.environ.get("SPLUNK_NOAH_ENABLED", vars_scope.get("splunk_noah_enabled", False))
+    if isinstance(value, bool):
+        vars_scope["splunk_noah_enabled"] = value
+        return
+
+    normalized = str(value).strip().lower()
+    if normalized not in ("true", "false"):
+        raise ValueError("SPLUNK_NOAH_ENABLED must be either 'true' or 'false'")
+    vars_scope["splunk_noah_enabled"] = normalized == "true"
 
 def getNoah(vars_scope):
     """Enable Noah provisioning only when explicitly requested."""
@@ -991,39 +1009,27 @@ def parseUrl(url, vars_scope):
         port = parsed[1]
     return "{}://{}:{}".format(scheme, hostname, port)
 
-def merge_dict(dict1, dict2, path=None):
-    """
-    Merge two dictionaries such that all the keys in dict2 overwrite those in dict1.
+def normalizeConfEntries(entries, default_directory, file_keys=None):
+    """Backwards-compatible wrapper for configuration entry normalization."""
+    return normalize_conf_entries(entries, default_directory, file_keys)
 
-    Special handling:
-    - If dict1[key] is a dict and dict2[key] is None (empty YAML section), preserve dict1[key]
-    - If dict1[key] is a dict and dict2[key] is a list, merge list items into dict1[key]
-    """
-    if path is None: path = []
-    for key in dict2:
-        if key in dict1:
-            if isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
-                merge_dict(dict1[key], dict2[key], path + [str(key)])
-            elif isinstance(dict1[key], list) and isinstance(dict2[key], list):
-                dict1[key] += dict2[key]
-            elif isinstance(dict1[key], dict) and dict2[key] is None:
-                # Preserve dict1[key] when dict2[key] is None (empty YAML section)
-                # This prevents losing default values when ConfigMap has empty sections
-                pass
-            elif isinstance(dict1[key], dict) and isinstance(dict2[key], list):
-                # Handle list-based format: merge each list item (dict) into dict1[key]
-                # This supports ConfigMap formats like:
-                # idxc:
-                #   - secret: value1
-                #   - pass4SymmKey: value2
-                for item in dict2[key]:
-                    if isinstance(item, dict):
-                        merge_dict(dict1[key], item, path + [str(key)])
-            else:
-                dict1[key] = dict2[key]
-        else:
-            dict1[key] = dict2[key]
-    return dict1
+def normalizeNoahConf(vars_scope):
+    """Opt Noah's list-form server.conf into effective-file normalization."""
+    if not vars_scope.get("splunk_noah_enabled", False):
+        return
+
+    splunk_vars = vars_scope.get("splunk", {})
+    conf_entries = splunk_vars.get("conf")
+    splunk_home = splunk_vars.get("home")
+    if not isinstance(conf_entries, list) or not splunk_home:
+        return
+
+    default_directory = os.path.join(splunk_home, "etc", "system", "local")
+    splunk_vars["conf"] = normalizeConfEntries(
+        conf_entries,
+        default_directory,
+        file_keys=("server",),
+    )
 
 def mergeDefaults(vars_scope, key, src):
     """
@@ -1153,32 +1159,41 @@ def loadHostDefaults(config):
     urls = config["host"]["url"].split(",")
     return [{"key": "host", "src": url} for url in urls]
 
+# Exact key names, lowercased. Matching on substrings or suffixes would also redact
+# unrelated settings such as hide_password, minPasswordLength or enableNewPassword.
+SENSITIVE_KEYS = frozenset([
+    "access_key",
+    "discoverypass4symmkey",
+    "pass4symmkey",
+    "password",
+    "secret",
+    "secret_key",
+])
+
+def redact_sensitive_keys(node, stars):
+    """
+    Recursively replace the value of any sensitive key with stars. Walking the whole
+    tree covers arbitrary user-supplied structures such as splunk.conf stanzas, in
+    both the dictionary and list forms accepted by the configuration writer.
+    """
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if isinstance(value, (dict, list)):
+                redact_sensitive_keys(value, stars)
+            # Dotted settings such as remote.s3.access_key match on their last component
+            elif value and str(key).lower().rsplit(".", 1)[-1] in SENSITIVE_KEYS:
+                node[key] = stars
+    elif isinstance(node, list):
+        for item in node:
+            redact_sensitive_keys(item, stars)
+
 def obfuscate_vars(inventory):
     """
     Remove sensitive variables when dumping inventory out to stdout or file
     """
     stars = "*"*14
     splunkVars = inventory.get("all", {}).get("vars", {}).get("splunk", {})
-    if splunkVars.get("password"):
-        splunkVars["password"] = stars
-    if splunkVars.get("pass4SymmKey"):
-        splunkVars["pass4SymmKey"] = stars
-    if splunkVars.get("shc") and splunkVars["shc"].get("secret"):
-        splunkVars["shc"]["secret"] = stars
-    if splunkVars.get("shc") and splunkVars["shc"].get("pass4SymmKey"):
-        splunkVars["shc"]["pass4SymmKey"] = stars
-    if splunkVars.get("idxc") and splunkVars["idxc"].get("secret"):
-        splunkVars["idxc"]["secret"] = stars
-    if splunkVars.get("idxc") and splunkVars["idxc"].get("pass4SymmKey"):
-        splunkVars["idxc"]["pass4SymmKey"] = stars
-    if splunkVars.get("smartstore") and splunkVars["smartstore"].get("index"):
-        splunkIndexes = splunkVars["smartstore"]["index"]
-        for idx in range(0, len(splunkIndexes)):
-            if splunkIndexes[idx].get("s3"):
-                if splunkIndexes[idx]["s3"].get("access_key"):
-                    splunkIndexes[idx]["s3"]["access_key"] = stars
-                if splunkIndexes[idx]["s3"].get("secret_key"):
-                    splunkIndexes[idx]["s3"]["secret_key"] = stars
+    redact_sensitive_keys(splunkVars, stars)
     return inventory
 
 def create_parser():
@@ -1235,7 +1250,7 @@ def main():
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True, indent=4, ensure_ascii=False)
     elif args.write_to_stdout:
         #remove keys we don't want to print
-        inventory_to_dump = prep_for_yaml_out(inventory)
+        inventory_to_dump = prep_for_yaml_out(obfuscate_vars(inventory))
         print("---")
         print(yaml.dump(inventory_to_dump, default_flow_style=False))
     else:

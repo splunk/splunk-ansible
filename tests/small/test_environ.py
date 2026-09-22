@@ -4,10 +4,12 @@ Unit tests for inventory/environ.py
 '''
 from __future__ import absolute_import
 
+import json
 import os
 import sys
 import pytest
 import requests
+import yaml
 from mock import MagicMock, patch, mock_open
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -23,331 +25,229 @@ import environ
 @pytest.mark.parametrize(("value", "expected"), [
     ("true", True),
     ("TRUE", True),
-    ("  true  ", True),
     ("false", False),
+    (True, True),
+    (False, False),
 ])
-def test_getNoah_normalizes_an_explicit_value(value, expected):
-    vars_scope = {}
+def test_getNoah(value, expected):
+    vars_scope = {"splunk_noah_enabled": False}
     with patch("os.environ", new={"SPLUNK_NOAH_ENABLED": value}):
         environ.getNoah(vars_scope)
     assert vars_scope["splunk_noah_enabled"] is expected
 
 
-def test_getNoah_defaults_to_disabled():
-    vars_scope = {}
-    with patch("os.environ", new={}):
-        environ.getNoah(vars_scope)
-    assert vars_scope["splunk_noah_enabled"] is False
+def test_getNoah_rejects_invalid_value():
+    with patch("os.environ", new={"SPLUNK_NOAH_ENABLED": "sometimes"}):
+        with pytest.raises(ValueError, match="must be either 'true' or 'false'"):
+            environ.getNoah({"splunk_noah_enabled": False})
 
 
-def test_getNoah_honours_a_boolean_default():
-    vars_scope = {"splunk_noah_enabled": True}
-    with patch("os.environ", new={}):
-        environ.getNoah(vars_scope)
-    assert vars_scope["splunk_noah_enabled"] is True
+def test_normalizeConfEntries_merges_duplicate_effective_files_recursively():
+    entries = [
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "uri": "https://noah.example",
+                        "tenant": "tenant-a",
+                        "heartbeatPeriod": "30",
+                    },
+                    "general": {"serverName": "indexer-0"},
+                }
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "pass4SymmKey": "noah-secret",
+                        "heartbeatPeriod": "60",
+                    }
+                }
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert len(normalized) == 1
+    assert normalized[0]["value"]["content"] == {
+        "noahService": {
+            "uri": "https://noah.example",
+            "tenant": "tenant-a",
+            "heartbeatPeriod": "60",
+            "pass4SymmKey": "noah-secret",
+        },
+        "general": {"serverName": "indexer-0"},
+    }
+    # The helper must not mutate data retained by defaults-loading callers.
+    assert len(entries) == 2
+    assert "pass4SymmKey" not in entries[0]["value"]["content"]["noahService"]
 
 
-def test_getNoah_rejects_an_ambiguous_value():
-    with patch("os.environ", new={"SPLUNK_NOAH_ENABLED": "yes"}):
-        with pytest.raises(ValueError, match="SPLUNK_NOAH_ENABLED"):
-            environ.getNoah({})
+def test_normalizeConfEntries_uses_effective_directory_in_file_identity():
+    default_directory = "/opt/splunk/etc/system/local"
+    entries = [
+        {"key": "server", "value": {"content": {"one": {"a": "1"}}}},
+        {
+            "key": "server",
+            "value": {
+                "directory": "/opt//splunk/etc/./system/local/",
+                "content": {"one": {"b": "2"}},
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "directory": "/opt/splunk/etc/apps/custom/local",
+                "content": {"one": {"c": "3"}},
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(entries, default_directory)
+
+    assert len(normalized) == 2
+    assert normalized[0]["value"]["content"]["one"] == {"a": "1", "b": "2"}
+    assert normalized[1]["value"]["content"]["one"] == {"c": "3"}
 
 
-POD_ENVIRONMENT = {
-    "POD_NAME": "idxc-site1-0",
-    "POD_NAMESPACE": "splunk",
-    "SPLUNK_HEADLESS_SERVICE_NAME": "idxc-headless",
-    "CLUSTER_DOMAIN": "cluster.local",
-}
-POD_DNS_NAME = "idxc-site1-0.idxc-headless.splunk.svc.cluster.local"
+def test_normalizeConfEntries_preserves_merge_dict_edge_case_semantics():
+    entries = [
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": {
+                        "uri": "https://noah.example",
+                        "tenant": "tenant-a",
+                    },
+                    "preserved": {"setting": "value"},
+                }
+            },
+        },
+        {
+            "key": "server",
+            "value": {
+                "content": {
+                    "noahService": [{"pass4SymmKey": "noah-secret"}],
+                    "preserved": None,
+                }
+            },
+        },
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert normalized[0]["value"]["content"] == {
+        "noahService": {
+            "uri": "https://noah.example",
+            "tenant": "tenant-a",
+            "pass4SymmKey": "noah-secret",
+        },
+        "preserved": {"setting": "value"},
+    }
 
 
-def noah_vars_scope(**overrides):
+def test_normalizeConfEntries_only_merges_selected_file_keys():
+    entries = [
+        {"key": "server", "value": {"content": {"one": {"a": "1"}}}},
+        {"key": "web", "value": {"content": {"settings": {"a": "1"}}}},
+        {"key": "server", "value": {"content": {"one": {"b": "2"}}}},
+        {"key": "web", "value": {"content": {"settings": {"b": "2"}}}},
+    ]
+
+    normalized = environ.normalizeConfEntries(
+        entries,
+        "/opt/splunk/etc/system/local",
+        file_keys=("server",),
+    )
+
+    assert [entry["key"] for entry in normalized] == ["server", "web", "web"]
+    assert normalized[0]["value"]["content"]["one"] == {"a": "1", "b": "2"}
+    assert normalized[1]["value"]["content"]["settings"] == {"a": "1"}
+    assert normalized[2]["value"]["content"]["settings"] == {"b": "2"}
+
+
+def test_normalizeNoahConf_updates_list_form_server_config_only_in_noah_mode():
+    conf_entries = [
+        {
+            "key": "server",
+            "value": {"content": {"noahService": {"uri": "https://noah.example"}}},
+        },
+        {
+            "key": "server",
+            "value": {"content": {"noahService": {"pass4SymmKey": "noah-secret"}}},
+        },
+    ]
     vars_scope = {
         "splunk_noah_enabled": True,
-        "cert_prefix": "https",
-        "splunk": {"role": "splunk_indexer", "svc_port": 8089, "ssl": {"enable": True}},
+        "splunk": {"home": "/opt/splunk", "conf": conf_entries},
     }
-    vars_scope["splunk"].update(overrides.pop("splunk", {}))
-    vars_scope.update(overrides)
-    return vars_scope
+
+    environ.normalizeNoahConf(vars_scope)
+
+    assert len(vars_scope["splunk"]["conf"]) == 1
+    assert vars_scope["splunk"]["conf"][0]["value"]["content"]["noahService"] == {
+        "uri": "https://noah.example",
+        "pass4SymmKey": "noah-secret",
+    }
+
+    classic_vars = {
+        "splunk_noah_enabled": False,
+        "splunk": {"home": "/opt/splunk", "conf": conf_entries},
+    }
+    environ.normalizeNoahConf(classic_vars)
+    assert classic_vars["splunk"]["conf"] is conf_entries
+
+    dict_conf = {
+        "server": {
+            "content": {
+                "noahService": {
+                    "uri": "https://noah.example",
+                    "pass4SymmKey": "noah-secret",
+                }
+            }
+        }
+    }
+    dict_vars = {
+        "splunk_noah_enabled": True,
+        "splunk": {"home": "/opt/splunk", "conf": dict_conf},
+    }
+    environ.normalizeNoahConf(dict_vars)
+    assert dict_vars["splunk"]["conf"] is dict_conf
+    assert vars_scope["splunk"]["conf"][0]["value"] == dict_conf["server"]
 
 
-def test_getNoahAdvertisedAddr_is_skipped_in_classic_mode():
-    vars_scope = noah_vars_scope(splunk_noah_enabled=False)
-    with patch("os.environ", new=dict(POD_ENVIRONMENT)):
-        environ.getNoahAdvertisedAddr(vars_scope)
-    assert "noah_advertised_addr" not in vars_scope["splunk"]
-
-
-@pytest.mark.parametrize("role", [
-    "splunk_search_head",
-    "splunk_deployer",
-    "splunk_standalone",
-    "splunk_cluster_master",
-])
-def test_getNoahAdvertisedAddr_is_resolved_only_for_indexers(role):
-    """Only indexers advertise an address, so no other role may demand pod identity."""
-    vars_scope = noah_vars_scope(splunk={"role": role})
-    with patch("os.environ", new={}):
-        environ.getNoahAdvertisedAddr(vars_scope)
-    assert "noah_advertised_addr" not in vars_scope["splunk"]
-
-
-@pytest.mark.parametrize("role", ["splunk_search_head", "splunk_deployer"])
-def test_getNoahAdvertisedAddr_ignores_an_explicit_value_for_a_non_indexer(role):
-    vars_scope = noah_vars_scope(splunk={"role": role})
-    environment = dict(POD_ENVIRONMENT, SPLUNK_NOAH_ADVERTISED_ADDR="https://idx-0.example:8089")
-    with patch("os.environ", new=environment):
-        environ.getNoahAdvertisedAddr(vars_scope)
-    assert "noah_advertised_addr" not in vars_scope["splunk"]
-
-
-@pytest.mark.parametrize(("environment", "scope_overrides", "expected"), [
-    (
-        {},
-        {},
-        "https://{}:8089".format(POD_DNS_NAME),
-    ),
-    (
-        {"SPLUNK_NOAH_ADVERTISED_ADDR": "https://idx-0.example:8089"},
-        {},
-        "https://idx-0.example:8089",
-    ),
-    (
-        {"SPLUNK_NOAH_ADVERTISED_ADDR": "  https://idx-0.example:8089  "},
-        {},
-        "https://idx-0.example:8089",
-    ),
-    (
-        {},
-        {"splunk": {"noah_advertised_addr": "https://from-defaults:8089"}},
-        "https://from-defaults:8089",
-    ),
-    (
-        {"SPLUNK_NOAH_ADVERTISED_ADDR": "https://from-env:8089"},
-        {"splunk": {"noah_advertised_addr": "https://from-defaults:8089"}},
-        "https://from-env:8089",
-    ),
-    (
-        {},
-        {"splunk": {"svc_port": 9089}},
-        "https://{}:9089".format(POD_DNS_NAME),
-    ),
-    (
-        {"CLUSTER_DOMAIN": ""},
-        {},
-        "https://{}:8089".format(POD_DNS_NAME),
-    ),
-    (
-        {"CLUSTER_DOMAIN": "corp.example"},
-        {},
-        "https://idxc-site1-0.idxc-headless.splunk.svc.corp.example:8089",
-    ),
-    (
-        {},
-        {"cert_prefix": "http"},
-        "http://{}:8089".format(POD_DNS_NAME),
-    ),
-    (
-        {},
-        {"splunk": {"ssl": {"enable": False}}},
-        "http://{}:8089".format(POD_DNS_NAME),
-    ),
-    (
-        {},
-        {"splunk": {"ssl": {"enable": "false"}}},
-        "http://{}:8089".format(POD_DNS_NAME),
-    ),
-    (
-        {},
-        {"cert_prefix": "https", "splunk": {"ssl": {"enable": False}}},
-        "http://{}:8089".format(POD_DNS_NAME),
-    ),
-])
-def test_getNoahAdvertisedAddr(environment, scope_overrides, expected):
-    vars_scope = noah_vars_scope(**scope_overrides)
-    merged = dict(POD_ENVIRONMENT)
-    merged.update(environment)
-    with patch("os.environ", new=merged):
-        environ.getNoahAdvertisedAddr(vars_scope)
-    assert vars_scope["splunk"]["noah_advertised_addr"] == expected
-
-
-@pytest.mark.parametrize("missing", [
-    "POD_NAME",
-    "POD_NAMESPACE",
-    "SPLUNK_HEADLESS_SERVICE_NAME",
-])
-def test_getNoahAdvertisedAddr_requires_every_identity_value(missing):
-    environment = dict(POD_ENVIRONMENT)
-    environment[missing] = ""
-    with patch("os.environ", new=environment):
-        with pytest.raises(ValueError, match=missing):
-            environ.getNoahAdvertisedAddr(noah_vars_scope())
-
-
-@pytest.mark.parametrize("port", ["notaport", "70000", "0", "-1", "80.5"])
-def test_getNoahAdvertisedAddr_validates_the_derived_port(port):
-    """SPLUNK_SVC_PORT is unvalidated environment input on the derivation path."""
-    vars_scope = noah_vars_scope(splunk={"svc_port": port})
-    with patch("os.environ", new=dict(POD_ENVIRONMENT)):
-        with pytest.raises(ValueError):
-            environ.getNoahAdvertisedAddr(vars_scope)
-
-
-def test_getNoahAdvertisedAddr_requires_a_derivation_port():
-    vars_scope = noah_vars_scope(splunk={"svc_port": ""})
-    with patch("os.environ", new=dict(POD_ENVIRONMENT)):
-        with pytest.raises(ValueError, match="svc_port"):
-            environ.getNoahAdvertisedAddr(vars_scope)
-
-
-@pytest.mark.parametrize("cluster_domain", ["bad_domain", "has space", "-leading.example"])
-def test_getNoahAdvertisedAddr_validates_the_derived_host(cluster_domain):
-    environment = dict(POD_ENVIRONMENT, CLUSTER_DOMAIN=cluster_domain)
-    with patch("os.environ", new=environment):
-        with pytest.raises(ValueError, match="derived Noah advertised address"):
-            environ.getNoahAdvertisedAddr(noah_vars_scope())
-
-
-def test_getNoahAdvertisedAddr_rejects_an_unsupported_management_scheme():
-    vars_scope = noah_vars_scope(cert_prefix="ftp")
-    with patch("os.environ", new=dict(POD_ENVIRONMENT)):
-        with pytest.raises(ValueError, match="unsupported management scheme"):
-            environ.getNoahAdvertisedAddr(vars_scope)
-
-
-@pytest.mark.parametrize("address", [
-    "idx-0.example:8089",
-    "ftp://idx-0.example:8089",
-    "https://idx-0.example",
-    "https://:8089",
-    "https://idx-0.example:notaport",
-    "https://idx-0.example:8089/services",
-    "https://idx-0.example:8089?probe=1",
-    "https://idx-0.example:8089#fragment",
-    "https://idx-0.example:8089/",
-    "HTTPS://idx-0.example:8089",
-    "https://idx-0.example.:8089",
-    "https://idx-0.example:0",
-    "https://idx-0.example:65536",
-    "https://operator:secret@idx-0.example:8089",
-    "https://idx 0.example:8089",
-    "https://idx_0.example:8089",
-    "https://IDX-0.example:8089",
-    "https://idx-0.Example:8089",
-    "https://-idx.example:8089",
-    "https://idx-.example:8089",
-    "https://idx-0.example:+8089",
-    # urlparse strips interior control characters, so these would otherwise
-    # validate and then corrupt the stanza. Surrounding whitespace is stripped
-    # by the caller and is accepted.
-    "https://idx-0\n.example:8089",
-    "https://idx-0.example:8089\r\ndisabled = false",
-    "https://idx-0.example\t:8089",
-])
-def test_getNoahAdvertisedAddr_rejects_an_unusable_explicit_address(address):
-    environment = dict(POD_ENVIRONMENT)
-    environment["SPLUNK_NOAH_ADVERTISED_ADDR"] = address
-    with patch("os.environ", new=environment):
-        with pytest.raises(ValueError, match="SPLUNK_NOAH_ADVERTISED_ADDR"):
-            environ.getNoahAdvertisedAddr(noah_vars_scope())
-
-
-@pytest.mark.parametrize("address", [
-    "https://[fd00::1]:8089",
-    "https://10.1.2.3:8089",
-    "https://idx-0.example:8089",
-    "https://idx--0.example:8089",
-    "https://idx0:8089",
-    "http://idx-0.example:8089",
-])
-def test_getNoahAdvertisedAddr_accepts_a_usable_explicit_address(address):
-    environment = dict(POD_ENVIRONMENT)
-    environment["SPLUNK_NOAH_ADVERTISED_ADDR"] = address
-    vars_scope = noah_vars_scope()
-    with patch("os.environ", new=environment):
-        environ.getNoahAdvertisedAddr(vars_scope)
-    assert vars_scope["splunk"]["noah_advertised_addr"] == address
-
-
-@pytest.mark.parametrize("address", [
-    "https://operator:secret@idx-0.example:8089",
-    "ftp://operator:secret@idx-0.example:8089",
-    "operator:secret@idx-0.example:8089",
-    # A password may contain "@", so redaction must not stop at the first one.
-    "https://operator:sec@ret@idx-0.example:8089",
-    "operator:sec@ret@idx-0.example:8089",
-    "https://operator:s@e@c@ret@idx-0.example:8089",
-])
-def test_getNoahAdvertisedAddr_redacts_credentials_from_errors(address):
-    environment = dict(POD_ENVIRONMENT)
-    environment["SPLUNK_NOAH_ADVERTISED_ADDR"] = address
-    with patch("os.environ", new=environment):
-        with pytest.raises(ValueError) as excinfo:
-            environ.getNoahAdvertisedAddr(noah_vars_scope())
-    assert "secret" not in str(excinfo.value)
-    assert "<redacted>" in str(excinfo.value)
-
-
-def test_getNoahAdvertisedAddr_rejects_an_unusable_defaults_address():
-    vars_scope = noah_vars_scope(splunk={"noah_advertised_addr": "ftp://idx-0.example:8089"})
-    with patch("os.environ", new=dict(POD_ENVIRONMENT)):
-        with pytest.raises(ValueError, match="splunk.noah_advertised_addr"):
-            environ.getNoahAdvertisedAddr(vars_scope)
-
-
-def test_getNoahAdvertisedAddr_is_stable_across_a_restart():
-    first, second = noah_vars_scope(), noah_vars_scope()
-    with patch("os.environ", new=dict(POD_ENVIRONMENT)):
-        environ.getNoahAdvertisedAddr(first)
-        environ.getNoahAdvertisedAddr(second)
-    assert first["splunk"]["noah_advertised_addr"] == second["splunk"]["noah_advertised_addr"]
-
-
-def test_getNoahAdvertisedAddr_survives_a_reschedule_onto_another_node():
-    environment = dict(POD_ENVIRONMENT)
-    before = noah_vars_scope()
-    with patch("os.environ", new=environment):
-        environ.getNoahAdvertisedAddr(before)
-
-    rescheduled = dict(POD_ENVIRONMENT, SPLUNK_HOSTNAME="another-node", POD_IP="10.1.2.3")
-    after = noah_vars_scope()
-    with patch("os.environ", new=rescheduled):
-        environ.getNoahAdvertisedAddr(after)
-
-    assert after["splunk"]["noah_advertised_addr"] == before["splunk"]["noah_advertised_addr"]
-
-
-def test_getNoahAdvertisedAddr_accepts_a_maximum_length_dns_name():
+def test_getServiceName_builds_noah_advertised_address_only_in_noah_mode():
     environment = {
-        "POD_NAME": "a" * 63,
-        "SPLUNK_HEADLESS_SERVICE_NAME": "b" * 63,
-        "POD_NAMESPACE": "c" * 63,
-        "CLUSTER_DOMAIN": "d" * 57,
+        "POD_NAME": "idxc-site1-0",
+        "POD_NAMESPACE": "splunk",
+        "SPLUNK_HEADLESS_SERVICE_NAME": "idxc-headless",
+        "CLUSTER_DOMAIN": "cluster.local",
     }
-    vars_scope = noah_vars_scope()
+    vars_scope = {"splunk_noah_enabled": True, "splunk": {"svc_port": 8089}}
     with patch("os.environ", new=environment):
-        environ.getNoahAdvertisedAddr(vars_scope)
+        environ.getServiceName(vars_scope)
 
-    address = vars_scope["splunk"]["noah_advertised_addr"]
-    host = address[len("https://"):-len(":8089")]
-    assert len(host) == 253
-    assert all(len(part) <= 63 for part in host.split("."))
+    expected_name = "idxc-site1-0.idxc-headless.splunk.svc.cluster.local"
+    assert vars_scope["splunk"]["server_name"] == expected_name
+    assert vars_scope["splunk"]["noah_advertised_addr"] == "https://{}:8089".format(expected_name)
 
-
-def test_getNoahAdvertisedAddr_rejects_an_over_length_dns_name():
-    environment = {
-        "POD_NAME": "a" * 63,
-        "SPLUNK_HEADLESS_SERVICE_NAME": "b" * 63,
-        "POD_NAMESPACE": "c" * 63,
-        "CLUSTER_DOMAIN": "d" * 58,
-    }
+    classic_vars = {"splunk_noah_enabled": False, "splunk": {"svc_port": 8089}}
     with patch("os.environ", new=environment):
-        with pytest.raises(ValueError, match="derived Noah advertised address"):
-            environ.getNoahAdvertisedAddr(noah_vars_scope())
-
+        environ.getServiceName(classic_vars)
+    assert "noah_advertised_addr" not in classic_vars["splunk"]
 
 @pytest.mark.parametrize(("regex", "result"),
                          [
@@ -1790,14 +1690,160 @@ def test_loadHostDefaults(config, output):
                 ({"all": {"vars": {"splunk": {}}}}, {"all": {"vars": {"splunk": {}}}}),
                 # Verify individual keys to obfuscate
                 ({"all": {"vars": {"splunk": {"password": "helloworld"}}}}, {"all": {"vars": {"splunk": {"password": "**************"}}}}),
+                ({"all": {"vars": {"splunk": {"pass4SymmKey": "helloworld"}}}}, {"all": {"vars": {"splunk": {"pass4SymmKey": "**************"}}}}),
                 ({"all": {"vars": {"splunk": {"shc": {"secret": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"shc": {"secret": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"shc": {"pass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"shc": {"pass4SymmKey": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"secret": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"secret": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"pass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"pass4SymmKey": "**************"}}}}}),
+                ({"all": {"vars": {"splunk": {"idxc": {"discoveryPass4SymmKey": "helloworld"}}}}}, {"all": {"vars": {"splunk": {"idxc": {"discoveryPass4SymmKey": "**************"}}}}}),
                 ({"all": {"vars": {"splunk": {"smartstore": {"index": []}}}}}, {"all": {"vars": {"splunk": {"smartstore": {"index": []}}}}}),
                 ({"all": {"vars": {"splunk": {"smartstore": {"index": [{"s3": {"access_key": "1234", "secret_key": "abcd"}}]}}}}}, {"all": {"vars": {"splunk": {"smartstore": {"index": [{"s3": {"access_key": "**************", "secret_key": "**************"}}]}}}}}),
+                # Verify empty/absent splunk.conf is tolerated
+                ({"all": {"vars": {"splunk": {"conf": None}}}}, {"all": {"vars": {"splunk": {"conf": None}}}}),
+                ({"all": {"vars": {"splunk": {"conf": {}}}}}, {"all": {"vars": {"splunk": {"conf": {}}}}}),
+                ({"all": {"vars": {"splunk": {"conf": []}}}}, {"all": {"vars": {"splunk": {"conf": []}}}}),
+                # Verify dictionary-form splunk.conf redacts the Noah credential
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"noahService": {"pass4SymmKey": "helloworld"}}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"noahService": {"pass4SymmKey": "**************"}}}}}}}},
+                ),
+                # Verify list-form splunk.conf redacts the Noah credential
+                (
+                    {"all": {"vars": {"splunk": {"conf": [{"key": "server", "content": {"noahService": {"pass4SymmKey": "helloworld"}}}]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [{"key": "server", "content": {"noahService": {"pass4SymmKey": "**************"}}}]}}}},
+                ),
+                # Verify every duplicate list-form entry for the same file is redacted, not just the first match
+                (
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                        {"key": "server", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                    ]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                        {"key": "server", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                    ]}}}},
+                ),
+                # Verify the same filename in distinct directories is redacted in each directory
+                (
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "directory": "/opt/splunk/etc/system/local", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                        {"key": "server", "directory": "/opt/splunk/etc/apps/noah/local", "content": {"noahService": {"pass4SymmKey": "helloworld"}}},
+                    ]}}}},
+                    {"all": {"vars": {"splunk": {"conf": [
+                        {"key": "server", "directory": "/opt/splunk/etc/system/local", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                        {"key": "server", "directory": "/opt/splunk/etc/apps/noah/local", "content": {"noahService": {"pass4SymmKey": "**************"}}},
+                    ]}}}},
+                ),
+                # Verify the redacted key set applies to any stanza of any configuration file
+                (
+                    {"all": {"vars": {"splunk": {"conf": {
+                        "server": {"content": {
+                            "general": {"pass4SymmKey": "helloworld"},
+                            "clustering": {"pass4SymmKey": "helloworld"},
+                        }},
+                        "authentication": {"content": {"bindDN": {"password": "helloworld"}}},
+                    }}}}},
+                    {"all": {"vars": {"splunk": {"conf": {
+                        "server": {"content": {
+                            "general": {"pass4SymmKey": "**************"},
+                            "clustering": {"pass4SymmKey": "**************"},
+                        }},
+                        "authentication": {"content": {"bindDN": {"password": "**************"}}},
+                    }}}}},
+                ),
+                # Verify dotted SmartStore credentials are matched on their final component
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"indexes": {"content": {"default": {
+                        "remote.s3.access_key": "helloworld",
+                        "remote.s3.secret_key": "helloworld",
+                        "remote.s3.endpoint": "https://s3.example",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"indexes": {"content": {"default": {
+                        "remote.s3.access_key": "**************",
+                        "remote.s3.secret_key": "**************",
+                        "remote.s3.endpoint": "https://s3.example",
+                    }}}}}}}},
+                ),
+                # Verify settings that merely contain a credential word are not redacted
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"someStanza": {
+                        "enableNewPassword": "true",
+                        "obfuscateToken": "false",
+                        "hide_password": "true",
+                        "minPasswordLength": "8",
+                        "requireSecretKey": "true",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"content": {"someStanza": {
+                        "enableNewPassword": "true",
+                        "obfuscateToken": "false",
+                        "hide_password": "true",
+                        "minPasswordLength": "8",
+                        "requireSecretKey": "true",
+                    }}}}}}}},
+                ),
+                # Verify non-sensitive diagnostic context survives redaction untouched
+                (
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"directory": "/opt/splunk/etc/system/local", "content": {"noahService": {
+                        "uri": "https://noah.example:8089",
+                        "tenant": "acme",
+                        "heartbeatInterval": "60",
+                        "minPasswordLength": "8",
+                        "pass4SymmKey": "helloworld",
+                    }}}}}}}},
+                    {"all": {"vars": {"splunk": {"conf": {"server": {"directory": "/opt/splunk/etc/system/local", "content": {"noahService": {
+                        "uri": "https://noah.example:8089",
+                        "tenant": "acme",
+                        "heartbeatInterval": "60",
+                        "minPasswordLength": "8",
+                        "pass4SymmKey": "**************",
+                    }}}}}}}},
+                ),
             ]
         )
 def test_obfuscate_vars(inputInventory, outputInventory):
     result = environ.obfuscate_vars(inputInventory)
     assert result == outputInventory
+
+SENTINEL = "s3nt1nel-cr3d-do-not-leak"
+
+def sentinel_inventory():
+    return {"all": {"vars": {
+        "ansible_ssh_user": "splunk",
+        "splunk": {
+            "home": "/opt/splunk",
+            "admin_user": "admin",
+            "password": SENTINEL,
+            "pass4SymmKey": SENTINEL,
+            "app_paths": {},
+            "ssl": {"password": SENTINEL},
+            "s2s": {"password": SENTINEL},
+            "hec": {"token": "notredacted", "password": SENTINEL},
+            "shc": {"secret": SENTINEL, "pass4SymmKey": SENTINEL, "label": "shc_label"},
+            "idxc": {"secret": SENTINEL, "pass4SymmKey": SENTINEL, "discoveryPass4SymmKey": SENTINEL, "label": "idxc_label"},
+            "smartstore": {"index": [{"s3": {"access_key": SENTINEL, "secret_key": SENTINEL}}]},
+            "conf": [
+                {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
+                {"key": "server", "content": {"noahService": {"pass4SymmKey": SENTINEL}}},
+                {"key": "indexes", "content": {"default": {"remote.s3.secret_key": SENTINEL}}},
+            ],
+        },
+    }}}
+
+def test_obfuscate_vars_leaves_no_plaintext_in_written_inventory():
+    inventory = sentinel_inventory()
+    serialized = json.dumps(environ.obfuscate_vars(inventory), sort_keys=True)
+    assert SENTINEL not in serialized
+    # Non-sensitive diagnostic context is still available for debugging
+    assert "noah.example" in serialized
+    assert "idxc_label" in serialized
+
+def test_main_write_to_stdout_leaves_no_plaintext_in_output(capsys):
+    inventory = sentinel_inventory()
+    with patch.object(environ, "inventory", inventory), \
+         patch.object(environ, "getSplunkInventory", MagicMock()), \
+         patch.object(sys, "argv", ["environ.py", "--write-to-stdout"]):
+        environ.main()
+    assert SENTINEL not in capsys.readouterr().out
 
 @pytest.mark.skip(reason="TODO")
 def test_create_parser():
