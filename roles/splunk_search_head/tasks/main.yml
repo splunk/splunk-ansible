@@ -14,7 +14,6 @@
 - include_tasks: search_head_clustering.yml
   when:
     - splunk_search_head_cluster | bool
-    - "'deployer_url' in splunk and splunk.deployer_url"
 
 ## Indexer Clustering Scenario
 - include_tasks: ../../splunk_common/tasks/peer_cluster_master.yml
