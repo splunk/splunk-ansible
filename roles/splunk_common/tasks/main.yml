@@ -170,7 +170,7 @@
   when:
     - ansible_system is match("Linux")
     - splunk.role == "splunk_deployer"
-    - splunk.deployer_url | default("") | length > 0
+    - splunk.deployer_url | default("", true) | length > 0
     - splunk_search_head_cluster | bool
     - first_run | bool
     - splunk_status.rc != 0
