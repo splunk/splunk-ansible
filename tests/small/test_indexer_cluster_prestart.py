@@ -22,23 +22,33 @@ def prestart_inputs_ok(splunk):
     return bool(cm_host) and bool(secret)
 
 
-def prestart_ssl_replication(splunk):
+def prestart_ssl_replication(splunk, splunk_conf_effective=None):
     '''
     Mirror idxc_prestart_ssl_replication.
 
     SSL peers already have [replication_port-ssl://PORT] from
     splunk.conf.server.content, so the bare [replication_port://PORT] stanza
-    must only be written for non-SSL peers.
+    must only be written for non-SSL peers. Both mapping and list forms of
+    splunk.conf are supported; the list form uses splunk_conf_effective
+    (normalized at the Noah role boundary) to resolve entries.
     '''
     if (splunk.get('idxc') or {}).get('replication_ssl'):
         return True
     conf = splunk.get('conf')
-    if not isinstance(conf, dict):
+    if isinstance(conf, dict):
+        server = conf.get('server')
+        if not isinstance(server, dict):
+            return False
+        content = server.get('content') or {}
+    elif isinstance(conf, list):
+        effective = splunk_conf_effective if splunk_conf_effective is not None else conf
+        content = {}
+        for entry in effective:
+            if isinstance(entry, dict) and entry.get('key') == 'server':
+                content = (entry.get('value') or {}).get('content') or {}
+                break
+    else:
         return False
-    server = conf.get('server')
-    if not isinstance(server, dict):
-        return False
-    content = server.get('content') or {}
     return any(str(k).startswith('replication_port-ssl://') for k in content)
 
 
@@ -86,17 +96,27 @@ def test_prestart_inputs_ok(splunk, expected):
     assert prestart_inputs_ok(splunk) is expected
 
 
-@pytest.mark.parametrize(('splunk', 'expected'), [
-    ({'idxc': {'replication_ssl': True}}, True),
-    ({'conf': {'server': {'content': {'replication_port-ssl://9887': {}}}}}, True),
-    ({'conf': {'server': {'content': {'replication_port://9887': {}}}}}, False),
-    ({'conf': {'server': {'content': {}}}}, False),
-    # list-based ConfigMap form must not raise
-    ({'conf': [{'key': 'server'}]}, False),
-    ({}, False),
+@pytest.mark.parametrize(('splunk', 'splunk_conf_effective', 'expected'), [
+    ({'idxc': {'replication_ssl': True}}, None, True),
+    ({'conf': {'server': {'content': {'replication_port-ssl://9887': {}}}}}, None, True),
+    ({'conf': {'server': {'content': {'replication_port://9887': {}}}}}, None, False),
+    ({'conf': {'server': {'content': {}}}}, None, False),
+    # list-based ConfigMap form – SSL stanza present
+    ({'conf': [{'key': 'server', 'value': {'content': {'replication_port-ssl://9887': {}}}}]}, None, True),
+    # list-based ConfigMap form – no SSL stanza
+    ({'conf': [{'key': 'server', 'value': {'content': {'replication_port://9887': {}}}}]}, None, False),
+    # list-based ConfigMap form – bare entry without content
+    ({'conf': [{'key': 'server'}]}, None, False),
+    # list-based with splunk_conf_effective (normalized) taking precedence
+    (
+        {'conf': [{'key': 'server', 'value': {'content': {}}}]},
+        [{'key': 'server', 'value': {'content': {'replication_port-ssl://9887': {}}}}],
+        True,
+    ),
+    ({}, None, False),
 ])
-def test_prestart_ssl_replication(splunk, expected):
-    assert prestart_ssl_replication(splunk) is expected
+def test_prestart_ssl_replication(splunk, splunk_conf_effective, expected):
+    assert prestart_ssl_replication(splunk, splunk_conf_effective) is expected
 
 
 @pytest.mark.parametrize(('splunk', 'expected'), [

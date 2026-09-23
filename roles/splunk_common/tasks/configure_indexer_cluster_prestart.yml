@@ -46,17 +46,35 @@
 - name: Apply pre-start indexer cluster configuration
   when: idxc_prestart_inputs_ok | bool
   block:
+    - name: Extract server.conf content for pre-start SSL check (dict format)
+      set_fact:
+        idxc_prestart_server_conf_content: "{{ splunk.conf.server.content }}"
+      when:
+        - "'conf' in splunk and splunk.conf"
+        - splunk.conf is mapping
+        - "'server' in splunk.conf"
+        - "'content' in splunk.conf.server"
+
+    # List-form splunk.conf only occurs in Noah/operator deployments where
+    # splunk_noah/pre_auth.yml has already run normalize_conf.yml, so
+    # splunk_conf_effective is available here.
+    - name: Extract server.conf content for pre-start SSL check (list format)
+      set_fact:
+        idxc_prestart_server_conf_content: >-
+          {{ ((splunk_conf_effective | default(splunk.conf))
+              | selectattr('key', 'equalto', 'server') | first | default({}))
+              .get('value', {}).get('content', {}) }}
+      when:
+        - "'conf' in splunk and splunk.conf"
+        - splunk.conf is not mapping
+
     - name: Determine SSL replication mode before start
       set_fact:
         idxc_prestart_ssl_replication: >-
           {{ (splunk.idxc.replication_ssl | default(false) | bool)
-             or ('conf' in splunk and splunk.conf is mapping
-                 and 'server' in splunk.conf
-                 and splunk.conf.server is mapping
-                 and 'content' in splunk.conf.server
-                 and (splunk.conf.server.content.keys()
-                      | select('match', '^replication_port-ssl://')
-                      | list | length > 0)) }}
+             or ((idxc_prestart_server_conf_content | default({})).keys()
+                 | select('match', '^replication_port-ssl://')
+                 | list | length > 0) }}
 
     # Mirrors cert_prefix without a running splunkd. set_certificate_prefix.yml
     # derives the scheme by probing the local splunkd after start; enable_splunkd_ssl.yml
