@@ -69,16 +69,21 @@
     - use_ssl_replication | bool
     - not (idxc_cluster_preseeded | default(false) | bool)
 
-# set_config_stanza.yml is used here (not set_config_file.yml) because some base images'
-# set_config_file.yml rewrites the whole server.conf, wiping the [clustering]/site= just written.
+# set_config_stanza.yml expects stanza_name and stanza_settings per iteration;
+# the with_dict loop splits idxc_server_conf_content into individual stanzas.
 - name: Re-apply SSL replication port configuration
   include_tasks: ../../../roles/splunk_common/tasks/set_config_stanza.yml
   vars:
     conf_file: "server.conf"
     conf_directory: "{{ splunk.home }}/etc/system/local"
-    conf_stanzas: "{{ idxc_server_conf_content }}"
+    stanza_name: "{{ stanza.key }}"
+    stanza_settings: "{{ stanza.value | default({}) }}"
+  with_dict: "{{ idxc_server_conf_content | default({}) }}"
+  loop_control:
+    loop_var: stanza
   when:
     - has_ssl_replication_port_in_conf | default(false) | bool
     - idxc_server_conf_content | default({}) | length > 0
+  no_log: "{{ hide_password }}"
 
 #INFRA-38882: Update
