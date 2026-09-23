@@ -1176,11 +1176,13 @@ def redact_sensitive_keys(node, stars):
     """
     if isinstance(node, dict):
         for key, value in node.items():
-            if isinstance(value, (dict, list)):
-                redact_sensitive_keys(value, stars)
-            # Dotted settings such as remote.s3.access_key match on their last component
-            elif value and str(key).lower().rsplit(".", 1)[-1] in SENSITIVE_KEYS:
+            # Dotted settings such as remote.s3.access_key match on their last component.
+            # Check the key first: sensitive keys are redacted regardless of value type,
+            # so password: [LEAKME] or secret: {raw: LEAKME} are replaced entirely.
+            if value and str(key).lower().rsplit(".", 1)[-1] in SENSITIVE_KEYS:
                 node[key] = stars
+            elif isinstance(value, (dict, list)):
+                redact_sensitive_keys(value, stars)
     elif isinstance(node, list):
         for item in node:
             redact_sensitive_keys(item, stars)

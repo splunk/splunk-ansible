@@ -1840,6 +1840,20 @@ def test_obfuscate_vars_leaves_no_plaintext_in_written_inventory():
     assert "noah.example" in serialized
     assert "idxc_label" in serialized
 
+def test_redact_sensitive_keys_handles_non_scalar_values():
+    stars = "**************"
+    # password with a list value must be redacted entirely, not recursed into
+    node = {"password": ["LEAKME"], "safe_key": "visible"}
+    environ.redact_sensitive_keys(node, stars)
+    assert node["password"] == stars
+    assert node["safe_key"] == "visible"
+
+    # secret with a dict value must be redacted entirely
+    node = {"secret": {"raw": "LEAKME"}, "label": "keep"}
+    environ.redact_sensitive_keys(node, stars)
+    assert node["secret"] == stars
+    assert node["label"] == "keep"
+
 def test_main_write_to_stdout_leaves_no_plaintext_in_output(capsys):
     inventory = sentinel_inventory()
     with patch.object(environ, "inventory", inventory), \
