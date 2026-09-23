@@ -237,10 +237,28 @@ def test_initial_shc_restart_check_is_deferred_in_role_and_top_level_play():
         task for task in role_tasks
         if task.get("include_tasks") == "../../../roles/splunk_common/tasks/check_for_required_restarts.yml"
     )
-    site = read_file("site.yml")
+    site_tasks = load_yaml("site.yml")
+    site_block = site_tasks[0]["tasks"][0]["block"]
 
+    # The search-head role still skips its own restart check during bootstrap
     assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in restart_check["when"]
-    assert "not (shc_prestart_defer_initial_restart | default(false) | bool)" in site
+
+    # site.yml clears the deferral flag before the final restart probe so that
+    # post-task config changes are never silently left unapplied
+    clear_task = next(
+        t for t in site_block
+        if t.get("name", "").startswith("Clear SHC pre-start")
+    )
+    assert clear_task["set_fact"]["shc_prestart_defer_initial_restart"] is False
+    final_check = next(
+        t for t in site_block
+        if t.get("include_tasks", "").endswith("check_for_required_restarts.yml")
+    )
+    # The final check must NOT have the deferral guard — it was cleared above
+    when = final_check.get("when", [])
+    if isinstance(when, str):
+        when = [when]
+    assert not any("shc_prestart_defer_initial_restart" in str(c) for c in when)
 
 
 def test_late_server_name_reconciliation_uses_the_real_shc_stanza():

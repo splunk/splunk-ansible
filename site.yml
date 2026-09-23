@@ -37,11 +37,18 @@
             - ansible_post_tasks_item is not none
             - ansible_post_tasks_item is match("^(http|https|file)://.*")
 
+        # Clear the SHC bootstrap deferral so the final restart probe is never
+        # suppressed. The flag is only meant to avoid redundant restarts during
+        # the search-head role work, not to skip this site-level safety net.
+        - name: Clear SHC pre-start restart deferral before final check
+          set_fact:
+            shc_prestart_defer_initial_restart: false
+          when: shc_prestart_defer_initial_restart | default(false) | bool
+
         - name: Check all instances for required restarts
           include_tasks: ./roles/splunk_common/tasks/check_for_required_restarts.yml
           when:
             - splunk_restart_triggered is not defined or not splunk_restart_triggered
-            - not (shc_prestart_defer_initial_restart | default(false) | bool)
 
         - name: Flush restart handlers
           meta: flush_handlers
