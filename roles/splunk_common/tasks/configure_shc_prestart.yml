@@ -112,6 +112,19 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
+# When migrating from deployer-backed to deployerless Noah, remove the stale
+# conf_deploy_fetch_url so splunkd does not attempt to contact a decommissioned
+# deployer.
+- name: Remove stale deployer fetch URL when no deployer is configured
+  ini_file:
+    path: "{{ shc_prestart_server_conf }}"
+    section: "shclustering"
+    option: "conf_deploy_fetch_url"
+    state: absent
+  when: shc_prestart_deployer_uri | length == 0
+  become: yes
+  become_user: "{{ splunk.user }}"
+
 - name: Write the SHC symmetric key before the first splunkd start
   ini_file:
     path: "{{ shc_prestart_server_conf }}"
