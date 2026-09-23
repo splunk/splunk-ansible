@@ -236,13 +236,16 @@ def test_getServiceName_builds_noah_advertised_address_only_in_noah_mode():
         "SPLUNK_HEADLESS_SERVICE_NAME": "idxc-headless",
         "CLUSTER_DOMAIN": "cluster.local",
     }
+    # getServiceName must NOT set noah_advertised_addr; that is the
+    # responsibility of getNoahAdvertisedAddr which validates inputs, respects
+    # SSL settings and honours explicit overrides.
     vars_scope = {"splunk_noah_enabled": True, "splunk": {"svc_port": 8089}}
     with patch("os.environ", new=environment):
         environ.getServiceName(vars_scope)
 
     expected_name = "idxc-site1-0.idxc-headless.splunk.svc.cluster.local"
     assert vars_scope["splunk"]["server_name"] == expected_name
-    assert vars_scope["splunk"]["noah_advertised_addr"] == "https://{}:8089".format(expected_name)
+    assert "noah_advertised_addr" not in vars_scope["splunk"]
 
     classic_vars = {"splunk_noah_enabled": False, "splunk": {"svc_port": 8089}}
     with patch("os.environ", new=environment):

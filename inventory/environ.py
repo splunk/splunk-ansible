@@ -199,8 +199,6 @@ def getServiceName(vars_scope):
     if headlessServiceName != "" and namespace != "":
         server_name = "{}.{}.{}.svc.{}".format(podName, headlessServiceName, namespace, clusterDomain)
         vars_scope["splunk"]["server_name"] = server_name
-        if vars_scope.get("splunk_noah_enabled", False):
-            vars_scope["splunk"]["noah_advertised_addr"] = "https://{}:{}".format(server_name, vars_scope["splunk"]["svc_port"])
 
 def getNoah(vars_scope):
     """Enable Noah provisioning only when explicitly requested."""
