@@ -1,0 +1,7 @@
+---
+- name: Normalize list-form server.conf entries by effective file
+  set_fact:
+    splunk_conf_effective: >-
+      {{ splunk.conf | normalize_splunk_conf_entries(
+          splunk.home + '/etc/system/local', ['server']) }}
+  no_log: true

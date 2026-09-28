@@ -1,0 +1,15 @@
+---
+# Noah augments the existing Splunk role; it does not replace splunk.role.
+splunk_noah_role_profiles:
+  splunk_indexer:
+    client_role: peer
+    task_file: indexer.yml
+    heartbeat_period: "30"
+  splunk_search_head:
+    client_role: search_client
+    task_file: search_head.yml
+    heartbeat_period: "0"
+  splunk_deployer:
+    client_role: none
+    task_file: deployer.yml
+    heartbeat_period: "0"

@@ -1,0 +1,14 @@
+---
+# The deployer manages SHC configuration. It is not a Noah membership or search client.
+- name: Keep the deployer out of Noah membership
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: noahService
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - { key: disabled, value: "true" }
+    - { key: heartbeatPeriod, value: "{{ splunk_noah_client_profile.heartbeat_period }}" }
+    - { key: usePeers, value: "false" }
