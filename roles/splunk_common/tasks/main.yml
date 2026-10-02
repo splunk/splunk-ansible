@@ -203,6 +203,15 @@
 
 - include_tasks: start_splunk.yml
 
+# Clear the SHC bootstrap deferral now that splunkd is running. The flag only
+# exists to avoid the redundant restart that would otherwise follow the
+# pre-start configuration. With splunkd up, restart-required detection must
+# resume so post-start changes (e.g. preferred captain) are applied.
+- name: Consume SHC pre-start restart deferral after splunkd start
+  set_fact:
+    shc_prestart_defer_initial_restart: false
+  when: shc_prestart_defer_initial_restart | default(false) | bool
+
 - include_tasks: set_certificate_prefix.yml
   when: not uds_enabled | bool
 
