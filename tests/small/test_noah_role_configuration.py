@@ -199,12 +199,76 @@ def test_search_head_prestart_configuration_is_shared_by_classic_and_noah():
     assert "shcclustering" not in text
 
 
-def test_prestart_secret_is_only_written_for_a_fresh_etc_volume():
+def test_prestart_secret_is_reconciled_on_every_run():
+    """The SHC pass4SymmKey must be written on every pre-start run, not just
+    first_run, so stopped members and rotated keys converge."""
     tasks = load_yaml("roles/splunk_common/tasks/configure_shc_prestart.yml")
-    secret = named_task(tasks, "Write the SHC symmetric key before the first splunkd start")
+    secret = named_task(tasks, "Reconcile the SHC symmetric key before splunkd starts")
 
-    assert secret["when"] == "first_run | bool"
+    # No first_run guard — must run unconditionally
+    assert "when" not in secret
     assert secret["no_log"] is True
+    assert secret["ini_file"]["section"] == "shclustering"
+    assert secret["ini_file"]["option"] == "pass4SymmKey"
+
+
+def test_prestart_btool_validation_is_scoped_to_shclustering_stanza():
+    """A pass4SymmKey from [general], [clustering], or [noahService] must not
+    falsely satisfy [shclustering] validation."""
+    tasks = load_yaml("roles/splunk_common/tasks/configure_shc_prestart.yml")
+    shc_btool = named_task(tasks, "Read effective pre-start SHC shclustering configuration")
+    repl_btool = named_task(tasks, "Read effective pre-start SHC replication port configuration")
+
+    # btool must be scoped to the specific stanza
+    assert "shclustering" in shc_btool["command"]["argv"]
+    assert any("replication_port://" in str(a) for a in repl_btool["command"]["argv"])
+
+    # Both must suppress logging
+    assert shc_btool["no_log"] is True
+    assert repl_btool["no_log"] is True
+
+
+def test_prestart_uri_scheme_is_derived_from_effective_ssl_config():
+    """The SHC mgmt_uri and deployer URI must use a scheme derived from
+    splunk.ssl.enable, not from the potentially stale cert_prefix variable."""
+    tasks = load_yaml("roles/splunk_common/tasks/configure_shc_prestart.yml")
+    scheme_task = named_task(tasks, "Resolve effective management scheme for pre-start SHC configuration")
+
+    # Scheme is derived from splunk.ssl.enable
+    assert "splunk.ssl.enable" in scheme_task["set_fact"]["shc_prestart_scheme"]
+    # No task in the parsed YAML should reference cert_prefix in any value
+    for task in tasks:
+        for key, value in task.items():
+            if key in ("name", "block", "rescue"):
+                continue
+            assert "cert_prefix" not in str(value), \
+                f"Task {task.get('name', '?')} references cert_prefix in {key}"
+
+
+def test_prestart_validation_failure_clears_configured_flag():
+    """If btool validation fails, shc_prestart_configured must not be left
+    set to true.  The block/rescue pattern ensures the supported initialization
+    path is not suppressed."""
+    tasks = load_yaml("roles/splunk_common/tasks/configure_shc_prestart.yml")
+    block_task = named_task(tasks, "Validate and record pre-start SHC configuration")
+
+    # Must have both block and rescue
+    assert "block" in block_task
+    assert "rescue" in block_task
+
+    # The record task is inside the block
+    record = named_task(block_task["block"], "Record declarative SHC pre-start configuration")
+    assert record["set_fact"]["shc_prestart_configured"] is True
+
+    # The rescue clears the flags
+    clear = named_task(block_task["rescue"], "Clear SHC pre-start state on validation failure")
+    assert clear["set_fact"]["shc_prestart_configured"] is False
+    assert clear["set_fact"]["shc_prestart_defer_initial_restart"] is False
+    assert clear["set_fact"]["shc_prestart_indexer_peer_configured"] is False
+
+    # The rescue re-raises the failure
+    fail_task = named_task(block_task["rescue"], "Report pre-start SHC validation failure")
+    assert "fail" in fail_task
 
 
 def test_classic_indexer_peering_is_declarative_before_initial_start():
