@@ -231,7 +231,38 @@ def test_shc_retries_are_mode_specific_but_restart_elimination_is_shared():
     assert "not (shc_prestart_configured | default(false) | bool)" in bootstrap["changed_when"]
 
 
-def test_initial_shc_restart_check_is_deferred_in_role_and_top_level_play():
+def test_defer_state_is_consumed_after_splunkd_start_in_common_role():
+    """The defer flag must be cleared immediately after start_splunk.yml so that
+    post-start restart-required detection works at both the role level and the
+    site level.  This gives the flag a bounded lifecycle: it suppresses only the
+    redundant restart associated with the initial pre-start configuration."""
+    common_tasks = load_yaml("roles/splunk_common/tasks/main.yml")
+
+    start_index = next(
+        i for i, task in enumerate(common_tasks)
+        if task.get("include_tasks") == "start_splunk.yml"
+    )
+    consume_task = named_task(
+        common_tasks,
+        "Consume SHC pre-start restart deferral after splunkd start",
+    )
+    consume_index = common_tasks.index(consume_task)
+
+    # The consume task must appear immediately after start_splunk.yml
+    assert consume_index > start_index
+    # No other task should sit between start and consume
+    assert consume_index == start_index + 1
+
+    # It must set the flag to false
+    assert consume_task["set_fact"]["shc_prestart_defer_initial_restart"] is False
+    # It must be conditional on the flag being true (no-op when not set)
+    assert consume_task["when"] == "shc_prestart_defer_initial_restart | default(false) | bool"
+
+
+def test_role_level_restart_check_is_guarded_and_site_level_has_safety_net():
+    """The search-head role still guards its restart check with the defer flag
+    (in case the common role didn't run start_splunk for some reason), and
+    site.yml still clears the flag as a defense-in-depth safety net."""
     role_tasks = load_yaml("roles/splunk_search_head/tasks/main.yml")
     restart_check = next(
         task for task in role_tasks
@@ -259,6 +290,38 @@ def test_initial_shc_restart_check_is_deferred_in_role_and_top_level_play():
     if isinstance(when, str):
         when = [when]
     assert not any("shc_prestart_defer_initial_restart" in str(c) for c in when)
+
+
+def test_defer_lifecycle_boundary_is_before_any_post_start_role_work():
+    """Verify that by the time the search-head (or any other) role runs its
+    post-start tasks, the defer flag has already been consumed. The common role
+    clears the flag after start_splunk.yml, which runs before include_role in
+    site.yml dispatches to the specific role."""
+    common_tasks = load_yaml("roles/splunk_common/tasks/main.yml")
+
+    consume_task = named_task(
+        common_tasks,
+        "Consume SHC pre-start restart deferral after splunkd start",
+    )
+    consume_index = common_tasks.index(consume_task)
+
+    # The common role is included before the specific role (splunk_search_head,
+    # etc.) via site.yml. Verify the consume happens inside the common role,
+    # which means it precedes any role-specific post-start work.
+    # Also verify it comes before any post-start task that might be affected.
+    start_index = next(
+        i for i, task in enumerate(common_tasks)
+        if task.get("include_tasks") == "start_splunk.yml"
+    )
+    assert start_index < consume_index
+
+    # No role-level task file should run between start and consume
+    # (set_certificate_prefix.yml is the next include after the consume task)
+    cert_index = next(
+        i for i, task in enumerate(common_tasks)
+        if task.get("include_tasks") == "set_certificate_prefix.yml"
+    )
+    assert consume_index < cert_index
 
 
 def test_late_server_name_reconciliation_uses_the_real_shc_stanza():
