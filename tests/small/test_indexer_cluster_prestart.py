@@ -1,25 +1,52 @@
+from pathlib import Path
+
 import pytest
+from ansible.parsing.dataloader import DataLoader
+from ansible.playbook.conditional import Conditional
+from ansible.template import Templar
 
 
 # ---------------------------------------------------------------------------
 # Pre-start indexer cluster configuration (CSPL-4136)
 #
-# These mirror the Jinja expressions in
-# roles/splunk_common/tasks/configure_indexer_cluster_prestart.yml so the guard
-# logic is covered without standing up a cluster.
+# Eligibility tests evaluate the role's actual YAML and Ansible expressions,
+# including the facts that control the post-start fallback. The remaining helpers
+# cover the existing replication-port, URI and configuration checks offline.
 # ---------------------------------------------------------------------------
 
-def prestart_inputs_ok(splunk):
-    '''
-    Mirror idxc_prestart_inputs_ok.
+ROLE_TASKS = Path(__file__).resolve().parents[2] / 'roles'
 
-    Without a cluster manager address or a cluster secret there is nothing safe
-    to write, so the pre-seed is skipped and the post-start
-    `splunk edit cluster-config` fallback runs instead.
-    '''
-    cm_host = splunk.get('multisite_master') or splunk.get('cluster_master_url') or ''
-    secret = (splunk.get('idxc') or {}).get('pass4SymmKey') or ''
-    return bool(cm_host) and bool(secret)
+
+def _task(loader, role, filename, name):
+    tasks = loader.load_from_file(str(ROLE_TASKS / role / 'tasks' / filename))
+    return next(task for task in tasks if task.get('name') == name)
+
+
+def _prestart_facts(splunk, **initial_facts):
+    """Evaluate the real set_fact tasks before the configuration-writing block."""
+    loader = DataLoader()
+    variables = dict(initial_facts, splunk=splunk)
+    for name in (
+        'Resolve cluster manager host for pre-start clustering',
+        'Determine whether pre-start clustering can be applied',
+    ):
+        task = _task(loader, 'splunk_common',
+                     'configure_indexer_cluster_prestart.yml', name)
+        templar = Templar(loader=loader, variables=variables)
+        facts = {key: templar.template(value)
+                 for key, value in task['set_fact'].items()}
+        variables.update(facts)
+    return variables
+
+
+def _condition(role, filename, name, variables):
+    loader = DataLoader()
+    task = _task(loader, role, filename, name)
+    conditional = Conditional(loader=loader)
+    conditional.when = (task['when'] if isinstance(task['when'], list)
+                        else [task['when']])
+    return conditional.evaluate_conditional(
+        Templar(loader=loader, variables=variables), variables)
 
 
 def prestart_ssl_replication(splunk, splunk_conf_effective=None):
@@ -87,13 +114,45 @@ def cluster_preseeded(server_conf, site=None):
 @pytest.mark.parametrize(('splunk', 'expected'), [
     ({'cluster_master_url': 'cm', 'idxc': {'pass4SymmKey': 'k'}}, True),
     ({'multisite_master': 'cm', 'idxc': {'pass4SymmKey': 'k'}}, True),
+    ({'cluster_master_url': 'cm', 'site': '', 'idxc': {'pass4SymmKey': 'k'}}, True),
+    ({'cluster_master_url': 'cm', 'site': None, 'idxc': {'pass4SymmKey': 'k'}}, True),
+    ({'cluster_master_url': 'cm', 'site': 'site1', 'idxc': {'pass4SymmKey': 'k'}}, False),
+    ({'cluster_master_url': 'cm', 'site': 'site2', 'idxc': {'pass4SymmKey': 'k'}}, False),
+    ({'cluster_master_url': 'cm', 'multisite_master': '',
+      'site': 'site1', 'idxc': {'pass4SymmKey': 'k'}}, False),
+    ({'cluster_master_url': 'cm', 'multisite_master': None,
+      'site': 'site1', 'idxc': {'pass4SymmKey': 'k'}}, False),
+    # A ready multisite peer need not know the complete all_sites list.
+    ({'multisite_master': 'multisite-cm', 'site': 'site1',
+      'idxc': {'pass4SymmKey': 'k'}}, True),
+    ({'cluster_master_url': 'bootstrap-cm', 'multisite_master': 'multisite-cm',
+      'site': 'site2', 'idxc': {'pass4SymmKey': 'k'}}, True),
     ({'cluster_master_url': '', 'idxc': {'pass4SymmKey': 'k'}}, False),
+    ({'cluster_master_url': None, 'idxc': {'pass4SymmKey': 'k'}}, False),
     ({'cluster_master_url': 'cm', 'idxc': {'pass4SymmKey': ''}}, False),
     ({'cluster_master_url': 'cm', 'idxc': {}}, False),
-    ({}, False),
+    ({'cluster_master_url': 'cm'}, False),
 ])
 def test_prestart_inputs_ok(splunk, expected):
-    assert prestart_inputs_ok(splunk) is expected
+    variables = _prestart_facts(splunk)
+    assert variables['idxc_prestart_inputs_ok'] is expected
+    assert _condition('splunk_common', 'configure_indexer_cluster_prestart.yml',
+                      'Apply pre-start indexer cluster configuration', variables) is expected
+
+
+@pytest.mark.parametrize('splunk', [
+    {'cluster_master_url': 'cm', 'site': 'site1', 'idxc': {'pass4SymmKey': 'k'}},
+    {'cluster_master_url': '', 'idxc': {'pass4SymmKey': 'k'}},
+    {'cluster_master_url': 'cm', 'idxc': {'pass4SymmKey': ''}},
+])
+def test_skipped_prestart_clears_stale_fact_and_enables_post_start_fallback(splunk):
+    variables = _prestart_facts(splunk, idxc_cluster_preseeded=True)
+    assert variables['idxc_prestart_inputs_ok'] is False
+    assert variables['idxc_cluster_preseeded'] is False
+    assert _condition('splunk_indexer', 'indexer_clustering.yml',
+                      'Set current node as indexer cluster peer', variables) is True
+    assert _condition('splunk_indexer', 'setup_multisite.yml',
+                      'Setup Peers with Associated Site', variables) is True
 
 
 @pytest.mark.parametrize(('splunk', 'splunk_conf_effective', 'expected'), [

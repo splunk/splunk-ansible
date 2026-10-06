@@ -27,20 +27,26 @@
          if (splunk.multisite_master is defined and splunk.multisite_master)
          else splunk.cluster_master_url }}
 
-# Guard: without a cluster manager or a cluster secret there is nothing safe to
-# write. Leave idxc_cluster_preseeded unset so the post-start `edit cluster-config`
-# fallback in the indexer role still runs.
+# Orca initially provisions each site against a single-site manager, then
+# converts the manager to multisite in a later play. A peer with a non-default
+# site cannot start against that single-site manager. Keep the post-start join
+# for this bootstrap phase; pre-seed a site only with an explicit multisite master.
+# Reset the result so a prior role invocation cannot suppress the fallback.
 - name: Determine whether pre-start clustering can be applied
   set_fact:
+    idxc_cluster_preseeded: false
     idxc_prestart_inputs_ok: >-
       {{ (idxc_prestart_cm_host is defined and idxc_prestart_cm_host | default('', true) | length > 0)
-         and (splunk.idxc.pass4SymmKey | default('', true) | length > 0) }}
+         and (splunk.idxc.pass4SymmKey | default('', true) | length > 0)
+         and ((splunk.site | default('', true) | length == 0)
+              or (splunk.multisite_master | default('', true) | length > 0)) }}
 
-- name: Skip pre-start clustering when required inputs are missing
+- name: Skip pre-start clustering when inputs are incomplete or multisite bootstrap is pending
   debug:
     msg: >-
       CSPL-4136: skipping pre-start clustering (cluster manager or idxc.pass4SymmKey
-      not set); falling back to post-start 'splunk edit cluster-config'.
+      not set, or site configured without a multisite master); falling back to
+      post-start 'splunk edit cluster-config'.
   when: not idxc_prestart_inputs_ok | bool
 
 - name: Apply pre-start indexer cluster configuration
@@ -130,9 +136,9 @@
         group: "{{ splunk.group }}"
         mode: '0600'
       loop:
-        - { option: 'master_uri', value: '{{ idxc_prestart_manager_uri }}' }
-        - { option: 'mode', value: 'peer' }
-        - { option: 'pass4SymmKey', value: '{{ splunk.idxc.pass4SymmKey }}' }
+        - {option: 'master_uri', value: '{{ idxc_prestart_manager_uri }}'}
+        - {option: 'mode', value: 'peer'}
+        - {option: 'pass4SymmKey', value: '{{ splunk.idxc.pass4SymmKey }}'}
       become: yes
       become_user: "{{ splunk.user }}"
       no_log: "{{ hide_password }}"
