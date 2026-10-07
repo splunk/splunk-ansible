@@ -141,7 +141,7 @@
         - {option: 'pass4SymmKey', value: '{{ splunk.idxc.pass4SymmKey }}'}
       become: yes
       become_user: "{{ splunk.user }}"
-      no_log: "{{ hide_password }}"
+      no_log: true
 
     # Only claim the pre-seed succeeded if server.conf really contains the required
     # stanzas. A partially applied run must not suppress the post-start fallback.

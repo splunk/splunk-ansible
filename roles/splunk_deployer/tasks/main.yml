@@ -14,7 +14,7 @@
     label: "{{ item.opt }}"
   become: yes
   become_user: "{{ splunk.user }}"
-  no_log: "{{ hide_password }}"
+  no_log: true
   notify:
     - Restart the splunkd service
   when: not (deployer_prestart_configured | default(false) | bool)
@@ -35,7 +35,7 @@
     timeout: 10
     use_proxy: no
   when: "'deployer_push_mode' in splunk.shc and splunk.shc.deployer_push_mode"
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 - name: Flush restart handlers
   meta: flush_handlers
@@ -46,7 +46,7 @@
     shc_peers="{{ groups['splunk_search_head'] }}"
     spl_user="{{ splunk.admin_user }}"
     spl_pass="{{ splunk.password }}"
-  no_log: "{{ hide_password }}"
+  no_log: true
   register: task_result
   until: task_result.rc == 0
   retries: "{{ shc_sync_retry_num }}"

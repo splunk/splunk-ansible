@@ -5,8 +5,12 @@
       - splunk.noah_advertised_addr is defined
       - splunk.noah_advertised_addr | length > 0
     fail_msg: >-
-      Noah indexers require POD_NAME, POD_NAMESPACE, and
-      SPLUNK_HEADLESS_SERVICE_NAME to construct their stable advertised address.
+      [SA-CFG-013] category=configuration stage=noah_indexer
+      field=POD_NAME,POD_NAMESPACE,SPLUNK_HEADLESS_SERVICE_NAME retryable=false
+      remediation="Set POD_NAME, POD_NAMESPACE, and SPLUNK_HEADLESS_SERVICE_NAME
+      environment variables, or set SPLUNK_NOAH_ADVERTISED_ADDR explicitly."
+      cause="Noah indexers require pod identity to construct a stable advertised
+      address."
 
 - name: Configure Noah indexer membership
   ini_file:

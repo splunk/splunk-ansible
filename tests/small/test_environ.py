@@ -38,8 +38,11 @@ def test_getNoah(value, expected):
 
 def test_getNoah_rejects_invalid_value():
     with patch("os.environ", new={"SPLUNK_NOAH_ENABLED": "sometimes"}):
-        with pytest.raises(ValueError, match="must be either 'true' or 'false'"):
+        with pytest.raises(environ.BootstrapError) as exc_info:
             environ.getNoah({"splunk_noah_enabled": False})
+        assert exc_info.value.code == "SA-INV-001"
+        assert exc_info.value.category == "configuration"
+        assert exc_info.value.retryable is False
 
 
 def test_normalizeConfEntries_merges_duplicate_effective_files_recursively():
@@ -1873,3 +1876,165 @@ def test_prep_for_yaml_out():
 @pytest.mark.skip(reason="TODO")
 def test_main():
     pass
+
+
+# ---------------------------------------------------------------------------
+# BootstrapError structured error handling tests
+# ---------------------------------------------------------------------------
+
+def test_bootstrap_error_carries_all_required_fields():
+    err = environ.BootstrapError(
+        code="SA-TEST-001", category="configuration",
+        stage="test_stage", field="test_field",
+        retryable=False, remediation="Fix it.",
+        cause="Something broke")
+    assert err.code == "SA-TEST-001"
+    assert err.category == "configuration"
+    assert err.stage == "test_stage"
+    assert err.field == "test_field"
+    assert err.retryable is False
+    assert err.remediation == "Fix it."
+    assert err.cause == "Something broke"
+
+
+def test_bootstrap_error_redacted_message_format():
+    err = environ.BootstrapError(
+        code="SA-TEST-002", category="auth",
+        stage="login", field="password",
+        retryable=True, remediation="Check creds.",
+        cause="Bad password")
+    msg = err.redacted_message()
+    assert "[SA-TEST-002]" in msg
+    assert "category=auth" in msg
+    assert "stage=login" in msg
+    assert "field=password" in msg
+    assert "retryable=true" in msg
+    assert 'remediation="Check creds."' in msg
+    assert 'cause="Bad password"' in msg
+
+
+def test_bootstrap_error_to_dict_is_json_serializable():
+    err = environ.BootstrapError(
+        code="SA-TEST-003", category="network",
+        stage="connect", field="url",
+        retryable=True, remediation="Retry.",
+        cause="Timeout")
+    d = err.to_dict()
+    serialized = json.dumps(d)
+    parsed = json.loads(serialized)
+    assert parsed["error"]["code"] == "SA-TEST-003"
+    assert parsed["error"]["retryable"] is True
+
+
+def test_bootstrap_error_to_dict_never_contains_raw_secrets():
+    """Even if a cause message accidentally contains a secret value, the
+    to_dict() output should not contain common secret field names as keys."""
+    err = environ.BootstrapError(
+        code="SA-TEST-004", category="configuration",
+        stage="test", field="test_field",
+        retryable=False, remediation="Fix.",
+        cause="failed for some reason")
+    d = err.to_dict()
+    # The error dict should only have the 'error' key
+    assert set(d.keys()) == {"error"}
+    # The inner dict should only have the documented fields
+    assert set(d["error"].keys()) == {
+        "code", "category", "stage", "field",
+        "retryable", "remediation", "cause"
+    }
+
+
+def test_bootstrap_error_is_exception_subclass():
+    err = environ.BootstrapError(
+        code="SA-TEST-005", category="test",
+        stage="test", field="test",
+        retryable=False, remediation="Fix.", cause="Broke")
+    assert isinstance(err, Exception)
+    assert "[SA-TEST-005]" in str(err)
+
+
+def test_main_emits_structured_json_on_bootstrap_error(capsys):
+    """When getSplunkInventory raises a BootstrapError, main() should emit
+    structured JSON on stderr and exit with code 1."""
+    def boom(_inv):
+        raise environ.BootstrapError(
+            code="SA-INV-001", category="configuration",
+            stage="inventory_noah", field="SPLUNK_NOAH_ENABLED",
+            retryable=False,
+            remediation="Set SPLUNK_NOAH_ENABLED to 'true' or 'false'.",
+            cause="SPLUNK_NOAH_ENABLED must be either 'true' or 'false'")
+
+    with patch.object(environ, "getSplunkInventory", boom), \
+         patch.object(sys, "argv", ["environ.py"]):
+        with pytest.raises(SystemExit) as exc_info:
+            environ.main()
+        assert exc_info.value.code == 1
+
+    captured = capsys.readouterr()
+    parsed = json.loads(captured.err)
+    assert parsed["error"]["code"] == "SA-INV-001"
+    assert parsed["error"]["category"] == "configuration"
+    assert SENTINEL not in captured.err
+
+
+def test_main_wraps_unstructured_errors_in_generic_bootstrap_error(capsys):
+    """Unstructured exceptions should be wrapped in SA-INV-999 so raw
+    tracebacks never escape to stdout."""
+    def boom(_inv):
+        raise RuntimeError("unexpected internal problem")
+
+    with patch.object(environ, "getSplunkInventory", boom), \
+         patch.object(sys, "argv", ["environ.py"]):
+        with pytest.raises(SystemExit) as exc_info:
+            environ.main()
+        assert exc_info.value.code == 1
+
+    captured = capsys.readouterr()
+    parsed = json.loads(captured.err)
+    assert parsed["error"]["code"] == "SA-INV-999"
+    assert parsed["error"]["category"] == "internal"
+    assert parsed["error"]["retryable"] is True
+    # The original exception message should be in the cause
+    assert "unexpected internal problem" in parsed["error"]["cause"]
+    # But no secrets should leak
+    assert SENTINEL not in captured.err
+
+
+def test_getNoah_bootstrap_error_has_correct_remediation():
+    with patch("os.environ", new={"SPLUNK_NOAH_ENABLED": "maybe"}):
+        with pytest.raises(environ.BootstrapError) as exc_info:
+            environ.getNoah({"splunk_noah_enabled": False})
+        assert "Set SPLUNK_NOAH_ENABLED" in exc_info.value.remediation
+
+
+def test_password_missing_raises_bootstrap_error():
+    vars_scope = {"splunk": {"password": ""}}
+    with pytest.raises(environ.BootstrapError) as exc_info:
+        environ.getSecrets(vars_scope)
+    assert exc_info.value.code == "SA-AUTH-010"
+    assert exc_info.value.field == "SPLUNK_PASSWORD"
+
+
+def test_hide_password_defaults_to_true():
+    """The hide_password variable must default to True so that no_log
+    suppresses credential output unless explicitly opted out."""
+    defaults_path = os.path.join(REPO_DIR, "inventory", "environ.py")
+    with open(defaults_path) as f:
+        source = f.read()
+    # The default assignment must set True before the opt-out check
+    assert 'defaultVars["hide_password"] = True' in source
+    assert 'HIDE_PASSWORD", "").lower() == "false"' in source
+
+
+def test_multisite_invalid_format_raises_bootstrap_error():
+    with pytest.raises(environ.BootstrapError) as exc_info:
+        environ.normalizeMultisiteFactorSites(42)
+    assert exc_info.value.code == "SA-INV-010"
+
+    with pytest.raises(environ.BootstrapError) as exc_info:
+        environ.normalizeMultisiteFactorSites("origin:1,site1:2")
+    assert exc_info.value.code == "SA-INV-012"
+
+    with pytest.raises(environ.BootstrapError) as exc_info:
+        environ.normalizeMultisiteFactorSites("badformat")
+    assert exc_info.value.code == "SA-INV-011"
