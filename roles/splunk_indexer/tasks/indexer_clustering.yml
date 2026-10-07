@@ -55,7 +55,7 @@
   when: not (idxc_cluster_preseeded | default(false) | bool)
   notify:
     - Restart the splunkd service
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 # splunkd loads the non-SSL stanza first, so it must be removed or replication falls back to plaintext.
 - name: Remove stale non-SSL replication port stanza left by cluster join
@@ -84,6 +84,6 @@
   when:
     - has_ssl_replication_port_in_conf | default(false) | bool
     - idxc_server_conf_content | default({}) | length > 0
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 #INFRA-38882: Update

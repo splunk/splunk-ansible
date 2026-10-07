@@ -48,9 +48,14 @@
       - noah_service_stanza.get('tenant', '') | length > 0
       - noah_service_stanza.get('pass4SymmKey', '') | length > 0
     fail_msg: >-
-      SPLUNK_NOAH_ENABLED=true requires splunk.conf to contain a server entry
-      for {{ splunk.home }}/etc/system/local with content.noahService including
-      'uri', 'tenant', and 'pass4SymmKey'.
+      [SA-CFG-012] category=configuration stage=noah_pre_auth
+      field=noahService.uri,noahService.tenant,noahService.pass4SymmKey
+      retryable=false
+      remediation="Supply a splunk.conf server entry for
+      {{ splunk.home }}/etc/system/local with content.noahService containing
+      uri, tenant, and pass4SymmKey."
+      cause="Noah is enabled but the required noahService configuration is
+      missing or incomplete."
 
 - name: Write Noah service configuration for temporary authentication startup
   ini_file:
@@ -61,7 +66,7 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   with_dict: "{{ noah_service_stanza }}"
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 - name: Keep Noah disabled during temporary authentication startup
   ini_file:

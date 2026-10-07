@@ -37,6 +37,56 @@ from splunk_config import merge_dict, normalize_conf_entries
 
 urllib3.disable_warnings()
 
+import sys
+
+
+class BootstrapError(Exception):
+    """Structured bootstrap error for operator-facing failure classification.
+
+    Every BootstrapError carries a stable error code, category, failing stage,
+    field, retryability, remediation hint, and wrapped cause so that SOK (or
+    any other operator tooling) can classify failures from redacted output
+    without parsing free-text messages.
+    """
+
+    def __init__(self, code, category, stage, field, retryable, remediation, cause):
+        self.code = code
+        self.category = category
+        self.stage = stage
+        self.field = field
+        self.retryable = retryable
+        self.remediation = remediation
+        self.cause = cause
+        super(BootstrapError, self).__init__(self.redacted_message())
+
+    def redacted_message(self):
+        return (
+            "[{code}] category={category} stage={stage} field={field} "
+            "retryable={retryable} remediation=\"{remediation}\" "
+            "cause=\"{cause}\""
+        ).format(
+            code=self.code,
+            category=self.category,
+            stage=self.stage,
+            field=self.field,
+            retryable=str(self.retryable).lower(),
+            remediation=self.remediation,
+            cause=self.cause,
+        )
+
+    def to_dict(self):
+        return {
+            "error": {
+                "code": self.code,
+                "category": self.category,
+                "stage": self.stage,
+                "field": self.field,
+                "retryable": self.retryable,
+                "remediation": self.remediation,
+                "cause": self.cause,
+            }
+        }
+
 HERE = os.path.dirname(os.path.normpath(__file__))
 _PLATFORM = platform.platform().lower()
 PLATFORM = "windows" if ("windows" in _PLATFORM or "cygwin" in _PLATFORM) else "linux"
@@ -158,9 +208,11 @@ def getDefaultVars():
     defaultVars["splunk_home_ownership_enforcement"] = True
     if os.environ.get("SPLUNK_HOME_OWNERSHIP_ENFORCEMENT", "").lower() == "false":
         defaultVars["splunk_home_ownership_enforcement"] = False
-    # Determine password visibility
-    if os.environ.get("HIDE_PASSWORD", "").lower() == "true":
-        defaultVars["hide_password"] = True
+    # Determine password visibility — default to hidden so raw credentials
+    # never appear in task output unless the operator explicitly opts out.
+    defaultVars["hide_password"] = True
+    if os.environ.get("HIDE_PASSWORD", "").lower() == "false":
+        defaultVars["hide_password"] = False
     # Determine SHC preferred captaincy
     defaultVars["splunk"]["preferred_captaincy"] = True
     if os.environ.get("SPLUNK_PREFERRED_CAPTAINCY", "").lower() == "false":
@@ -209,19 +261,12 @@ def getNoah(vars_scope):
 
     normalized = str(value).strip().lower()
     if normalized not in ("true", "false"):
-        raise ValueError("SPLUNK_NOAH_ENABLED must be either 'true' or 'false'")
-    vars_scope["splunk_noah_enabled"] = normalized == "true"
-
-def getNoah(vars_scope):
-    """Enable Noah provisioning only when explicitly requested."""
-    value = os.environ.get("SPLUNK_NOAH_ENABLED", vars_scope.get("splunk_noah_enabled", False))
-    if isinstance(value, bool):
-        vars_scope["splunk_noah_enabled"] = value
-        return
-
-    normalized = str(value).strip().lower()
-    if normalized not in ("true", "false"):
-        raise ValueError("SPLUNK_NOAH_ENABLED must be either 'true' or 'false'")
+        raise BootstrapError(
+            code="SA-INV-001", category="configuration",
+            stage="inventory_noah", field="SPLUNK_NOAH_ENABLED",
+            retryable=False,
+            remediation="Set SPLUNK_NOAH_ENABLED to 'true' or 'false'.",
+            cause="SPLUNK_NOAH_ENABLED must be either 'true' or 'false'")
     vars_scope["splunk_noah_enabled"] = normalized == "true"
 
 def getNoahAdvertisedAddr(vars_scope):
@@ -268,9 +313,12 @@ def getNoahManagementScheme(vars_scope):
 
     scheme = str(vars_scope.get("cert_prefix", "https")).strip().lower()
     if scheme not in ("http", "https"):
-        raise ValueError(
-            "cannot advertise a Noah indexer: unsupported management scheme "
-            "'{}', expected http or https".format(scheme))
+        raise BootstrapError(
+            code="SA-INV-002", category="configuration",
+            stage="inventory_noah", field="cert_prefix",
+            retryable=False,
+            remediation="Set SPLUNK_CERT_PREFIX to 'http' or 'https'.",
+            cause="Unsupported management scheme '{}', expected http or https".format(scheme))
     return scheme
 
 def deriveNoahAdvertisedAddr(vars_scope):
@@ -290,15 +338,22 @@ def deriveNoahAdvertisedAddr(vars_scope):
         ("POD_NAMESPACE", namespace),
     ) if not value.strip()]
     if missing:
-        raise ValueError(
-            "cannot derive the Noah advertised address: set "
-            "SPLUNK_NOAH_ADVERTISED_ADDR explicitly, or supply {}".format(
-                ", ".join(missing)))
+        raise BootstrapError(
+            code="SA-INV-003", category="configuration",
+            stage="inventory_noah", field=",".join(missing),
+            retryable=False,
+            remediation="Set SPLUNK_NOAH_ADVERTISED_ADDR explicitly, or supply {}.".format(
+                ", ".join(missing)),
+            cause="Cannot derive the Noah advertised address: missing environment variables")
 
     port = vars_scope["splunk"].get("svc_port")
     if port in (None, ""):
-        raise ValueError(
-            "cannot derive the Noah advertised address: splunk.svc_port is unset")
+        raise BootstrapError(
+            code="SA-INV-004", category="configuration",
+            stage="inventory_noah", field="splunk.svc_port",
+            retryable=False,
+            remediation="Set splunk.svc_port in the defaults file.",
+            cause="Cannot derive the Noah advertised address: splunk.svc_port is unset")
 
     # Validated like an operator-supplied value: svc_port and CLUSTER_DOMAIN are
     # unvalidated environment input, so an unusable port or host would otherwise
@@ -333,7 +388,12 @@ def validateNoahAdvertisedAddr(address, source):
     safe = redactNoahAdvertisedAddr(address)
 
     def reject(problem):
-        return ValueError("{} must {}, got '{}'".format(source, problem, safe))
+        return BootstrapError(
+            code="SA-INV-005", category="configuration",
+            stage="inventory_noah", field=source,
+            retryable=False,
+            remediation="{} must {}.".format(source, problem),
+            cause="{} must {}, got '{}'".format(source, problem, safe))
 
     # urlparse silently strips tabs and newlines, so a value containing them
     # would validate and then be written to server.conf verbatim, corrupting the
@@ -524,7 +584,12 @@ def normalizeMultisiteFactorSites(sites):
         string_types = (str,)
 
     if not isinstance(sites, string_types):
-        raise Exception("Invalid multisite factor sites format: expected a string")
+        raise BootstrapError(
+            code="SA-INV-010", category="configuration",
+            stage="inventory_multisite", field="multisite_factor_sites",
+            retryable=False,
+            remediation="Supply multisite factor sites as a comma-separated string (e.g. site1:1,site2:1).",
+            cause="Invalid multisite factor sites format: expected a string")
 
     parsed_factors = []
     for term in sites.split(","):
@@ -533,21 +598,46 @@ def normalizeMultisiteFactorSites(sites):
             continue
         parts = site_factor.split(":", 1)
         if len(parts) != 2:
-            raise Exception("Invalid multisite factor term '{}'".format(site_factor))
+            raise BootstrapError(
+                code="SA-INV-011", category="configuration",
+                stage="inventory_multisite", field="multisite_factor_sites",
+                retryable=False,
+                remediation="Each multisite factor term must be site:value (e.g. site1:1).",
+                cause="Invalid multisite factor term '{}'".format(site_factor))
         site = parts[0].strip()
         if not site:
-            raise Exception("Invalid multisite factor term '{}'".format(site_factor))
+            raise BootstrapError(
+                code="SA-INV-011", category="configuration",
+                stage="inventory_multisite", field="multisite_factor_sites",
+                retryable=False,
+                remediation="Each multisite factor term must be site:value (e.g. site1:1).",
+                cause="Invalid multisite factor term '{}'".format(site_factor))
         if site in ("origin", "total"):
-            raise Exception("Invalid multisite factor site '{}': use origin/total base variables".format(site))
+            raise BootstrapError(
+                code="SA-INV-012", category="configuration",
+                stage="inventory_multisite", field="multisite_factor_sites",
+                retryable=False,
+                remediation="Use the dedicated origin/total base variables instead of embedding them in site terms.",
+                cause="Invalid multisite factor site '{}': use origin/total base variables".format(site))
         try:
             value = int(parts[1].strip())
         except ValueError:
-            raise Exception("Invalid multisite factor term '{}'".format(site_factor))
+            raise BootstrapError(
+                code="SA-INV-011", category="configuration",
+                stage="inventory_multisite", field="multisite_factor_sites",
+                retryable=False,
+                remediation="Each multisite factor term must be site:value with an integer value.",
+                cause="Invalid multisite factor term '{}'".format(site_factor))
 
         parsed_factors.append((site, value))
 
     if not parsed_factors:
-        raise Exception("Invalid multisite factor sites format: no values supplied")
+        raise BootstrapError(
+            code="SA-INV-010", category="configuration",
+            stage="inventory_multisite", field="multisite_factor_sites",
+            retryable=False,
+            remediation="Supply at least one site:value term.",
+            cause="Invalid multisite factor sites format: no values supplied")
 
     return ",".join(["{}:{}".format(site, value) for site, value in parsed_factors])
 
@@ -626,7 +716,13 @@ def getJava(vars_scope):
         return
     java_version = java_version.lower()
     if java_version not in JAVA_VERSION_WHITELIST:
-        raise Exception("Invalid Java version supplied, supported versions are: {}".format(JAVA_VERSION_WHITELIST))
+        raise BootstrapError(
+            code="SA-INV-020", category="configuration",
+            stage="inventory_java", field="JAVA_VERSION",
+            retryable=False,
+            remediation="Set JAVA_VERSION to one of: {}.".format(
+                ", ".join(sorted(JAVA_VERSION_WHITELIST))),
+            cause="Invalid Java version supplied")
     vars_scope["java_version"] = java_version
     # TODO: We can probably DRY this up
     if java_version == "oracle:8":
@@ -634,19 +730,34 @@ def getJava(vars_scope):
         try:
             vars_scope["java_update_version"] = re.search(r"jdk-8u(\d+)-linux-x64.tar.gz", vars_scope["java_download_url"]).group(1)
         except:
-            raise Exception("Invalid Java download URL format")
+            raise BootstrapError(
+                code="SA-INV-021", category="configuration",
+                stage="inventory_java", field="JAVA_DOWNLOAD_URL",
+                retryable=False,
+                remediation="Supply a valid Oracle JDK 8 download URL.",
+                cause="Invalid Java download URL format")
     elif java_version == "openjdk:11":
         vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz")
         try:
             vars_scope["java_update_version"] = re.search(r"openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", vars_scope["java_download_url"]).group(1)
         except:
-            raise Exception("Invalid Java download URL format")
+            raise BootstrapError(
+                code="SA-INV-021", category="configuration",
+                stage="inventory_java", field="JAVA_DOWNLOAD_URL",
+                retryable=False,
+                remediation="Supply a valid OpenJDK 11 download URL.",
+                cause="Invalid Java download URL format")
     elif java_version == "openjdk:21":
         vars_scope["java_download_url"] = os.environ.get("JAVA_DOWNLOAD_URL", "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz")
         try:
             vars_scope["java_update_version"] = re.search(r"openjdk-(\d+\.\d+\.\d+)_linux-x64_bin.tar.gz", vars_scope["java_download_url"]).group(1)
         except:
-            raise Exception("Invalid Java download URL format")
+            raise BootstrapError(
+                code="SA-INV-021", category="configuration",
+                stage="inventory_java", field="JAVA_DOWNLOAD_URL",
+                retryable=False,
+                remediation="Supply a valid OpenJDK 21 download URL.",
+                cause="Invalid Java download URL format")
 
 def getSplunkBuild(vars_scope):
     """
@@ -667,7 +778,12 @@ def getSplunkbaseToken(vars_scope):
         resp = requests.post("https://splunkbase.splunk.com/api/account:login/",
                              data={"username": vars_scope["splunkbase_username"], "password": vars_scope["splunkbase_password"]})
         if resp.status_code != 200:
-            raise Exception("Invalid Splunkbase credentials - will not download apps from Splunkbase")
+            raise BootstrapError(
+                code="SA-AUTH-001", category="authentication",
+                stage="inventory_splunkbase", field="SPLUNKBASE_USERNAME,SPLUNKBASE_PASSWORD",
+                retryable=True,
+                remediation="Verify SPLUNKBASE_USERNAME and SPLUNKBASE_PASSWORD are correct.",
+                cause="Invalid Splunkbase credentials - will not download apps from Splunkbase")
         output = resp.content
         if isinstance(output, bytes):
             output = output.decode("utf-8", "ignore")
@@ -753,12 +869,22 @@ def getSecrets(vars_scope):
     """
     vars_scope["splunk"]["password"] = os.environ.get("SPLUNK_PASSWORD", vars_scope["splunk"].get("password"))
     if not vars_scope["splunk"]["password"]:
-        raise Exception("Splunk password must be supplied!")
+        raise BootstrapError(
+            code="SA-AUTH-010", category="authentication",
+            stage="inventory_secrets", field="SPLUNK_PASSWORD",
+            retryable=False,
+            remediation="Set SPLUNK_PASSWORD or mount a password file.",
+            cause="Splunk password must be supplied!")
     if os.path.isfile(vars_scope["splunk"]["password"]):
         with open(vars_scope["splunk"]["password"], "r") as f:
             vars_scope["splunk"]["password"] = f.read().strip()
             if not vars_scope["splunk"]["password"]:
-                raise Exception("Splunk password supplied is empty/null")
+                raise BootstrapError(
+                    code="SA-AUTH-011", category="authentication",
+                    stage="inventory_secrets", field="SPLUNK_PASSWORD",
+                    retryable=False,
+                    remediation="Ensure the password file is not empty.",
+                    cause="Splunk password supplied is empty/null")
     dpw = os.environ.get("SPLUNK_DECLARATIVE_ADMIN_PASSWORD", "")
     if dpw.lower() == "true":
         vars_scope["splunk"]["declarative_admin_password"] = True
@@ -1239,12 +1365,32 @@ def prep_for_yaml_out(inventory):
 
 def main():
     """
-    Primary entrypoint to dynamic inventory script
+    Primary entrypoint to dynamic inventory script.
+
+    BootstrapError exceptions are caught and emitted as structured JSON on
+    stderr so that SOK and operator tooling can classify failures without
+    parsing free-text tracebacks.  Unstructured exceptions are wrapped in a
+    generic SA-INV-999 error so that raw credentials or command material
+    never escape to stdout.
     """
     parser = create_parser()
     args = parser.parse_args()
 
-    getSplunkInventory(inventory)
+    try:
+        getSplunkInventory(inventory)
+    except BootstrapError as exc:
+        print(json.dumps(exc.to_dict()), file=sys.stderr)
+        sys.exit(1)
+    except Exception as exc:
+        wrapped = BootstrapError(
+            code="SA-INV-999", category="internal",
+            stage="inventory", field="unknown",
+            retryable=True,
+            remediation="Check the container logs for details and retry.",
+            cause=str(exc))
+        print(json.dumps(wrapped.to_dict()), file=sys.stderr)
+        sys.exit(1)
+
     if args.write_to_file:
         with open(os.path.join("/opt/container_artifact", "ansible_inventory.json"), "w") as outfile:
             json.dump(obfuscate_vars(inventory), outfile, sort_keys=True, indent=4, ensure_ascii=False)

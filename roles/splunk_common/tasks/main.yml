@@ -142,7 +142,7 @@
     reconcile_config_map_values: true
   with_items: "{% set effective_conf = splunk_conf_effective | default(splunk.conf) %}{% if effective_conf is mapping %}{{ effective_conf | dict2items }}{% else %}{{ effective_conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 - name: Configure the Noah client role before full splunkd startup
   include_role:
