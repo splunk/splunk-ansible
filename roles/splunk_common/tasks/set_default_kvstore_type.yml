@@ -48,8 +48,8 @@
     section: kvstore
     option: "postgresMigrateOnStartup"
     value: >-
-      {{ 'false' if splunk.kvstore.default_kvstore_type | default('', true) == 'local'
-         and kvstore_installed_splunk_version[0] is version('10.9.0', '<')
+      {{ 'false' if kvstore_installed_splunk_version[0] is version('10.9.0', '<')
+         and splunk.kvstore.default_kvstore_type == 'local'
          else 'true' }}
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
