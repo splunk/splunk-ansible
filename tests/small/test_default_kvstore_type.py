@@ -40,18 +40,18 @@ def _condition(loader, task, variables):
         ("11.0.0", False, True, True),
     ],
 )
-@pytest.mark.parametrize("kvstore_type", ["local", "external", "cohosted", None, ""])
+@pytest.mark.parametrize("kvstore_type", ["local", "external", "cohosted"])
 def test_kvstore_settings_version_boundaries(
     installed_version, writes_type, writes_startup, is_10_9_or_later, kvstore_type
 ):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_FILE))
-    kvstore = {"kvservice_connection_string": "https://kvservice"}
-    if kvstore_type is not None:
-        kvstore["default_kvstore_type"] = kvstore_type
     variables = {
         "kvstore_installed_splunk_version": [installed_version],
-        "splunk": {"kvstore": kvstore, "role": "splunk_standalone"},
+        "splunk": {
+            "kvstore": {"default_kvstore_type": kvstore_type},
+            "role": "splunk_standalone",
+        },
     }
     support_task = next(
         task for task in tasks
@@ -61,20 +61,13 @@ def test_kvstore_settings_version_boundaries(
         loader=loader, variables=variables
     ).template(support_task["set_fact"]["kvstore_default_type_supported"])
 
-    validation = next(task for task in tasks if "assert" in task)
-    assert _condition(loader, validation, variables) is bool(kvstore_type)
-
     write_tasks = [task for task in tasks if "ini_file" in task]
     assert {task["ini_file"]["option"] for task in write_tasks} == {
         "defaultKVStoreType", "postgresMigrateOnStartup",
     }
     for task in write_tasks:
         is_type = task["ini_file"]["option"] == "defaultKVStoreType"
-        expected_write = (
-            writes_type and bool(kvstore_type)
-            if is_type
-            else writes_startup and (bool(kvstore_type) or is_10_9_or_later)
-        )
+        expected_write = writes_type if is_type else writes_startup
         assert _condition(loader, task, variables) is expected_write
         if expected_write:
             expected_value = (
@@ -90,14 +83,14 @@ def test_kvstore_settings_version_boundaries(
     "kvstore,role,included",
     [
         ({"default_kvstore_type": "local"}, "splunk_standalone", True),
-        ({"kvservice_connection_string": "https://kvservice"}, "splunk_standalone", True),
-        ({"default_kvstore_type": None, "kvservice_connection_string": "https://kvservice"}, "splunk_standalone", True),
+        ({"kvservice_connection_string": "https://kvservice"}, "splunk_standalone", False),
+        ({"default_kvstore_type": None, "kvservice_connection_string": "https://kvservice"}, "splunk_standalone", False),
         ({}, "splunk_standalone", False),
         ({"default_kvstore_type": "", "kvservice_connection_string": ""}, "splunk_standalone", False),
-        ({"kvservice_connection_string": "https://kvservice"}, "splunk_universal_forwarder", False),
+        ({"default_kvstore_type": "local"}, "splunk_universal_forwarder", False),
     ],
 )
-def test_kvstore_tasks_run_for_type_or_connection(kvstore, role, included):
+def test_kvstore_tasks_require_an_explicit_default_type(kvstore, role, included):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_FILE.with_name("main.yml")))
     task = next(
