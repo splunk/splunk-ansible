@@ -6,10 +6,18 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
+- name: Read previous ConfigMap-owned values in {{ conf_file }}
+  slurp:
+    src: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
+  register: config_map_managed_values_content
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: config_map_managed_values_file.stat.exists
+  no_log: "{{ hide_password }}"
+
 - name: Load previous ConfigMap-owned values in {{ conf_file }}
-  include_vars:
-    file: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
-    name: previous_config_map_stanzas
+  set_fact:
+    previous_config_map_stanzas: "{{ config_map_managed_values_content.content | b64decode | from_yaml }}"
   when: config_map_managed_values_file.stat.exists
   no_log: "{{ hide_password }}"
 
