@@ -27,26 +27,32 @@
          if (splunk.multisite_master is defined and splunk.multisite_master)
          else splunk.cluster_master_url }}
 
+- name: Check indexer process state before pre-start clustering
+  include_tasks: get_splunk_status.yml
+
 # Orca initially provisions each site against a single-site manager, then
 # converts the manager to multisite in a later play. A peer with a non-default
 # site cannot start against that single-site manager. Keep the post-start join
 # for this bootstrap phase; pre-seed a site only with an explicit multisite master.
-# Reset the result so a prior role invocation cannot suppress the fallback.
+# The later play can also run this role with splunkd already up: settings written
+# then are not loaded until restart. Only stopped peers can use the pre-start path.
+# Reset the result so a prior role invocation cannot suppress the post-start join.
 - name: Determine whether pre-start clustering can be applied
   set_fact:
     idxc_cluster_preseeded: false
     idxc_prestart_inputs_ok: >-
-      {{ (idxc_prestart_cm_host is defined and idxc_prestart_cm_host | default('', true) | length > 0)
+      {{ (splunk_status.rc != 0)
+         and (idxc_prestart_cm_host is defined and idxc_prestart_cm_host | default('', true) | length > 0)
          and (splunk.idxc.pass4SymmKey | default('', true) | length > 0)
          and ((splunk.site | default('', true) | length == 0)
               or (splunk.multisite_master | default('', true) | length > 0)) }}
 
-- name: Skip pre-start clustering when inputs are incomplete or multisite bootstrap is pending
+- name: Skip pre-start clustering when Splunk is running or bootstrap inputs are not ready
   debug:
     msg: >-
-      CSPL-4136: skipping pre-start clustering (cluster manager or idxc.pass4SymmKey
-      not set, or site configured without a multisite master); falling back to
-      post-start 'splunk edit cluster-config'.
+      CSPL-4136: skipping pre-start clustering (Splunk is running, cluster manager
+      or idxc.pass4SymmKey not set, or site configured without a multisite master);
+      falling back to post-start 'splunk edit cluster-config'.
   when: not idxc_prestart_inputs_ok | bool
 
 - name: Apply pre-start indexer cluster configuration
