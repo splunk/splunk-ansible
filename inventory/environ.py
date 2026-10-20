@@ -182,6 +182,7 @@ def getDefaultVars():
     getDSP(defaultVars)
     getIPv6(defaultVars)
     getDefaultKVStoreType(defaultVars)
+    getKVServiceDeploymentConfig(defaultVars)
     getNodeSidecarPostgres(defaultVars)
     return defaultVars
 
@@ -901,7 +902,6 @@ def overrideEnvironmentVars(vars_scope):
     vars_scope["splunk"]["allow_upgrade"] = os.environ.get('SPLUNK_ALLOW_UPGRADE', vars_scope["splunk"]["allow_upgrade"])
     vars_scope["splunk"]["appserver"]["port"] = os.environ.get('SPLUNK_APPSERVER_PORT', vars_scope["splunk"]["appserver"]["port"])
     vars_scope["splunk"]["kvstore"]["port"] = os.environ.get('SPLUNK_KVSTORE_PORT', vars_scope["splunk"]["kvstore"]["port"])
-    vars_scope["splunk"]["kvstore"]["kvservice_connection_string"] = os.environ.get('KVSERVICE_CONNECTION_STRING', vars_scope["splunk"]["kvstore"].get("kvservice_connection_string"))
     vars_scope["splunk"]["connection_timeout"] = int(os.environ.get('SPLUNK_CONNECTION_TIMEOUT', vars_scope["splunk"]["connection_timeout"]))
 
     if vars_scope["splunk"]["splunk_http_enabled"] == "false" and "forwarder" not in vars_scope["splunk"]["role"].lower():
@@ -960,6 +960,19 @@ def getDefaultKVStoreType(vars_scope):
     default_kvstore_type = val.lower()
     vars_scope["splunk"].setdefault("kvstore", {})
     vars_scope["splunk"]["kvstore"]["default_kvstore_type"] = default_kvstore_type
+
+def getKVServiceDeploymentConfig(vars_scope):
+    kvstore = vars_scope["splunk"].setdefault("kvstore", {})
+    mode = os.environ.get("SPLUNK_KVSERVICE_DEPLOYMENT_MODE", kvstore.get("deployment_mode"))
+    if mode:
+        kvstore["deployment_mode"] = mode
+
+    scs = vars_scope["splunk"].get("scs", {})
+    for setting, variable in (("tenant", "SPLUNK_SCS_TENANT"),
+                              ("environment", "SPLUNK_SCS_ENVIRONMENT")):
+        value = os.environ.get(variable, scs.get(setting))
+        if value:
+            vars_scope["splunk"].setdefault("scs", {})[setting] = value
 
 def getNodeSidecarPostgres(vars_scope):
     """
