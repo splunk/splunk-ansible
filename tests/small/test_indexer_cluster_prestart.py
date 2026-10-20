@@ -25,7 +25,8 @@ def _task(loader, role, filename, name):
 def _prestart_facts(splunk, **initial_facts):
     """Evaluate the real set_fact tasks before the configuration-writing block."""
     loader = DataLoader()
-    variables = dict(initial_facts, splunk=splunk)
+    variables = dict(splunk_status={'rc': 3}, splunk=splunk)
+    variables.update(initial_facts)
     for name in (
         'Resolve cluster manager host for pre-start clustering',
         'Determine whether pre-start clustering can be applied',
@@ -153,6 +154,65 @@ def test_skipped_prestart_clears_stale_fact_and_enables_post_start_fallback(splu
                       'Set current node as indexer cluster peer', variables) is True
     assert _condition('splunk_indexer', 'setup_multisite.yml',
                       'Setup Peers with Associated Site', variables) is True
+
+
+@pytest.mark.parametrize('splunk', [
+    {'cluster_master_url': 'cm', 'idxc': {'pass4SymmKey': 'k'}},
+    {'multisite_master': 'multisite-cm', 'site': 'site1',
+     'idxc': {'pass4SymmKey': 'k'}},
+    {'cluster_master_url': 'bootstrap-cm', 'multisite_master': 'multisite-cm',
+     'site': 'site2', 'idxc': {'pass4SymmKey': 'k'}},
+])
+def test_running_indexer_uses_post_start_fallback_in_later_play(splunk):
+    # Orca's later multisite play invokes the common role after splunkd has
+    # already started. A stale success fact must not suppress its site join.
+    variables = _prestart_facts(
+        splunk, first_run=False, splunk_status={'rc': 0},
+        idxc_cluster_preseeded=True)
+    assert variables['idxc_prestart_inputs_ok'] is False
+    assert variables['idxc_cluster_preseeded'] is False
+    assert _condition('splunk_common', 'configure_indexer_cluster_prestart.yml',
+                      'Apply pre-start indexer cluster configuration', variables) is False
+    assert _condition('splunk_indexer', 'indexer_clustering.yml',
+                      'Set current node as indexer cluster peer', variables) is True
+    assert _condition('splunk_indexer', 'setup_multisite.yml',
+                      'Setup Peers with Associated Site', variables) is True
+
+
+@pytest.mark.parametrize('splunk', [
+    {'cluster_master_url': 'cm', 'idxc': {'pass4SymmKey': 'k'}},
+    {'multisite_master': 'multisite-cm', 'site': 'site1',
+     'idxc': {'pass4SymmKey': 'k'}},
+])
+def test_stopped_initialized_indexer_can_still_preseed(splunk):
+    # Existing installations can safely load the configuration on their next
+    # start; first_run alone must not decide whether pre-seeding is allowed.
+    variables = _prestart_facts(
+        splunk, first_run=False, splunk_status={'rc': 3})
+    assert variables['idxc_prestart_inputs_ok'] is True
+    assert _condition('splunk_common', 'configure_indexer_cluster_prestart.yml',
+                      'Apply pre-start indexer cluster configuration', variables) is True
+
+
+def test_prestart_refreshes_process_status_before_deciding_or_writing():
+    loader = DataLoader()
+    tasks = loader.load_from_file(str(
+        ROLE_TASKS / 'splunk_common' / 'tasks' / 'configure_indexer_cluster_prestart.yml'))
+    names = [task.get('name') for task in tasks]
+    status_name = 'Check indexer process state before pre-start clustering'
+    assert status_name in names
+    status_index = names.index(status_name)
+    eligibility_index = names.index('Determine whether pre-start clustering can be applied')
+    writes_index = names.index('Apply pre-start indexer cluster configuration')
+    assert status_index < eligibility_index < writes_index
+    status_include = tasks[status_index]
+    assert status_include['include_tasks'] == 'get_splunk_status.yml'
+    assert 'when' not in status_include
+
+    status_task = _task(loader, 'splunk_common', 'get_splunk_status.yml', 'Get Splunk status')
+    assert status_task['register'] == 'splunk_status'
+    assert status_task['command'].startswith('{{ splunk.exec }} status ')
+    assert 'when' not in status_task
 
 
 @pytest.mark.parametrize(('splunk', 'splunk_conf_effective', 'expected'), [
