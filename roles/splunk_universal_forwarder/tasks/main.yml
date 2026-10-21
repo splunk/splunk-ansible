@@ -32,7 +32,7 @@
   retries: "{{ retry_num }}"
   delay: "{{ retry_delay }}"
   when: splunk.cmd is defined
-  no_log: "{{ hide_password }}"
+  no_log: true
   ignore_errors: true
   notify:
     - Restart the splunkd service

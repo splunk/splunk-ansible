@@ -39,8 +39,12 @@
       - splunk.shc.replication_port | int != splunk.s2s.port | int
       - splunk.shc.replication_port | int != splunk.kvstore.port | int
     fail_msg: >-
-      Pre-start SHC configuration requires stable identity, valid non-conflicting
-      ports, replication factor, and shared secret.
+      [SA-CFG-001] category=configuration stage=shc_prestart
+      field=shc.pass4SymmKey,shc.replication_port,hostname retryable=false
+      remediation="Supply a valid hostname, SHC pass4SymmKey, replication factor,
+      and non-conflicting replication port."
+      cause="Pre-start SHC configuration requires stable identity, valid
+      non-conflicting ports, replication factor, and shared secret."
   no_log: true
 
 - name: Validate classic pre-start indexer peering inputs
@@ -49,8 +53,12 @@
       - splunk.cluster_master_url | default("") | length > 0
       - splunk.idxc.pass4SymmKey | default("") | length > 0
     fail_msg: >-
-      Classic SHC pre-start indexer peering requires a Cluster Manager endpoint
-      and indexer-cluster shared secret.
+      [SA-CFG-002] category=configuration stage=shc_prestart
+      field=cluster_master_url,idxc.pass4SymmKey retryable=false
+      remediation="Set SPLUNK_CLUSTER_MASTER_URL and SPLUNK_IDXC_PASS4SYMMKEY
+      for classic SHC indexer peering."
+      cause="Classic SHC pre-start indexer peering requires a Cluster Manager
+      endpoint and indexer-cluster shared secret."
   when: shc_prestart_indexer_peer_enabled | bool
   no_log: true
 
@@ -239,7 +247,13 @@
           - ("register_replication_address = " ~ shc_prestart_server_name) in shc_prestart_btool_shclustering.stdout
           - ("search_head_uri = " ~ shc_prestart_server_name) in shc_prestart_btool_shclustering.stdout
           - ("[replication_port://" ~ (splunk.shc.replication_port | string) ~ "]") in shc_prestart_btool_repl_port.stdout
-        fail_msg: "Effective pre-start SHC configuration does not match the requested member configuration."
+        fail_msg: >-
+          [SA-CFG-003] category=configuration stage=shc_prestart
+          field=shclustering retryable=true
+          remediation="Check that server.conf [shclustering] settings match the
+          requested SHC member configuration.  The next run will retry."
+          cause="Effective pre-start SHC configuration does not match the
+          requested member configuration."
       no_log: true
 
     - name: Record declarative SHC pre-start configuration
@@ -258,5 +272,9 @@
     - name: Report pre-start SHC validation failure
       fail:
         msg: >-
-          Pre-start SHC validation failed.  shc_prestart_configured has been
-          cleared so the supported initialization path will run instead.
+          [SA-CFG-004] category=configuration stage=shc_prestart
+          field=shclustering retryable=true
+          remediation="Verify SHC configuration inputs and retry.  The
+          shc_prestart_configured flag has been cleared so the supported
+          initialization path will run on the next attempt."
+          cause="Pre-start SHC validation failed."

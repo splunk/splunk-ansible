@@ -5,8 +5,12 @@
       - splunk.shc.pass4SymmKey | default("") | length > 0
       - splunk.shc.label | default("") | length > 0
     fail_msg: >-
-      Pre-start SHC deployer configuration requires the SHC label and shared
-      symmetric key.
+      [SA-CFG-005] category=configuration stage=deployer_prestart
+      field=shc.pass4SymmKey,shc.label retryable=false
+      remediation="Set SPLUNK_SHC_PASS4SYMMKEY and SPLUNK_SHC_LABEL for the
+      deployer."
+      cause="Pre-start SHC deployer configuration requires the SHC label and
+      shared symmetric key."
   no_log: true
 
 - name: Create the local Splunk configuration directory for the SHC deployer
@@ -61,7 +65,13 @@
     that:
       - (deployer_prestart_btool.stdout | regex_search("(?m)^pass4SymmKey\\s*=\\s*\\S+\\s*$")) is not none
       - ("shcluster_label = " ~ splunk.shc.label) in deployer_prestart_btool.stdout
-    fail_msg: "Effective pre-start SHC deployer configuration does not match the requested SHC."
+    fail_msg: >-
+      [SA-CFG-006] category=configuration stage=deployer_prestart
+      field=shclustering retryable=true
+      remediation="Verify the SHC deployer pass4SymmKey and label are correct
+      and retry."
+      cause="Effective pre-start SHC deployer configuration does not match
+      the requested SHC."
   no_log: true
 
 - name: Record declarative SHC deployer pre-start configuration

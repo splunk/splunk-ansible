@@ -17,7 +17,7 @@
   delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
-  no_log: "{{ hide_password }}"
+  no_log: true
   when: not (shc_prestart_configured | default(false) | bool)
 
 - name: Set desired preferred captaincy
@@ -38,7 +38,7 @@
     - Restart the splunkd service
   register: preferred_captaincy_result
   changed_when: false
-  no_log: "{{ hide_password }}"
+  no_log: true
   when:
     - splunk_search_head_captain is defined and splunk.preferred_captaincy | bool
 
@@ -67,7 +67,6 @@
   when:
     - splunk_noah_enabled | default(false) | bool
     - splunk_search_head_captain | bool
-  no_log: "{{ hide_password }}"
 
 #INFRA-38882: Update exec command?
 - name: Boostrap SHC captain
@@ -85,7 +84,7 @@
   delay: "{{ retry_delay }}"
   notify:
     - Restart the splunkd service
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 #INFRA-38882: Update exec command?
 - name: Add new member to SHC
@@ -99,7 +98,7 @@
   until: task_result.rc == 0 or "is already part of cluster" in task_result.stderr
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 - name: Destructive sync search head
   command: "{{ splunk.exec }} resync shcluster-replicated-config -auth {{ splunk.admin_user }}:{{ splunk.password }}"
@@ -112,4 +111,4 @@
   until: task_result.rc == 0 or "this instance is the captain" in task_result.stderr
   retries: "{{ shc_sync_retry_num }}"
   delay: "{{ retry_delay }}"
-  no_log: "{{ hide_password }}"
+  no_log: true

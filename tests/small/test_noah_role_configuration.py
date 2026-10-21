@@ -408,3 +408,209 @@ def test_restart_handler_keeps_the_existing_notification_contract():
     assert " restart " not in noah["shell"]
     assert "not (splunk_noah_enabled | default(false) | bool)" in classic["when"]
     assert " restart --answer-yes --accept-license" in classic["command"]
+
+
+# ---------------------------------------------------------------------------
+# Structured error code and secret redaction contract tests
+# ---------------------------------------------------------------------------
+
+# Error code format: [SA-XXXX-NNN] category=... stage=... field=...
+#                     retryable=... remediation="..." cause="..."
+import re
+import glob
+
+_ERROR_CODE_RE = re.compile(
+    r"\[SA-[A-Z]+-\d{3}\]\s+"
+    r"category=\S+\s+"
+    r"stage=\S+\s+"
+    r"field=\S+"
+    r".*retryable=(true|false)"
+    r".*remediation="
+    r".*cause="
+)
+
+# All task files that contain assert/fail with fail_msg or msg
+_STRUCTURED_ERROR_TASK_FILES = [
+    "roles/splunk_common/tasks/configure_shc_prestart.yml",
+    "roles/splunk_common/tasks/configure_deployer_prestart.yml",
+    "roles/splunk_noah/tasks/validate.yml",
+    "roles/splunk_noah/tasks/search_head.yml",
+    "roles/splunk_noah/tasks/pre_auth.yml",
+    "roles/splunk_noah/tasks/indexer.yml",
+    "roles/splunk_common/tasks/set_default_kvstore_type.yml",
+]
+
+
+def _collect_fail_msgs(relative_path):
+    """Extract all fail_msg and fail.msg values from a YAML task file."""
+    tasks = load_yaml(relative_path)
+    msgs = []
+
+    def _walk(items):
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            # Direct assert fail_msg
+            if "assert" in item and "fail_msg" in item["assert"]:
+                msgs.append(item["assert"]["fail_msg"])
+            # Direct fail msg
+            if "fail" in item and isinstance(item["fail"], dict):
+                msgs.append(item["fail"].get("msg", ""))
+            # Recurse into block/rescue
+            for key in ("block", "rescue"):
+                if key in item and isinstance(item[key], list):
+                    _walk(item[key])
+
+    _walk(tasks)
+    return msgs
+
+
+def test_all_ansible_fail_msgs_carry_structured_error_codes():
+    """Every fail_msg and fail.msg in error-bearing task files must carry a
+    structured [SA-XXXX-NNN] error code with the required fields so that SOK
+    can classify bootstrap failures from stable redacted output."""
+    for path in _STRUCTURED_ERROR_TASK_FILES:
+        msgs = _collect_fail_msgs(path)
+        assert msgs, f"Expected at least one fail_msg in {path}"
+        for msg in msgs:
+            # Normalize multiline YAML scalars
+            flat = " ".join(msg.split())
+            assert _ERROR_CODE_RE.search(flat), (
+                f"fail_msg in {path} missing structured error code: {flat[:120]}"
+            )
+
+
+def test_structured_error_codes_are_unique():
+    """No two fail_msg/fail.msg values should share the same SA-XXXX-NNN
+    code unless they are the same logical error."""
+    seen = {}
+    code_re = re.compile(r"\[SA-[A-Z]+-\d{3}\]")
+    for path in _STRUCTURED_ERROR_TASK_FILES:
+        for msg in _collect_fail_msgs(path):
+            flat = " ".join(msg.split())
+            match = code_re.search(flat)
+            assert match, f"Missing code in {path}"
+            code = match.group()
+            if code in seen:
+                assert seen[code] == path, (
+                    f"Duplicate error code {code} in {path} and {seen[code]}"
+                )
+            seen[code] = path
+
+
+def test_structured_error_codes_include_required_fields():
+    """Each structured error must include category, stage, field, retryable,
+    remediation, and cause."""
+    required = ["category=", "stage=", "field=", "retryable=", "remediation=", "cause="]
+    for path in _STRUCTURED_ERROR_TASK_FILES:
+        for msg in _collect_fail_msgs(path):
+            flat = " ".join(msg.split())
+            for field in required:
+                assert field in flat, (
+                    f"Missing '{field}' in error from {path}: {flat[:120]}"
+                )
+
+
+# ---------------------------------------------------------------------------
+# Secret sentinel scanning — no raw credential values in fail_msg output
+# ---------------------------------------------------------------------------
+
+# Sentinel patterns that should NEVER appear in error messages
+_SECRET_SENTINELS = [
+    "splunk.password",
+    "splunk.shc.pass4SymmKey",
+    "splunk.idxc.pass4SymmKey",
+    "splunk.secret",
+    "splunk.splunk_secret",
+    "splunkbase_password",
+    "artifact_auth_pass",
+]
+
+
+def test_fail_msgs_never_interpolate_secret_values():
+    """Error messages must never interpolate actual secret values.  They may
+    reference field names (like 'pass4SymmKey') but must not template-expand
+    the value itself (like '{{ splunk.password }}' or '{{ splunk.shc.pass4SymmKey }}')."""
+    for path in _STRUCTURED_ERROR_TASK_FILES:
+        for msg in _collect_fail_msgs(path):
+            for sentinel in _SECRET_SENTINELS:
+                # Allow 'pass4SymmKey' as a field name reference but not
+                # '{{ splunk.shc.pass4SymmKey }}' which would expand the value
+                assert "{{ " + sentinel + " }}" not in msg, (
+                    f"Secret interpolation '{sentinel}' found in fail_msg of {path}"
+                )
+
+
+# ---------------------------------------------------------------------------
+# no_log enforcement — secret-bearing tasks must suppress output
+# ---------------------------------------------------------------------------
+
+# Tasks whose command/module arguments contain credentials on the command line
+_SECRET_BEARING_TASK_FILES = {
+    "roles/splunk_search_head/tasks/search_head_clustering.yml": [
+        "Initialize SHC cluster config",
+        "Set desired preferred captaincy",
+        "Boostrap SHC captain",
+        "Add new member to SHC",
+        "Destructive sync search head",
+    ],
+    "roles/splunk_indexer/tasks/indexer_clustering.yml": [
+        "Set current node as indexer cluster peer",
+    ],
+    "roles/splunk_indexer/tasks/setup_multisite.yml": [
+        "Setup Peers with Associated Site",
+    ],
+    "roles/splunk_common/tasks/peer_cluster_master.yml": [
+        "Peer cluster master TCP",
+        "Peer cluster master UDS",
+    ],
+    "roles/splunk_deployer/tasks/main.yml": [
+        "Set deployer SHC key and label",
+        "Set deployer push mode",
+        "Wait for SHC to be ready",
+    ],
+    "roles/splunk_universal_forwarder/tasks/main.yml": [
+        "Execute Splunk commands",
+    ],
+}
+
+
+def test_secret_bearing_command_tasks_have_unconditional_no_log():
+    """Tasks that put credentials into command-line arguments or module
+    parameters must have no_log: true (unconditional, not hide_password)."""
+    for path, task_names in _SECRET_BEARING_TASK_FILES.items():
+        tasks = load_yaml(path)
+        for name in task_names:
+            task = named_task(tasks, name)
+            assert task.get("no_log") is True, (
+                f"Task '{name}' in {path} must have no_log: true "
+                f"(got {task.get('no_log')!r})"
+            )
+
+
+def test_shc_prestart_secret_tasks_have_unconditional_no_log():
+    """Pre-start SHC tasks that handle pass4SymmKey must have no_log: true."""
+    tasks = load_yaml("roles/splunk_common/tasks/configure_shc_prestart.yml")
+    secret = named_task(tasks, "Reconcile the SHC symmetric key before splunkd starts")
+    assert secret["no_log"] is True
+
+    shc_btool = named_task(tasks, "Read effective pre-start SHC shclustering configuration")
+    assert shc_btool["no_log"] is True
+
+
+def test_deployer_prestart_secret_tasks_have_unconditional_no_log():
+    """Pre-start deployer tasks that handle pass4SymmKey must have no_log: true."""
+    tasks = load_yaml("roles/splunk_common/tasks/configure_deployer_prestart.yml")
+    writer = named_task(tasks, "Configure the SHC deployer before the first splunkd start")
+    assert writer["no_log"] is True
+
+    btool = named_task(tasks, "Read effective pre-start SHC deployer configuration")
+    assert btool["no_log"] is True
+
+
+def test_noah_pre_auth_service_writer_has_unconditional_no_log():
+    """The Noah service configuration writer (which includes pass4SymmKey)
+    must have unconditional no_log: true."""
+    tasks = load_yaml("roles/splunk_noah/tasks/pre_auth.yml")
+    writer = named_task(tasks, "Write Noah service configuration for temporary authentication startup")
+    assert writer["no_log"] is True
