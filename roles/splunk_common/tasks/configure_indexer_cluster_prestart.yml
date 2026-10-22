@@ -9,7 +9,7 @@
 #
 # The CLI mutates exactly these five things (verified by clean-slate diff on a live
 # peer), all of which are reproduced below:
-#   [replication_port://PORT]        (bare stanza)
+#   [replication_port://PORT]        (CLI writes it bare; seeded here with disabled = false)
 #   [clustering] master_uri          (cluster manager URI)
 #   [clustering] mode = peer
 #   [clustering] pass4SymmKey        (splunkd encrypts it on startup)
