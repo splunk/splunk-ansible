@@ -909,17 +909,25 @@ def test_getDefaultKVStoreType(default_yml, os_env, result):
 def test_getKVServiceDeploymentConfig():
     vars_scope = {"splunk": {"kvstore": {}}}
     os_env = {
-        "SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "singleCustomer",
+        "SPLUNK_KVSERVICE_MODE": "installationScoped",
         "SPLUNK_SCS_TENANT": "tenant1",
         "SPLUNK_SCS_ENVIRONMENT": "kvservice.example.com:443",
     }
     with patch("os.environ", new=os_env):
         environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"]["kvstore"]["deployment_mode"] == "singleCustomer"
+    assert vars_scope["splunk"]["kvstore"]["kvservice_mode"] == "installationScoped"
     assert vars_scope["splunk"]["scs"] == {
         "tenant": "tenant1",
         "environment": "kvservice.example.com:443",
     }
+
+
+def test_getKVServiceDeploymentConfig_platform_scoped():
+    vars_scope = {"splunk": {"kvstore": {}}}
+    with patch("os.environ", new={"SPLUNK_KVSERVICE_MODE": "platformScoped"}):
+        environ.getKVServiceDeploymentConfig(vars_scope)
+    assert vars_scope["splunk"]["kvstore"]["kvservice_mode"] == "platformScoped"
+    assert "scs" not in vars_scope["splunk"]
 
 
 def test_getKVServiceDeploymentConfig_local_without_mode():
