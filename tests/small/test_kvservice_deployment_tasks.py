@@ -52,6 +52,8 @@ def test_managed_settings_cleanup_scope():
         ("kvstore", "kvserviceMode"),
         ("kvstore", "kvserviceScope"),
         ("kvstore", "kvserviceDeploymentMode"),
+        ("kvstore", "defaultKVStoreType"),
+        ("kvstore", "postgresMigrateOnStartup"),
         ("scs", "tenant"),
         ("scs", "environment"),
     }
@@ -69,14 +71,26 @@ def test_installation_scoped_mode_creates_marker():
 
 
 def test_mode_replaces_legacy_settings():
-    mode_task = task_named("Set KVService mode")
-    assert mode_task["ini_file"]["option"] == "kvserviceMode"
-    assert mode_task["ini_file"]["value"] == "{{ splunk.kvstore.kvservice_mode }}"
+    mode_task = task_named("Set KVService scope")
+    assert mode_task["ini_file"]["option"] == "kvserviceScope"
+    value = mode_task["ini_file"]["value"]
+    jinja = Environment()
+    for legacy_mode, scope in (("installationScoped", "deployment"), ("platformScoped", "platform")):
+        assert jinja.from_string(value).render(splunk={"kvstore": {"kvservice_mode": legacy_mode}}) == scope
 
     for name, option in (
         ("Remove legacy KVService scope when configuring mode", "kvserviceScope"),
         ("Remove legacy KVService deployment mode when configuring mode", "kvserviceDeploymentMode"),
+        ("Remove legacy KVService mode when configuring scope", "kvserviceMode"),
     ):
         cleanup = task_named(name)
         assert cleanup["ini_file"]["option"] == option
         assert cleanup["ini_file"]["state"] == "absent"
+
+
+def test_sok_app_server_conf_is_rebuilt_from_current_defaults():
+    tasks = yaml.safe_load(
+        (TASK_FILE.parent / "remove_stale_sok_conf.yml").read_text()
+    )
+    cleanup = tasks[0]
+    assert "{{ splunk.home }}/etc/apps/100-sok/local/server.conf" in cleanup["loop"]

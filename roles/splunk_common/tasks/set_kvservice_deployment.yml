@@ -41,6 +41,20 @@
         option: environment
         state: absent
 
+    - name: Remove previous KV Store type
+      ini_file:
+        dest: "{{ splunk.home }}/etc/system/local/server.conf"
+        section: kvstore
+        option: defaultKVStoreType
+        state: absent
+
+    - name: Remove previous Postgres migration setting
+      ini_file:
+        dest: "{{ splunk.home }}/etc/system/local/server.conf"
+        section: kvstore
+        option: postgresMigrateOnStartup
+        state: absent
+
     - name: Remove installation-scoped KVService management marker
       file:
         path: "{{ splunk.home }}/etc/system/local/.kvservice-single-customer-managed"
@@ -67,6 +81,15 @@
   when:
     - splunk.kvstore.kvservice_mode | default('') | length > 0
 
+- name: Remove legacy KVService mode when configuring scope
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: kvserviceMode
+    state: absent
+  when:
+    - splunk.kvstore.kvservice_mode | default('') | length > 0
+
 - name: Remove legacy KVService connection string
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
@@ -74,12 +97,12 @@
     option: kvserviceConnectionString
     state: absent
 
-- name: Set KVService mode
+- name: Set KVService scope
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: kvstore
-    option: kvserviceMode
-    value: "{{ splunk.kvstore.kvservice_mode }}"
+    option: kvserviceScope
+    value: "{{ {'installationScoped': 'deployment', 'platformScoped': 'platform'}[splunk.kvstore.kvservice_mode] }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when:

@@ -930,6 +930,27 @@ def test_getKVServiceDeploymentConfig_platform_scoped():
     assert "scs" not in vars_scope["splunk"]
 
 
+@pytest.mark.parametrize(
+    ("legacy_mode", "expected_mode"),
+    [("singleCustomer", "installationScoped"), ("multiCustomer", "platformScoped")],
+)
+def test_getKVServiceDeploymentConfig_legacy_mode(legacy_mode, expected_mode):
+    vars_scope = {"splunk": {"kvstore": {}}}
+    with patch("os.environ", new={"SPLUNK_KVSERVICE_DEPLOYMENT_MODE": legacy_mode}):
+        environ.getKVServiceDeploymentConfig(vars_scope)
+    assert vars_scope["splunk"]["kvstore"]["kvservice_mode"] == expected_mode
+
+
+def test_getKVServiceDeploymentConfig_prefers_current_mode():
+    vars_scope = {"splunk": {"kvstore": {}}}
+    with patch("os.environ", new={
+        "SPLUNK_KVSERVICE_MODE": "platformScoped",
+        "SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "singleCustomer",
+    }):
+        environ.getKVServiceDeploymentConfig(vars_scope)
+    assert vars_scope["splunk"]["kvstore"]["kvservice_mode"] == "platformScoped"
+
+
 def test_getKVServiceDeploymentConfig_local_without_mode():
     vars_scope = {"splunk": {"kvstore": {"default_kvstore_type": "local"}}}
     with patch("os.environ", new={}):
