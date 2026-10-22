@@ -963,9 +963,16 @@ def getDefaultKVStoreType(vars_scope):
 
 def getKVServiceDeploymentConfig(vars_scope):
     kvstore = vars_scope["splunk"].setdefault("kvstore", {})
-    mode = os.environ.get("SPLUNK_KVSERVICE_DEPLOYMENT_MODE", kvstore.get("deployment_mode"))
+    mode = os.environ.get("SPLUNK_KVSERVICE_MODE", kvstore.get("kvservice_mode"))
+    if not mode:
+        legacy_mode = os.environ.get("SPLUNK_KVSERVICE_DEPLOYMENT_MODE")
+        if legacy_mode:
+            mode = {
+                "singleCustomer": "installationScoped",
+                "multiCustomer": "platformScoped",
+            }[legacy_mode]
     if mode:
-        kvstore["deployment_mode"] = mode
+        kvstore["kvservice_mode"] = mode
 
     scs = vars_scope["splunk"].get("scs", {})
     for setting, variable in (("tenant", "SPLUNK_SCS_TENANT"),
