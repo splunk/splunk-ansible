@@ -6,24 +6,26 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
+# Registered per file rather than include_vars into a shared name: under
+# hash_behaviour=merge include_vars merges each receipt into the previous one.
 - name: Load previous ConfigMap-owned values in {{ conf_file }}
-  include_vars:
-    file: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
-    name: previous_config_map_stanzas
+  slurp:
+    src: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
+  register: config_map_managed_values
   when: config_map_managed_values_file.stat.exists
+  become: yes
+  become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
 
-- name: Initialize previous ConfigMap-owned values in {{ conf_file }}
-  set_fact:
-    previous_config_map_stanzas: {}
-  when: not config_map_managed_values_file.stat.exists
-
-- name: Remove previous ConfigMap-owned values from {{ conf_file }}
+- name: Remove dropped ConfigMap-owned values from {{ conf_file }}
   include_tasks: remove_config_map_stanza.yml
   vars:
     config_map_stanza_name: "{{ previous_stanza.key }}"
     config_map_stanza_settings: "{{ previous_stanza.value | default({}) }}"
-  with_dict: "{{ previous_config_map_stanzas }}"
+  with_dict: >-
+    {{ ((config_map_managed_values.content | b64decode | from_yaml)
+        if config_map_managed_values_file.stat.exists else {}) | default({}, true)
+       | config_map_dropped_options(conf_stanzas) }}
   loop_control:
     loop_var: previous_stanza
   no_log: "{{ hide_password }}"

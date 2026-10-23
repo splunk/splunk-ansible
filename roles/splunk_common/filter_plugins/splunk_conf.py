@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Ansible filters for Noah's effective Splunk configuration."""
+"""Ansible filters for normalizing splunk.conf entries."""
 
 from __future__ import absolute_import
 

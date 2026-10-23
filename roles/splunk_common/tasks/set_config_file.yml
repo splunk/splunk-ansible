@@ -9,9 +9,7 @@
 
 - name: Remove stale ConfigMap-owned values from {{ conf_file }}
   include_tasks: reconcile_config_map_values.yml
-  when:
-    - reconcile_config_map_values | default(false) | bool
-    - conf_stanzas | length > 0
+  when: reconcile_config_map_values | default(false) | bool
   no_log: "{{ hide_password }}"
 
 - include_tasks: set_config_stanza.yml
@@ -36,3 +34,13 @@
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
+
+- name: Remove ConfigMap ownership record for {{ conf_file }}
+  file:
+    path: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
+    state: absent
+  when:
+    - reconcile_config_map_values | default(false) | bool
+    - conf_stanzas | length == 0
+  become: yes
+  become_user: "{{ splunk.user }}"
