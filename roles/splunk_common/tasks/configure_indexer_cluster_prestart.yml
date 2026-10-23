@@ -9,7 +9,7 @@
 #
 # The CLI mutates exactly these five things (verified by clean-slate diff on a live
 # peer), all of which are reproduced below:
-#   [replication_port://PORT]        (bare stanza)
+#   [replication_port://PORT]        (CLI writes it bare; seeded here with disabled = false)
 #   [clustering] master_uri          (cluster manager URI)
 #   [clustering] mode = peer
 #   [clustering] pass4SymmKey        (splunkd encrypts it on startup)
@@ -101,15 +101,16 @@
              ~ '://' ~ idxc_prestart_cm_host ~ ':' ~ splunk.svc_port }}
 
     # SSL peers already have [replication_port-ssl://PORT] from splunk.conf.server.content,
-    # which satisfies splunkd on its own. Only non-SSL peers need the bare stanza.
-    # allow_no_value is required: without it ini_file refuses to create a valueless
-    # stanza and fails the task.
+    # which satisfies splunkd on its own. Only non-SSL peers need this stanza.
+    # Explicitly set the default enabled value so older ini_file versions create
+    # the section even when they do not support adding an empty stanza.
     - name: Pre-seed non-SSL replication port stanza
       ini_file:
         path: "{{ splunk.home }}/etc/system/local/server.conf"
         section: "replication_port://{{ splunk.idxc.replication_port }}"
+        option: disabled
+        value: 'false'
         state: present
-        allow_no_value: true
         owner: "{{ splunk.user }}"
         group: "{{ splunk.group }}"
         mode: '0600'
