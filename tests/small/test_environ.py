@@ -931,44 +931,32 @@ def test_getKVServiceDeploymentConfig_platform_scope():
 
 
 @pytest.mark.parametrize(
-    ("variable", "legacy_mode", "expected_scope"),
+    ("kvstore", "os_env"),
     [
-        ("SPLUNK_KVSERVICE_DEPLOYMENT_MODE", "singleCustomer", "deployment"),
-        ("SPLUNK_KVSERVICE_DEPLOYMENT_MODE", "multiCustomer", "platform"),
-        ("SPLUNK_KVSERVICE_MODE", "installationScoped", "deployment"),
-        ("SPLUNK_KVSERVICE_MODE", "platformScoped", "platform"),
+        ({}, {"SPLUNK_KVSERVICE_MODE": "installationScoped"}),
+        ({}, {"SPLUNK_KVSERVICE_MODE": "platformScoped"}),
+        ({}, {"SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "singleCustomer"}),
+        ({}, {"SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "multiCustomer"}),
+        ({"kvservice_mode": "installationScoped"}, {}),
+        ({"kvservice_mode": "platformScoped"}, {}),
+        ({"deployment_mode": "singleCustomer"}, {}),
+        ({"deployment_mode": "multiCustomer"}, {}),
     ],
 )
-def test_getKVServiceDeploymentConfig_legacy_mode(variable, legacy_mode, expected_scope):
-    vars_scope = {"splunk": {"kvstore": {}}}
-    with patch("os.environ", new={variable: legacy_mode}):
+def test_getKVServiceDeploymentConfig_ignores_obsolete_mode_inputs(kvstore, os_env):
+    vars_scope = {"splunk": {"kvstore": kvstore}}
+    with patch("os.environ", new=os_env):
         environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"]["kvstore"]["kvservice_scope"] == expected_scope
-
-
-def test_getKVServiceDeploymentConfig_prefers_scope():
-    vars_scope = {"splunk": {"kvstore": {}}}
-    with patch("os.environ", new={
-        "SPLUNK_KVSERVICE_SCOPE": "platform",
-        "SPLUNK_KVSERVICE_MODE": "installationScoped",
-        "SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "singleCustomer",
-    }):
-        environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"]["kvstore"]["kvservice_scope"] == "platform"
+    assert "kvservice_scope" not in vars_scope["splunk"]["kvstore"]
 
 
 @pytest.mark.parametrize(
     ("kvstore", "os_env", "expected_scope"),
     [
         ({"kvservice_scope": "deployment"}, {}, "deployment"),
+        ({"kvservice_scope": "platform"}, {}, "platform"),
         ({"kvservice_scope": "deployment"}, {"SPLUNK_KVSERVICE_SCOPE": "platform"}, "platform"),
-        ({"kvservice_scope": "platform"}, {"SPLUNK_KVSERVICE_MODE": "installationScoped"}, "platform"),
-        ({"kvservice_scope": "platform"}, {"SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "singleCustomer"}, "platform"),
-        ({"kvservice_mode": "installationScoped"}, {}, "deployment"),
-        ({"deployment_mode": "singleCustomer"}, {}, "deployment"),
-        ({"deployment_mode": "multiCustomer"}, {}, "platform"),
         ({"kvservice_mode": "installationScoped"}, {"SPLUNK_KVSERVICE_SCOPE": "platform"}, "platform"),
-        ({}, {"SPLUNK_KVSERVICE_MODE": "platformScoped", "SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "singleCustomer"}, "platform"),
     ],
 )
 def test_getKVServiceDeploymentConfig_defaults_and_precedence(kvstore, os_env, expected_scope):
