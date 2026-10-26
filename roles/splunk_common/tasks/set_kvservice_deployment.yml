@@ -1,10 +1,10 @@
 ---
-- name: Check for Ansible-managed installation-scoped KVService settings
+- name: Check for Ansible-managed deployment-scoped KVService settings
   stat:
     path: "{{ splunk.home }}/etc/system/local/.kvservice-single-customer-managed"
   register: kvservice_managed_config
 
-- name: Remove previous Ansible-managed installation-scoped KVService settings
+- name: Remove previous Ansible-managed deployment-scoped KVService settings
   block:
     - name: Remove previous KVService mode
       ini_file:
@@ -41,45 +41,24 @@
         option: environment
         state: absent
 
-    - name: Remove previous KV Store type
-      ini_file:
-        dest: "{{ splunk.home }}/etc/system/local/server.conf"
-        section: kvstore
-        option: defaultKVStoreType
-        state: absent
-
-    - name: Remove previous Postgres migration setting
-      ini_file:
-        dest: "{{ splunk.home }}/etc/system/local/server.conf"
-        section: kvstore
-        option: postgresMigrateOnStartup
-        state: absent
-
-    - name: Remove installation-scoped KVService management marker
+    # KV Store type and startup migration are managed by set_default_kvstore_type.yml.
+    # In particular, Splunk 10.9+ owns the saved defaultKVStoreType after migration.
+    - name: Remove deployment-scoped KVService management marker
       file:
         path: "{{ splunk.home }}/etc/system/local/.kvservice-single-customer-managed"
         state: absent
   when:
     - kvservice_managed_config.stat.exists
-    - splunk.kvstore.kvservice_mode | default('') != 'installationScoped'
+    - splunk.kvstore.kvservice_scope | default('') != 'deployment'
 
-- name: Remove legacy KVService scope when configuring mode
-  ini_file:
-    dest: "{{ splunk.home }}/etc/system/local/server.conf"
-    section: kvstore
-    option: kvserviceScope
-    state: absent
-  when:
-    - splunk.kvstore.kvservice_mode | default('') | length > 0
-
-- name: Remove legacy KVService deployment mode when configuring mode
+- name: Remove legacy KVService deployment mode when configuring scope
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: kvstore
     option: kvserviceDeploymentMode
     state: absent
   when:
-    - splunk.kvstore.kvservice_mode | default('') | length > 0
+    - splunk.kvstore.kvservice_scope | default('', true) | length > 0
 
 - name: Remove legacy KVService mode when configuring scope
   ini_file:
@@ -88,7 +67,7 @@
     option: kvserviceMode
     state: absent
   when:
-    - splunk.kvstore.kvservice_mode | default('') | length > 0
+    - splunk.kvstore.kvservice_scope | default('', true) | length > 0
 
 - name: Remove legacy KVService connection string
   ini_file:
@@ -102,13 +81,13 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: kvstore
     option: kvserviceScope
-    value: "{{ {'installationScoped': 'deployment', 'platformScoped': 'platform'}[splunk.kvstore.kvservice_mode] }}"
+    value: "{{ splunk.kvstore.kvservice_scope }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when:
     - splunk.kvstore is defined
-    - splunk.kvstore.kvservice_mode is defined
-    - splunk.kvstore.kvservice_mode | length > 0
+    - splunk.kvstore.kvservice_scope is defined
+    - splunk.kvstore.kvservice_scope | default('', true) | length > 0
 
 - name: Set KVService tenant
   ini_file:
@@ -136,12 +115,12 @@
     - splunk.scs.environment is defined
     - splunk.scs.environment | length > 0
 
-- name: Mark installation-scoped KVService settings as Ansible-managed
+- name: Mark deployment-scoped KVService settings as Ansible-managed
   copy:
-    content: "installationScoped\n"
+    content: "deployment\n"
     dest: "{{ splunk.home }}/etc/system/local/.kvservice-single-customer-managed"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     mode: '0644'
   when:
-    - splunk.kvstore.kvservice_mode | default('') == 'installationScoped'
+    - splunk.kvstore.kvservice_scope | default('') == 'deployment'
