@@ -11,7 +11,7 @@ import yaml
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_DIR = os.path.join(FILE_DIR, "..", "..")
-sys.path.insert(0, os.path.join(REPO_DIR, "roles", "splunk_noah", "filter_plugins"))
+sys.path.insert(0, os.path.join(REPO_DIR, "roles", "splunk_common", "filter_plugins"))
 
 splunk_conf = __import__("splunk_conf")
 

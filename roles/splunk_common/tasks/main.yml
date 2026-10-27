@@ -130,13 +130,25 @@
     - "'connection_timeout' in splunk and splunk.connection_timeout"
     - splunk.connection_timeout | int > 0
 
+# Entries for the same file share one ownership receipt, so they must be
+# reconciled as a single entry or each would remove the others' options.
+- name: Combine list-form splunk.conf entries by effective file
+  set_fact:
+    splunk_conf_by_file: >-
+      {{ (splunk_conf_effective | default(splunk.conf))
+         | normalize_splunk_conf_entries(splunk.home + '/etc/system/local') }}
+  when:
+    - "'conf' in splunk and splunk.conf"
+    - splunk.conf is not mapping
+  no_log: "{{ hide_password }}"
+
 - include_tasks: set_config_file.yml
   vars:
     conf_file: "{{ item.key }}.conf"
     conf_directory: "{{ item.value.directory | default(splunk.home + '/etc/system/local', true) }}"
     conf_stanzas: "{{ item.value.content | default({}) }}"
     reconcile_config_map_values: true
-  with_items: "{% set effective_conf = splunk_conf_effective | default(splunk.conf) %}{% if effective_conf is mapping %}{{ effective_conf | dict2items }}{% else %}{{ effective_conf }}{% endif %}"
+  with_items: "{% set effective_conf = splunk.conf if splunk.conf is mapping else splunk_conf_by_file | default(splunk.conf) %}{% if effective_conf is mapping %}{{ effective_conf | dict2items }}{% else %}{{ effective_conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
   no_log: "{{ hide_password }}"
 
