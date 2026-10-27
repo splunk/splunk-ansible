@@ -1,39 +1,39 @@
 ---
-- name: Check for Ansible-managed single-customer KVService settings
+- name: Check for Ansible-managed deployment-scoped KVService settings
   stat:
-    path: "{{ splunk.home }}/etc/system/local/.kvservice-single-customer-managed"
+    path: "{{ splunk.home }}/etc/system/local/.kvservice-deployment-managed"
   register: kvservice_managed_config
 
-- name: Remove previous Ansible-managed single-customer KVService settings
+- name: Remove Ansible-managed settings when leaving deployment-scoped KVService
   block:
-    - name: Remove previous KVService deployment mode
+    - name: Remove managed KVService scope
       ini_file:
         dest: "{{ splunk.home }}/etc/system/local/server.conf"
         section: kvstore
-        option: kvserviceDeploymentMode
+        option: kvserviceScope
         state: absent
 
-    - name: Remove previous KVService tenant
+    - name: Remove managed KVService tenant
       ini_file:
         dest: "{{ splunk.home }}/etc/system/local/server.conf"
         section: scs
         option: tenant
         state: absent
 
-    - name: Remove previous KVService environment
+    - name: Remove managed KVService environment
       ini_file:
         dest: "{{ splunk.home }}/etc/system/local/server.conf"
         section: scs
         option: environment
         state: absent
 
-    - name: Remove single-customer KVService management marker
+    - name: Remove deployment-scoped KVService management marker
       file:
-        path: "{{ splunk.home }}/etc/system/local/.kvservice-single-customer-managed"
+        path: "{{ splunk.home }}/etc/system/local/.kvservice-deployment-managed"
         state: absent
   when:
     - kvservice_managed_config.stat.exists
-    - splunk.kvstore.deployment_mode | default('') != 'singleCustomer'
+    - splunk.kvstore.kvservice_scope | default('') != 'deployment'
 
 - name: Remove legacy KVService connection string
   ini_file:
@@ -42,18 +42,18 @@
     option: kvserviceConnectionString
     state: absent
 
-- name: Set KVService deployment mode
+- name: Set KVService scope
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: kvstore
-    option: kvserviceDeploymentMode
-    value: "{{ splunk.kvstore.deployment_mode }}"
+    option: kvserviceScope
+    value: "{{ splunk.kvstore.kvservice_scope }}"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when:
     - splunk.kvstore is defined
-    - splunk.kvstore.deployment_mode is defined
-    - splunk.kvstore.deployment_mode | length > 0
+    - splunk.kvstore.kvservice_scope is defined
+    - splunk.kvstore.kvservice_scope | default('', true) | length > 0
 
 - name: Set KVService tenant
   ini_file:
@@ -81,12 +81,12 @@
     - splunk.scs.environment is defined
     - splunk.scs.environment | length > 0
 
-- name: Mark single-customer KVService settings as Ansible-managed
+- name: Mark deployment-scoped KVService settings as Ansible-managed
   copy:
-    content: "singleCustomer\n"
-    dest: "{{ splunk.home }}/etc/system/local/.kvservice-single-customer-managed"
+    content: "deployment\n"
+    dest: "{{ splunk.home }}/etc/system/local/.kvservice-deployment-managed"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
     mode: '0644'
   when:
-    - splunk.kvstore.deployment_mode | default('') == 'singleCustomer'
+    - splunk.kvstore.kvservice_scope | default('') == 'deployment'
