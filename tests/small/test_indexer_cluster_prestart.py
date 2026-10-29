@@ -284,3 +284,75 @@ def test_cluster_preseeded_requires_site_when_multisite():
 ])
 def test_cluster_preseeded_false_on_partial_write(server_conf):
     assert cluster_preseeded(server_conf) is False
+
+
+def _live_peer_guard():
+    return _task(DataLoader(), 'splunk_indexer', 'indexer_clustering.yml',
+                 'Verify pre-seeded Windows peer is active')
+
+
+def _live_peer_variables(response, **overrides):
+    variables = dict(_live_peer_guard()['vars'])
+    variables.update(idxc_cluster_preseeded=True, ansible_system='Win32NT',
+                     uds_enabled=False, idxc_prestart_live_peer=response)
+    variables.update(overrides)
+    return variables
+
+
+def _evaluate(expressions, variables):
+    loader = DataLoader()
+    conditional = Conditional(loader=loader)
+    conditional.when = expressions if isinstance(expressions, list) else [expressions]
+    return conditional.evaluate_conditional(
+        Templar(loader=loader, variables=variables), variables)
+
+
+def _live_peer_validation(variables):
+    task = next(task for task in _live_peer_guard()['block']
+                if task.get('name') == 'Validate live indexer peer response')
+    return _evaluate(task['assert']['that'], variables)
+
+
+@pytest.mark.parametrize('response_kind', ['registered', 'unregistered', 'disabled'])
+def test_windows_live_peer_controls_the_existing_post_start_fallback(response_kind):
+    variables = _live_peer_variables({})
+    if response_kind == 'registered':
+        response = {'status': 200, 'json': {'entry': [{'content': {'is_registered': True}}]}}
+    else:
+        message = variables['idxc_peer_{}_message'.format(
+            'unregistered' if response_kind == 'unregistered' else 'disabled')]
+        response = {'status': 503, 'json': {'messages': [{'type': 'ERROR', 'text': message}]}}
+    variables['idxc_prestart_live_peer'] = response
+    assert _live_peer_validation(variables) is True
+
+    fallback = next(task for task in _live_peer_guard()['block']
+                    if task.get('name') == 'Use post-start configuration when Windows peer is not active')
+    if _evaluate(fallback['when'], variables):
+        variables.update({key: Templar(loader=DataLoader(), variables=variables).template(value)
+                          for key, value in fallback['set_fact'].items()})
+    assert variables['idxc_cluster_preseeded'] is (response_kind != 'disabled')
+    assert _condition('splunk_indexer', 'indexer_clustering.yml',
+                      'Set current node as indexer cluster peer', variables) is (response_kind == 'disabled')
+
+
+@pytest.mark.parametrize('response', [
+    {'status': 503, 'json': {'messages': [{'type': 'ERROR', 'text': 'Unknown peer failure'}]}},
+    {'status': 503, 'json': {'messages': [{'type': 'ERROR', 'text': 'The cluster peer is not running.'}]}},
+    {'status': 200, 'content': '<html>Login</html>'},
+])
+def test_windows_live_peer_rejects_unknown_terminal_or_login_responses(response):
+    assert _live_peer_validation(_live_peer_variables(response)) is False
+
+
+@pytest.mark.parametrize(('system', 'uds_enabled', 'preseeded', 'expected'), [
+    ('Win32NT', False, True, True),
+    ('CYGWIN_NT-10.0', False, True, True),
+    ('Linux', False, True, False),
+    ('Win32NT', True, True, False),
+    ('Win32NT', False, False, False),
+])
+def test_live_peer_probe_is_limited_to_preseeded_windows_tcp(system, uds_enabled,
+                                                          preseeded, expected):
+    variables = _live_peer_variables({}, ansible_system=system,
+                                     uds_enabled=uds_enabled, idxc_cluster_preseeded=preseeded)
+    assert _evaluate(_live_peer_guard()['when'], variables) is expected

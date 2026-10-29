@@ -1,9 +1,62 @@
 ---
-# CSPL-4136: when configure_indexer_cluster_prestart.yml already wrote cluster
-# membership into server.conf before the first splunkd start, splunkd is already a
-# peer and this post-start join is unnecessary. It is retained as a fallback for the
-# cases where the pre-seed could not be applied or could not be verified, since any
-# server.conf write after splunkd is running sets restart_required and forces a
+# A Windows file pre-seed is only sufficient when the running instance has
+# initialized its peer component. An unregistered peer is valid here: waiting
+# for registration would deadlock the parallel manager/peer provisioning.
+- name: Verify pre-seeded Windows peer is active
+  when:
+    - idxc_cluster_preseeded | default(false) | bool
+    - ansible_system is match("CYGWIN.*|Win32NT")
+    - not uds_enabled | bool
+  vars:
+    idxc_peer_disabled_message: "Cluster peer is not enabled on this node, check clustering stanza in server.conf"
+    idxc_peer_unregistered_message: >-
+      The cluster peer is unable to handle request at this time.  This means either the cluster peer unable to communicate w/ the cluster manager
+      OR the cluster manager does not have <repFactor> peers added to the cluster.  Check the cluster manager dashboard and/or manager_uri/secret settings.
+  block:
+    - name: Read live indexer peer state
+      uri:
+        url: "{{ cert_prefix }}://127.0.0.1:{{ splunk.svc_port }}/services/cluster/peer/info?output_mode=json"
+        method: GET
+        user: "{{ splunk.admin_user }}"
+        password: "{{ splunk.password }}"
+        force_basic_auth: true
+        validate_certs: false
+        use_proxy: false
+        timeout: 10
+        status_code: [200, 503]
+      register: idxc_prestart_live_peer
+      changed_when: false
+      no_log: true
+
+    - name: Validate live indexer peer response
+      assert:
+        that:
+          - >-
+            (idxc_prestart_live_peer.status == 200
+             and idxc_prestart_live_peer.json is mapping
+             and idxc_prestart_live_peer.json.entry | default([]) | length == 1
+             and idxc_prestart_live_peer.json.entry[0].content is mapping
+             and idxc_prestart_live_peer.json.entry[0].content.is_registered | default(none) in [true, false, 0, 1, 'true', 'false'])
+            or
+            (idxc_prestart_live_peer.status == 503
+             and idxc_prestart_live_peer.json is mapping
+             and idxc_prestart_live_peer.json.messages | default([]) | length == 1
+             and idxc_prestart_live_peer.json.messages[0] is mapping
+             and idxc_prestart_live_peer.json.messages[0].type | default('') == 'ERROR'
+             and idxc_prestart_live_peer.json.messages[0].text | default('') in
+               [idxc_peer_disabled_message, idxc_peer_unregistered_message])
+        fail_msg: "Cannot verify the pre-seeded Windows peer state; stopping before cluster configuration is skipped."
+        quiet: true
+
+    - name: Use post-start configuration when Windows peer is not active
+      set_fact:
+        idxc_cluster_preseeded: false
+      when: idxc_prestart_live_peer.status == 503 and idxc_prestart_live_peer.json.messages[0].text == idxc_peer_disabled_message
+
+# CSPL-4136: pre-seeding cluster membership normally makes the post-start join
+# unnecessary. Windows also verifies the live peer above before relying on the
+# file pre-seed. Keep the join as a fallback when pre-seeding was not applied or
+# verified: a server.conf write after splunkd starts sets restart_required and forces a
 # second splunkd startup.
 - include_tasks: ../../../roles/splunk_common/tasks/wait_for_splunk_instance.yml
   vars:
