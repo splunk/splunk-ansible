@@ -225,6 +225,9 @@
 
 - include_tasks: clean_user_seed.yml
 
+- include_tasks: configure_users.yml
+  when: splunk.users | default({}, true) | length > 0
+
 - include_tasks: add_splunk_license.yml
 
 - include_tasks: disable_popups.yml
