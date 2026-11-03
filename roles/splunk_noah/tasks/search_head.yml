@@ -4,7 +4,11 @@
     that:
       - splunk.role == "splunk_search_head"
     fail_msg: >-
-      The Noah search-client configuration is only valid for a search-head role.
+      [SA-CFG-011] category=configuration stage=noah_search_head
+      field=SPLUNK_ROLE retryable=false
+      remediation="Assign this host the splunk_search_head role."
+      cause="The Noah search-client configuration is only valid for a
+      search-head role."
 
 - name: Configure the Noah search client
   ini_file:

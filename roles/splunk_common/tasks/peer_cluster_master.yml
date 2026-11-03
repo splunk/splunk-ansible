@@ -32,7 +32,7 @@
   ignore_errors: yes
   notify:
     - Restart the splunkd service
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 - name: Peer cluster master UDS
   command: "{{ splunk.exec }} edit cluster-config -mode searchhead -master_uri http+unix://{{ splunk.uds_socket_path_url }} -replication_port {{ splunk.idxc.replication_port }} -secret '{{ splunk.idxc.pass4SymmKey }}' -auth '{{ splunk.admin_user }}:{{ splunk.password }}'"
@@ -50,7 +50,7 @@
   ignore_errors: yes
   notify:
     - Restart the splunkd service
-  no_log: "{{ hide_password }}"
+  no_log: true
 
 - include_tasks: peer_aux_cluster_masters.yml
   when:

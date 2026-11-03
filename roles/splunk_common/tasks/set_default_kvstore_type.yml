@@ -3,7 +3,12 @@
   assert:
     that:
       - splunk.kvstore.default_kvstore_type in ["cohosted", "external", "local"]
-    fail_msg: "splunk.kvstore.default_kvstore_type must be 'cohosted', 'external', or 'local'"
+    fail_msg: >-
+      [SA-CFG-020] category=configuration stage=kvstore_setup
+      field=splunk.kvstore.default_kvstore_type retryable=false
+      remediation="Set splunk.kvstore.default_kvstore_type to one of: cohosted,
+      external, local."
+      cause="Invalid KV Store type."
 
 - name: Retrieve installed Splunk version for default KV Store type
   command: "{{ splunk.exec }} version --accept-license --answer-yes --no-prompt"
