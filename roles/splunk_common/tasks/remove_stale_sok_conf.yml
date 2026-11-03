@@ -9,6 +9,7 @@
   loop:
     - "{{ splunk.home }}/etc/apps/100-sok/local/outputs.conf"
     - "{{ splunk.home }}/etc/apps/100-sok/local/inputs.conf"
+    - "{{ splunk.home }}/etc/apps/100-sok/local/server.conf"
     - "{{ splunk.home }}/etc/apps/101-sok-secrets/local/inputs.conf"
     - "{{ splunk.home }}/etc/apps/101-sok-secrets/local/outputs.conf"
   become: yes

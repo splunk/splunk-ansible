@@ -108,11 +108,7 @@
 - include_tasks: set_kvservice_deployment.yml
 
 - include_tasks: set_default_kvstore_type.yml
-  when:
-    - "'kvstore' in splunk and 'default_kvstore_type' in splunk.kvstore"
-    - splunk.kvstore.default_kvstore_type is not none
-    - splunk.kvstore.default_kvstore_type | length > 0
-    - splunk.role != "splunk_universal_forwarder"
+  when: splunk.role != "splunk_universal_forwarder"
 
 - include_tasks: enable_splunkweb_ssl.yml
   when:
