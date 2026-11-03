@@ -909,46 +909,49 @@ def test_getDefaultKVStoreType(default_yml, os_env, result):
 def test_getKVServiceDeploymentConfig():
     vars_scope = {"splunk": {"kvstore": {}}}
     os_env = {
-        "SPLUNK_KVSERVICE_MODE": "installationScoped",
+        "KVSERVICE_CONNECTION_STRING": "https://kvservice.example.com:8066",
         "SPLUNK_SCS_TENANT": "tenant1",
-        "SPLUNK_SCS_ENVIRONMENT": "kvservice.example.com:443",
     }
     with patch("os.environ", new=os_env):
         environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"]["kvstore"]["kvservice_mode"] == "installationScoped"
+    assert vars_scope["splunk"]["kvstore"]["kvservice_connection_string"] == "https://kvservice.example.com:8066"
     assert vars_scope["splunk"]["scs"] == {
         "tenant": "tenant1",
-        "environment": "kvservice.example.com:443",
     }
 
 
-def test_getKVServiceDeploymentConfig_platform_scoped():
+def test_getKVServiceDeploymentConfig_cloud_environment():
     vars_scope = {"splunk": {"kvstore": {}}}
-    with patch("os.environ", new={"SPLUNK_KVSERVICE_MODE": "platformScoped"}):
+    with patch("os.environ", new={"SPLUNK_SCS_ENVIRONMENT": "production"}):
         environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"]["kvstore"]["kvservice_mode"] == "platformScoped"
-    assert "scs" not in vars_scope["splunk"]
+    assert vars_scope["splunk"]["kvstore"] == {}
+    assert vars_scope["splunk"]["scs"] == {"environment": "production"}
 
 
 @pytest.mark.parametrize(
-    ("legacy_mode", "expected_mode"),
-    [("singleCustomer", "installationScoped"), ("multiCustomer", "platformScoped")],
+    ("configured", "env_value", "expected"),
+    [
+        ("https://configured:8066", None, "https://configured:8066"),
+        ("https://configured:8066", "http://override:8066", "http://override:8066"),
+        ("https://configured:8066", "", ""),
+    ],
 )
-def test_getKVServiceDeploymentConfig_legacy_mode(legacy_mode, expected_mode):
-    vars_scope = {"splunk": {"kvstore": {}}}
-    with patch("os.environ", new={"SPLUNK_KVSERVICE_DEPLOYMENT_MODE": legacy_mode}):
+def test_getKVServiceDeploymentConfig_connection_precedence(configured, env_value, expected):
+    vars_scope = {"splunk": {"kvstore": {"kvservice_connection_string": configured}}}
+    os_env = {} if env_value is None else {"KVSERVICE_CONNECTION_STRING": env_value}
+    with patch("os.environ", new=os_env):
         environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"]["kvstore"]["kvservice_mode"] == expected_mode
+    assert vars_scope["splunk"]["kvstore"]["kvservice_connection_string"] == expected
 
 
-def test_getKVServiceDeploymentConfig_prefers_current_mode():
+def test_getKVServiceDeploymentConfig_ignores_removed_mode_flags():
     vars_scope = {"splunk": {"kvstore": {}}}
     with patch("os.environ", new={
         "SPLUNK_KVSERVICE_MODE": "platformScoped",
         "SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "singleCustomer",
     }):
         environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"]["kvstore"]["kvservice_mode"] == "platformScoped"
+    assert vars_scope["splunk"]["kvstore"] == {}
 
 
 def test_getKVServiceDeploymentConfig_local_without_mode():

@@ -418,6 +418,25 @@ splunk:
     * Determine the port used for Splunk Key-Value store
     * Default: 8191
 
+    kvservice_connection_string: <str>
+    * Optional HTTP or HTTPS URL written to [kvstore] kvserviceConnectionString.
+    * Requires [kvstore] defaultKVStoreType=external to select the backend.
+    * The tenant is configured separately with splunk.scs.tenant.
+    * When omitted, existing manual settings are preserved. A connection string
+      previously owned by this task is removed when it is no longer requested.
+    * Default: unset
+
+  scs:
+    tenant: <str>
+    * Tenant identifier for cloud or deployment KVService.
+    * Default: unset
+
+    environment: <str>
+    * Existing cloud SCS environment setting. Deployment KVService uses
+      kvstore.kvservice_connection_string instead; this setting remains supported
+      for cloud configurations.
+    * Default: unset
+
   launch: null
   * key::value pairs for environment variables that get written to ${SPLUNK_HOME}/etc/splunk-launch.conf
   * Default: null
