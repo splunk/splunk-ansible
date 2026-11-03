@@ -20,11 +20,13 @@
 
 - name: Set default KV Store type support fact
   set_fact:
-    kvstore_default_type_supported: "{{ kvstore_installed_splunk_version[0] is version('10.6.0', '>=') }}"
+    kvstore_default_type_supported: >-
+      {{ kvstore_installed_splunk_version[0] is version('10.6.0', '>=')
+         and kvstore_installed_splunk_version[0] is version('10.9.0', '<') }}
 
 - name: Skip default KV Store type for unsupported Splunk version
   debug:
-    msg: "Skipping splunk.kvstore.default_kvstore_type={{ splunk.kvstore.default_kvstore_type }} because it requires Splunk Enterprise 10.6.0 or later. Installed version is {{ kvstore_installed_splunk_version[0] | default('unknown') }}."
+    msg: "Skipping splunk.kvstore.default_kvstore_type={{ splunk.kvstore.default_kvstore_type }} because Ansible manages it only when 10.6.0 <= Splunk version < 10.9.0. Installed version is {{ kvstore_installed_splunk_version[0] | default('unknown') }}."
   when: not (kvstore_default_type_supported | default(false) | bool)
 
 - name: Set default KV Store type
@@ -42,7 +44,10 @@
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: kvstore
     option: "postgresMigrateOnStartup"
-    value: "{{ 'false' if splunk.kvstore.default_kvstore_type == 'local' else 'true' }}"
+    value: >-
+      {{ 'false' if kvstore_installed_splunk_version[0] is version('10.9.0', '<')
+         and splunk.kvstore.default_kvstore_type == 'local'
+         else 'true' }}
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  when: kvstore_default_type_supported | default(false) | bool
+  when: kvstore_installed_splunk_version[0] is version('10.6.0', '>=')
