@@ -260,6 +260,20 @@ splunk:
   * When set to true, the playbooks will always enforce that the admin password is set to the value of `password` above. Any changes to the admin password outside of splunk-ansible will be reverted.
   * Default: false
 
+  users: <dict>
+  * Additional splunkd users, keyed by username. Each entry is a mapping with:
+  *   password: <str> - the user's password, or a path to a file containing it. Required and must not be empty.
+  *   roles: <list> - at least one non-empty role. Roles are not created and must already exist (a default role, or one defined through Splunk config).
+  * Users are created, or have their password and roles updated, through the management API after splunkd has started and user-seed.conf has been removed. A user's roles are replaced, not added to, so changes made outside of splunk-ansible are reverted on the next run. Users removed from this mapping are not deleted.
+  * When several defaults files declare the same user, the last file's entry replaces the earlier one entirely; distinct users from every file are kept.
+  * Provisioning stops before splunkd starts if this is not a mapping, if a username matches admin_user (case-insensitively), or if an entry has an empty password or no roles. Passwords are redacted from inventory dumps.
+  * Example:
+  *   users:
+  *     internal_observability:
+  *       password: /mnt/splunk-secrets/observability-password
+  *       roles: [observability_role]
+  * Default: null
+
   user: <str>
   * Host user under which Splunk will run
   * Default: splunk

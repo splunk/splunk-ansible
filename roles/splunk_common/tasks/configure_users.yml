@@ -1,0 +1,56 @@
+---
+# Must run after splunkd has started and user-seed.conf is gone: creating a user
+# writes etc/passwd, and splunkd only seeds the admin user while that file is absent.
+- name: Look up declared Splunk users
+  splunk_api:
+    method: GET
+    url: "/services/authentication/users/{{ item | urlencode }}?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    svc_port: "{{ splunk.svc_port }}"
+    status_code: [200, 404]
+    timeout: 10
+  register: splunk_user_lookup
+  until: splunk_user_lookup is succeeded
+  retries: 5
+  delay: "{{ retry_delay }}"
+  loop: "{{ splunk.users | list }}"
+  no_log: "{{ hide_password }}"
+
+# Every expected splunkd status is accepted so the result carries it: a failed
+# splunk_api call puts the passwords into its message, which must never be shown.
+- name: Create or update declared Splunk users
+  splunk_api:
+    method: POST
+    url: "/services/authentication/users{{ '/' ~ (lookup.item | urlencode) if lookup.status == 200 else '' }}?output_mode=json"
+    cert_prefix: "{{ cert_prefix }}"
+    username: "{{ splunk.admin_user }}"
+    password: "{{ splunk.password }}"
+    svc_port: "{{ splunk.svc_port }}"
+    body: "{{ user_body if lookup.status == 200 else user_body | combine({'name': lookup.item, 'force-change-pass': 0}) }}"
+    body_format: "form-urlencoded"
+    status_code: [200, 201, 400, 401, 403, 404, 409, 500, 503]
+    timeout: 30
+  vars:
+    user_body:
+      password: "{{ splunk.users[lookup.item].password }}"
+      roles: "{{ splunk.users[lookup.item].roles }}"
+  register: splunk_user_apply
+  failed_when: false
+  loop: "{{ splunk_user_lookup.results }}"
+  loop_control:
+    loop_var: lookup
+    label: "{{ lookup.item }}"
+  no_log: true
+
+- name: Fail if a declared Splunk user could not be applied
+  fail:
+    msg: "Failed to apply Splunk users: {{ splunk_user_failures | trim }}"
+  vars:
+    splunk_user_failures: >-
+      {% for result in splunk_user_apply.results if result.status | default(0) not in [200, 201] -%}
+      '{{ result.lookup.item }}' (HTTP {{ result.status | default('no response') }}){% if result.json is defined and result.json.messages is defined %}:
+      {{ result.json.messages | map(attribute='text') | join('; ') | replace(splunk.users[result.lookup.item].password, '**************') }}{% endif %}{% if not loop.last %};{% endif %}
+      {% endfor %}
+  when: splunk_user_failures | default('', true) | trim | length > 0
