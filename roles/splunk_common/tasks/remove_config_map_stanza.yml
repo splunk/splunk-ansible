@@ -12,4 +12,10 @@
   with_dict: "{{ config_map_stanza_settings }}"
   loop_control:
     loop_var: config_map_stanza_setting
-  when: config_map_stanza_name and config_map_stanza_settings
+  when:
+    - config_map_stanza_name and config_map_stanza_settings
+    # Only prune options no longer present in the current desired stanza. Options that are
+    # still desired (even with a changed value) are left for set_config_stanza.yml's
+    # idempotent `ini_file state=present` to update in place -- removing them here first
+    # made every option look changed on every run, even when its value hadn't moved.
+    - config_map_stanza_setting.key not in (conf_stanzas[config_map_stanza_name] | default({}))
