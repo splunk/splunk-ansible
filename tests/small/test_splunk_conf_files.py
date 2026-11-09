@@ -192,22 +192,22 @@ def main_tasks():
 
 
 def writer_loop_items(splunk, splunk_conf_by_file=None):
-    """Render the set_config_file.yml loop expression from main.yml."""
-    task = next(t for t in main_tasks() if t.get("include_tasks") == "set_config_file.yml")
+    """Render the conf_entries passed to set_config_files.yml from main.yml."""
+    task = next(t for t in main_tasks() if t.get("include_tasks") == "set_config_files.yml")
     env = jinja2.Environment(undefined=jinja2.StrictUndefined)
     env.filters["dict2items"] = lambda d: [{"key": k, "value": v} for k, v in d.items()]
     env.tests["mapping"] = lambda value: isinstance(value, dict)
     context = {"splunk": splunk}
     if splunk_conf_by_file is not None:
         context["splunk_conf_by_file"] = splunk_conf_by_file
-    return ast.literal_eval(env.from_string(task["with_items"]).render(**context))
+    return ast.literal_eval(env.from_string(task["vars"]["conf_entries"]).render(**context))
 
 
 def test_combine_task_runs_before_the_writer_loop_for_list_form_only():
     tasks = main_tasks()
     names = [t.get("name") for t in tasks]
     combine_index = names.index("Combine list-form splunk.conf entries by effective file")
-    writer_index = next(i for i, t in enumerate(tasks) if t.get("include_tasks") == "set_config_file.yml")
+    writer_index = next(i for i, t in enumerate(tasks) if t.get("include_tasks") == "set_config_files.yml")
     noah_index = next(i for i, t in enumerate(tasks)
                       if t.get("include_role", {}).get("tasks_from") == "pre_auth")
     combine_task = tasks[combine_index]
