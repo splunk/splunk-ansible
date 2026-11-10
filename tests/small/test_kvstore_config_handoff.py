@@ -134,32 +134,47 @@ def test_new_policy_requires_explicit_input_and_runs_after_render(enabled):
 
 
 @pytest.mark.parametrize(
-    "release,enabled,backend,expected_backend,expected_migration",
+    "release,enabled,role,backend,expected_backend,expected_migration,indexer_external",
     [
-        ("10.6.0", True, "external", "local", "false"),
-        ("10.6.7.1", False, "external", "local", "false"),
-        ("10.9.0", False, "external", "local", "false"),
-        ("10.9.0", True, "local", "local", "true"),
-        ("10.9.0", True, "external", "external", "true"),
-        ("10.9.0", True, None, None, "true"),
-        ("10.10.0", True, "external", "external", "true"),
-        ("10.7.0", True, "external", "external", "false"),
-        ("10.8.9", False, "external", "external", "false"),
+        ("10.6.0", True, "splunk_standalone", "external", "local", "false", False),
+        ("10.6.7.1", False, "splunk_standalone", "external", "local", "false", False),
+        ("10.9.0", False, "splunk_standalone", "external", "local", "false", False),
+        ("10.9.0", True, "splunk_standalone", "local", "local", "true", False),
+        ("10.9.0", True, "splunk_standalone", "external", "external", "true", False),
+        ("10.9.0", True, "splunk_standalone", None, None, "true", False),
+        ("10.10.0", True, "splunk_standalone", "external", "external", "true", False),
+        ("10.7.0", True, "splunk_standalone", "external", "external", "false", False),
+        ("10.8.9", False, "splunk_standalone", "external", "external", "false", False),
+        ("10.6.0", True, "splunk_indexer", "external", "local", "false", False),
+        ("10.6.7.1", False, "splunk_indexer", "external", "local", "false", False),
+        ("10.8.9", True, "splunk_indexer", "local", "local", "false", False),
+        ("10.9.0", False, "splunk_indexer", "external", "local", "false", False),
+        ("10.9.0", True, "splunk_indexer", "local", "external", "true", True),
+        ("10.9.0.0", True, "splunk_indexer", None, "external", "true", True),
+        ("10.10.0", True, "splunk_indexer", "external", "external", "true", True),
+        ("11.0.0", True, "splunk_indexer", "external", "external", "true", True),
+        ("10.9.0", True, "splunk_search_head", "local", "local", "true", False),
+        ("10.9.0", True, "splunk_search_head_captain", "local", "local", "true", False),
+        ("10.9.0", True, "splunk_cluster_master", "local", "local", "true", False),
+        ("10.9.0", True, "splunk_deployer", "local", "local", "true", False),
     ],
 )
 def test_actual_explicit_policy_tasks(
-    tmp_path, release, enabled, backend, expected_backend, expected_migration
+    tmp_path, release, enabled, role, backend, expected_backend, expected_migration,
+    indexer_external,
 ):
     home = tmp_path / "splunk"
     local = home / "etc/system/local"
     local.mkdir(parents=True)
     server_conf = local / "server.conf"
     (home / "etc/splunk.version").write_text("VERSION=%s\nBUILD=test\n" % release)
-    contents = "[kvstore]\npostgresMigrateOnStartup = false\n"
+    contents = ("[kvstore]\npostgresMigrateOnStartup = false\ndisabled = false\n"
+                "forceLocalForInternalCollections = true\nshutDownMongo = false\n")
     if backend is not None:
         contents += "defaultKVStoreType = %s\n" % backend
     server_conf.write_text(contents)
     variables = _variables(home)
+    variables["splunk"]["role"] = role
     variables["splunk_kvservice_enabled"] = enabled
     _run_tasks(tmp_path, variables, [
         _main_include("set_default_kvstore_type.yml"),
@@ -169,10 +184,14 @@ def test_actual_explicit_policy_tasks(
     conf.read(server_conf)
     assert conf["kvstore"].get("defaultKVStoreType") == expected_backend
     assert conf["kvstore"]["postgresMigrateOnStartup"] == expected_migration
+    assert conf["kvstore"]["disabled"] == ("true" if indexer_external else "false")
+    assert conf["kvstore"]["forceLocalForInternalCollections"] == ("false" if indexer_external else "true")
+    assert conf["kvstore"]["shutDownMongo"] == ("true" if indexer_external else "false")
 
 
 @pytest.mark.parametrize("requested_type", ["cohosted", "external"])
-def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, requested_type):
+@pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
+def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, requested_type, role):
     home = tmp_path / "splunk"
     local = home / "etc/system/local"
     local.mkdir(parents=True)
@@ -180,6 +199,7 @@ def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, req
     fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk 10.6.0 (test)'\n")
     fake_cli.chmod(0o755)
     variables = _variables(home)
+    variables["splunk"]["role"] = role
     variables["splunk"]["exec"] = str(fake_cli)
     variables["splunk"]["kvstore"]["default_kvstore_type"] = requested_type
     # No splunk.version file: entering the new policy would fail this legacy test.
@@ -191,6 +211,8 @@ def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, req
     conf.read(local / "server.conf")
     assert conf["kvstore"]["defaultKVStoreType"] == requested_type
     assert conf["kvstore"]["postgresMigrateOnStartup"] == "true"
+    for option in ("disabled", "forceLocalForInternalCollections", "shutDownMongo"):
+        assert option not in conf["kvstore"]
 
 
 @pytest.mark.parametrize("saved_backend", ["local", "external"])
