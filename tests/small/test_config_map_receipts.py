@@ -108,8 +108,8 @@ def test_removal_loop_uses_only_dropped_options_from_this_files_receipt():
 
 
 def test_targets_with_no_desired_settings_are_still_reconciled():
+    reconcile = named_task(load_tasks("set_config_files.yml"), "Remove stale ConfigMap-owned values")
     tasks = load_tasks("set_config_file.yml")
-    reconcile = named_task(tasks, "Remove stale ConfigMap-owned values")
     record = named_task(tasks, "Record ConfigMap-owned values")
     forget = named_task(tasks, "Remove ConfigMap ownership record")
 

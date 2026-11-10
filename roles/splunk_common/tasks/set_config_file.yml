@@ -7,19 +7,28 @@
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Remove stale ConfigMap-owned values from {{ conf_file }}
-  include_tasks: reconcile_config_map_values.yml
-  when: reconcile_config_map_values | default(false) | bool
-  no_log: "{{ hide_password }}"
-
 - include_tasks: set_config_stanza.yml
   vars:
     stanza_name: "{{ stanza.key }}"
     stanza_settings: "{{ stanza.value | default({}) }}"
-  with_dict: "{{ conf_stanzas }}"
+  with_dict: "{{ conf_write_stanzas | default(conf_stanzas) }}"
   loop_control:
     loop_var: stanza
   no_log: "{{ hide_password }}"
+
+# ini_file sets these on every option it writes, so set them when options were skipped.
+- name: Set owner, group and mode of {{ conf_file }}
+  file:
+    path: "{{ conf_directory }}/{{ conf_file }}"
+    state: file
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+    mode: '0660'
+  when:
+    - conf_set_attributes | default(false) | bool
+    - conf_stanzas | default({}, true) | length > 0
+  become: yes
+  become_user: "{{ splunk.user }}"
 
 - name: Record ConfigMap-owned values in {{ conf_file }}
   copy:

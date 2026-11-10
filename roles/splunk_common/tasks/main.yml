@@ -142,13 +142,10 @@
     - splunk.conf is not mapping
   no_log: "{{ hide_password }}"
 
-- include_tasks: set_config_file.yml
+- include_tasks: set_config_files.yml
   vars:
-    conf_file: "{{ item.key }}.conf"
-    conf_directory: "{{ item.value.directory | default(splunk.home + '/etc/system/local', true) }}"
-    conf_stanzas: "{{ item.value.content | default({}) }}"
+    conf_entries: "{% set effective_conf = splunk.conf if splunk.conf is mapping else splunk_conf_by_file | default(splunk.conf) %}{% if effective_conf is mapping %}{{ effective_conf | dict2items }}{% else %}{{ effective_conf }}{% endif %}"
     reconcile_config_map_values: true
-  with_items: "{% set effective_conf = splunk.conf if splunk.conf is mapping else splunk_conf_by_file | default(splunk.conf) %}{% if effective_conf is mapping %}{{ effective_conf | dict2items }}{% else %}{{ effective_conf }}{% endif %}"
   when: "'conf' in splunk and splunk.conf"
   no_log: "{{ hide_password }}"
 

@@ -35,9 +35,9 @@ REPO_DIR = os.path.realpath(
     os.environ.get("SPLUNK_ANSIBLE_ROOT") or os.path.join(FILE_DIR, "..", "..")
 )
 TASKS_DIR = os.path.join(REPO_DIR, "roles", "splunk_common", "tasks")
-FILTER_PLUGINS_DIR = os.path.join(REPO_DIR, "roles", "splunk_common", "filter_plugins")
 HASH_BEHAVIOURS = ("merge", "replace")
 REMOVAL_TASK_PREFIX = "Remove ConfigMap-owned options"
+WRITE_TASK_PREFIX = "Set options in"
 RECEIPT = ".{}.conf.splunk-ansible-managed.yml"
 
 
@@ -51,13 +51,13 @@ def find_ansible_playbook():
 ANSIBLE_PLAYBOOK = find_ansible_playbook()
 
 
-def conf_writer_tasks():
+def conf_writer_tasks(tasks_dir=TASKS_DIR):
     """Return the splunk.conf writer tasks from main.yml, with absolute include paths."""
-    with open(os.path.join(TASKS_DIR, "main.yml")) as stream:
+    with open(os.path.join(tasks_dir, "main.yml")) as stream:
         main_tasks = yaml.safe_load(stream)
     index = next(
         i for i, task in enumerate(main_tasks)
-        if task.get("include_tasks") == "set_config_file.yml"
+        if task.get("include_tasks") in ("set_config_file.yml", "set_config_files.yml")
     )
     selected = [main_tasks[index]]
     # Any splunk.conf preparation directly before the writer loop runs too.
@@ -68,11 +68,11 @@ def conf_writer_tasks():
     selected = copy.deepcopy(selected)
     for task in selected:
         if "include_tasks" in task:
-            task["include_tasks"] = os.path.join(TASKS_DIR, task["include_tasks"])
+            task["include_tasks"] = os.path.join(tasks_dir, task["include_tasks"])
     return selected
 
 
-def build_playbook(splunk_home, conf):
+def build_playbook(splunk_home, conf, tasks_dir=TASKS_DIR):
     user = pwd.getpwuid(os.getuid()).pw_name
     group = grp.getgrgid(os.getgid()).gr_name
     return [{
@@ -86,15 +86,20 @@ def build_playbook(splunk_home, conf):
             "hide_password": False,
             "splunk": {"user": user, "group": group, "home": splunk_home, "conf": conf},
         },
-        "tasks": [{"include_tasks": os.path.join(TASKS_DIR, "remove_stale_sok_conf.yml")}]
-        + conf_writer_tasks(),
+        "tasks": [{"include_tasks": os.path.join(tasks_dir, "remove_stale_sok_conf.yml")}]
+        + conf_writer_tasks(tasks_dir),
     }]
 
 
-def run_playbook(workdir, splunk_home, conf, hash_behaviour):
+def run_playbook(workdir, splunk_home, conf, hash_behaviour, library_dir=None, check=False, repo_dir=REPO_DIR):
+    """Run the writer tasks from repo_dir and return the ansible.posix.json report."""
+    role_dir = os.path.join(repo_dir, "roles", "splunk_common")
     playbook = os.path.join(workdir, "site.yml")
     with open(playbook, "w") as stream:
-        yaml.safe_dump(build_playbook(splunk_home, conf), stream, default_flow_style=False)
+        yaml.safe_dump(
+            build_playbook(splunk_home, conf, os.path.join(role_dir, "tasks")),
+            stream, default_flow_style=False,
+        )
     config = os.path.join(workdir, "ansible.cfg")
     with open(config, "w") as stream:
         stream.write("[defaults]\nretry_files_enabled = False\nlocalhost_warning = False\n")
@@ -103,26 +108,27 @@ def run_playbook(workdir, splunk_home, conf, hash_behaviour):
         "ANSIBLE_CONFIG": config,
         "ANSIBLE_HASH_BEHAVIOUR": hash_behaviour,
         "ANSIBLE_STDOUT_CALLBACK": "ansible.posix.json",
-        "ANSIBLE_FILTER_PLUGINS": FILTER_PLUGINS_DIR,
+        "ANSIBLE_FILTER_PLUGINS": os.path.join(role_dir, "filter_plugins"),
+        "ANSIBLE_LIBRARY": library_dir or os.path.join(role_dir, "library"),
         "ANSIBLE_LOCAL_TEMP": os.path.join(workdir, "tmp"),
         "ANSIBLE_NOCOLOR": "1",
     })
     proc = subprocess.run(
-        [ANSIBLE_PLAYBOOK, "-i", "localhost,", playbook],
+        [ANSIBLE_PLAYBOOK, "-i", "localhost,", playbook] + (["--check"] if check else []),
         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         env=env, universal_newlines=True, check=False,
     )
     if proc.returncode != 0:
         raise AssertionError("ansible-playbook failed:\n{}\n{}".format(proc.stdout[-4000:], proc.stderr[-4000:]))
-    return removal_counts(json.loads(proc.stdout))
+    return json.loads(proc.stdout)
 
 
-def removal_counts(report):
-    """Count executed removal tasks (one per stanza) and option removals (loop items)."""
+def removal_counts(report, prefix=REMOVAL_TASK_PREFIX):
+    """Count executed tasks named prefix* (one per stanza) and their executed loop items."""
     tasks = items = 0
     for play in report["plays"]:
         for task in play["tasks"]:
-            if not task["task"]["name"].startswith(REMOVAL_TASK_PREFIX):
+            if not task["task"]["name"].startswith(prefix):
                 continue
             result = task["hosts"].get("localhost", {})
             results = result.get("results")
@@ -304,11 +310,14 @@ def run_scenario(name, hash_behaviour):
             scenario["seed"](home)
         run1 = scenario["run1"](home)
         run2 = scenario.get("run2", scenario["run1"])(home)
-        result = {"run1": run_playbook(workdir, home, run1, hash_behaviour)}
+        report = run_playbook(workdir, home, run1, hash_behaviour)
+        result = {"run1": removal_counts(report), "run1_writes": removal_counts(report, WRITE_TASK_PREFIX)}
         result["after_run1"] = {f: read_conf(os.path.join(home, f)) for f in scenario["report"]}
         if scenario.get("between"):
             scenario["between"](home)
-        result["run2"] = run_playbook(workdir, home, run2, hash_behaviour)
+        report = run_playbook(workdir, home, run2, hash_behaviour)
+        result["run2"] = removal_counts(report)
+        result["run2_writes"] = removal_counts(report, WRITE_TASK_PREFIX)
         result["after_run2"] = {f: read_conf(os.path.join(home, f)) for f in scenario["report"]}
         result["receipts"] = sorted(
             os.path.relpath(os.path.join(root, f), home)
@@ -338,6 +347,7 @@ def expected_six_files():
 def test_restart_with_unchanged_config_removes_nothing(name, hash_behaviour):
     result = run_scenario(name, hash_behaviour)
     assert result["run2"] == {"tasks": 0, "options": 0}
+    assert result["run2_writes"] == {"tasks": 0, "options": 0}
     assert result["after_run1"] == expected_six_files()
     assert result["after_run2"] == expected_six_files()
 
