@@ -4,19 +4,24 @@
     that:
       - splunk.kvstore.default_kvstore_type in ["cohosted", "external", "local"]
     fail_msg: "splunk.kvstore.default_kvstore_type must be 'cohosted', 'external', or 'local'"
+  when:
+    - splunk.kvstore.default_kvstore_type | default(none) is not none
+    - splunk.kvstore.default_kvstore_type | default('') | length > 0
 
-- name: Retrieve installed Splunk version for default KV Store type
-  command: "{{ splunk.exec }} version --accept-license --answer-yes --no-prompt"
-  register: kvstore_installed_splunk_version_cmd
+- name: Read installed Splunk version without invoking first-time-run
+  slurp:
+    src: "{{ splunk.home }}/etc/splunk.version"
+  register: kvstore_installed_splunk_version_file
   become: yes
   become_user: "{{ splunk.user }}"
-  changed_when: false
+  when: kvstore_installed_splunk_version is not defined
 
 - name: Set installed Splunk version fact for default KV Store type
   set_fact:
-    kvstore_installed_splunk_version: "{{ kvstore_installed_splunk_version_cmd.stdout | regex_search(regexp, '\\1') | default(['0'], true) }}"
+    kvstore_installed_splunk_version: "{{ kvstore_installed_splunk_version_file.content | b64decode | regex_findall(regexp) | default(['0'], true) }}"
   vars:
-    regexp: 'Splunk(?:\sUniversal\sForwarder)?\s((\d+)\.(\d+)\.(\d+)(?:\.\d+)?).*'
+    regexp: '(?m)^VERSION=([0-9]+(?:\.[0-9]+){2,3})'
+  when: kvstore_installed_splunk_version is not defined
 
 - name: Set default KV Store type support fact
   set_fact:
@@ -26,28 +31,25 @@
 
 - name: Skip default KV Store type for unsupported Splunk version
   debug:
-    msg: "Skipping splunk.kvstore.default_kvstore_type={{ splunk.kvstore.default_kvstore_type }} because Ansible manages it only when 10.6.0 <= Splunk version < 10.9.0. Installed version is {{ kvstore_installed_splunk_version[0] | default('unknown') }}."
+    msg: "Ansible enforces local KV Store only when 10.6.0 <= Splunk version < 10.9.0. Installed version is {{ kvstore_installed_splunk_version[0] | default('unknown') }}."
   when: not (kvstore_default_type_supported | default(false) | bool)
 
-- name: Set default KV Store type
+- name: Keep pre-10.9 KV Store local
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: kvstore
     option: "defaultKVStoreType"
-    value: "{{ splunk.kvstore.default_kvstore_type }}"
+    value: "local"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when: kvstore_default_type_supported | default(false) | bool
 
-- name: Set Postgres migrate on startup for default KV Store type
+- name: Disable pre-10.9 Postgres migration on startup
   ini_file:
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: kvstore
     option: "postgresMigrateOnStartup"
-    value: >-
-      {{ 'false' if kvstore_installed_splunk_version[0] is version('10.9.0', '<')
-         and splunk.kvstore.default_kvstore_type == 'local'
-         else 'true' }}
+    value: "false"
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
-  when: kvstore_installed_splunk_version[0] is version('10.6.0', '>=')
+  when: kvstore_default_type_supported | default(false) | bool
