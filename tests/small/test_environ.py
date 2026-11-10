@@ -906,6 +906,31 @@ def test_getDefaultKVStoreType(default_yml, os_env, result):
             environ.getDefaultKVStoreType(vars_scope)
     assert vars_scope["splunk"]["kvstore"] == result
 
+
+@pytest.mark.parametrize("value,expected", [
+    ("true", True), ("TRUE", True), (" false ", False), ("FALSE", False),
+])
+def test_getKVServiceEnabled_preserves_explicit_boolean(value, expected):
+    variables = {"splunk": {}}
+    with patch("os.environ", new={"SPLUNK_KVSERVICE_ENABLED": value}):
+        environ.getKVServiceEnabled(variables)
+    assert variables["splunk_kvservice_enabled"] is expected
+
+
+def test_getKVServiceEnabled_omits_policy_when_environment_is_unset():
+    variables = {"splunk": {"kvstore": {"default_kvstore_type": "external"}}}
+    with patch("os.environ", new={}):
+        environ.getKVServiceEnabled(variables)
+    assert "splunk_kvservice_enabled" not in variables
+
+
+@pytest.mark.parametrize("value", ["", "yes", "1", "disabled", "sometimes"])
+def test_getKVServiceEnabled_rejects_invalid_value(value):
+    with patch("os.environ", new={"SPLUNK_KVSERVICE_ENABLED": value}):
+        with pytest.raises(ValueError, match="must be either 'true' or 'false'"):
+            environ.getKVServiceEnabled({"splunk": {}})
+
+
 def test_getKVServiceDeploymentConfig():
     vars_scope = {"splunk": {"kvstore": {}}}
     os_env = {

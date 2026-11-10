@@ -9,23 +9,23 @@
 - name: Load previous ConfigMap-owned values in {{ conf_file }}
   include_vars:
     file: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
-    name: loaded_config_map_stanzas
-  register: loaded_config_map_values
+    name: previous_config_map_stanzas
   when: config_map_managed_values_file.stat.exists
   no_log: "{{ hide_password }}"
 
-- name: Refresh previous ConfigMap-owned values in {{ conf_file }}
+- name: Initialize previous ConfigMap-owned values in {{ conf_file }}
   set_fact:
-    previous_config_map_stanzas: "{{ loaded_config_map_values.ansible_facts.loaded_config_map_stanzas if config_map_managed_values_file.stat.exists else {} }}"
+    previous_config_map_stanzas: {}
+  when: not config_map_managed_values_file.stat.exists
 
 - name: Remove previous ConfigMap-owned values from {{ conf_file }}
   include_tasks: remove_config_map_stanza.yml
   vars:
     config_map_stanza_name: "{{ previous_stanza.key }}"
     config_map_stanza_settings: "{{ previous_stanza.value | default({}) }}"
-    # Splunk owns the backend after KVService is enabled, including cutover.
     config_map_preserve_kvstore_backend: >-
-      {{ conf_file == 'server.conf'
+      {{ splunk_kvservice_enabled | default(false) | bool
+         and conf_file == 'server.conf'
          and (conf_directory | regex_replace('/+$', '')) ==
              ((splunk.home + '/etc/system/local') | regex_replace('/+$', ''))
          and (conf_stanzas.get('kvstore') or {}).get('kvserviceConnectionString', '')

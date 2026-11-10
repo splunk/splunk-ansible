@@ -87,10 +87,11 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNKD_SSL_CA | Path to custom CA certificate used for Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNKD_SSL_PASSWORD | Custom SSL password used with Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNK_KVSTORE_PORT | Port to run Splunk KVStore. Default: `8191` | no | no | no |
+| SPLUNK_KVSERVICE_ENABLED | Explicitly selects the operator KV Store startup policy. Set to `true` or `false`; leaving it unset preserves the existing Ansible default-type behavior. Splunk 10.6.x uses `local`/`false` for either value. On 10.9+, `false` uses `local`/`false`, while `true` sets `postgresMigrateOnStartup=true` and preserves the saved backend. The policy does not change settings on other release lines. | no | no | no |
 | SPLUNK_KVSERVICE_SCOPE | Sets `[kvstore] kvserviceScope` to `deployment` or `platform`. Overrides `splunk.kvstore.kvservice_scope` in defaults. | no | no | no |
 | SPLUNK_SCS_TENANT | Sets `[scs] tenant` for external KVService. Overrides `splunk.scs.tenant` in defaults. | no | no | no |
 | SPLUNK_SCS_ENVIRONMENT | Sets `[scs] environment` for external KVService. Overrides `splunk.scs.environment` in defaults. | no | no | no |
-| SPLUNK_KVSTORE_DEFAULT_TYPE | Legacy default-type input. Allowed values are `cohosted`, `external`, and `local`. For Splunk Enterprise versions 10.6.0 <= version < 10.9.0, Ansible enforces `defaultKVStoreType=local` and `postgresMigrateOnStartup=false` regardless of this input, including when it is absent. The installed release is read from `etc/splunk.version` without executing a Splunk CLI command. Desired configuration is rendered before early CLI calls can consume first-time-run; the compatibility policy runs after each render. Starting with 10.9.0, the version policy writes neither setting: SOK supplies `local`/`false` when KVService is disabled, and Splunk owns enabled KVService initialization and migration. During ownership handoff, Ansible preserves the saved backend when the desired system/local configuration provides a KVService connection string and omits `defaultKVStoreType`. Versions earlier than 10.6.0 skip both settings. | no | no | no |
+| SPLUNK_KVSTORE_DEFAULT_TYPE | Requests `[kvstore] defaultKVStoreType` in `server.conf` when explicitly set and `SPLUNK_KVSERVICE_ENABLED` is unset. Allowed values are `cohosted`, `external`, and `local`. For Splunk Enterprise versions 10.6.0 <= version < 10.9.0, Ansible writes the requested type and `postgresMigrateOnStartup=false` for `local` or `true` for `cohosted` and `external`. Starting with 10.9.0, Ansible preserves the saved type and writes `postgresMigrateOnStartup=true` when a default type is configured, replacing a previously saved `false` value. Versions earlier than 10.6.0 skip both settings. | no | no | no |
 | SPLUNK_APPSERVER_PORT | Port to run Splunk appserver. Default: `8065` | no | no | no |
 | SPLUNK_SET_SEARCH_PEERS | Boolean to configure whether search heads should connect to search peers. Default: `True`. Not recommended to change | no | no | no |
 | SPLUNK_SITE | For multisite topologies, define the site of this particular Splunk Enterprise instance | no | no | no |
@@ -154,6 +155,17 @@ to both classic and Noah deployments. The later SHC commands still form and
 verify the cluster, but they do not request duplicate restarts when the
 effective pre-start configuration already matches. If splunkd is already
 running, Ansible keeps the established live-configuration and restart path.
+
+The explicit `SPLUNK_KVSERVICE_ENABLED` policy runs after normal configuration
+rendering and reads the installed release from `etc/splunk.version`. With `true`,
+cleanup preserves `defaultKVStoreType` only when the desired system/local
+`server.conf` entry contains a KVService connection string and omits that backend
+key. The new ownership metadata then leaves the backend to Splunk. An unset flag
+retains legacy cleanup and default-type handling, including cohosted deployments.
+This policy does not select the initial backend for an enabled installation or
+change `migration.py`. Fresh backend initialization still depends on native
+first-time-run seeing the connection string; moving configuration ahead of early
+CLI calls is deferred.
 
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 

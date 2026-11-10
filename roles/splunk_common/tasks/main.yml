@@ -55,30 +55,6 @@
 # This needs to be done before any encrypted passkeys are generated, and before first call to splunk status
 - include_tasks: set_splunk_secret.yml
 
-# Status and version commands can perform first-time-run configuration migration.
-- name: Normalize Noah server configuration before the first Splunk CLI call
-  include_role:
-    name: splunk_noah
-    tasks_from: normalize_conf
-  when:
-    - splunk_noah_enabled | default(false) | bool
-    - "'conf' in splunk and splunk.conf and splunk.conf is not mapping"
-
-- name: Render desired configuration before the first Splunk CLI call
-  include_tasks: set_config_file.yml
-  vars:
-    conf_file: "{{ item.key }}.conf"
-    conf_directory: "{{ item.value.directory | default(splunk.home + '/etc/system/local', true) }}"
-    conf_stanzas: "{{ item.value.content | default({}) }}"
-    reconcile_config_map_values: true
-  with_items: "{% set effective_conf = splunk_conf_effective | default(splunk.conf) %}{% if effective_conf is mapping %}{{ effective_conf | dict2items }}{% else %}{{ effective_conf }}{% endif %}"
-  when: "'conf' in splunk and splunk.conf"
-  no_log: "{{ hide_password }}"
-
-# Protect temporary authentication and user-supplied pre-start commands too.
-- include_tasks: set_default_kvstore_type.yml
-  when: splunk.role != "splunk_universal_forwarder"
-
 - include_tasks: set_general_symmkey_password.yml
   when: "'pass4SymmKey' in splunk and splunk.pass4SymmKey"
 
@@ -131,6 +107,14 @@
 
 - include_tasks: set_kvservice_deployment.yml
 
+- include_tasks: set_default_kvstore_type.yml
+  when:
+    - splunk_kvservice_enabled is not defined
+    - "'kvstore' in splunk and 'default_kvstore_type' in splunk.kvstore"
+    - splunk.kvstore.default_kvstore_type is not none
+    - splunk.kvstore.default_kvstore_type | length > 0
+    - splunk.role != "splunk_universal_forwarder"
+
 - include_tasks: enable_splunkweb_ssl.yml
   when:
     - "'http_enableSSL' in splunk and splunk.http_enableSSL is not none"
@@ -157,9 +141,11 @@
   when: "'conf' in splunk and splunk.conf"
   no_log: "{{ hide_password }}"
 
-# Generic defaults can contain values from an older operator.
-- include_tasks: set_default_kvstore_type.yml
-  when: splunk.role != "splunk_universal_forwarder"
+- name: Apply the explicitly selected KVService startup policy
+  include_tasks: set_kvservice_startup_policy.yml
+  when:
+    - splunk_kvservice_enabled is defined
+    - splunk.role != "splunk_universal_forwarder"
 
 - name: Configure the Noah client role before full splunkd startup
   include_role:

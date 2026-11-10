@@ -182,6 +182,7 @@ def getDefaultVars():
     getDSP(defaultVars)
     getIPv6(defaultVars)
     getDefaultKVStoreType(defaultVars)
+    getKVServiceEnabled(defaultVars)
     getKVServiceDeploymentConfig(defaultVars)
     getNodeSidecarPostgres(defaultVars)
     return defaultVars
@@ -960,6 +961,17 @@ def getDefaultKVStoreType(vars_scope):
     default_kvstore_type = val.lower()
     vars_scope["splunk"].setdefault("kvstore", {})
     vars_scope["splunk"]["kvstore"]["default_kvstore_type"] = default_kvstore_type
+
+def getKVServiceEnabled(vars_scope):
+    """Select the operator KV Store policy only with an explicit environment input."""
+    value = os.environ.get("SPLUNK_KVSERVICE_ENABLED")
+    if value is None:
+        return
+    normalized = str(value).strip().lower()
+    if normalized not in ("true", "false"):
+        raise ValueError("SPLUNK_KVSERVICE_ENABLED must be either 'true' or 'false'")
+    vars_scope["splunk_kvservice_enabled"] = normalized == "true"
+
 
 def getKVServiceDeploymentConfig(vars_scope):
     kvstore = vars_scope["splunk"].setdefault("kvstore", {})

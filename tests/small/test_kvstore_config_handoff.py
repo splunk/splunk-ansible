@@ -1,4 +1,4 @@
-"""KVService configuration ownership and version-policy task coverage."""
+"""Explicit KVService policy, legacy isolation, and backend handoff coverage."""
 
 import configparser
 import getpass
@@ -40,8 +40,37 @@ def _run_tasks(tmp_path, variables, tasks):
     assert result.returncode == 0, result.stdout
 
 
+def _include(task_file, **extra):
+    return {"include_tasks": str(TASK_DIR / task_file), **extra}
+
+
+def _main_include(task_file):
+    tasks = yaml.safe_load((TASK_DIR / "main.yml").read_text())
+    task = next(task for task in tasks if task.get("include_tasks") == task_file)
+    task["include_tasks"] = str(TASK_DIR / task_file)
+    return task
+
+
+def _variables(home):
+    return {
+        "splunk": {"home": str(home), "exec": "/must-not-call-splunk-cli",
+                   "role": "splunk_standalone", "user": getpass.getuser(),
+                   "group": str(os.getgid()), "kvstore": {"default_kvstore_type": "external"}},
+        "hide_password": False,
+        "ansible_python_interpreter": sys.executable,
+    }
+
+
+def _condition(loader, task, variables):
+    condition = Conditional(loader=loader)
+    when = task["when"]
+    condition.when = when if isinstance(when, list) else [when]
+    return condition.evaluate_conditional(Templar(loader=loader, variables=variables), variables)
+
+
+@pytest.mark.parametrize("enabled", [None, False, True])
 @pytest.mark.parametrize(
-    "directory,conf_file,desired,preserve",
+    "directory,conf_file,desired,enabled_handoff",
     [
         ("/opt/splunk/etc/system/local", "server.conf",
          {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
@@ -62,156 +91,136 @@ def _run_tasks(tmp_path, variables, tasks):
         ("/opt/splunk/etc/system/local", "server.conf", {"kvstore": None}, False),
     ],
 )
-def test_only_enabled_system_local_handoff_preserves_backend(
-    directory, conf_file, desired, preserve
+def test_only_explicit_enabled_system_local_handoff_preserves_backend(
+    enabled, directory, conf_file, desired, enabled_handoff
 ):
     loader = DataLoader()
     reconcile = loader.load_from_file(str(TASK_DIR / "reconcile_config_map_values.yml"))[-1]
     remove = loader.load_from_file(str(TASK_DIR / "remove_config_map_stanza.yml"))[0]
-    variables = {
-        "conf_directory": directory,
-        "conf_file": conf_file,
-        "conf_stanzas": desired,
-        "splunk": {"home": "/opt/splunk"},
-    }
+    variables = {"conf_directory": directory, "conf_file": conf_file,
+                 "conf_stanzas": desired, "splunk": {"home": "/opt/splunk"}}
+    if enabled is not None:
+        variables["splunk_kvservice_enabled"] = enabled
+    preserve = enabled is True and enabled_handoff
     variables["config_map_preserve_kvstore_backend"] = Templar(
         loader=loader, variables=variables
     ).template(reconcile["vars"]["config_map_preserve_kvstore_backend"])
     assert variables["config_map_preserve_kvstore_backend"] is preserve
-
-    for stanza, option in [
-        ("kvstore", "defaultKVStoreType"),
-        ("kvstore", "kvserviceConnectionString"),
-        ("kvstore", "postgresMigrateOnStartup"),
-        ("general", "defaultKVStoreType"),
-    ]:
-        variables.update({
-            "config_map_stanza_name": stanza,
-            "config_map_stanza_settings": {option: "previous"},
-            "config_map_stanza_setting": {"key": option, "value": "previous"},
-        })
-        condition = Conditional(loader=loader)
-        condition.when = remove["when"]
-        should_remove = condition.evaluate_conditional(
-            Templar(loader=loader, variables=variables), variables
-        )
-        assert should_remove is not (
+    for stanza, option in [("kvstore", "defaultKVStoreType"),
+                           ("kvstore", "kvserviceConnectionString"),
+                           ("kvstore", "postgresMigrateOnStartup"),
+                           ("general", "defaultKVStoreType")]:
+        variables.update({"config_map_stanza_name": stanza,
+                          "config_map_stanza_settings": {option: "previous"},
+                          "config_map_stanza_setting": {"key": option, "value": "previous"}})
+        assert _condition(loader, remove, variables) is not (
             preserve and stanza == "kvstore" and option == "defaultKVStoreType"
         )
 
 
-@pytest.mark.parametrize("saved_backend", ["local", "external"])
-def test_actual_tasks_preserve_cutover_and_enforce_old_image_policy(tmp_path, saved_backend):
-    """Exercise real ini_file writes, cleanup, and managed metadata locally."""
+@pytest.mark.parametrize("enabled", [None, False, True])
+def test_new_policy_requires_explicit_input_and_runs_after_render(enabled):
+    loader = DataLoader()
+    tasks = loader.load_from_file(str(TASK_DIR / "main.yml"))
+    policy = next(task for task in tasks
+                  if task.get("include_tasks") == "set_kvservice_startup_policy.yml")
+    variables = {"splunk": {"role": "splunk_standalone"}}
+    if enabled is not None:
+        variables["splunk_kvservice_enabled"] = enabled
+    assert _condition(loader, policy, variables) is (enabled is not None)
+    includes = [task.get("include_tasks") for task in tasks]
+    assert includes.count("set_config_file.yml") == 1
+    assert includes.index("set_config_file.yml") < tasks.index(policy) < includes.index("start_splunk.yml")
+
+
+@pytest.mark.parametrize(
+    "release,enabled,backend,expected_backend,expected_migration",
+    [
+        ("10.6.0", True, "external", "local", "false"),
+        ("10.6.7.1", False, "external", "local", "false"),
+        ("10.9.0", False, "external", "local", "false"),
+        ("10.9.0", True, "local", "local", "true"),
+        ("10.9.0", True, "external", "external", "true"),
+        ("10.9.0", True, None, None, "true"),
+        ("10.10.0", True, "external", "external", "true"),
+        ("10.7.0", True, "external", "external", "false"),
+        ("10.8.9", False, "external", "external", "false"),
+    ],
+)
+def test_actual_explicit_policy_tasks(
+    tmp_path, release, enabled, backend, expected_backend, expected_migration
+):
     home = tmp_path / "splunk"
     local = home / "etc/system/local"
     local.mkdir(parents=True)
     server_conf = local / "server.conf"
-    managed = local / ".server.conf.splunk-ansible-managed.yml"
-    (home / "etc/splunk.version").write_text("VERSION=10.6.0\nBUILD=test\n")
-    user = getpass.getuser()
-    variables = {
-        "splunk": {"home": str(home), "exec": "/must-not-call-splunk-cli",
-                   "user": user, "group": str(os.getgid()),
-                   "enable_service": False,
-                   "kvstore": {"default_kvstore_type": "external"}},
-        "conf_directory": str(local),
-        "conf_file": "server.conf",
-        "reconcile_config_map_values": True,
-        "hide_password": False,
-        "ansible_python_interpreter": sys.executable,
-        "ansible_system": "Linux",
-    }
-
-    def include(task_file, **extra):
-        return {"include_tasks": str(TASK_DIR / task_file), **extra}
-
-    tasks = [
-        include("stop_splunk.yml"),
-        include("set_default_kvstore_type.yml"),
-        include("set_config_file.yml", vars={
-            "conf_stanzas": {"kvstore": {"defaultKVStoreType": "external",
-                                         "postgresMigrateOnStartup": "true"}},
-        }),
-        include("set_default_kvstore_type.yml"),
-        {"slurp": {"src": str(server_conf)}, "register": "old_image_conf"},
-        {"assert": {"that": [
-            "'defaultKVStoreType = local' in (old_image_conf.content | b64decode)",
-            "'postgresMigrateOnStartup = false' in (old_image_conf.content | b64decode)",
-        ]}},
-        {"set_fact": {"kvstore_installed_splunk_version": ["10.9.0"]}},
-        # Splunk can change the backend after SOK records its desired value.
-        {"ini_file": {"path": str(server_conf), "section": "kvstore",
-                      "option": "defaultKVStoreType", "value": saved_backend}},
-        include("set_default_kvstore_type.yml"),
-        include("set_config_file.yml", vars={
-            "conf_stanzas": {"kvstore": {"kvserviceConnectionString": "https://kvservice"}},
-        }),
-        {"slurp": {"src": str(server_conf)}, "register": "handoff_conf"},
-        {"assert": {"that": [
-            "'defaultKVStoreType = %s' in (handoff_conf.content | b64decode)" % saved_backend,
-            "'postgresMigrateOnStartup' not in (handoff_conf.content | b64decode)",
-        ]}},
-        # Model the core startup helper's persisted flag, then reconcile again.
-        {"ini_file": {"path": str(server_conf), "section": "kvstore",
-                      "option": "postgresMigrateOnStartup", "value": "true"}},
-        include("set_config_file.yml", vars={
-            "conf_stanzas": {"kvstore": {"kvserviceConnectionString": "https://kvservice"}},
-        }),
-    ]
-    _run_tasks(tmp_path, variables, tasks)
+    (home / "etc/splunk.version").write_text("VERSION=%s\nBUILD=test\n" % release)
+    contents = "[kvstore]\npostgresMigrateOnStartup = false\n"
+    if backend is not None:
+        contents += "defaultKVStoreType = %s\n" % backend
+    server_conf.write_text(contents)
+    variables = _variables(home)
+    variables["splunk_kvservice_enabled"] = enabled
+    _run_tasks(tmp_path, variables, [
+        _main_include("set_default_kvstore_type.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+    ])
     conf = configparser.ConfigParser()
     conf.read(server_conf)
-    assert conf["kvstore"]["defaultKVStoreType"] == saved_backend
+    assert conf["kvstore"].get("defaultKVStoreType") == expected_backend
+    assert conf["kvstore"]["postgresMigrateOnStartup"] == expected_migration
+
+
+@pytest.mark.parametrize("requested_type", ["cohosted", "external"])
+def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, requested_type):
+    home = tmp_path / "splunk"
+    local = home / "etc/system/local"
+    local.mkdir(parents=True)
+    fake_cli = tmp_path / "splunk-version"
+    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk 10.6.0 (test)'\n")
+    fake_cli.chmod(0o755)
+    variables = _variables(home)
+    variables["splunk"]["exec"] = str(fake_cli)
+    variables["splunk"]["kvstore"]["default_kvstore_type"] = requested_type
+    # No splunk.version file: entering the new policy would fail this legacy test.
+    _run_tasks(tmp_path, variables, [
+        _main_include("set_default_kvstore_type.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+    ])
+    conf = configparser.ConfigParser()
+    conf.read(local / "server.conf")
+    assert conf["kvstore"]["defaultKVStoreType"] == requested_type
     assert conf["kvstore"]["postgresMigrateOnStartup"] == "true"
-    ownership = yaml.safe_load(managed.read_text())
-    assert ownership == {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}
 
 
-def test_fresh_kvservice_config_is_visible_to_first_status_command(tmp_path):
+@pytest.mark.parametrize("saved_backend", ["local", "external"])
+@pytest.mark.parametrize("enabled", [None, True])
+def test_actual_handoff_preserves_backend_only_with_explicit_enabled_input(
+    tmp_path, saved_backend, enabled
+):
     home = tmp_path / "splunk"
     local = home / "etc/system/local"
     local.mkdir(parents=True)
     server_conf = local / "server.conf"
-    (home / "etc/splunk.version").write_text("VERSION=10.9.0\nBUILD=test\n")
-    ftr = home / "ftr"
-    ftr.touch()
-    cli_observed_endpoint = tmp_path / "cli-observed-endpoint"
-    fake_splunk = tmp_path / "splunk-cli"
-    # Check the input available to native FTR, rather than duplicate core policy.
-    fake_splunk.write_text(
-        "#!%s\n" % sys.executable
-        + "import configparser, pathlib, sys\n"
-        + "conf = configparser.ConfigParser()\n"
-        + "conf.read(%r)\n" % str(server_conf)
-        + "endpoint = conf.get('kvstore', 'kvserviceConnectionString', fallback='')\n"
-        + "if endpoint == 'https://kvservice' and pathlib.Path(%r).exists():\n" % str(ftr)
-        + "    pathlib.Path(%r).write_text(endpoint)\n" % str(cli_observed_endpoint)
-        + "    pathlib.Path(%r).unlink()\n" % str(ftr)
-        + "sys.exit(1)\n"
-    )
-    fake_splunk.chmod(0o755)
-    user = getpass.getuser()
-    variables = {
-        "splunk": {"home": str(home), "exec": str(fake_splunk),
-                   "role": "splunk_standalone", "user": user, "group": str(os.getgid()),
-                   "pass4SymmKey": "test-key", "kvstore": {},
-                   "conf": {"server": {"content": {
-                       "kvstore": {"kvserviceConnectionString": "https://kvservice"},
-                   }}}},
-        "hide_password": False,
-        "ansible_python_interpreter": sys.executable,
-        "ansible_system": "Linux",
-    }
-    main_tasks = yaml.safe_load((TASK_DIR / "main.yml").read_text())
-    selected = []
-    for task in main_tasks:
-        if task.get("include_tasks") in {
-            "set_config_file.yml", "set_default_kvstore_type.yml",
-            "set_general_symmkey_password.yml",
-        }:
-            task["include_tasks"] = str(TASK_DIR / task["include_tasks"])
-            selected.append(task)
-    _run_tasks(tmp_path, variables, selected)
-    assert cli_observed_endpoint.read_text() == "https://kvservice"
-    assert not ftr.exists()
+    server_conf.write_text("[kvstore]\ndefaultKVStoreType = %s\npostgresMigrateOnStartup = false\n" % saved_backend)
+    managed = local / ".server.conf.splunk-ansible-managed.yml"
+    managed.write_text(yaml.safe_dump({"kvstore": {
+        "defaultKVStoreType": "local", "postgresMigrateOnStartup": "false",
+        "kvserviceConnectionString": "https://old-kvservice",
+    }}))
+    variables = _variables(home)
+    variables.update({"conf_directory": str(local), "conf_file": "server.conf",
+                      "reconcile_config_map_values": True})
+    if enabled is not None:
+        variables["splunk_kvservice_enabled"] = enabled
+    desired = {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}
+    _run_tasks(tmp_path, variables, [
+        _include("set_config_file.yml", vars={"conf_stanzas": desired}),
+        _include("set_config_file.yml", vars={"conf_stanzas": desired}),
+    ])
+    conf = configparser.ConfigParser()
+    conf.read(server_conf)
+    assert conf["kvstore"].get("defaultKVStoreType") == (saved_backend if enabled is True else None)
+    assert "postgresMigrateOnStartup" not in conf["kvstore"]
+    assert conf["kvstore"]["kvserviceConnectionString"] == "https://kvservice"
+    assert yaml.safe_load(managed.read_text()) == desired
