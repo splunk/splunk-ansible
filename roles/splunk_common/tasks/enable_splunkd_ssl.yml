@@ -6,8 +6,8 @@
     section: sslConfig
     option: enableSplunkdSSL
     value: "false"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
     state: "{{ 'absent' if splunk.ssl.enable else 'present' }}"
   become: yes
   become_user: "{{ splunk.user }}"
@@ -19,8 +19,8 @@
     section: sslConfig
     option: sslRootCAPath
     value: "{{ splunk.ssl.ca }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when: "'ca' in splunk.ssl and splunk.ssl.ca"
@@ -31,8 +31,8 @@
     section: sslConfig
     option: serverCert
     value: "{{ splunk.ssl.cert }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when: "'cert' in splunk.ssl and splunk.ssl.cert"
@@ -43,8 +43,8 @@
     section: sslConfig
     option: sslPassword
     value: "{{ splunk.ssl.password }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when: "'password' in splunk.ssl and splunk.ssl.password"
