@@ -27,22 +27,25 @@ def _condition(loader, task, variables):
 
 
 @pytest.mark.parametrize(
-    "installed_version,writes_settings",
+    "installed_version,writes_unmanaged,writes_managed",
     [
-        ("0", False),
-        ("10.5.9", False),
-        ("10.6.0", True),
-        ("10.8.9", True),
-        ("10.8.0.1", True),
-        ("10.9.0", True),
-        ("10.9.0.0", True),
-        ("10.10.0", True),
-        ("11.0.0", True),
+        ("0", False, False),
+        ("10.5.9", False, False),
+        ("10.6.0", True, True),
+        ("10.6.7.1", True, True),
+        ("10.7.0", True, False),
+        ("10.8.9", True, False),
+        ("10.8.0.1", True, False),
+        ("10.9.0", True, False),
+        ("10.9.0.0", True, False),
+        ("10.10.0", True, False),
+        ("11.0.0", True, False),
     ],
 )
 @pytest.mark.parametrize("kvstore_type", ["local", "external", "cohosted"])
+@pytest.mark.parametrize("enabled", [None, False, True])
 def test_kvstore_settings_version_boundaries(
-    installed_version, writes_settings, kvstore_type
+    installed_version, writes_unmanaged, writes_managed, kvstore_type, enabled
 ):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_FILE))
@@ -53,6 +56,9 @@ def test_kvstore_settings_version_boundaries(
             "role": "splunk_standalone",
         },
     }
+    if enabled is not None:
+        variables["splunk_kvservice_enabled"] = enabled
+    writes_settings = writes_unmanaged if enabled is None else writes_managed
     support_task = next(
         task for task in tasks
         if task["name"] == "Set default KV Store type support fact"
@@ -100,7 +106,7 @@ def test_kvstore_tasks_require_an_explicit_default_type(kvstore, role, included)
 
 
 @pytest.mark.parametrize("enabled", [True, False])
-def test_explicit_kvservice_policy_excludes_legacy_default_type_task(enabled):
+def test_explicit_kvservice_policy_still_includes_legacy_version_check(enabled):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_FILE.with_name("main.yml")))
     task = next(
@@ -111,4 +117,4 @@ def test_explicit_kvservice_policy_excludes_legacy_default_type_task(enabled):
         "splunk_kvservice_enabled": enabled,
         "splunk": {"role": "splunk_standalone", "kvstore": {"default_kvstore_type": "external"}},
     }
-    assert _condition(loader, task, variables) is False
+    assert _condition(loader, task, variables) is True

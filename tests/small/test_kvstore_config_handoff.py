@@ -4,6 +4,7 @@ import configparser
 import getpass
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -117,6 +118,7 @@ def test_new_policy_requires_explicit_input_and_runs_after_render(enabled):
     assert _condition(loader, capture, variables) is (enabled is not None)
     includes = [task.get("include_tasks") for task in tasks]
     assert includes.index("update_etc.yml") < tasks.index(capture) < includes.index("stop_splunk.yml")
+    assert tasks.index(capture) < includes.index("set_default_kvstore_type.yml")
     assert includes.count("set_config_file.yml") == 1
     assert includes.index("set_config_file.yml") < tasks.index(policy) < includes.index("start_splunk.yml")
 
@@ -168,6 +170,10 @@ def test_actual_explicit_policy_tasks(
     variables = _variables(home)
     variables["splunk"]["role"] = role
     variables["splunk_kvservice_enabled"] = enabled
+    fake_cli = tmp_path / "splunk-version"
+    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk {} (test)'\n".format(release))
+    fake_cli.chmod(0o755)
+    variables["splunk"]["exec"] = str(fake_cli)
     _run_tasks(tmp_path, variables, [
         _main_include("set_default_kvstore_type.yml"),
         _main_include("set_kvservice_startup_policy.yml"),
@@ -270,6 +276,10 @@ def test_actual_disabled_config_render_restores_local_policy_after_cleanup(tmp_p
     variables["splunk"]["role"] = role
     variables["splunk"]["conf"] = {"server": {"content": desired}}
     variables["splunk_kvservice_enabled"] = False
+    fake_cli = tmp_path / "splunk-version"
+    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk 10.9.0 (test)'\n")
+    fake_cli.chmod(0o755)
+    variables["splunk"]["exec"] = str(fake_cli)
     # Exercise the real main.yml rendering include, cleanup, and repeated reconciliation.
     _run_tasks(tmp_path, variables, [
         _main_include("set_default_kvstore_type.yml"),
@@ -409,6 +419,70 @@ def test_actual_multi_entry_sok_handoff_preserves_backend(tmp_path, saved_backen
     assert yaml.safe_load(managed.read_text()) == {
         "general": {"serverName": "customer-name"}, **sok_settings,
     }
+
+
+@pytest.mark.parametrize(
+    "release,enabled,saved_backend,fresh,expected_backend,expected_migration",
+    [
+        ("10.6.0", None, "external", False, "local", "false"),
+        ("10.6.7.1", True, "external", False, "local", "false"),
+        ("10.6.0", False, "external", False, "local", "false"),
+        ("10.9.0", True, "external", False, "external", "true"),
+        ("10.9.0", True, "local", False, "local", "true"),
+        ("10.9.0", True, "local", True, "external", "true"),
+        ("10.9.0", False, "local", False, "local", "false"),
+    ],
+)
+def test_actual_legacy_local_input_preserves_version_policy(
+    tmp_path, release, enabled, saved_backend, fresh, expected_backend, expected_migration
+):
+    home = tmp_path / "splunk"
+    local = home / "etc/system/local"
+    local.mkdir(parents=True)
+    server_conf = local / "server.conf"
+    server_conf.write_text(
+        "[kvstore]\ndefaultKVStoreType = %s\npostgresMigrateOnStartup = false\n"
+        "[unrelated]\nsetting = keep-me\n" % saved_backend
+    )
+    (home / "etc/splunk.version").write_text("VERSION=%s\nBUILD=test\n" % release)
+    (local / ".server.conf.splunk-ansible-managed.yml").write_text(yaml.safe_dump({
+        "kvstore": {"defaultKVStoreType": "local", "postgresMigrateOnStartup": "false"},
+    }))
+    marker = home / "etc/myinstall/splunkd.xml"
+    marker.parent.mkdir()
+    if not fresh:
+        marker.write_text("<splunk/>\n")
+    fake_cli = tmp_path / "splunk-version"
+    fake_cli.write_text("#!/bin/sh\ntouch {}\nprintf '%s\\n' 'Splunk {} (test)'\n".format(
+        shlex.quote(str(marker)), release,
+    ))
+    fake_cli.chmod(0o755)
+    variables = _variables(home)
+    variables["splunk"]["exec"] = str(fake_cli)
+    environment = {"SPLUNK_KVSTORE_DEFAULT_TYPE": "local"}
+    if enabled is not None:
+        environment["SPLUNK_KVSERVICE_ENABLED"] = str(enabled).lower()
+    with mock.patch.dict(os.environ, environment, clear=True):
+        environ.getDefaultKVStoreType(variables)
+        environ.getKVServiceEnabled(variables)
+    desired = {"kvstore": {"kvserviceConnectionString": "https://kvservice"}} if enabled else {
+        "kvstore": {"defaultKVStoreType": "local", "postgresMigrateOnStartup": "false"},
+    }
+    variables["splunk"]["conf"] = (
+        [{"key": "server", "value": {"content": desired}}] if enabled is not None else []
+    )
+    _run_tasks(tmp_path, variables, [_installation_state_task()] + [
+        _main_include(task_file)
+        for _ in range(2)
+        for task_file in ("set_default_kvstore_type.yml", "set_config_file.yml",
+                          "set_kvservice_startup_policy.yml")
+    ])
+    conf = configparser.ConfigParser()
+    conf.read(server_conf)
+    assert conf["kvstore"]["defaultKVStoreType"] == expected_backend
+    assert conf["kvstore"]["postgresMigrateOnStartup"] == expected_migration
+    assert conf["unrelated"]["setting"] == "keep-me"
+    assert marker.exists()
 
 
 @pytest.mark.parametrize("requested_type", ["local", "cohosted", "external"])

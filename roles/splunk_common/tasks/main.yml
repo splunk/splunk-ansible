@@ -125,7 +125,6 @@
 
 - include_tasks: set_default_kvstore_type.yml
   when:
-    - splunk_kvservice_enabled is not defined
     - "'kvstore' in splunk and 'default_kvstore_type' in splunk.kvstore"
     - splunk.kvstore.default_kvstore_type is not none
     - splunk.kvstore.default_kvstore_type | length > 0
