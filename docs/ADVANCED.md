@@ -179,8 +179,9 @@ Enabled installations receive `postgresMigrateOnStartup=true` in either case.
 The supported SOK path has no cohosted deployments and does not allow disabling
 KVService after successful migration. Configuration rendering stays in its normal
 position, and no migration-attempt marker is needed. Package this with the
-companion `migration.py` change that defers both fresh and existing backend
-selection when `SPLUNK_KVSERVICE_ENABLED` is explicitly `true` or `false`.
+companion core change that removes native CMPK fresh and upgrade initialization.
+The generic upgrade fallback still defers when `SPLUNK_KVSERVICE_ENABLED` is
+explicitly `true` or `false`, so it cannot overwrite Ansible's selected backend.
 
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 
