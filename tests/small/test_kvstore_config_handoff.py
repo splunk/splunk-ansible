@@ -309,6 +309,31 @@ def test_actual_disabled_config_render_restores_local_policy_after_cleanup(tmp_p
     assert yaml.safe_load(managed.read_text()) == desired
 
 
+@pytest.mark.parametrize("enabled", [None, False, True])
+def test_actual_legacy_endpoint_cleanup_requires_explicit_disabled_input(tmp_path, enabled):
+    home = tmp_path / "splunk"
+    local = home / "etc/system/local"
+    local.mkdir(parents=True)
+    server_conf = local / "server.conf"
+    contents = ("[kvstore]\nkvserviceConnectionString = https://saved-kvservice\n"
+                "defaultKVStoreType = local\n[general]\nserverName = keep-me\n")
+    server_conf.write_text(contents)
+    variables = _variables(home)
+    if enabled is not None:
+        variables["splunk_kvservice_enabled"] = enabled
+    _run_tasks(tmp_path, variables, [
+        _main_include("remove_legacy_kvservice_connection_string.yml"),
+    ])
+    if enabled is not False:
+        assert server_conf.read_text() == contents
+    else:
+        conf = configparser.ConfigParser()
+        conf.read(server_conf)
+        assert "kvserviceConnectionString" not in conf["kvstore"]
+        assert conf["kvstore"]["defaultKVStoreType"] == "local"
+        assert conf["general"]["serverName"] == "keep-me"
+
+
 @pytest.mark.parametrize("enabled", [False, True])
 def test_actual_sok_connection_and_scs_settings_use_normal_rendering(tmp_path, enabled):
     home = tmp_path / "splunk"

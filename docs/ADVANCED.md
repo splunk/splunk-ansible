@@ -156,8 +156,9 @@ running, Ansible keeps the established live-configuration and restart path.
 SOK supplies `kvserviceConnectionString` and the `[scs]` tenant and
 `mvl-enabled` settings through `splunk.conf`; normal configuration rendering
 writes them to system/local `server.conf`. No separate KVService scope,
-tenant, or environment input is parsed. The legacy connection string is removed
-before rendering so disabled deployments do not retain an untracked old endpoint.
+tenant, or environment input is parsed. Only explicitly disabled KVService removes
+the legacy connection string before rendering, so an untracked old endpoint does
+not persist. Enabled and unmarked deployments skip that extra cleanup.
 
 The explicit `SPLUNK_KVSERVICE_ENABLED` policy runs after normal configuration
 rendering and reads the installed release from `etc/splunk.version`. With `true`,
