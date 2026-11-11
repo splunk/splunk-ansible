@@ -109,6 +109,7 @@ def run_playbook(workdir, splunk_home, conf, hash_behaviour, library_dir=None, c
         "ANSIBLE_HASH_BEHAVIOUR": hash_behaviour,
         "ANSIBLE_STDOUT_CALLBACK": "ansible.posix.json",
         "ANSIBLE_FILTER_PLUGINS": os.path.join(role_dir, "filter_plugins"),
+        "ANSIBLE_ACTION_PLUGINS": os.path.join(repo_dir, "action_plugins"),
         "ANSIBLE_LIBRARY": library_dir or os.path.join(role_dir, "library"),
         "ANSIBLE_LOCAL_TEMP": os.path.join(workdir, "tmp"),
         "ANSIBLE_NOCOLOR": "1",

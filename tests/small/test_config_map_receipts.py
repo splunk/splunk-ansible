@@ -116,7 +116,10 @@ def test_targets_with_no_desired_settings_are_still_reconciled():
     assert reconcile["when"] == "reconcile_config_map_values | default(false) | bool"
     assert "conf_stanzas | length > 0" in record["when"]
     assert "conf_stanzas | length == 0" in forget["when"]
-    assert forget["file"] == {
+    forget_args = forget.get("splunk_config", forget.get("file"))
+    assert {
+        key: value for key, value in forget_args.items() if key not in ("module", "home")
+    } == {
         "path": "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml",
         "state": "absent",
     }

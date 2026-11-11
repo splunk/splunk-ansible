@@ -1,6 +1,8 @@
 ---
 - name: Set Splunkd Connection Timeout
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "splunkdConnectionTimeout"

@@ -1,7 +1,9 @@
 ---
 # By default, splunkd responds on SSL - only update 'enableSplunkdSSL' if purposely disabled 
 - name: Enable Splunkd SSL
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: enableSplunkdSSL
@@ -14,7 +16,9 @@
   when: "'enable' in splunk.ssl"
 
 - name: Set Splunkd CA
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: sslRootCAPath
@@ -26,7 +30,9 @@
   when: "'ca' in splunk.ssl and splunk.ssl.ca"
 
 - name: Set Splunkd cert
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: serverCert
@@ -38,7 +44,9 @@
   when: "'cert' in splunk.ssl and splunk.ssl.cert"
 
 - name: Set Splunkd SSL password
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     section: sslConfig
     option: sslPassword
