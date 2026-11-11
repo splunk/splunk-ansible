@@ -17,6 +17,22 @@
     - ansible_system is match("Linux")
     - splunk.build_location is none or splunk.build_location is not match("^(https?|file)://.*")
 
+- name: Capture KVService installation state before Splunk CLI calls
+  when:
+    - splunk_kvservice_enabled is defined
+    - splunk.role != "splunk_universal_forwarder"
+  block:
+    - name: Check the native Splunk installation marker
+      stat:
+        path: "{{ splunk.home }}/etc/myinstall/splunkd.xml"
+      register: kvservice_installation_marker
+      become: yes
+      become_user: "{{ splunk.user }}"
+
+    - name: Remember whether the KVService installation is fresh
+      set_fact:
+        kvservice_fresh_install: "{{ not kvservice_installation_marker.stat.exists }}"
+
 - include_tasks: stop_splunk.yml
   when:
     - splunk_upgrade | bool or etc_updated is changed

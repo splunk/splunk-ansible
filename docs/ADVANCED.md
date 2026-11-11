@@ -87,7 +87,7 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNKD_SSL_CA | Path to custom CA certificate used for Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNKD_SSL_PASSWORD | Custom SSL password used with Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNK_KVSTORE_PORT | Port to run Splunk KVStore. Default: `8191` | no | no | no |
-| SPLUNK_KVSERVICE_ENABLED | Explicitly selects the operator KV Store startup policy. Set to `true` or `false`; leaving it unset preserves the existing Ansible default-type behavior. Splunk 10.6.x uses `local`/`false` for either value. On 10.9+, `false` uses `local`/`false`, while `true` sets `postgresMigrateOnStartup=true` and preserves the saved backend except for indexers, which select `external` and disable local Mongo as described below. The policy does not change settings on other release lines. | no | no | no |
+| SPLUNK_KVSERVICE_ENABLED | Explicitly selects the operator KV Store startup policy. Set to `true` or `false`; leaving it unset preserves the existing Ansible default-type behavior. Splunk 10.6.x uses `local`/`false` for either value. On 10.9+, `false` relies on normal configuration rendering of SOK's `defaultKVStoreType=local` and `postgresMigrateOnStartup=false`; the startup policy adds no backend or migration override. With `true`, the policy sets `postgresMigrateOnStartup=true`, selects `external` for fresh installations, preserves a saved `external` backend for existing installations, and sets other or missing existing backends to `local`. Indexers retain their role-specific settings as described below. Other release lines receive no backend or migration override. | no | no | no |
 | SPLUNK_KVSERVICE_SCOPE | Sets `[kvstore] kvserviceScope` to `deployment` or `platform`. Overrides `splunk.kvstore.kvservice_scope` in defaults. | no | no | no |
 | SPLUNK_SCS_TENANT | Sets `[scs] tenant` for external KVService. Overrides `splunk.scs.tenant` in defaults. | no | no | no |
 | SPLUNK_SCS_ENVIRONMENT | Sets `[scs] environment` for external KVService. Overrides `splunk.scs.environment` in defaults. | no | no | no |
@@ -163,15 +163,24 @@ cleanup preserves `defaultKVStoreType` only when the desired system/local
 key. The new ownership metadata then stops tracking that key. An unset flag
 retains legacy cleanup and default-type handling, including cohosted deployments.
 
-On Splunk 10.9 and later, `SPLUNK_KVSERVICE_ENABLED=true` with
-`SPLUNK_ROLE=splunk_indexer` additionally writes `[kvstore] disabled=true`,
-`defaultKVStoreType=external`, `forceLocalForInternalCollections=false`, and
-`shutDownMongo=true`. This applies to both fresh and existing indexers. Other roles
-keep their saved backend and the existing migration policy.
+With an explicit `SPLUNK_KVSERVICE_ENABLED` value, indexers always retain
+`[kvstore] disabled=true`, regardless of enablement or release. On Splunk 10.9
+and later, enabled indexers additionally receive `defaultKVStoreType=external`,
+`forceLocalForInternalCollections=false`, and `shutDownMongo=true`. This applies
+to both fresh and existing indexers.
 
-For other enabled roles, initial backend selection still depends on native
-first-time-run seeing the connection string. This policy does not change
-`migration.py`; moving configuration ahead of early CLI calls is deferred.
+For other enabled roles on Splunk 10.9 and later, Ansible initializes fresh
+installations with `defaultKVStoreType=external`,
+`forceLocalForInternalCollections=false`, and `shutDownMongo=true`. It captures
+freshness from the absence of `etc/myinstall/splunkd.xml` after updating `etc`
+and before Splunk CLI calls can create that marker. Existing installations keep
+a saved `external` backend; any other or missing saved backend becomes `local`.
+Enabled installations receive `postgresMigrateOnStartup=true` in either case.
+The supported SOK path has no cohosted deployments and does not allow disabling
+KVService after successful migration. Configuration rendering stays in its normal
+position, and no migration-attempt marker is needed. Package this with the
+companion `migration.py` change that defers both fresh and existing backend
+selection when `SPLUNK_KVSERVICE_ENABLED` is explicitly `true` or `false`.
 
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 

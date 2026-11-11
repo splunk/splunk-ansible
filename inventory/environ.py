@@ -971,6 +971,8 @@ def getKVServiceEnabled(vars_scope):
     if normalized not in ("true", "false"):
         raise ValueError("SPLUNK_KVSERVICE_ENABLED must be either 'true' or 'false'")
     vars_scope["splunk_kvservice_enabled"] = normalized == "true"
+    # Preserve the policy signal for Splunk CLI calls under privilege escalation.
+    vars_scope.setdefault("ansible_environment", {})["SPLUNK_KVSERVICE_ENABLED"] = normalized
 
 
 def getKVServiceDeploymentConfig(vars_scope):

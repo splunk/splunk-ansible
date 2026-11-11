@@ -911,10 +911,13 @@ def test_getDefaultKVStoreType(default_yml, os_env, result):
     ("true", True), ("TRUE", True), (" false ", False), ("FALSE", False),
 ])
 def test_getKVServiceEnabled_preserves_explicit_boolean(value, expected):
-    variables = {"splunk": {}}
+    variables = {"splunk": {}, "ansible_environment": {"KEEP_ME": "value", "SPLUNK_KVSERVICE_ENABLED": "stale"}}
     with patch("os.environ", new={"SPLUNK_KVSERVICE_ENABLED": value}):
         environ.getKVServiceEnabled(variables)
     assert variables["splunk_kvservice_enabled"] is expected
+    assert variables["ansible_environment"] == {
+        "KEEP_ME": "value", "SPLUNK_KVSERVICE_ENABLED": str(expected).lower(),
+    }
 
 
 def test_getKVServiceEnabled_omits_policy_when_environment_is_unset():
@@ -922,6 +925,7 @@ def test_getKVServiceEnabled_omits_policy_when_environment_is_unset():
     with patch("os.environ", new={}):
         environ.getKVServiceEnabled(variables)
     assert "splunk_kvservice_enabled" not in variables
+    assert "ansible_environment" not in variables
 
 
 @pytest.mark.parametrize("value", ["", "yes", "1", "disabled", "sometimes"])

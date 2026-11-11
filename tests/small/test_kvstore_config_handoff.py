@@ -51,6 +51,12 @@ def _main_include(task_file):
     return task
 
 
+def _installation_state_task():
+    tasks = yaml.safe_load((TASK_DIR / "main.yml").read_text())
+    return next(task for task in tasks
+                if task.get("name") == "Capture KVService installation state before Splunk CLI calls")
+
+
 def _variables(home):
     return {
         "splunk": {"home": str(home), "exec": "/must-not-call-splunk-cli",
@@ -128,7 +134,10 @@ def test_new_policy_requires_explicit_input_and_runs_after_render(enabled):
     if enabled is not None:
         variables["splunk_kvservice_enabled"] = enabled
     assert _condition(loader, policy, variables) is (enabled is not None)
+    capture = _installation_state_task()
+    assert _condition(loader, capture, variables) is (enabled is not None)
     includes = [task.get("include_tasks") for task in tasks]
+    assert includes.index("update_etc.yml") < tasks.index(capture) < includes.index("stop_splunk.yml")
     assert includes.count("set_config_file.yml") == 1
     assert includes.index("set_config_file.yml") < tasks.index(policy) < includes.index("start_splunk.yml")
 
@@ -138,17 +147,19 @@ def test_new_policy_requires_explicit_input_and_runs_after_render(enabled):
     [
         ("10.6.0", True, "splunk_standalone", "external", "local", "false", False),
         ("10.6.7.1", False, "splunk_standalone", "external", "local", "false", False),
-        ("10.9.0", False, "splunk_standalone", "external", "local", "false", False),
+        ("10.9.0", False, "splunk_standalone", "external", "external", "true", False),
         ("10.9.0", True, "splunk_standalone", "local", "local", "true", False),
         ("10.9.0", True, "splunk_standalone", "external", "external", "true", False),
-        ("10.9.0", True, "splunk_standalone", None, None, "true", False),
+        ("10.9.0", True, "splunk_standalone", None, "local", "true", False),
+        ("10.9.0", True, "splunk_standalone", "", "local", "true", False),
+        ("10.9.0", True, "splunk_standalone", "other", "local", "true", False),
         ("10.10.0", True, "splunk_standalone", "external", "external", "true", False),
         ("10.7.0", True, "splunk_standalone", "external", "external", "false", False),
-        ("10.8.9", False, "splunk_standalone", "external", "external", "false", False),
+        ("10.8.9", False, "splunk_standalone", "external", "external", "true", False),
         ("10.6.0", True, "splunk_indexer", "external", "local", "false", False),
         ("10.6.7.1", False, "splunk_indexer", "external", "local", "false", False),
         ("10.8.9", True, "splunk_indexer", "local", "local", "false", False),
-        ("10.9.0", False, "splunk_indexer", "external", "local", "false", False),
+        ("10.9.0", False, "splunk_indexer", "external", "external", "true", False),
         ("10.9.0", True, "splunk_indexer", "local", "external", "true", True),
         ("10.9.0.0", True, "splunk_indexer", None, "external", "true", True),
         ("10.10.0", True, "splunk_indexer", "external", "external", "true", True),
@@ -168,10 +179,12 @@ def test_actual_explicit_policy_tasks(
     local.mkdir(parents=True)
     server_conf = local / "server.conf"
     (home / "etc/splunk.version").write_text("VERSION=%s\nBUILD=test\n" % release)
-    contents = ("[kvstore]\npostgresMigrateOnStartup = false\ndisabled = false\n"
-                "forceLocalForInternalCollections = true\nshutDownMongo = false\n")
+    initial_migration = "false" if enabled else "true"
+    contents = ("[kvstore]\npostgresMigrateOnStartup = %s\ndisabled = false\n"
+                "forceLocalForInternalCollections = true\nshutDownMongo = false\n") % initial_migration
     if backend is not None:
         contents += "defaultKVStoreType = %s\n" % backend
+    contents += "[unrelated]\ndefaultKVStoreType = external\npercent = 50%\n"
     server_conf.write_text(contents)
     variables = _variables(home)
     variables["splunk"]["role"] = role
@@ -184,9 +197,116 @@ def test_actual_explicit_policy_tasks(
     conf.read(server_conf)
     assert conf["kvstore"].get("defaultKVStoreType") == expected_backend
     assert conf["kvstore"]["postgresMigrateOnStartup"] == expected_migration
-    assert conf["kvstore"]["disabled"] == ("true" if indexer_external else "false")
+    assert conf["kvstore"]["disabled"] == ("true" if role == "splunk_indexer" else "false")
     assert conf["kvstore"]["forceLocalForInternalCollections"] == ("false" if indexer_external else "true")
     assert conf["kvstore"]["shutDownMongo"] == ("true" if indexer_external else "false")
+
+
+@pytest.mark.parametrize(
+    "release,enabled,fresh,backend,expected_backend,expected_migration,role",
+    [
+        ("10.9.0", True, True, "local", "external", "true", "splunk_standalone"),
+        ("10.9.0", True, False, "local", "local", "true", "splunk_standalone"),
+        ("10.9.0", True, False, "external", "external", "true", "splunk_standalone"),
+        ("10.9.0", True, False, None, "local", "true", "splunk_standalone"),
+        ("10.9.0", True, False, "other", "local", "true", "splunk_standalone"),
+        ("10.10.0", True, True, None, "external", "true", "splunk_search_head"),
+        ("10.6.0", True, True, None, "local", "false", "splunk_standalone"),
+        ("10.8.0", True, True, "local", "local", "false", "splunk_standalone"),
+        ("10.9.0", False, True, "external", "local", "false", "splunk_standalone"),
+        ("10.9.0", True, True, "local", "external", "true", "splunk_indexer"),
+    ],
+)
+def test_actual_initialization_uses_state_captured_before_early_cli(
+    tmp_path, release, enabled, fresh, backend, expected_backend, expected_migration, role
+):
+    home = tmp_path / "splunk"
+    local = home / "etc/system/local"
+    local.mkdir(parents=True)
+    marker = home / "etc/myinstall/splunkd.xml"
+    marker.parent.mkdir()
+    if not fresh:
+        marker.touch()
+    if fresh:
+        secret = home / "etc/auth/splunk.secret"
+        secret.parent.mkdir()
+        secret.write_text("preseeded-secret")
+    (home / "etc/splunk.version").write_text("VERSION=%s\nBUILD=test\n" % release)
+    contents = ("[kvstore]\npostgresMigrateOnStartup = false\n"
+                "forceLocalForInternalCollections = true\nshutDownMongo = false\n")
+    if backend is not None:
+        contents += "defaultKVStoreType = %s\n" % backend
+    server_conf = local / "server.conf"
+    server_conf.write_text(contents)
+    fake_cli = tmp_path / "splunk-version"
+    fake_cli.write_text("#!%s\nfrom pathlib import Path\nPath(%r).touch()\n" % (sys.executable, str(marker)))
+    fake_cli.chmod(0o755)
+    desired = {"kvstore": {"kvserviceConnectionString": "https://kvservice"}} if enabled else {
+        "kvstore": {"defaultKVStoreType": "local", "postgresMigrateOnStartup": "false"},
+    }
+    variables = _variables(home)
+    variables["splunk"].update({"role": role, "exec": str(fake_cli),
+                                "conf": {"server": {"content": desired}}})
+    variables.update({"splunk_kvservice_enabled": enabled, "first_run": not fresh})
+    _run_tasks(tmp_path, variables, [
+        _installation_state_task(),
+        {"command": "{{ splunk.exec }} version"},
+        _main_include("set_config_file.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+        # A subsequent reconciliation sees the native marker created by the CLI.
+        _installation_state_task(),
+        _main_include("set_config_file.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+    ])
+    conf = configparser.ConfigParser()
+    conf.read(server_conf)
+    assert conf["kvstore"]["defaultKVStoreType"] == expected_backend
+    assert conf["kvstore"]["postgresMigrateOnStartup"] == expected_migration
+    external_initialization = enabled and release.startswith(("10.9.", "10.10.")) and fresh
+    assert conf["kvstore"]["forceLocalForInternalCollections"] == ("false" if external_initialization else "true")
+    assert conf["kvstore"]["shutDownMongo"] == ("true" if external_initialization else "false")
+    assert conf["kvstore"].get("disabled") == ("true" if role == "splunk_indexer" else None)
+
+
+@pytest.mark.parametrize("release", ["10.6.0", "10.9.0", "10.10.0"])
+@pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
+def test_actual_disabled_config_render_restores_local_policy_after_cleanup(tmp_path, release, role):
+    home = tmp_path / "splunk"
+    local = home / "etc/system/local"
+    local.mkdir(parents=True)
+    server_conf = local / "server.conf"
+    (home / "etc/splunk.version").write_text("VERSION=%s\nBUILD=test\n" % release)
+    previous = {"kvstore": {
+        "defaultKVStoreType": "external", "postgresMigrateOnStartup": "true",
+        "kvserviceConnectionString": "https://old-kvservice",
+    }}
+    server_conf.write_text(
+        "[kvstore]\ndefaultKVStoreType = external\npostgresMigrateOnStartup = true\n"
+        "kvserviceConnectionString = https://old-kvservice\n[general]\nserverName = keep-me\n"
+    )
+    managed = local / ".server.conf.splunk-ansible-managed.yml"
+    managed.write_text(yaml.safe_dump(previous))
+    desired = {"kvstore": {"defaultKVStoreType": "local", "postgresMigrateOnStartup": "false"}}
+    variables = _variables(home)
+    variables["splunk"]["role"] = role
+    variables["splunk"]["conf"] = {"server": {"content": desired}}
+    variables["splunk_kvservice_enabled"] = False
+    # Exercise the real main.yml rendering include, cleanup, and repeated reconciliation.
+    _run_tasks(tmp_path, variables, [
+        _main_include("set_default_kvstore_type.yml"),
+        _main_include("set_config_file.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+        _main_include("set_config_file.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+    ])
+    conf = configparser.ConfigParser()
+    conf.read(server_conf)
+    expected = {"defaultkvstoretype": "local", "postgresmigrateonstartup": "false"}
+    if role == "splunk_indexer":
+        expected["disabled"] = "true"
+    assert dict(conf["kvstore"]) == expected
+    assert conf["general"]["serverName"] == "keep-me"
+    assert yaml.safe_load(managed.read_text()) == desired
 
 
 @pytest.mark.parametrize("requested_type", ["cohosted", "external"])
