@@ -23,10 +23,6 @@
   vars:
     config_map_stanza_name: "{{ previous_stanza.key }}"
     config_map_stanza_settings: "{{ previous_stanza.value | default({}) }}"
-    config_map_preserve_kvstore_backend: >-
-      {{ splunk_kvservice_enabled | default(false) | bool
-         and conf_file == 'server.conf'
-         and (conf_directory | relpath(splunk.home + '/etc/system/local')) == '.' }}
   with_dict: "{{ previous_config_map_stanzas }}"
   loop_control:
     loop_var: previous_stanza

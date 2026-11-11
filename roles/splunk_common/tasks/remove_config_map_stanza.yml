@@ -15,6 +15,6 @@
   when:
     - config_map_stanza_name and config_map_stanza_settings
     - >-
-      not (config_map_preserve_kvstore_backend | default(false) | bool
+      not (splunk_kvservice_enabled | default(false) | bool
            and config_map_stanza_name == 'kvstore'
            and config_map_stanza_setting.key == 'defaultKVStoreType')

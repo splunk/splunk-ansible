@@ -81,56 +81,26 @@ def _condition(loader, task, variables):
 
 @pytest.mark.parametrize("enabled", [None, False, True])
 @pytest.mark.parametrize(
-    "directory,conf_file,desired,preserve_if_enabled",
+    "stanza,option",
     [
-        ("/opt/splunk/etc/system/local", "server.conf",
-         {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
-        ("/opt/splunk/etc/system/local/", "server.conf",
-         {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
-        ("/opt//splunk/etc/./system/local/", "server.conf",
-         {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
-        ("/opt/splunk/etc/system/local/../local", "server.conf",
-         {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
-        ("/opt/splunk/etc/apps/custom/local", "server.conf",
-         {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, False),
-        ("/opt/splunk/etc/system/local", "inputs.conf",
-         {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, False),
-        ("/opt/splunk/etc/system/local", "server.conf",
-         {"kvstore": {"kvserviceConnectionString": "   "}}, True),
-        ("/opt/splunk/etc/system/local", "server.conf",
-         {"kvstore": {"defaultKVStoreType": "local"}}, True),
-        ("/opt/splunk/etc/system/local", "server.conf",
-         {"kvstore": {"kvserviceConnectionString": "https://kvservice",
-                      "defaultKVStoreType": "external"}}, True),
-        ("/opt/splunk/etc/system/local", "server.conf", {}, True),
-        ("/opt/splunk/etc/system/local", "server.conf", {"kvstore": None}, True),
+        ("kvstore", "defaultKVStoreType"),
+        ("kvstore", "kvserviceConnectionString"),
+        ("kvstore", "postgresMigrateOnStartup"),
+        ("general", "defaultKVStoreType"),
     ],
 )
-def test_enabled_system_local_cleanup_preserves_backend_for_any_desired_settings(
-    enabled, directory, conf_file, desired, preserve_if_enabled
-):
+def test_cleanup_preserves_only_kvstore_backend_when_enabled(enabled, stanza, option):
     loader = DataLoader()
-    reconcile = loader.load_from_file(str(TASK_DIR / "reconcile_config_map_values.yml"))[-1]
     remove = loader.load_from_file(str(TASK_DIR / "remove_config_map_stanza.yml"))[0]
-    variables = {"conf_directory": directory, "conf_file": conf_file,
-                 "conf_stanzas": desired, "splunk": {"home": "/opt/splunk"}}
+    variables = {
+        "config_map_stanza_name": stanza,
+        "config_map_stanza_settings": {option: "previous"},
+        "config_map_stanza_setting": {"key": option, "value": "previous"},
+    }
     if enabled is not None:
         variables["splunk_kvservice_enabled"] = enabled
-    preserve = enabled is True and preserve_if_enabled
-    variables["config_map_preserve_kvstore_backend"] = Templar(
-        loader=loader, variables=variables
-    ).template(reconcile["vars"]["config_map_preserve_kvstore_backend"])
-    assert variables["config_map_preserve_kvstore_backend"] is preserve
-    for stanza, option in [("kvstore", "defaultKVStoreType"),
-                           ("kvstore", "kvserviceConnectionString"),
-                           ("kvstore", "postgresMigrateOnStartup"),
-                           ("general", "defaultKVStoreType")]:
-        variables.update({"config_map_stanza_name": stanza,
-                          "config_map_stanza_settings": {option: "previous"},
-                          "config_map_stanza_setting": {"key": option, "value": "previous"}})
-        assert _condition(loader, remove, variables) is not (
-            preserve and stanza == "kvstore" and option == "defaultKVStoreType"
-        )
+    preserve = enabled is True and stanza == "kvstore" and option == "defaultKVStoreType"
+    assert _condition(loader, remove, variables) is not preserve
 
 
 @pytest.mark.parametrize("enabled", [None, False, True])
