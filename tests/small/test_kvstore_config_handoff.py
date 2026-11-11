@@ -309,6 +309,50 @@ def test_actual_disabled_config_render_restores_local_policy_after_cleanup(tmp_p
     assert yaml.safe_load(managed.read_text()) == desired
 
 
+@pytest.mark.parametrize("enabled", [False, True])
+def test_actual_sok_connection_and_scs_settings_use_normal_rendering(tmp_path, enabled):
+    home = tmp_path / "splunk"
+    local = home / "etc/system/local"
+    local.mkdir(parents=True)
+    server_conf = local / "server.conf"
+    server_conf.write_text("[kvstore]\nkvserviceConnectionString = https://legacy-kvservice\n")
+    (home / "etc/splunk.version").write_text("VERSION=10.9.0\nBUILD=test\n")
+    desired = {
+        "kvstore": {"kvserviceConnectionString": "https://sok-kvservice"},
+        "scs": {"tenant": "sok-tenant", "mvl-enabled": "true"},
+    } if enabled else {
+        "kvstore": {"defaultKVStoreType": "local", "postgresMigrateOnStartup": "false"},
+    }
+    variables = _variables(home)
+    variables["splunk"]["conf"] = [{"key": "server", "value": {"content": desired}}]
+    variables["splunk_kvservice_enabled"] = enabled
+    _run_tasks(tmp_path, variables, [
+        _main_include("remove_legacy_kvservice_connection_string.yml"),
+        _main_include("set_config_file.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+        _main_include("remove_legacy_kvservice_connection_string.yml"),
+        _main_include("set_config_file.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+    ])
+    conf = configparser.ConfigParser()
+    conf.read(server_conf)
+    assert conf["kvstore"].get("kvserviceConnectionString") == (
+        "https://sok-kvservice" if enabled else None
+    )
+    assert "kvserviceScope" not in conf["kvstore"]
+    if enabled:
+        assert dict(conf["scs"]) == {"tenant": "sok-tenant", "mvl-enabled": "true"}
+    else:
+        assert conf["kvstore"]["defaultKVStoreType"] == "local"
+        assert conf["kvstore"]["postgresMigrateOnStartup"] == "false"
+        assert "scs" not in conf
+
+
+def test_sok_app_server_conf_is_rebuilt_from_current_defaults():
+    tasks = yaml.safe_load((TASK_DIR / "remove_stale_sok_conf.yml").read_text())
+    assert "{{ splunk.home }}/etc/apps/100-sok/local/server.conf" in tasks[0]["loop"]
+
+
 @pytest.mark.parametrize("requested_type", ["cohosted", "external"])
 @pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
 def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, requested_type, role):

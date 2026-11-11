@@ -183,7 +183,6 @@ def getDefaultVars():
     getIPv6(defaultVars)
     getDefaultKVStoreType(defaultVars)
     getKVServiceEnabled(defaultVars)
-    getKVServiceDeploymentConfig(defaultVars)
     getNodeSidecarPostgres(defaultVars)
     return defaultVars
 
@@ -974,21 +973,6 @@ def getKVServiceEnabled(vars_scope):
     # Preserve the policy signal for Splunk CLI calls under privilege escalation.
     vars_scope.setdefault("ansible_environment", {})["SPLUNK_KVSERVICE_ENABLED"] = normalized
 
-
-def getKVServiceDeploymentConfig(vars_scope):
-    kvstore = vars_scope["splunk"].setdefault("kvstore", {})
-    scope = os.environ.get("SPLUNK_KVSERVICE_SCOPE", kvstore.get("kvservice_scope"))
-    if scope:
-        if scope not in ("deployment", "platform"):
-            raise ValueError("KVService scope must be either 'deployment' or 'platform'")
-        kvstore["kvservice_scope"] = scope
-
-    scs = vars_scope["splunk"].get("scs", {})
-    for setting, variable in (("tenant", "SPLUNK_SCS_TENANT"),
-                              ("environment", "SPLUNK_SCS_ENVIRONMENT")):
-        value = os.environ.get(variable, scs.get(setting))
-        if value:
-            vars_scope["splunk"].setdefault("scs", {})[setting] = value
 
 def getNodeSidecarPostgres(vars_scope):
     """

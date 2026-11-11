@@ -88,9 +88,6 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNKD_SSL_PASSWORD | Custom SSL password used with Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNK_KVSTORE_PORT | Port to run Splunk KVStore. Default: `8191` | no | no | no |
 | SPLUNK_KVSERVICE_ENABLED | Explicitly selects the operator KV Store startup policy. Set to `true` or `false`; leaving it unset preserves the existing Ansible default-type behavior. Splunk 10.6.x uses `local`/`false` for either value. On 10.9+, `false` relies on normal configuration rendering of SOK's `defaultKVStoreType=local` and `postgresMigrateOnStartup=false`; the startup policy adds no backend or migration override. With `true`, the policy sets `postgresMigrateOnStartup=true`, selects `external` for fresh installations, preserves a saved `external` backend for existing installations, and sets other or missing existing backends to `local`. Indexers retain their role-specific settings as described below. Other release lines receive no backend or migration override. | no | no | no |
-| SPLUNK_KVSERVICE_SCOPE | Sets `[kvstore] kvserviceScope` to `deployment` or `platform`. Overrides `splunk.kvstore.kvservice_scope` in defaults. | no | no | no |
-| SPLUNK_SCS_TENANT | Sets `[scs] tenant` for external KVService. Overrides `splunk.scs.tenant` in defaults. | no | no | no |
-| SPLUNK_SCS_ENVIRONMENT | Sets `[scs] environment` for external KVService. Overrides `splunk.scs.environment` in defaults. | no | no | no |
 | SPLUNK_KVSTORE_DEFAULT_TYPE | Requests `[kvstore] defaultKVStoreType` in `server.conf` when explicitly set and `SPLUNK_KVSERVICE_ENABLED` is unset. Allowed values are `cohosted`, `external`, and `local`. For Splunk Enterprise versions 10.6.0 <= version < 10.9.0, Ansible writes the requested type and `postgresMigrateOnStartup=false` for `local` or `true` for `cohosted` and `external`. Starting with 10.9.0, Ansible preserves the saved type and writes `postgresMigrateOnStartup=true` when a default type is configured, replacing a previously saved `false` value. Versions earlier than 10.6.0 skip both settings. | no | no | no |
 | SPLUNK_APPSERVER_PORT | Port to run Splunk appserver. Default: `8065` | no | no | no |
 | SPLUNK_SET_SEARCH_PEERS | Boolean to configure whether search heads should connect to search peers. Default: `True`. Not recommended to change | no | no | no |
@@ -155,6 +152,12 @@ to both classic and Noah deployments. The later SHC commands still form and
 verify the cluster, but they do not request duplicate restarts when the
 effective pre-start configuration already matches. If splunkd is already
 running, Ansible keeps the established live-configuration and restart path.
+
+SOK supplies `kvserviceConnectionString` and the `[scs]` tenant and
+`mvl-enabled` settings through `splunk.conf`; normal configuration rendering
+writes them to system/local `server.conf`. No separate KVService scope,
+tenant, or environment input is parsed. The legacy connection string is removed
+before rendering so disabled deployments do not retain an untracked old endpoint.
 
 The explicit `SPLUNK_KVSERVICE_ENABLED` policy runs after normal configuration
 rendering and reads the installed release from `etc/splunk.version`. With `true`,
