@@ -26,10 +26,7 @@
     config_map_preserve_kvstore_backend: >-
       {{ splunk_kvservice_enabled | default(false) | bool
          and conf_file == 'server.conf'
-         and (conf_directory | relpath(splunk.home + '/etc/system/local')) == '.'
-         and (conf_stanzas.get('kvstore') or {}).get('kvserviceConnectionString', '')
-             | default('', true) | string | trim | length > 0
-         and 'defaultKVStoreType' not in (conf_stanzas.get('kvstore') or {}) }}
+         and (conf_directory | relpath(splunk.home + '/etc/system/local')) == '.' }}
   with_dict: "{{ previous_config_map_stanzas }}"
   loop_control:
     loop_var: previous_stanza

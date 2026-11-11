@@ -81,7 +81,7 @@ def _condition(loader, task, variables):
 
 @pytest.mark.parametrize("enabled", [None, False, True])
 @pytest.mark.parametrize(
-    "directory,conf_file,desired,enabled_handoff",
+    "directory,conf_file,desired,preserve_if_enabled",
     [
         ("/opt/splunk/etc/system/local", "server.conf",
          {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
@@ -96,18 +96,18 @@ def _condition(loader, task, variables):
         ("/opt/splunk/etc/system/local", "inputs.conf",
          {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, False),
         ("/opt/splunk/etc/system/local", "server.conf",
-         {"kvstore": {"kvserviceConnectionString": "   "}}, False),
+         {"kvstore": {"kvserviceConnectionString": "   "}}, True),
         ("/opt/splunk/etc/system/local", "server.conf",
-         {"kvstore": {"defaultKVStoreType": "local"}}, False),
+         {"kvstore": {"defaultKVStoreType": "local"}}, True),
         ("/opt/splunk/etc/system/local", "server.conf",
          {"kvstore": {"kvserviceConnectionString": "https://kvservice",
-                      "defaultKVStoreType": "external"}}, False),
-        ("/opt/splunk/etc/system/local", "server.conf", {}, False),
-        ("/opt/splunk/etc/system/local", "server.conf", {"kvstore": None}, False),
+                      "defaultKVStoreType": "external"}}, True),
+        ("/opt/splunk/etc/system/local", "server.conf", {}, True),
+        ("/opt/splunk/etc/system/local", "server.conf", {"kvstore": None}, True),
     ],
 )
-def test_only_explicit_enabled_system_local_handoff_preserves_backend(
-    enabled, directory, conf_file, desired, enabled_handoff
+def test_enabled_system_local_cleanup_preserves_backend_for_any_desired_settings(
+    enabled, directory, conf_file, desired, preserve_if_enabled
 ):
     loader = DataLoader()
     reconcile = loader.load_from_file(str(TASK_DIR / "reconcile_config_map_values.yml"))[-1]
@@ -116,7 +116,7 @@ def test_only_explicit_enabled_system_local_handoff_preserves_backend(
                  "conf_stanzas": desired, "splunk": {"home": "/opt/splunk"}}
     if enabled is not None:
         variables["splunk_kvservice_enabled"] = enabled
-    preserve = enabled is True and enabled_handoff
+    preserve = enabled is True and preserve_if_enabled
     variables["config_map_preserve_kvstore_backend"] = Templar(
         loader=loader, variables=variables
     ).template(reconcile["vars"]["config_map_preserve_kvstore_backend"])
@@ -470,9 +470,14 @@ def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, req
 
 
 @pytest.mark.parametrize("saved_backend", ["local", "external"])
-@pytest.mark.parametrize("enabled", [None, True])
+@pytest.mark.parametrize("enabled", [None, False, True])
+@pytest.mark.parametrize("desired", [
+    {"kvstore": {"kvserviceConnectionString": "https://kvservice"}},
+    {"general": {"serverName": "customer-name"}},
+    {"kvstore": {"defaultKVStoreType": "local"}},
+])
 def test_actual_handoff_preserves_backend_only_with_explicit_enabled_input(
-    tmp_path, saved_backend, enabled
+    tmp_path, saved_backend, enabled, desired
 ):
     home = tmp_path / "splunk"
     local = home / "etc/system/local"
@@ -489,14 +494,20 @@ def test_actual_handoff_preserves_backend_only_with_explicit_enabled_input(
                       "reconcile_config_map_values": True})
     if enabled is not None:
         variables["splunk_kvservice_enabled"] = enabled
-    desired = {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}
     _run_tasks(tmp_path, variables, [
         _include("set_config_file.yml", vars={"conf_stanzas": desired}),
         _include("set_config_file.yml", vars={"conf_stanzas": desired}),
     ])
     conf = configparser.ConfigParser()
     conf.read(server_conf)
-    assert conf["kvstore"].get("defaultKVStoreType") == (saved_backend if enabled is True else None)
+    expected_backend = desired.get("kvstore", {}).get(
+        "defaultKVStoreType", saved_backend if enabled is True else None,
+    )
+    assert conf["kvstore"].get("defaultKVStoreType") == expected_backend
     assert "postgresMigrateOnStartup" not in conf["kvstore"]
-    assert conf["kvstore"]["kvserviceConnectionString"] == "https://kvservice"
+    assert conf["kvstore"].get("kvserviceConnectionString") == desired.get("kvstore", {}).get(
+        "kvserviceConnectionString",
+    )
+    if "general" in desired:
+        assert conf["general"]["serverName"] == "customer-name"
     assert yaml.safe_load(managed.read_text()) == desired

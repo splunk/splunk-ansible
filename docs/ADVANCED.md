@@ -164,10 +164,12 @@ The explicit `SPLUNK_KVSERVICE_ENABLED` policy runs after normal configuration
 rendering and reads the installed release from `etc/splunk.version`. Before
 rendering, an explicit flag combines list-form `server.conf` entries targeting the
 same file, so customer settings and SOK settings are reconciled together. With
-`true`, cleanup preserves `defaultKVStoreType` only when the combined desired
-system/local `server.conf` contains a KVService connection string and omits that
-backend key. The new ownership metadata then stops tracking that key. An unset flag
-retains legacy cleanup and default-type handling, including cohosted deployments.
+`true`, cleanup always preserves `[kvstore] defaultKVStoreType` in system/local
+`server.conf`, regardless of which settings are supplied. Desired configuration
+and the startup policy can still write a new backend value afterward. The new
+ownership metadata stops tracking the key when it is omitted from desired
+configuration. An unset flag retains legacy cleanup and default-type handling,
+including cohosted deployments.
 
 With an explicit `SPLUNK_KVSERVICE_ENABLED` value, indexers always retain
 `[kvstore] disabled=true`, regardless of enablement or release. On Splunk 10.9
