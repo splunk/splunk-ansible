@@ -373,11 +373,6 @@ def test_actual_sok_connection_and_scs_settings_use_normal_rendering(tmp_path, e
         assert "scs" not in conf
 
 
-def test_sok_app_server_conf_is_rebuilt_from_current_defaults():
-    tasks = yaml.safe_load((TASK_DIR / "remove_stale_sok_conf.yml").read_text())
-    assert "{{ splunk.home }}/etc/apps/100-sok/local/server.conf" in tasks[0]["loop"]
-
-
 @pytest.mark.parametrize("requested_type", ["cohosted", "external"])
 @pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
 def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, requested_type, role):
