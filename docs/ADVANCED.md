@@ -168,21 +168,19 @@ same file, so customer settings and SOK settings are reconciled together. With
 `[kvstore] defaultKVStoreType`, regardless of the file or settings supplied.
 Desired configuration and the startup policy can still write a new backend value
 afterward. Ownership metadata stops tracking the key when desired configuration
-omits it. An unset flag retains legacy cleanup and default-type handling,
-including cohosted deployments.
+omits it. An unset flag retains legacy cleanup.
 
 SOK also supplies `SPLUNK_KVSTORE_DEFAULT_TYPE=local` for older 10.6 images.
-The legacy default-type task is included for either enablement value when this
-input is configured. Its writes are limited to 10.6.x when the enablement flag is
-present; unset-flag deployments retain the original 10.6+ behavior. Thus the
-compatibility input keeps 10.6 on local/false without resetting a saved external
-backend on managed 10.9 deployments. Splunk 10.9 images contain the new Ansible
-policy. Backend and startup-migration settings for 10.6 belong to
-`set_default_kvstore_type.yml`; the new `set_kvservice_startup_policy.yml` writes
-those settings only on 10.9 and later. With an explicit enablement flag, the
-legacy setter runs after configuration rendering so cleanup cannot remove its
-final 10.6 settings. Without the flag, it retains its original position before
-custom configuration rendering. These paths are mutually exclusive.
+After configuration rendering, Ansible reads the installed release from
+`etc/splunk.version` and selects the setter by version. On 10.6.x,
+`set_default_kvstore_type.yml` runs once when a non-empty default-type input is
+configured, whether enablement is true, false, or unset. It runs after cleanup,
+so SOK's local input gives the final local/false settings precedence over
+rendered customer settings. On 10.9 and later, the legacy setter is skipped;
+`set_kvservice_startup_policy.yml` handles explicit KVService enablement.
+An unset enablement flag on 10.9+ leaves backend and migration settings to the
+supplied configuration. Other release lines skip both setters. Splunk 10.9
+images contain the new Ansible policy.
 
 With an explicit `SPLUNK_KVSERVICE_ENABLED` value, indexers always retain
 `[kvstore] disabled=true`, regardless of enablement or release. On Splunk 10.9

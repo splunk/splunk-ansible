@@ -50,9 +50,9 @@ def _include(task_file, **extra):
     return {"include_tasks": str(TASK_DIR / task_file), **extra}
 
 
-def _main_include(task_file, occurrence=-1):
+def _main_include(task_file):
     tasks = yaml.safe_load((TASK_DIR / "main.yml").read_text())
-    task = [task for task in tasks if task.get("include_tasks") == task_file][occurrence]
+    task = next(task for task in tasks if task.get("include_tasks") == task_file)
     task["include_tasks"] = str(TASK_DIR / task_file)
     return task
 
@@ -66,6 +66,17 @@ def _installation_state_task():
 def _indexer_policy_task():
     tasks = yaml.safe_load((TASK_DIR / "main.yml").read_text())
     return next(task for task in tasks if task.get("name") == "Keep KV Store disabled on indexers")
+
+
+def _installed_release_task():
+    tasks = yaml.safe_load((TASK_DIR / "main.yml").read_text())
+    return next(task for task in tasks
+                if task.get("name") == "Read the installed release for KV Store settings")
+
+
+def _policy_tasks():
+    return [_installed_release_task(), _main_include("set_default_kvstore_type.yml"),
+            _indexer_policy_task(), _main_include("set_kvservice_startup_policy.yml")]
 
 
 def _variables(home):
@@ -111,15 +122,19 @@ def test_cleanup_preserves_only_kvstore_backend_when_enabled(enabled, stanza, op
 
 @pytest.mark.parametrize("enabled", [None, False, True])
 @pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
-def test_new_policy_requires_explicit_input_and_runs_after_render(enabled, role):
+@pytest.mark.parametrize("release", ["10.6.7.1", "10.8.9", "10.9.0", "10.10.0"])
+def test_version_selects_setter_after_render(enabled, role, release):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_DIR / "main.yml"))
     policy = next(task for task in tasks
                   if task.get("include_tasks") == "set_kvservice_startup_policy.yml")
-    variables = {"splunk": {"role": role, "kvstore": {"default_kvstore_type": "local"}}}
+    variables = {"splunk": {"role": role, "kvstore": {"default_kvstore_type": "local"}},
+                 "kvservice_installed_release": release}
     if enabled is not None:
         variables["splunk_kvservice_enabled"] = enabled
-    assert _condition(loader, policy, variables) is (enabled is not None)
+    assert _condition(loader, policy, variables) is (
+        enabled is not None and release.startswith(("10.9.", "10.10."))
+    )
     capture = _installation_state_task()
     assert _condition(loader, capture, variables) is (enabled is not None)
     includes = [task.get("include_tasks") for task in tasks]
@@ -129,12 +144,11 @@ def test_new_policy_requires_explicit_input_and_runs_after_render(enabled, role)
     assert includes.index("set_config_file.yml") < tasks.index(policy) < includes.index("start_splunk.yml")
     indexer_policy = _indexer_policy_task()
     assert _condition(loader, indexer_policy, variables) is (enabled is not None and role == "splunk_indexer")
-    legacy_before, legacy_after = [task for task in tasks
-                                  if task.get("include_tasks") == "set_default_kvstore_type.yml"]
-    assert _condition(loader, legacy_before, variables) is (enabled is None)
-    assert _condition(loader, legacy_after, variables) is (enabled is not None)
-    assert tasks.index(legacy_before) < includes.index("set_config_file.yml")
-    assert (includes.index("set_config_file.yml") < tasks.index(legacy_after)
+    assert includes.count("set_default_kvstore_type.yml") == 1
+    legacy = next(task for task in tasks if task.get("include_tasks") == "set_default_kvstore_type.yml")
+    assert _condition(loader, legacy, variables) is release.startswith("10.6.")
+    assert (includes.index("set_config_file.yml") < tasks.index(_installed_release_task())
+            < tasks.index(legacy)
             < tasks.index(indexer_policy) < tasks.index(policy))
 
 
@@ -151,8 +165,19 @@ def test_new_setter_leaves_10_6_configuration_unchanged(tmp_path, enabled, role)
     variables = _variables(home)
     variables["splunk"].update({"role": role})
     variables["splunk_kvservice_enabled"] = enabled
-    _run_tasks(tmp_path, variables, [_main_include("set_kvservice_startup_policy.yml")])
+    _run_tasks(tmp_path, variables, [
+        _installed_release_task(), _main_include("set_kvservice_startup_policy.yml"),
+    ])
     assert server_conf.read_text() == contents
+
+
+def test_actual_universal_forwarder_skips_version_read_and_both_setters(tmp_path):
+    home = tmp_path / "splunk"
+    variables = _variables(home)
+    variables["splunk"]["role"] = "splunk_universal_forwarder"
+    variables["splunk_kvservice_enabled"] = True
+    _run_tasks(tmp_path, variables, _policy_tasks())
+    assert not home.exists()
 
 
 @pytest.mark.parametrize(
@@ -204,14 +229,13 @@ def test_actual_explicit_policy_tasks(
     variables["splunk_kvservice_enabled"] = enabled
     variables["splunk"]["kvstore"]["default_kvstore_type"] = "local"
     fake_cli = tmp_path / "splunk-version"
-    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk {} (test)'\n".format(release))
+    fake_cli.write_text(
+        "#!/bin/sh\nprintf '%s\\n' 'Splunk {} (test)'\n".format(release)
+        if release.startswith("10.6.") else "#!/bin/sh\nexit 99\n"
+    )
     fake_cli.chmod(0o755)
     variables["splunk"]["exec"] = str(fake_cli)
-    _run_tasks(tmp_path, variables, [
-        _main_include("set_default_kvstore_type.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
-    ])
+    _run_tasks(tmp_path, variables, _policy_tasks())
     conf = configparser.ConfigParser()
     conf.read(server_conf)
     assert conf["kvstore"].get("defaultKVStoreType") == expected_backend
@@ -274,15 +298,11 @@ def test_actual_initialization_uses_state_captured_before_early_cli(
         _installation_state_task(),
         {"command": "{{ splunk.exec }} version"},
         _main_include("set_config_file.yml"),
-        _main_include("set_default_kvstore_type.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
         # A subsequent reconciliation sees the native marker created by the CLI.
         _installation_state_task(),
         _main_include("set_config_file.yml"),
-        _main_include("set_default_kvstore_type.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
     ])
     conf = configparser.ConfigParser()
     conf.read(server_conf)
@@ -325,13 +345,9 @@ def test_actual_disabled_config_render_restores_local_policy_after_cleanup(tmp_p
     # Exercise the real main.yml rendering include, cleanup, and repeated reconciliation.
     _run_tasks(tmp_path, variables, [
         _main_include("set_config_file.yml"),
-        _main_include("set_default_kvstore_type.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
         _main_include("set_config_file.yml"),
-        _main_include("set_default_kvstore_type.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
     ])
     conf = configparser.ConfigParser()
     conf.read(server_conf)
@@ -388,12 +404,10 @@ def test_actual_sok_connection_and_scs_settings_use_normal_rendering(tmp_path, e
     _run_tasks(tmp_path, variables, [
         _main_include("remove_legacy_kvservice_connection_string.yml"),
         _main_include("set_config_file.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
         _main_include("remove_legacy_kvservice_connection_string.yml"),
         _main_include("set_config_file.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
     ])
     conf = configparser.ConfigParser()
     conf.read(server_conf)
@@ -452,11 +466,9 @@ def test_actual_multi_entry_sok_handoff_preserves_backend(tmp_path, saved_backen
     _run_tasks(tmp_path, variables, [
         _installation_state_task(),
         _main_include("set_config_file.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
         _main_include("set_config_file.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
     ])
     conf = configparser.ConfigParser()
     conf.read(server_conf)
@@ -518,15 +530,18 @@ def test_actual_legacy_local_input_preserves_version_policy(
         "kvstore": {"defaultKVStoreType": "local", "postgresMigrateOnStartup": "false"},
     }
     variables["splunk"]["conf"] = (
-        [{"key": "server", "value": {"content": desired}}] if enabled is not None else []
+        [{"key": "server", "value": {"content": desired}}] if enabled is not None else {
+            "server": {"content": {"kvstore": {
+                "defaultKVStoreType": "external", "postgresMigrateOnStartup": "true",
+            }}},
+        }
     )
-    _run_tasks(tmp_path, variables, [_installation_state_task()] + [
+    _run_tasks(tmp_path, variables, [
+        _installation_state_task(), {"command": "{{ splunk.exec }} version"},
+    ] + [
         task
         for _ in range(2)
-        for task in (_main_include("set_default_kvstore_type.yml", occurrence=0),
-                     _main_include("set_config_file.yml"),
-                     _main_include("set_default_kvstore_type.yml"), _indexer_policy_task(),
-                     _main_include("set_kvservice_startup_policy.yml"))
+        for task in (_main_include("set_config_file.yml"), *_policy_tasks())
     ])
     conf = configparser.ConfigParser()
     conf.read(server_conf)
@@ -542,20 +557,17 @@ def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, req
     home = tmp_path / "splunk"
     local = home / "etc/system/local"
     local.mkdir(parents=True)
+    (home / "etc/splunk.version").write_text("VERSION=10.6.7.1\nBUILD=test\n")
     fake_cli = tmp_path / "splunk-version"
-    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk 10.9.0 (test)'\n")
+    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk 10.6.7.1 (test)'\n")
     fake_cli.chmod(0o755)
     variables = _variables(home)
     variables["splunk"]["role"] = role
     variables["splunk"]["exec"] = str(fake_cli)
     variables["splunk"]["kvstore"]["default_kvstore_type"] = requested_type
-    # No splunk.version file: entering the new policy would fail this legacy test.
     _run_tasks(tmp_path, variables, [
-        _main_include("set_default_kvstore_type.yml", occurrence=0),
         _main_include("set_config_file.yml"),
-        _main_include("set_default_kvstore_type.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        *_policy_tasks(),
     ])
     conf = configparser.ConfigParser()
     conf.read(local / "server.conf")
@@ -567,29 +579,24 @@ def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, req
         assert option not in conf["kvstore"]
 
 
-def test_actual_unset_input_preserves_custom_migration_setting(tmp_path):
+def test_actual_10_9_unset_input_leaves_custom_configuration_in_control(tmp_path):
     home = tmp_path / "splunk"
     local = home / "etc/system/local"
     local.mkdir(parents=True)
-    fake_cli = tmp_path / "splunk-version"
-    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk 10.9.0 (test)'\n")
-    fake_cli.chmod(0o755)
+    server_conf = local / "server.conf"
+    server_conf.write_text("[kvstore]\ndefaultKVStoreType = external\npostgresMigrateOnStartup = true\n")
+    (home / "etc/splunk.version").write_text("VERSION=10.9.0\nBUILD=test\n")
     variables = _variables(home)
-    variables["splunk"]["exec"] = str(fake_cli)
-    variables["splunk"]["kvstore"]["default_kvstore_type"] = "cohosted"
+    variables["splunk"]["kvstore"]["default_kvstore_type"] = "local"
     variables["splunk"]["conf"] = {"server": {"content": {
         "kvstore": {"postgresMigrateOnStartup": "false"},
     }}}
     _run_tasks(tmp_path, variables, [
-        _main_include("set_default_kvstore_type.yml", occurrence=0),
-        _main_include("set_config_file.yml"),
-        _main_include("set_default_kvstore_type.yml"),
-        _indexer_policy_task(),
-        _main_include("set_kvservice_startup_policy.yml"),
+        _main_include("set_config_file.yml"), *_policy_tasks(),
     ])
     conf = configparser.ConfigParser()
-    conf.read(local / "server.conf")
-    assert conf["kvstore"]["defaultKVStoreType"] == "cohosted"
+    conf.read(server_conf)
+    assert conf["kvstore"]["defaultKVStoreType"] == "external"
     assert conf["kvstore"]["postgresMigrateOnStartup"] == "false"
 
 
