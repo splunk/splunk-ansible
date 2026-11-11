@@ -179,7 +179,12 @@ def test_normalizeConfEntries_only_merges_selected_file_keys():
     assert normalized[2]["value"]["content"]["settings"] == {"b": "2"}
 
 
-def test_normalizeNoahConf_updates_list_form_server_config_only_in_noah_mode():
+@pytest.mark.parametrize("mode", [
+    {"splunk_noah_enabled": True},
+    {"splunk_kvservice_enabled": True},
+    {"splunk_kvservice_enabled": False},
+])
+def test_normalizeServerConf_preserves_noah_and_unset_legacy_behavior(mode):
     conf_entries = [
         {
             "key": "server",
@@ -191,11 +196,11 @@ def test_normalizeNoahConf_updates_list_form_server_config_only_in_noah_mode():
         },
     ]
     vars_scope = {
-        "splunk_noah_enabled": True,
         "splunk": {"home": "/opt/splunk", "conf": conf_entries},
     }
+    vars_scope.update(mode)
 
-    environ.normalizeNoahConf(vars_scope)
+    environ.normalizeServerConf(vars_scope)
 
     assert len(vars_scope["splunk"]["conf"]) == 1
     assert vars_scope["splunk"]["conf"][0]["value"]["content"]["noahService"] == {
@@ -207,7 +212,7 @@ def test_normalizeNoahConf_updates_list_form_server_config_only_in_noah_mode():
         "splunk_noah_enabled": False,
         "splunk": {"home": "/opt/splunk", "conf": conf_entries},
     }
-    environ.normalizeNoahConf(classic_vars)
+    environ.normalizeServerConf(classic_vars)
     assert classic_vars["splunk"]["conf"] is conf_entries
 
     dict_conf = {
@@ -224,7 +229,7 @@ def test_normalizeNoahConf_updates_list_form_server_config_only_in_noah_mode():
         "splunk_noah_enabled": True,
         "splunk": {"home": "/opt/splunk", "conf": dict_conf},
     }
-    environ.normalizeNoahConf(dict_vars)
+    environ.normalizeServerConf(dict_vars)
     assert dict_vars["splunk"]["conf"] is dict_conf
     assert vars_scope["splunk"]["conf"][0]["value"] == dict_conf["server"]
 

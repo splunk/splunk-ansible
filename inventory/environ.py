@@ -139,7 +139,8 @@ def getDefaultVars():
     getHEC(defaultVars)
     getSecrets(defaultVars)
     getSplunkPaths(defaultVars)
-    normalizeNoahConf(defaultVars)
+    getKVServiceEnabled(defaultVars)
+    normalizeServerConf(defaultVars)
     getIndexerClustering(defaultVars)
     getSearchHeadClustering(defaultVars)
     # getMultisite() must be called after getIndexerClustering() + getSearchHeadClustering()
@@ -182,7 +183,6 @@ def getDefaultVars():
     getDSP(defaultVars)
     getIPv6(defaultVars)
     getDefaultKVStoreType(defaultVars)
-    getKVServiceEnabled(defaultVars)
     getNodeSidecarPostgres(defaultVars)
     return defaultVars
 
@@ -1024,9 +1024,10 @@ def normalizeConfEntries(entries, default_directory, file_keys=None):
     """Backwards-compatible wrapper for configuration entry normalization."""
     return normalize_conf_entries(entries, default_directory, file_keys)
 
-def normalizeNoahConf(vars_scope):
-    """Opt Noah's list-form server.conf into effective-file normalization."""
-    if not vars_scope.get("splunk_noah_enabled", False):
+def normalizeServerConf(vars_scope):
+    """Merge same-file server entries for Noah or explicit KVService policy."""
+    if not (vars_scope.get("splunk_noah_enabled", False)
+            or "splunk_kvservice_enabled" in vars_scope):
         return
 
     splunk_vars = vars_scope.get("splunk", {})

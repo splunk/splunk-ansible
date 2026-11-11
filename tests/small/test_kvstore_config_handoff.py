@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+from unittest import mock
 
 import pytest
 import yaml
@@ -16,6 +17,10 @@ from ansible.template import Templar
 
 
 TASK_DIR = Path(__file__).resolve().parents[2] / "roles/splunk_common/tasks"
+
+
+sys.path.append(str(Path(__file__).resolve().parents[2] / "inventory"))
+import environ
 
 
 def _run_tasks(tmp_path, variables, tasks):
@@ -81,6 +86,10 @@ def _condition(loader, task, variables):
         ("/opt/splunk/etc/system/local", "server.conf",
          {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
         ("/opt/splunk/etc/system/local/", "server.conf",
+         {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
+        ("/opt//splunk/etc/./system/local/", "server.conf",
+         {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
+        ("/opt/splunk/etc/system/local/../local", "server.conf",
          {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, True),
         ("/opt/splunk/etc/apps/custom/local", "server.conf",
          {"kvstore": {"kvserviceConnectionString": "https://kvservice"}}, False),
@@ -371,6 +380,65 @@ def test_actual_sok_connection_and_scs_settings_use_normal_rendering(tmp_path, e
         assert conf["kvstore"]["defaultKVStoreType"] == "local"
         assert conf["kvstore"]["postgresMigrateOnStartup"] == "false"
         assert "scs" not in conf
+
+
+@pytest.mark.parametrize("saved_backend", ["external", "local"])
+@pytest.mark.parametrize("directory_alias", [False, True], ids=["implicit-directory", "aliased-directory"])
+def test_actual_multi_entry_sok_handoff_preserves_backend(tmp_path, saved_backend, directory_alias):
+    home = tmp_path / "splunk"
+    local = home / "etc/system/local"
+    local.mkdir(parents=True)
+    server_conf = local / "server.conf"
+    server_conf.write_text(
+        "[kvstore]\ndefaultKVStoreType = %s\n"
+        "kvserviceConnectionString = https://old-kvservice\n"
+        "[general]\nserverName = old-name\n" % saved_backend
+    )
+    (home / "etc/splunk.version").write_text("VERSION=10.9.0\nBUILD=test\n")
+    marker = home / "etc/myinstall/splunkd.xml"
+    marker.parent.mkdir()
+    marker.write_text("<splunk/>\n")
+    managed = local / ".server.conf.splunk-ansible-managed.yml"
+    managed.write_text(yaml.safe_dump({
+        "kvstore": {"defaultKVStoreType": "local",
+                    "kvserviceConnectionString": "https://old-kvservice"},
+        "general": {"serverName": "old-name"},
+    }))
+    variables = environ.merge_dict(environ.loadBaseDefaults(), _variables(home))
+    variables["splunk"].update({"conf": [
+        {"key": "server", "value": {"content": {"general": {"serverName": "customer-name"}}}},
+    ]})
+    if directory_alias:
+        variables["splunk"]["conf"][0]["value"]["directory"] = str(home) + "/etc//./system/local/"
+    sok_settings = {
+        "kvstore": {"kvserviceConnectionString": "https://new-kvservice"},
+        "scs": {"tenant": "sok-tenant", "mvl-enabled": "true"},
+    }
+    environ.merge_dict(variables, {"splunk": {"conf": [
+        {"key": "server", "value": {"content": sok_settings}},
+    ]}})
+    with mock.patch.dict(os.environ, {
+        "SPLUNK_KVSERVICE_ENABLED": "true", "SPLUNK_NOAH_ENABLED": "false",
+    }, clear=True), mock.patch.object(environ, "loadDefaults", return_value=variables), \
+            mock.patch.object(environ, "getSecrets"), mock.patch.object(environ, "getHEC"):
+        variables = environ.getDefaultVars()
+    _run_tasks(tmp_path, variables, [
+        _installation_state_task(),
+        _main_include("set_config_file.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+        _main_include("set_config_file.yml"),
+        _main_include("set_kvservice_startup_policy.yml"),
+    ])
+    conf = configparser.ConfigParser()
+    conf.read(server_conf)
+    assert conf["kvstore"]["defaultKVStoreType"] == saved_backend
+    assert conf["kvstore"]["kvserviceConnectionString"] == "https://new-kvservice"
+    assert conf["kvstore"]["postgresMigrateOnStartup"] == "true"
+    assert conf["general"]["serverName"] == "customer-name"
+    assert dict(conf["scs"]) == {"tenant": "sok-tenant", "mvl-enabled": "true"}
+    assert yaml.safe_load(managed.read_text()) == {
+        "general": {"serverName": "customer-name"}, **sok_settings,
+    }
 
 
 @pytest.mark.parametrize("requested_type", ["local", "cohosted", "external"])
