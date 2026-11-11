@@ -27,22 +27,22 @@ def _condition(loader, task, variables):
 
 
 @pytest.mark.parametrize(
-    "installed_version,writes_type,writes_startup,is_10_9_or_later",
+    "installed_version,writes_settings",
     [
-        ("0", False, False, False),
-        ("10.5.9", False, False, False),
-        ("10.6.0", True, True, False),
-        ("10.8.9", True, True, False),
-        ("10.8.0.1", True, True, False),
-        ("10.9.0", False, True, True),
-        ("10.9.0.0", False, True, True),
-        ("10.10.0", False, True, True),
-        ("11.0.0", False, True, True),
+        ("0", False),
+        ("10.5.9", False),
+        ("10.6.0", True),
+        ("10.8.9", True),
+        ("10.8.0.1", True),
+        ("10.9.0", True),
+        ("10.9.0.0", True),
+        ("10.10.0", True),
+        ("11.0.0", True),
     ],
 )
 @pytest.mark.parametrize("kvstore_type", ["local", "external", "cohosted"])
 def test_kvstore_settings_version_boundaries(
-    installed_version, writes_type, writes_startup, is_10_9_or_later, kvstore_type
+    installed_version, writes_settings, kvstore_type
 ):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_FILE))
@@ -67,12 +67,11 @@ def test_kvstore_settings_version_boundaries(
     }
     for task in write_tasks:
         is_type = task["ini_file"]["option"] == "defaultKVStoreType"
-        expected_write = writes_type if is_type else writes_startup
-        assert _condition(loader, task, variables) is expected_write
-        if expected_write:
+        assert _condition(loader, task, variables) is writes_settings
+        if writes_settings:
             expected_value = (
                 kvstore_type if is_type
-                else "false" if kvstore_type == "local" and not is_10_9_or_later
+                else "false" if kvstore_type == "local"
                 else "true"
             )
             templar = Templar(loader=loader, variables=variables)

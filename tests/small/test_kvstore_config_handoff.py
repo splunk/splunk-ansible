@@ -373,14 +373,14 @@ def test_actual_sok_connection_and_scs_settings_use_normal_rendering(tmp_path, e
         assert "scs" not in conf
 
 
-@pytest.mark.parametrize("requested_type", ["cohosted", "external"])
+@pytest.mark.parametrize("requested_type", ["local", "cohosted", "external"])
 @pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
 def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, requested_type, role):
     home = tmp_path / "splunk"
     local = home / "etc/system/local"
     local.mkdir(parents=True)
     fake_cli = tmp_path / "splunk-version"
-    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk 10.6.0 (test)'\n")
+    fake_cli.write_text("#!/bin/sh\nprintf '%s\\n' 'Splunk 10.9.0 (test)'\n")
     fake_cli.chmod(0o755)
     variables = _variables(home)
     variables["splunk"]["role"] = role
@@ -394,7 +394,9 @@ def test_actual_unset_input_keeps_legacy_type_and_startup_behavior(tmp_path, req
     conf = configparser.ConfigParser()
     conf.read(local / "server.conf")
     assert conf["kvstore"]["defaultKVStoreType"] == requested_type
-    assert conf["kvstore"]["postgresMigrateOnStartup"] == "true"
+    assert conf["kvstore"]["postgresMigrateOnStartup"] == (
+        "false" if requested_type == "local" else "true"
+    )
     for option in ("disabled", "forceLocalForInternalCollections", "shutDownMongo"):
         assert option not in conf["kvstore"]
 
