@@ -98,23 +98,24 @@ def test_kvstore_settings_version_boundaries(
 def test_kvstore_tasks_require_an_explicit_default_type(kvstore, role, included):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_FILE.with_name("main.yml")))
-    task = next(
+    includes = [
         task for task in tasks
         if task.get("include_tasks") == "set_default_kvstore_type.yml"
-    )
-    assert _condition(loader, task, {"splunk": {"kvstore": kvstore, "role": role}}) is included
+    ]
+    variables = {"splunk": {"kvstore": kvstore, "role": role}}
+    assert sum(_condition(loader, task, variables) for task in includes) == int(included)
 
 
 @pytest.mark.parametrize("enabled", [True, False])
 def test_explicit_kvservice_policy_still_includes_legacy_version_check(enabled):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_FILE.with_name("main.yml")))
-    task = next(
+    includes = [
         task for task in tasks
         if task.get("include_tasks") == "set_default_kvstore_type.yml"
-    )
+    ]
     variables = {
         "splunk_kvservice_enabled": enabled,
         "splunk": {"role": "splunk_standalone", "kvstore": {"default_kvstore_type": "external"}},
     }
-    assert _condition(loader, task, variables) is True
+    assert sum(_condition(loader, task, variables) for task in includes) == 1

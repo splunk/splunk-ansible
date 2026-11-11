@@ -177,13 +177,20 @@ input is configured. Its writes are limited to 10.6.x when the enablement flag i
 present; unset-flag deployments retain the original 10.6+ behavior. Thus the
 compatibility input keeps 10.6 on local/false without resetting a saved external
 backend on managed 10.9 deployments. Splunk 10.9 images contain the new Ansible
-policy.
+policy. Backend and startup-migration settings for 10.6 belong to
+`set_default_kvstore_type.yml`; the new `set_kvservice_startup_policy.yml` writes
+those settings only on 10.9 and later. With an explicit enablement flag, the
+legacy setter runs after configuration rendering so cleanup cannot remove its
+final 10.6 settings. Without the flag, it retains its original position before
+custom configuration rendering. These paths are mutually exclusive.
 
 With an explicit `SPLUNK_KVSERVICE_ENABLED` value, indexers always retain
 `[kvstore] disabled=true`, regardless of enablement or release. On Splunk 10.9
 and later, enabled indexers additionally receive `defaultKVStoreType=external`,
 `forceLocalForInternalCollections=false`, and `shutDownMongo=true`. This applies
 to both fresh and existing indexers.
+The indexer-disable rule runs after configuration rendering, independently of
+the version-specific backend setters.
 
 For other enabled roles on Splunk 10.9 and later, Ansible initializes fresh
 installations with `defaultKVStoreType=external`,
