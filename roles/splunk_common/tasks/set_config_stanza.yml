@@ -1,19 +1,23 @@
 ---
 - name: "Set stanza {{ stanza_name }}"
-  lineinfile:
+  splunk_config:
+    module: lineinfile
+    home: "{{ splunk.home }}"
     path: "{{ conf_directory }}/{{ conf_file }}"
     line: "[{{ stanza_name }}]"
     state: present
     create: yes
     mode: 0660
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
   when: stanza_name and not stanza_settings
 
 - name: "Set options in {{ stanza_name }}"
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     path: "{{ conf_directory }}/{{ conf_file }}"
     section: "{{ stanza_name }}"
     option: "{{ stanza_setting.key }}"
@@ -21,8 +25,8 @@
     allow_no_value: False
     state: present
     mode: 0660
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_dict: "{{ stanza_settings | default({}) }}"

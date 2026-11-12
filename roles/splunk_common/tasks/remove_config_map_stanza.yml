@@ -1,12 +1,14 @@
 ---
 - name: Remove ConfigMap-owned options in {{ config_map_stanza_name }}
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     path: "{{ conf_directory }}/{{ conf_file }}"
     section: "{{ config_map_stanza_name }}"
     option: "{{ config_map_stanza_setting.key }}"
     state: absent
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.group }}"
   become: yes
   become_user: "{{ splunk.user }}"
   with_dict: "{{ config_map_stanza_settings }}"

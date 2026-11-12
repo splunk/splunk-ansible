@@ -1,9 +1,11 @@
 ---
 - name: Set Splunkd Connection Timeout
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "splunkdConnectionTimeout"
     value: "{{ splunk.connection_timeout }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
