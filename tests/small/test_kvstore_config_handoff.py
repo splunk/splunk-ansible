@@ -475,11 +475,8 @@ def test_actual_multi_entry_sok_handoff_preserves_backend(tmp_path, saved_backen
     assert conf["kvstore"]["defaultKVStoreType"] == saved_backend
     assert conf["kvstore"]["kvserviceConnectionString"] == "https://new-kvservice"
     assert conf["kvstore"]["postgresMigrateOnStartup"] == "true"
-    assert conf["general"]["serverName"] == "customer-name"
     assert dict(conf["scs"]) == {"tenant": "sok-tenant", "mvl-enabled": "true"}
-    assert yaml.safe_load(managed.read_text()) == {
-        "general": {"serverName": "customer-name"}, **sok_settings,
-    }
+    assert yaml.safe_load(managed.read_text()) == sok_settings
 
 
 @pytest.mark.parametrize(

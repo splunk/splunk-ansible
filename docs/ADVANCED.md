@@ -161,9 +161,7 @@ the legacy connection string before rendering, so an untracked old endpoint does
 not persist. Enabled and unmarked deployments skip that extra cleanup.
 
 The explicit `SPLUNK_KVSERVICE_ENABLED` policy runs after normal configuration
-rendering and reads the installed release from `etc/splunk.version`. Before
-rendering, an explicit flag combines list-form `server.conf` entries targeting the
-same file, so customer settings and SOK settings are reconciled together. With
+rendering and reads the installed release from `etc/splunk.version`. With
 `true`, the cleanup task checks the enablement flag directly and always preserves
 `[kvstore] defaultKVStoreType`, regardless of the file or settings supplied.
 Desired configuration and the startup policy can still write a new backend value
