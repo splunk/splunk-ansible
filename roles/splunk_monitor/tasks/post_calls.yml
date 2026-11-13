@@ -7,7 +7,7 @@
     dmc_group_kv_store: "default=false&name=dmc_group_kv_store"
     dmc_group_license_master: "{% if license_master_string | length > 0 %}member={{ license_master_string }}&default=false&name=dmc_group_license_master{% else %}default=false&name=dmc_group_license_master{% endif %}"
     dmc_group_search_head: "{% if search_head_string | length > 0 %}member={{ search_head_string }}&default=false&name=dmc_group_search_head{% else %}default=false&name=dmc_group_search_head{% endif %}"
-    dmc_group_shc_deployer: "default=false&name=dmc_group_shc_deployer"
+    dmc_group_shc_deployer: "{% if shc_deployer_string | length > 0 %}member={{ shc_deployer_string }}&default=false&name=dmc_group_shc_deployer{% else %}default=false&name=dmc_group_shc_deployer{% endif %}"
 
 - name: POST Requests
   uri:

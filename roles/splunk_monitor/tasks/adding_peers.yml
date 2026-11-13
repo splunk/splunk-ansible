@@ -29,7 +29,7 @@
 
 - name: Create list of peers
   set_fact:
-    group_list: "{{ (groups['splunk_indexer'] | default([])) + (groups['splunk_search_head'] | default([])) + (groups['splunk_search_head_captain'] | default([])) + (groups['splunk_cluster_master'] | default([])) + (groups['splunk_deployment_server']| default([])) + (groups['splunk_license_master'] | default([])) + (groups['splunk_standalone'] | default([])) + (splunk['manual_monitor_list'] | default([])) }}"
+    group_list: "{{ (groups['splunk_indexer'] | default([])) + (groups['splunk_search_head'] | default([])) + (groups['splunk_search_head_captain'] | default([])) + (groups['splunk_cluster_master'] | default([])) + (groups['splunk_deployment_server']| default([])) + (groups['splunk_license_master'] | default([])) + (groups['splunk_standalone'] | default([])) + (groups['splunk_deployer'] | default([])) + (splunk['manual_monitor_list'] | default([])) }}"
 
 - name: Fetch existing peers
   splunk_api:
