@@ -138,6 +138,7 @@ def getDefaultVars():
     getDisablePopups(defaultVars)
     getHEC(defaultVars)
     getSecrets(defaultVars)
+    getUsers(defaultVars)
     getSplunkPaths(defaultVars)
     getKVServiceEnabled(defaultVars)
     normalizeNoahConf(defaultVars)
@@ -771,6 +772,46 @@ def getSecrets(vars_scope):
     if vars_scope["splunk"]["splunk_secret"] and os.path.isfile(vars_scope["splunk"]["splunk_secret"]):
         with open(vars_scope["splunk"]["splunk_secret"], "r") as f:
             vars_scope["splunk"]["splunk_secret"] = f.read().strip()
+
+def getUsers(vars_scope):
+    """
+    Validate the additional users declared in splunk.users, resolving any password
+    supplied as a file path. Errors name the user but never the password.
+    """
+    try:
+        string_types = (basestring,)
+    except NameError:
+        string_types = (str,)
+
+    users = vars_scope["splunk"].get("users")
+    if users is None:
+        return
+    if not isinstance(users, dict):
+        raise Exception("splunk.users must be a mapping of username to password and roles")
+    admin_user = str(vars_scope["splunk"].get("admin_user") or "admin").strip().lower()
+    for name, user in users.items():
+        if not isinstance(name, string_types) or not name.strip():
+            raise Exception("splunk.users contains an empty or non-string username")
+        if name.strip().lower() == admin_user:
+            raise Exception("splunk.users must not declare the admin user '{}'".format(name))
+        if not isinstance(user, dict):
+            raise Exception("splunk.users entry '{}' must be a mapping with password and roles".format(name))
+
+        password = user.get("password")
+        if not isinstance(password, string_types) or not password:
+            raise Exception("splunk.users entry '{}' must have a non-empty string password".format(name))
+        if os.path.isfile(password):
+            with open(password, "r") as f:
+                password = f.read().strip()
+            if not password:
+                raise Exception("splunk.users entry '{}' password file is empty".format(name))
+        user["password"] = password
+
+        roles = user.get("roles")
+        if not isinstance(roles, list) or not roles:
+            raise Exception("splunk.users entry '{}' must have a non-empty list of roles".format(name))
+        if any(not isinstance(role, string_types) or not role.strip() for role in roles):
+            raise Exception("splunk.users entry '{}' must not have an empty role".format(name))
 
 def getLaunchConf(vars_scope):
     """

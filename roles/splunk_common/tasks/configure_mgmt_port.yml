@@ -18,13 +18,15 @@
     - ansible_system is not match("CYGWIN*|Win32NT")
 
 - name: Configure to set Mgmt Mode as tcp (Allows only TCP)
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/server.conf"
     option: "mgmtMode"
     section: "httpServer"
     value: "tcp"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
   when:
     - splunk.role == "splunk_universal_forwarder"
     - splunk.splunk_http_enabled | bool or ansible_system is match("CYGWIN*|Win32NT")

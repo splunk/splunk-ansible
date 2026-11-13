@@ -6,6 +6,9 @@ from __future__ import absolute_import
 import copy
 import os
 
+# Each entry under these mappings is replaced whole by the last file declaring it;
+# deep merging an entry would concatenate list values such as a user's roles.
+REPLACED_ENTRY_PATHS = frozenset([("splunk", "users")])
 
 def merge_dict(dict1, dict2, path=None):
     """
@@ -16,10 +19,14 @@ def merge_dict(dict1, dict2, path=None):
     """
     if path is None:
         path = []
+    replace_entries = tuple(path) in REPLACED_ENTRY_PATHS
     for key in dict2:
-        if key in dict1:
+        if key in dict1 and not replace_entries:
             if isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
                 merge_dict(dict1[key], dict2[key], path + [str(key)])
+            elif tuple(path + [str(key)]) in REPLACED_ENTRY_PATHS and isinstance(dict2[key], list):
+                # Keep the list so validation rejects it rather than folding it in
+                dict1[key] = dict2[key]
             elif isinstance(dict1[key], list) and isinstance(dict2[key], list):
                 dict1[key] += dict2[key]
             elif isinstance(dict1[key], dict) and dict2[key] is None:

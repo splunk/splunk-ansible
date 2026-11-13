@@ -1,0 +1,44 @@
+---
+- name: Resolve splunk.conf target files
+  set_fact:
+    conf_targets: "{{ conf_entries | splunk_conf_targets(splunk.home + '/etc/system/local') }}"
+  no_log: "{{ hide_password }}"
+
+# The probe must see each file after its dropped values are removed.
+- name: Remove stale ConfigMap-owned values before checking for unchanged options
+  include_tasks: reconcile_config_map_values.yml
+  vars:
+    conf_file: "{{ conf_target.file }}"
+    conf_directory: "{{ conf_target.directory }}"
+    conf_stanzas: "{{ conf_target.stanzas }}"
+  loop: "{{ conf_targets }}"
+  loop_control:
+    loop_var: conf_target
+  when: reconcile_config_map_values | default(false) | bool
+  no_log: "{{ hide_password }}"
+
+# Any failure here leaves conf_probe without usable files, so every file is written in full.
+- name: Find splunk.conf options that differ from the files on disk
+  splunk_conf_pending:
+    files: "{{ conf_targets }}"
+  register: conf_probe
+  failed_when: false
+  become: yes
+  become_user: "{{ splunk.user }}"
+  no_log: "{{ hide_password }}"
+
+- name: Report splunk.conf options that differ from the files on disk
+  debug:
+    msg: "{{ conf_probe | splunk_conf_probe_report }}"
+
+- include_tasks: set_config_file.yml
+  vars:
+    conf_file: "{{ conf_target.file }}"
+    conf_directory: "{{ conf_target.directory }}"
+    conf_stanzas: "{{ conf_target.stanzas }}"
+    conf_write_stanzas: "{{ conf_target.stanzas | splunk_conf_pending_stanzas(conf_probe, conf_target.path) }}"
+    conf_set_attributes: "{{ conf_probe | splunk_conf_probe_supported(conf_target.path, conf_target.stanzas) }}"
+  loop: "{{ conf_targets }}"
+  loop_control:
+    loop_var: conf_target
+  no_log: "{{ hide_password }}"

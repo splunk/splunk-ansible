@@ -11,7 +11,7 @@ import yaml
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_DIR = os.path.join(FILE_DIR, "..", "..")
-sys.path.insert(0, os.path.join(REPO_DIR, "roles", "splunk_noah", "filter_plugins"))
+sys.path.insert(0, os.path.join(REPO_DIR, "roles", "splunk_common", "filter_plugins"))
 
 splunk_conf = __import__("splunk_conf")
 
@@ -67,7 +67,7 @@ def test_common_role_calls_noah_at_the_two_lifecycle_boundaries():
     assert post_config["when"] == expected_gate
     pre_index = tasks.index(pre_auth)
     auth_index = next(i for i, task in enumerate(tasks) if task.get("include_tasks") == "enable_admin_auth.yml")
-    config_index = next(i for i, task in enumerate(tasks) if task.get("include_tasks") == "set_config_file.yml")
+    config_index = next(i for i, task in enumerate(tasks) if task.get("include_tasks") == "set_config_files.yml")
     post_index = tasks.index(post_config)
     start_index = next(i for i, task in enumerate(tasks) if task.get("include_tasks") == "start_splunk.yml")
     assert pre_index < auth_index

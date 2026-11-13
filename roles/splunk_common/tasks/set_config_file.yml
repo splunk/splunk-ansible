@@ -1,34 +1,47 @@
 ---
 - name: Create {{ conf_directory }} directory
-  file:
+  splunk_config:
+    module: file
+    home: "{{ splunk.home }}"
     path: "{{ conf_directory }}"
     state: directory
   when: conf_directory is defined
   become: yes
   become_user: "{{ splunk.user }}"
 
-- name: Remove stale ConfigMap-owned values from {{ conf_file }}
-  include_tasks: reconcile_config_map_values.yml
-  when:
-    - reconcile_config_map_values | default(false) | bool
-    - conf_stanzas | length > 0
-  no_log: "{{ hide_password }}"
-
 - include_tasks: set_config_stanza.yml
   vars:
     stanza_name: "{{ stanza.key }}"
     stanza_settings: "{{ stanza.value | default({}) }}"
-  with_dict: "{{ conf_stanzas }}"
+  with_dict: "{{ conf_write_stanzas | default(conf_stanzas) }}"
   loop_control:
     loop_var: stanza
   no_log: "{{ hide_password }}"
 
+# ini_file sets these on every option it writes, so set them when options were skipped.
+- name: Set owner, group and mode of {{ conf_file }}
+  splunk_config:
+    module: file
+    home: "{{ splunk.home }}"
+    path: "{{ conf_directory }}/{{ conf_file }}"
+    state: file
+    owner: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.group }}"
+    mode: '0660'
+  when:
+    - conf_set_attributes | default(false) | bool
+    - conf_stanzas | default({}, true) | length > 0
+  become: yes
+  become_user: "{{ splunk.user }}"
+
 - name: Record ConfigMap-owned values in {{ conf_file }}
-  copy:
+  splunk_config:
+    module: copy
+    home: "{{ splunk.home }}"
     content: "{{ conf_stanzas | to_nice_yaml }}"
     dest: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system | default('') is match('CYGWIN.*|Win32NT') else splunk.group }}"
     mode: '0660'
   when:
     - reconcile_config_map_values | default(false) | bool
@@ -36,3 +49,15 @@
   become: yes
   become_user: "{{ splunk.user }}"
   no_log: "{{ hide_password }}"
+
+- name: Remove ConfigMap ownership record for {{ conf_file }}
+  splunk_config:
+    module: file
+    home: "{{ splunk.home }}"
+    path: "{{ conf_directory }}/.{{ conf_file }}.splunk-ansible-managed.yml"
+    state: absent
+  when:
+    - reconcile_config_map_values | default(false) | bool
+    - conf_stanzas | length == 0
+  become: yes
+  become_user: "{{ splunk.user }}"

@@ -596,6 +596,75 @@ worldneversayshiback
                     mopen.assert_called_once()
     assert vars_scope["splunk"]["password"] == "worldneversayshiback"
 
+USER_PASSWORD = "us3r-pa55-do-not-leak"
+
+@pytest.mark.parametrize(("users"),
+            [
+                None,
+                {},
+                {"internal_observability": {"password": USER_PASSWORD, "roles": ["observability_role"]}},
+                {"internal_automation": {"password": USER_PASSWORD, "roles": ["automation_role", "user"]},
+                 "internal_observability": {"password": USER_PASSWORD, "roles": ["observability_role"]}},
+            ]
+        )
+def test_getUsers(users):
+    vars_scope = {"splunk": {"admin_user": "admin", "users": users}}
+    with patch("environ.os.path.isfile", return_value=False):
+        environ.getUsers(vars_scope)
+    assert vars_scope["splunk"]["users"] == users
+
+def test_getUsers_absent():
+    vars_scope = {"splunk": {"admin_user": "admin"}}
+    environ.getUsers(vars_scope)
+    assert "users" not in vars_scope["splunk"]
+
+def test_getUsers_passwordFromFile():
+    vars_scope = {"splunk": {"admin_user": "admin", "users": {"obs": {"password": "/mnt/secrets/obs", "roles": ["user"]}}}}
+    m = mock_open(read_data="\n{}\n\n".format(USER_PASSWORD))
+    with patch("environ.open", m, create=True) as mopen:
+        with patch("environ.os.path.isfile", return_value=True):
+            environ.getUsers(vars_scope)
+    mopen.assert_called_once_with("/mnt/secrets/obs", "r")
+    assert vars_scope["splunk"]["users"]["obs"]["password"] == USER_PASSWORD
+
+@pytest.mark.parametrize(("users", "file_contents", "error"),
+            [
+                ([{"name": "obs", "password": USER_PASSWORD, "roles": ["user"]}], None, "must be a mapping of username"),
+                ("obs", None, "must be a mapping of username"),
+                ({"admin": {"password": USER_PASSWORD, "roles": ["user"]}}, None, "must not declare the admin user 'admin'"),
+                ({"ADMIN": {"password": USER_PASSWORD, "roles": ["user"]}}, None, "must not declare the admin user 'ADMIN'"),
+                ({"": {"password": USER_PASSWORD, "roles": ["user"]}}, None, "empty or non-string username"),
+                ({1: {"password": USER_PASSWORD, "roles": ["user"]}}, None, "empty or non-string username"),
+                ({"obs": None}, None, "entry 'obs' must be a mapping"),
+                ({"obs": [USER_PASSWORD]}, None, "entry 'obs' must be a mapping"),
+                ({"obs": {"roles": ["user"]}}, None, "entry 'obs' must have a non-empty string password"),
+                ({"obs": {"password": "", "roles": ["user"]}}, None, "entry 'obs' must have a non-empty string password"),
+                ({"obs": {"password": 12345678, "roles": ["user"]}}, None, "entry 'obs' must have a non-empty string password"),
+                ({"obs": {"password": "/mnt/secrets/obs", "roles": ["user"]}}, "\n  \n", "entry 'obs' password file is empty"),
+                ({"obs": {"password": USER_PASSWORD}}, None, "entry 'obs' must have a non-empty list of roles"),
+                ({"obs": {"password": USER_PASSWORD, "roles": []}}, None, "entry 'obs' must have a non-empty list of roles"),
+                ({"obs": {"password": USER_PASSWORD, "roles": "user"}}, None, "entry 'obs' must have a non-empty list of roles"),
+                ({"obs": {"password": USER_PASSWORD, "roles": ["user", ""]}}, None, "entry 'obs' must not have an empty role"),
+                ({"obs": {"password": USER_PASSWORD, "roles": ["  "]}}, None, "entry 'obs' must not have an empty role"),
+                ({"obs": {"password": USER_PASSWORD, "roles": [None]}}, None, "entry 'obs' must not have an empty role"),
+            ]
+        )
+def test_getUsers_invalid(users, file_contents, error):
+    vars_scope = {"splunk": {"admin_user": "admin", "users": users}}
+    m = mock_open(read_data=file_contents or "")
+    with patch("environ.open", m, create=True):
+        with patch("environ.os.path.isfile", return_value=file_contents is not None):
+            with pytest.raises(Exception) as exc:
+                environ.getUsers(vars_scope)
+    assert error in str(exc.value)
+    assert USER_PASSWORD not in str(exc.value)
+
+def test_getUsers_customAdminUser():
+    vars_scope = {"splunk": {"admin_user": "SuperUser", "users": {"superuser": {"password": USER_PASSWORD, "roles": ["user"]}}}}
+    with pytest.raises(Exception) as exc:
+        environ.getUsers(vars_scope)
+    assert "must not declare the admin user 'superuser'" in str(exc.value)
+
 
 @pytest.mark.parametrize(("default_yml"),
             [
@@ -1469,6 +1538,20 @@ def test_parseUrl(url, vars_scope, output):
         ({"splunk": {"idxc": {"replication_port": 9887, "secret": None}}}, {"splunk": {"idxc": [{"secret": "mysecret"}, {"pass4SymmKey": "mykey"}]}}, {"splunk": {"idxc": {"replication_port": 9887, "secret": "mysecret", "pass4SymmKey": "mykey"}}}),
         # CSPL-4007: Deep nested None preservation
         ({"a": {"b": {"c": 1, "d": 2}}}, {"a": {"b": None}}, {"a": {"b": {"c": 1, "d": 2}}}),
+        # splunk.users entries are replaced whole by the last file, so roles never concatenate
+        ({"splunk": {"users": {"obs": {"password": "a", "roles": ["r1"]}, "auto": {"password": "b", "roles": ["r2"]}}}},
+         {"splunk": {"users": {"obs": {"password": "c", "roles": ["r3"]}}}},
+         {"splunk": {"users": {"obs": {"password": "c", "roles": ["r3"]}, "auto": {"password": "b", "roles": ["r2"]}}}}),
+        ({"splunk": {"users": {"obs": {"password": "a", "roles": ["r1"]}}}},
+         {"splunk": {"users": {"auto": {"password": "b", "roles": ["r2"]}}}},
+         {"splunk": {"users": {"obs": {"password": "a", "roles": ["r1"]}, "auto": {"password": "b", "roles": ["r2"]}}}}),
+        # An empty users section preserves earlier users
+        ({"splunk": {"users": {"obs": {"password": "a", "roles": ["r1"]}}}}, {"splunk": {"users": None}},
+         {"splunk": {"users": {"obs": {"password": "a", "roles": ["r1"]}}}}),
+        # A list of users is kept, not folded into the mapping, so validation can reject it
+        ({"splunk": {"users": {"obs": {"password": "a", "roles": ["r1"]}}}},
+         {"splunk": {"users": [{"auto": {"password": "b", "roles": ["r2"]}}]}},
+         {"splunk": {"users": [{"auto": {"password": "b", "roles": ["r2"]}}]}}),
     ]
 )
 def test_merge_dict(dict1, dict2, result):
@@ -1849,6 +1932,10 @@ def sentinel_inventory():
             "shc": {"secret": SENTINEL, "pass4SymmKey": SENTINEL, "label": "shc_label"},
             "idxc": {"secret": SENTINEL, "pass4SymmKey": SENTINEL, "discoveryPass4SymmKey": SENTINEL, "label": "idxc_label"},
             "smartstore": {"index": [{"s3": {"access_key": SENTINEL, "secret_key": SENTINEL}}]},
+            "users": {
+                "internal_observability": {"password": SENTINEL, "roles": ["observability_role"]},
+                "internal_automation": {"password": SENTINEL, "roles": ["automation_role", "user"]},
+            },
             "conf": [
                 {"key": "server", "content": {"noahService": {"uri": "https://noah.example:8089"}}},
                 {"key": "server", "content": {"noahService": {"pass4SymmKey": SENTINEL}}},
@@ -1864,6 +1951,8 @@ def test_obfuscate_vars_leaves_no_plaintext_in_written_inventory():
     # Non-sensitive diagnostic context is still available for debugging
     assert "noah.example" in serialized
     assert "idxc_label" in serialized
+    assert "internal_observability" in serialized
+    assert "observability_role" in serialized
 
 def test_redact_sensitive_keys_handles_non_scalar_values():
     stars = "**************"

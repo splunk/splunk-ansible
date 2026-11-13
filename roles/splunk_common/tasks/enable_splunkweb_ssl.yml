@@ -1,24 +1,28 @@
 ---
 - name: Enable Web SSL
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "enableSplunkWebSSL"
     value: "{{ splunk.http_enableSSL }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
     mode: 0660
   become: true
   become_user: "{{ splunk.user }}"
 
 - name: Set Web certificate path
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "serverCert"
     value: "{{ splunk.http_enableSSL_cert }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
     mode: 0660
   when:
     - splunk.http_enableSSL_cert is defined
@@ -27,13 +31,15 @@
   become_user: "{{ splunk.user }}"
 
 - name: Set Web private key path
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "privKeyPath"
     value: "{{ splunk.http_enableSSL_privKey }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
     mode: 0660
   when:
     - splunk.http_enableSSL_privKey is defined
@@ -42,13 +48,15 @@
   become_user: "{{ splunk.user }}"
 
 - name: Set Web private key password
-  ini_file:
+  splunk_config:
+    module: ini_file
+    home: "{{ splunk.home }}"
     dest: "{{ splunk.home }}/etc/system/local/web.conf"
     section: settings
     option: "sslPassword"
     value: "{{ splunk.http_enableSSL_privKey_password }}"
-    owner: "{{ splunk.user }}"
-    group: "{{ splunk.group }}"
+    owner: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.user }}"
+    group: "{{ omit if ansible_system is match('CYGWIN.*|Win32NT') else splunk.group }}"
     mode: 0660
   when:
     - splunk.http_enableSSL_privKey_password is defined
