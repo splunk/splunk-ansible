@@ -975,29 +975,34 @@ def test_getDefaultKVStoreType(default_yml, os_env, result):
             environ.getDefaultKVStoreType(vars_scope)
     assert vars_scope["splunk"]["kvstore"] == result
 
-def test_getKVServiceDeploymentConfig():
-    vars_scope = {"splunk": {"kvstore": {}}}
-    os_env = {
-        "SPLUNK_KVSERVICE_DEPLOYMENT_MODE": "singleCustomer",
-        "SPLUNK_SCS_TENANT": "tenant1",
-        "SPLUNK_SCS_ENVIRONMENT": "kvservice.example.com:443",
-    }
-    with patch("os.environ", new=os_env):
-        environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"]["kvstore"]["deployment_mode"] == "singleCustomer"
-    assert vars_scope["splunk"]["scs"] == {
-        "tenant": "tenant1",
-        "environment": "kvservice.example.com:443",
+
+@pytest.mark.parametrize("value,expected", [
+    ("true", True), ("TRUE", True), (" false ", False), ("FALSE", False),
+])
+def test_getKVServiceEnabled_preserves_explicit_boolean(value, expected):
+    variables = {"splunk": {}, "ansible_environment": {"KEEP_ME": "value", "SPLUNK_KVSERVICE_ENABLED": "stale"}}
+    with patch("os.environ", new={"SPLUNK_KVSERVICE_ENABLED": value}):
+        environ.getKVServiceEnabled(variables)
+    assert variables["splunk_kvservice_enabled"] is expected
+    assert variables["ansible_environment"] == {
+        "KEEP_ME": "value", "SPLUNK_KVSERVICE_ENABLED": str(expected).lower(),
     }
 
 
-def test_getKVServiceDeploymentConfig_local_without_mode():
-    vars_scope = {"splunk": {"kvstore": {"default_kvstore_type": "local"}}}
+def test_getKVServiceEnabled_omits_policy_when_environment_is_unset():
+    variables = {"splunk": {"kvstore": {"default_kvstore_type": "external"}}}
     with patch("os.environ", new={}):
-        environ.getKVServiceDeploymentConfig(vars_scope)
-    assert vars_scope["splunk"] == {
-        "kvstore": {"default_kvstore_type": "local"}
-    }
+        environ.getKVServiceEnabled(variables)
+    assert "splunk_kvservice_enabled" not in variables
+    assert "ansible_environment" not in variables
+
+
+@pytest.mark.parametrize("value", ["", "yes", "1", "disabled", "sometimes"])
+def test_getKVServiceEnabled_rejects_invalid_value(value):
+    with patch("os.environ", new={"SPLUNK_KVSERVICE_ENABLED": value}):
+        with pytest.raises(ValueError, match="must be either 'true' or 'false'"):
+            environ.getKVServiceEnabled({"splunk": {}})
+
 
 @pytest.mark.parametrize(("es_enablement", "os_env", "result"),
             [

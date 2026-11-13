@@ -1,0 +1,89 @@
+---
+- name: Check whether the installed release supports KVService migration
+  set_fact:
+    kvservice_release_supports_migration: "{{ kvservice_installed_release is version('10.9.0', '>=') }}"
+
+- name: Initialize fresh KVService installations with external KV Store
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - {option: defaultKVStoreType, value: external}
+    - {option: forceLocalForInternalCollections, value: "false"}
+    - {option: shutDownMongo, value: "true"}
+  when:
+    - kvservice_release_supports_migration | bool
+    - splunk_kvservice_enabled | bool
+    - kvservice_fresh_install | default(false) | bool
+    - splunk.role != "splunk_indexer"
+
+- name: Select local KV Store for existing clients unless already external
+  when:
+    - kvservice_release_supports_migration | bool
+    - splunk_kvservice_enabled | bool
+    - not (kvservice_fresh_install | default(false) | bool)
+    - splunk.role != "splunk_indexer"
+  block:
+    - name: Read the saved KV Store backend without invoking Splunk
+      command:
+        argv:
+          - "{{ ansible_facts.python.executable | default(ansible_python_interpreter | default('/usr/bin/python3')) }}"
+          - -c
+          - |
+            import configparser
+            import sys
+            config = configparser.RawConfigParser(strict=False, delimiters=('=',))
+            config.optionxform = str
+            with open(sys.argv[1]) as conf:
+                config.read_file(conf)
+            print(config.get('kvstore', 'defaultKVStoreType', fallback='').strip())
+          - "{{ splunk.home }}/etc/system/local/server.conf"
+      register: kvservice_saved_backend
+      changed_when: false
+      check_mode: no
+      become: yes
+      become_user: "{{ splunk.user }}"
+      no_log: true
+
+    - name: Set the existing non-external KV Store backend to local
+      ini_file:
+        dest: "{{ splunk.home }}/etc/system/local/server.conf"
+        section: kvstore
+        option: defaultKVStoreType
+        value: local
+        owner: "{{ splunk.user }}"
+        group: "{{ splunk.group }}"
+      when: kvservice_saved_backend.stdout != 'external'
+
+- name: Configure indexers to use external KV Store on supported releases
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  loop:
+    - {option: defaultKVStoreType, value: external}
+    - {option: forceLocalForInternalCollections, value: "false"}
+    - {option: shutDownMongo, value: "true"}
+  when:
+    - kvservice_release_supports_migration | bool
+    - splunk_kvservice_enabled | bool
+    - splunk.role == "splunk_indexer"
+
+- name: Set the explicitly selected KVService startup migration policy
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: postgresMigrateOnStartup
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - kvservice_release_supports_migration | bool
+    - splunk_kvservice_enabled | bool

@@ -14,4 +14,9 @@
   with_dict: "{{ config_map_stanza_settings }}"
   loop_control:
     loop_var: config_map_stanza_setting
-  when: config_map_stanza_name and config_map_stanza_settings
+  when:
+    - config_map_stanza_name and config_map_stanza_settings
+    - >-
+      not (splunk_kvservice_enabled | default(false) | bool
+           and config_map_stanza_name == 'kvstore'
+           and config_map_stanza_setting.key == 'defaultKVStoreType')

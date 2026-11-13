@@ -140,6 +140,7 @@ def getDefaultVars():
     getSecrets(defaultVars)
     getUsers(defaultVars)
     getSplunkPaths(defaultVars)
+    getKVServiceEnabled(defaultVars)
     normalizeNoahConf(defaultVars)
     getIndexerClustering(defaultVars)
     getSearchHeadClustering(defaultVars)
@@ -183,7 +184,6 @@ def getDefaultVars():
     getDSP(defaultVars)
     getIPv6(defaultVars)
     getDefaultKVStoreType(defaultVars)
-    getKVServiceDeploymentConfig(defaultVars)
     getNodeSidecarPostgres(defaultVars)
     return defaultVars
 
@@ -1002,18 +1002,18 @@ def getDefaultKVStoreType(vars_scope):
     vars_scope["splunk"].setdefault("kvstore", {})
     vars_scope["splunk"]["kvstore"]["default_kvstore_type"] = default_kvstore_type
 
-def getKVServiceDeploymentConfig(vars_scope):
-    kvstore = vars_scope["splunk"].setdefault("kvstore", {})
-    mode = os.environ.get("SPLUNK_KVSERVICE_DEPLOYMENT_MODE", kvstore.get("deployment_mode"))
-    if mode:
-        kvstore["deployment_mode"] = mode
+def getKVServiceEnabled(vars_scope):
+    """Select the operator KV Store policy only with an explicit environment input."""
+    value = os.environ.get("SPLUNK_KVSERVICE_ENABLED")
+    if value is None:
+        return
+    normalized = str(value).strip().lower()
+    if normalized not in ("true", "false"):
+        raise ValueError("SPLUNK_KVSERVICE_ENABLED must be either 'true' or 'false'")
+    vars_scope["splunk_kvservice_enabled"] = normalized == "true"
+    # Preserve the policy signal for Splunk CLI calls under privilege escalation.
+    vars_scope.setdefault("ansible_environment", {})["SPLUNK_KVSERVICE_ENABLED"] = normalized
 
-    scs = vars_scope["splunk"].get("scs", {})
-    for setting, variable in (("tenant", "SPLUNK_SCS_TENANT"),
-                              ("environment", "SPLUNK_SCS_ENVIRONMENT")):
-        value = os.environ.get(variable, scs.get(setting))
-        if value:
-            vars_scope["splunk"].setdefault("scs", {})[setting] = value
 
 def getNodeSidecarPostgres(vars_scope):
     """

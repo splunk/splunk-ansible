@@ -87,7 +87,8 @@ Splunk-Ansible ships with an inventory script in `inventory/environ.py`. The scr
 | SPLUNKD_SSL_CA | Path to custom CA certificate used for Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNKD_SSL_PASSWORD | Custom SSL password used with Splunkd when HTTPS is enabled | no | no | no |
 | SPLUNK_KVSTORE_PORT | Port to run Splunk KVStore. Default: `8191` | no | no | no |
-| SPLUNK_KVSTORE_DEFAULT_TYPE | Configures `[kvstore] defaultKVStoreType` in `server.conf` when explicitly set. Allowed values are `cohosted`, `external`, and `local`; Ansible writes the setting only for Splunk Enterprise 10.6.0 or later. When set to `cohosted` or `external`, Ansible also writes `[kvstore] postgresMigrateOnStartup=true`; when set to `local`, it writes `[kvstore] postgresMigrateOnStartup=false`. Older Splunk versions skip the default KV Store type configuration. SOK injects `external` for CMP-K workloads configured with `spec.kvServiceRef`. | no | no | no |
+| SPLUNK_KVSERVICE_ENABLED | Explicitly selects the operator KV Store startup policy. Set to `true` or `false`; leaving it unset preserves the existing Ansible default-type behavior. Splunk 10.6.x uses `local`/`false` for either value. On 10.9+, `false` relies on normal configuration rendering of SOK's `defaultKVStoreType=local` and `postgresMigrateOnStartup=false`; the startup policy adds no backend or migration override. With `true`, the policy sets `postgresMigrateOnStartup=true`, selects `external` for fresh installations, preserves a saved `external` backend for existing installations, and sets other or missing existing backends to `local`. Indexers retain their role-specific settings as described below. Other release lines receive no backend or migration override. | no | no | no |
+| SPLUNK_KVSTORE_DEFAULT_TYPE | Requests `[kvstore] defaultKVStoreType` in `server.conf` when explicitly set. Allowed values are `cohosted`, `external`, and `local`. On 10.6.x, the legacy task writes the requested type and `postgresMigrateOnStartup=false` for `local` or `true` for `cohosted` and `external`, regardless of `SPLUNK_KVSERVICE_ENABLED`. SOK supplies `local` for compatibility with older Ansible images. With an explicit enablement flag, releases 10.7+ skip these legacy writes; the separate startup policy handles 10.9+. With the flag unset, the original legacy behavior remains active on all releases >=10.6.0. | no | no | no |
 | SPLUNK_APPSERVER_PORT | Port to run Splunk appserver. Default: `8065` | no | no | no |
 | SPLUNK_SET_SEARCH_PEERS | Boolean to configure whether search heads should connect to search peers. Default: `True`. Not recommended to change | no | no | no |
 | SPLUNK_SITE | For multisite topologies, define the site of this particular Splunk Enterprise instance | no | no | no |
@@ -151,6 +152,55 @@ to both classic and Noah deployments. The later SHC commands still form and
 verify the cluster, but they do not request duplicate restarts when the
 effective pre-start configuration already matches. If splunkd is already
 running, Ansible keeps the established live-configuration and restart path.
+
+SOK supplies `kvserviceConnectionString` and the `[scs]` tenant and
+`mvl-enabled` settings through `splunk.conf`; normal configuration rendering
+writes them to system/local `server.conf`. No separate KVService scope,
+tenant, or environment input is parsed. Only explicitly disabled KVService removes
+the legacy connection string before rendering, so an untracked old endpoint does
+not persist. Enabled and unmarked deployments skip that extra cleanup.
+
+The explicit `SPLUNK_KVSERVICE_ENABLED` policy runs after normal configuration
+rendering and reads the installed release from `etc/splunk.version`. With
+`true`, the cleanup task checks the enablement flag directly and always preserves
+`[kvstore] defaultKVStoreType`, regardless of the file or settings supplied.
+Desired configuration and the startup policy can still write a new backend value
+afterward. Ownership metadata stops tracking the key when desired configuration
+omits it. An unset flag retains legacy cleanup.
+
+SOK also supplies `SPLUNK_KVSTORE_DEFAULT_TYPE=local` for older 10.6 images.
+After configuration rendering, Ansible reads the installed release from
+`etc/splunk.version` and selects the setter by version. On 10.6.x,
+`set_default_kvstore_type.yml` runs once when a non-empty default-type input is
+configured, whether enablement is true, false, or unset. It runs after cleanup,
+so SOK's local input gives the final local/false settings precedence over
+rendered customer settings. On 10.9 and later, the legacy setter is skipped;
+`set_kvservice_startup_policy.yml` handles explicit KVService enablement.
+An unset enablement flag on 10.9+ leaves backend and migration settings to the
+supplied configuration. Other release lines skip both setters. Splunk 10.9
+images contain the new Ansible policy.
+
+With an explicit `SPLUNK_KVSERVICE_ENABLED` value, indexers always retain
+`[kvstore] disabled=true`, regardless of enablement or release. On Splunk 10.9
+and later, enabled indexers additionally receive `defaultKVStoreType=external`,
+`forceLocalForInternalCollections=false`, and `shutDownMongo=true`. This applies
+to both fresh and existing indexers.
+The indexer-disable rule runs after configuration rendering, independently of
+the version-specific backend setters.
+
+For other enabled roles on Splunk 10.9 and later, Ansible initializes fresh
+installations with `defaultKVStoreType=external`,
+`forceLocalForInternalCollections=false`, and `shutDownMongo=true`. It captures
+freshness from the absence of `etc/myinstall/splunkd.xml` after updating `etc`
+and before Splunk CLI calls can create that marker. Existing installations keep
+a saved `external` backend; any other or missing saved backend becomes `local`.
+Enabled installations receive `postgresMigrateOnStartup=true` in either case.
+The supported SOK path has no cohosted deployments and does not allow disabling
+KVService after successful migration. Configuration rendering stays in its normal
+position, and no migration-attempt marker is needed. Package this with the
+companion core change that removes native CMPK fresh and upgrade initialization.
+The generic upgrade fallback still defers when `SPLUNK_KVSERVICE_ENABLED` is
+explicitly `true` or `false`, so it cannot overwrite Ansible's selected backend.
 
 \* Password must be set either in `default.yml` or as the environment variable `SPLUNK_PASSWORD`
 

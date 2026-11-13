@@ -17,6 +17,22 @@
     - ansible_system is match("Linux")
     - splunk.build_location is none or splunk.build_location is not match("^(https?|file)://.*")
 
+- name: Capture KVService installation state before Splunk CLI calls
+  when:
+    - splunk_kvservice_enabled is defined
+    - splunk.role != "splunk_universal_forwarder"
+  block:
+    - name: Check the native Splunk installation marker
+      stat:
+        path: "{{ splunk.home }}/etc/myinstall/splunkd.xml"
+      register: kvservice_installation_marker
+      become: yes
+      become_user: "{{ splunk.user }}"
+
+    - name: Remember whether the KVService installation is fresh
+      set_fact:
+        kvservice_fresh_install: "{{ not kvservice_installation_marker.stat.exists }}"
+
 - include_tasks: stop_splunk.yml
   when:
     - splunk_upgrade | bool or etc_updated is changed
@@ -105,14 +121,7 @@
     - "'kvstore' in splunk and 'port' in splunk.kvstore"
     - splunk.kvstore.port | int != 8191
 
-- include_tasks: set_kvservice_deployment.yml
-
-- include_tasks: set_default_kvstore_type.yml
-  when:
-    - "'kvstore' in splunk and 'default_kvstore_type' in splunk.kvstore"
-    - splunk.kvstore.default_kvstore_type is not none
-    - splunk.kvstore.default_kvstore_type | length > 0
-    - splunk.role != "splunk_universal_forwarder"
+- include_tasks: remove_legacy_kvservice_connection_string.yml
 
 - include_tasks: enable_splunkweb_ssl.yml
   when:
@@ -148,6 +157,51 @@
     reconcile_config_map_values: true
   when: "'conf' in splunk and splunk.conf"
   no_log: "{{ hide_password }}"
+
+- name: Read the installed release for KV Store settings
+  when: splunk.role != "splunk_universal_forwarder"
+  block:
+    - name: Read the installed release without invoking Splunk first-time-run
+      slurp:
+        src: "{{ splunk.home }}/etc/splunk.version"
+      register: kvservice_installed_release_file
+      become: yes
+      become_user: "{{ splunk.user }}"
+
+    - name: Resolve the installed release for KV Store settings
+      set_fact:
+        kvservice_installed_release: "{{ kvservice_installed_release_file.content | b64decode | regex_findall(regexp) | default(['0'], true) | first }}"
+      vars:
+        regexp: '(?m)^VERSION=([0-9]+(?:\.[0-9]+){2,3})'
+
+- name: Apply legacy KV Store settings on 10.6
+  include_tasks: set_default_kvstore_type.yml
+  when:
+    - splunk.role != "splunk_universal_forwarder"
+    - kvservice_installed_release is version('10.6.0', '>=')
+    - kvservice_installed_release is version('10.7.0', '<')
+    - "'kvstore' in splunk and 'default_kvstore_type' in splunk.kvstore"
+    - splunk.kvstore.default_kvstore_type is not none
+    - splunk.kvstore.default_kvstore_type | length > 0
+
+- name: Keep KV Store disabled on indexers
+  ini_file:
+    dest: "{{ splunk.home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: disabled
+    value: "true"
+    owner: "{{ splunk.user }}"
+    group: "{{ splunk.group }}"
+  when:
+    - splunk_kvservice_enabled is defined
+    - splunk.role == "splunk_indexer"
+
+- name: Apply the explicitly selected KVService startup policy
+  include_tasks: set_kvservice_startup_policy.yml
+  when:
+    - splunk.role != "splunk_universal_forwarder"
+    - splunk_kvservice_enabled is defined
+    - kvservice_installed_release is version('10.9.0', '>=')
 
 - name: Configure the Noah client role before full splunkd startup
   include_role:
