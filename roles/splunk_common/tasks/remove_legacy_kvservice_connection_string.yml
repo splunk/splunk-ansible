@@ -6,5 +6,6 @@
     option: kvserviceConnectionString
     state: absent
   when:
+    - ansible_system is match("Linux")
     - splunk_kvservice_enabled is defined
     - not (splunk_kvservice_enabled | bool)

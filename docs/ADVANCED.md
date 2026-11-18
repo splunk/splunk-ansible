@@ -180,7 +180,11 @@ An unset enablement flag on 10.9+ leaves backend and migration settings to the
 supplied configuration. Other release lines skip both setters. Splunk 10.9
 images contain the new Ansible policy.
 
-With an explicit `SPLUNK_KVSERVICE_ENABLED` value, indexers always retain
+The 10.9+ startup policy, early installation-state capture, qualification marker,
+explicit indexer-disable rule, and legacy connection-string removal are Linux-only.
+Windows and Cygwin skip these tasks even when `SPLUNK_KVSERVICE_ENABLED` is set.
+
+On Linux, with an explicit `SPLUNK_KVSERVICE_ENABLED` value, indexers always retain
 `[kvstore] disabled=true`, regardless of enablement or release. On Splunk 10.9
 and later, enabled indexers additionally receive `defaultKVStoreType=external`,
 `forceLocalForInternalCollections=false`, and `shutDownMongo=true`. This applies

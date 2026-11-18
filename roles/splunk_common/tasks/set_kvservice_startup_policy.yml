@@ -21,6 +21,37 @@
     - kvservice_fresh_install | default(false) | bool
     - splunk.role != "splunk_indexer"
 
+- name: Persist indexer qualification for fresh KVService installations
+  when:
+    - kvservice_release_supports_migration | bool
+    - splunk_kvservice_enabled | bool
+    - kvservice_fresh_install | default(false) | bool
+    - splunk.role not in ["splunk_ingestor", "splunk_indexer"]
+  block:
+    - name: Check whether the KV Store state directory exists
+      stat:
+        path: "{{ splunk.home }}/var/run/splunk/kvstore_state"
+      register: kvservice_state_directory
+
+    - name: Create the KV Store state directory
+      file:
+        path: "{{ splunk.home }}/var/run/splunk/kvstore_state"
+        state: directory
+        owner: "{{ splunk.user }}"
+        group: "{{ splunk.group }}"
+        mode: '0700'
+      when: not kvservice_state_directory.stat.exists
+
+    - name: Create the CMP-K indexer qualification marker
+      file:
+        path: "{{ splunk.home }}/var/run/splunk/kvstore_state/cmpk_indexers_qualified"
+        state: touch
+        modification_time: preserve
+        access_time: preserve
+        owner: "{{ splunk.user }}"
+        group: "{{ splunk.group }}"
+        mode: '0600'
+
 - name: Select local KV Store for existing clients unless already external
   when:
     - kvservice_release_supports_migration | bool
