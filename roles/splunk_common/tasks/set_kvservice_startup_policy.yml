@@ -23,7 +23,6 @@
 
 - name: Persist indexer qualification for fresh KVService installations
   when:
-    - ansible_system is match("Linux")
     - kvservice_release_supports_migration | bool
     - splunk_kvservice_enabled | bool
     - kvservice_fresh_install | default(false) | bool

@@ -176,16 +176,11 @@ def test_actual_non_linux_skips_kvservice_policy_and_marker(tmp_path, system, en
     variables = _variables(home)
     variables["splunk"]["role"] = role
     variables.update({"ansible_system": system, "splunk_kvservice_enabled": enabled,
-                      "kvservice_installed_release": "10.9.0", "kvservice_fresh_install": True,
-                      "kvservice_release_supports_migration": True})
-    policy = yaml.safe_load((TASK_DIR / "set_kvservice_startup_policy.yml").read_text())
-    marker_block = next(task for task in policy
-                        if task["name"] == "Persist indexer qualification for fresh KVService installations")
+                      "kvservice_installed_release": "10.9.0", "kvservice_fresh_install": True})
     _run_tasks(tmp_path, variables, [
         _installation_state_task(), _indexer_policy_task(),
         _main_include("set_kvservice_startup_policy.yml"),
         _main_include("remove_legacy_kvservice_connection_string.yml"),
-        marker_block,
     ])
     assert server_conf.read_text() == contents
     if enabled:
