@@ -85,6 +85,7 @@ def _variables(home):
                    "role": "splunk_standalone", "user": getpass.getuser(),
                    "group": str(os.getgid()), "kvstore": {"default_kvstore_type": "external"}},
         "hide_password": False,
+        "ansible_system": "Linux",
         "ansible_python_interpreter": sys.executable,
     }
 
@@ -123,33 +124,78 @@ def test_cleanup_preserves_only_kvstore_backend_when_enabled(enabled, stanza, op
 @pytest.mark.parametrize("enabled", [None, False, True])
 @pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
 @pytest.mark.parametrize("release", ["10.6.7.1", "10.8.9", "10.9.0", "10.10.0"])
-def test_version_selects_setter_after_render(enabled, role, release):
+@pytest.mark.parametrize("system", ["Linux", "Win32NT", "CYGWIN_NT-10.0-20348", "Darwin"])
+def test_version_selects_setter_after_render(enabled, role, release, system):
     loader = DataLoader()
     tasks = loader.load_from_file(str(TASK_DIR / "main.yml"))
     policy = next(task for task in tasks
                   if task.get("include_tasks") == "set_kvservice_startup_policy.yml")
     variables = {"splunk": {"role": role, "kvstore": {"default_kvstore_type": "local"}},
-                 "kvservice_installed_release": release}
+                 "kvservice_installed_release": release, "ansible_system": system}
     if enabled is not None:
         variables["splunk_kvservice_enabled"] = enabled
     assert _condition(loader, policy, variables) is (
-        enabled is not None and release.startswith(("10.9.", "10.10."))
+        system == "Linux" and enabled is not None and release.startswith(("10.9.", "10.10."))
     )
     capture = _installation_state_task()
-    assert _condition(loader, capture, variables) is (enabled is not None)
+    assert _condition(loader, capture, variables) is (system == "Linux" and enabled is not None)
     includes = [task.get("include_tasks") for task in tasks]
     assert includes.index("update_etc.yml") < tasks.index(capture) < includes.index("stop_splunk.yml")
     assert tasks.index(capture) < includes.index("set_default_kvstore_type.yml")
-    assert includes.count("set_config_file.yml") == 1
-    assert includes.index("set_config_file.yml") < tasks.index(policy) < includes.index("start_splunk.yml")
+    assert includes.count("set_config_files.yml") == 1
+    assert includes.index("set_config_files.yml") < tasks.index(policy) < includes.index("start_splunk.yml")
     indexer_policy = _indexer_policy_task()
-    assert _condition(loader, indexer_policy, variables) is (enabled is not None and role == "splunk_indexer")
+    assert _condition(loader, indexer_policy, variables) is (
+        system == "Linux" and enabled is not None and role == "splunk_indexer"
+    )
     assert includes.count("set_default_kvstore_type.yml") == 1
     legacy = next(task for task in tasks if task.get("include_tasks") == "set_default_kvstore_type.yml")
     assert _condition(loader, legacy, variables) is release.startswith("10.6.")
-    assert (includes.index("set_config_file.yml") < tasks.index(_installed_release_task())
+    assert (includes.index("set_config_files.yml") < tasks.index(_installed_release_task())
             < tasks.index(legacy)
             < tasks.index(indexer_policy) < tasks.index(policy))
+
+
+@pytest.mark.parametrize("system", ["Win32NT", "CYGWIN_NT-10.0-20348"])
+@pytest.mark.parametrize("enabled", [False, True])
+@pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
+def test_actual_non_linux_skips_kvservice_policy_and_marker(tmp_path, system, enabled, role):
+    home = tmp_path / "splunk"
+    server_conf = home / "etc/system/local/server.conf"
+    server_conf.parent.mkdir(parents=True)
+    contents = "[kvstore]\nkvserviceConnectionString = https://saved-kvservice\ndisabled = false\n"
+    server_conf.write_text(contents)
+    marker = home / "var/run/splunk/kvstore_state/cmpk_indexers_qualified"
+    # Check both absent state and preservation of existing state.
+    if not enabled:
+        marker.parent.mkdir(parents=True)
+        marker.write_text("retained")
+        marker.chmod(0o640)
+        os.utime(marker, (1000000000, 1000000000))
+        original = marker.stat()
+    variables = _variables(home)
+    variables["splunk"]["role"] = role
+    variables.update({"ansible_system": system, "splunk_kvservice_enabled": enabled,
+                      "kvservice_installed_release": "10.9.0", "kvservice_fresh_install": True,
+                      "kvservice_release_supports_migration": True})
+    policy = yaml.safe_load((TASK_DIR / "set_kvservice_startup_policy.yml").read_text())
+    marker_block = next(task for task in policy
+                        if task["name"] == "Persist indexer qualification for fresh KVService installations")
+    _run_tasks(tmp_path, variables, [
+        _installation_state_task(), _indexer_policy_task(),
+        _main_include("set_kvservice_startup_policy.yml"),
+        _main_include("remove_legacy_kvservice_connection_string.yml"),
+        marker_block,
+    ])
+    assert server_conf.read_text() == contents
+    if enabled:
+        assert not (home / "var").exists()
+    else:
+        current = marker.stat()
+        assert (current.st_mode, current.st_uid, current.st_gid, current.st_mtime_ns) == (
+            original.st_mode, original.st_uid, original.st_gid, original.st_mtime_ns,
+        )
+        assert marker.read_text() == "retained"
 
 
 @pytest.mark.parametrize("enabled", [False, True])

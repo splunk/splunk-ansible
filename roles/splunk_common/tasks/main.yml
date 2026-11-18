@@ -19,6 +19,7 @@
 
 - name: Capture KVService installation state before Splunk CLI calls
   when:
+    - ansible_system is match("Linux")
     - splunk_kvservice_enabled is defined
     - splunk.role != "splunk_universal_forwarder"
   block:
@@ -193,12 +194,14 @@
     owner: "{{ splunk.user }}"
     group: "{{ splunk.group }}"
   when:
+    - ansible_system is match("Linux")
     - splunk_kvservice_enabled is defined
     - splunk.role == "splunk_indexer"
 
 - name: Apply the explicitly selected KVService startup policy
   include_tasks: set_kvservice_startup_policy.yml
   when:
+    - ansible_system is match("Linux")
     - splunk.role != "splunk_universal_forwarder"
     - splunk_kvservice_enabled is defined
     - kvservice_installed_release is version('10.9.0', '>=')
@@ -237,7 +240,7 @@
 # Generate outputs.conf before splunk starts to prevent data being indexed locally
 - include_tasks: enable_forwarding.yml
   when:
-    # Indexers should never forward 
+    # Indexers should never forward
     - splunk.role != "splunk_indexer"
     - (splunk.role != "splunk_standalone" and splunk.role != "splunk_search_head") or
         (splunk_indexer_cluster | bool or splunk_forward_servers is defined)
