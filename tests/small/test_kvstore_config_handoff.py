@@ -314,6 +314,85 @@ def test_actual_initialization_uses_state_captured_before_early_cli(
     assert conf["kvstore"].get("disabled") == ("true" if role == "splunk_indexer" else None)
 
 
+@pytest.mark.parametrize("release,enabled,fresh,role,qualifies", [
+    ("10.9.0", True, True, "splunk_standalone", True),
+    ("10.9.0", True, True, "splunk_search_head", True),
+    ("10.9.0", True, True, "splunk_search_head_captain", True),
+    ("10.10.0", True, True, "splunk_standalone", True),
+    ("10.9.0", True, True, "splunk_ingestor", False),
+    ("10.9.0", True, True, "splunk_indexer", False),
+    ("10.9.0", True, False, "splunk_standalone", False),
+    ("10.9.0", False, True, "splunk_standalone", False),
+    ("10.9.0", None, True, "splunk_standalone", False),
+    ("10.8.0", True, True, "splunk_standalone", False),
+    ("10.6.0", True, True, "splunk_standalone", False),
+    ("10.9.0.0", True, True, "splunk_standalone", True),
+])
+def test_actual_fresh_qualification_marker_uses_captured_installation_state(
+    tmp_path, release, enabled, fresh, role, qualifies
+):
+    home = tmp_path / "splunk"
+    local = home / "etc/system/local"
+    local.mkdir(parents=True)
+    (local / "server.conf").write_text("[kvstore]\ndefaultKVStoreType = local\n")
+    (home / "etc/splunk.version").write_text("VERSION=%s\nBUILD=test\n" % release)
+    installation_marker = home / "etc/myinstall/splunkd.xml"
+    installation_marker.parent.mkdir()
+    if not fresh:
+        installation_marker.touch()
+    variables = _variables(home)
+    variables["splunk"]["role"] = role
+    if enabled is not None:
+        variables["splunk_kvservice_enabled"] = enabled
+    _run_tasks(tmp_path, variables, [
+        _installation_state_task(),
+        # Early CLI calls can create this marker after freshness is captured.
+        {"file": {"path": str(installation_marker), "state": "touch"}},
+        _installed_release_task(),
+        _main_include("set_kvservice_startup_policy.yml"),
+        _installation_state_task(),
+        _main_include("set_kvservice_startup_policy.yml"),
+    ])
+    marker = home / "var/run/splunk/kvstore_state/cmpk_indexers_qualified"
+    assert marker.is_file() is qualifies
+    assert marker.parent.exists() is qualifies
+    if qualifies:
+        assert marker.read_bytes() == b""
+        assert marker.stat().st_uid == os.getuid()
+        assert marker.stat().st_gid == os.getgid()
+
+
+@pytest.mark.parametrize("existing_directory", [False, True])
+def test_actual_fresh_qualification_preserves_existing_state_on_rerun(tmp_path, existing_directory):
+    home = tmp_path / "splunk"
+    (home / "etc/system/local").mkdir(parents=True)
+    state_directory = home / "var/run/splunk/kvstore_state"
+    if existing_directory:
+        state_directory.mkdir(parents=True)
+        state_directory.chmod(0o750)
+        (state_directory / "read_only").write_text("persistent")
+        original = state_directory.stat()
+    variables = _variables(home)
+    variables.update({"kvservice_installed_release": "10.9.0",
+                      "splunk_kvservice_enabled": True, "kvservice_fresh_install": True})
+    tasks = [_include("set_kvservice_startup_policy.yml")]
+    _run_tasks(tmp_path, variables, tasks)
+    marker = state_directory / "cmpk_indexers_qualified"
+    os.utime(marker, (1000000000, 1000000000))
+    _run_tasks(tmp_path, variables, tasks)
+    assert marker.stat().st_atime == 1000000000
+    assert marker.stat().st_mtime == 1000000000
+    assert marker.stat().st_size == 0
+    if existing_directory:
+        current = state_directory.stat()
+        assert (current.st_mode, current.st_uid, current.st_gid) == (
+            original.st_mode, original.st_uid, original.st_gid,
+        )
+        assert (state_directory / "read_only").read_text() == "persistent"
+    else:
+        assert state_directory.stat().st_mode & 0o777 == 0o700
+
+
 @pytest.mark.parametrize("release", ["10.6.0", "10.9.0", "10.10.0"])
 @pytest.mark.parametrize("role", ["splunk_standalone", "splunk_indexer"])
 def test_actual_disabled_config_render_restores_local_policy_after_cleanup(tmp_path, release, role):
