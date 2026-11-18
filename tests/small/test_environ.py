@@ -1517,6 +1517,14 @@ def test_parseUrl(url, vars_scope, output):
         ({}, {"a": [1, 2]}, {"a": [1, 2]}),
         ({"b": [0]}, {"a": [1]}, {"a": [1], "b": [0]}),
         ({"a": [0]}, {"a": [1]}, {"a": [0, 1]}),
+        # Non-conf list + map retains the ordinary replacement contract.
+        ({"a": [{"key": "old", "value": {}}]}, {"a": {"new": {}}}, {"a": {"new": {}}}),
+        # Only the exact splunk.conf path interprets key/value-form entries.
+        ({"conf": {"server": {}}}, {"conf": [{"key": "web", "value": {}}]},
+         {"conf": {"server": {}, "key": "web", "value": {}}}),
+        ({"splunk": {"other": {"conf": {"server": {}}}}},
+         {"splunk": {"other": {"conf": [{"key": "web", "value": {}}]}}},
+         {"splunk": {"other": {"conf": {"server": {}, "key": "web", "value": {}}}}}),
         # Check nested dict output
         ({"nested": {}}, {"nested": {"a": 1}}, {"nested": {"a": 1}}),
         ({"nested": {"a": 1}}, {"nested": {"b": 2}}, {"nested": {"a": 1, "b": 2}}),

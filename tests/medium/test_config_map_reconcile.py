@@ -35,6 +35,9 @@ REPO_DIR = os.path.realpath(
     os.environ.get("SPLUNK_ANSIBLE_ROOT") or os.path.join(FILE_DIR, "..", "..")
 )
 TASKS_DIR = os.path.join(REPO_DIR, "roles", "splunk_common", "tasks")
+sys.path.insert(0, os.path.join(REPO_DIR, "inventory"))
+from splunk_config import merge_dict  # noqa: E402
+
 HASH_BEHAVIOURS = ("merge", "replace")
 REMOVAL_TASK_PREFIX = "Remove ConfigMap-owned options"
 WRITE_TASK_PREFIX = "Set options in"
@@ -351,6 +354,45 @@ def test_restart_with_unchanged_config_removes_nothing(name, hash_behaviour):
     assert result["run2_writes"] == {"tasks": 0, "options": 0}
     assert result["after_run1"] == expected_six_files()
     assert result["after_run2"] == expected_six_files()
+
+
+@needs_ansible
+@behaviours
+@pytest.mark.parametrize("pcrs_form,sok_form", [
+    ("map", "map"), ("list", "list"), ("map", "list"), ("list", "map"),
+])
+def test_defaults_formats_write_all_effective_files(tmp_path, hash_behaviour, pcrs_form, sok_form):
+    home = str(tmp_path / "splunk")
+    whisper = home + "/etc/apps/100-whisper/local"
+    sok = home + "/etc/apps/100-sok/local"
+    pcrs = [
+        entry("web", {"settings": {"enableSplunkWebSSL": "true", "httpport": "8443"}}, whisper),
+        entry("server", {"general": {"serverName": "pcrs"}}, whisper),
+        entry("limits", {"search": {"max_searches_per_cpu": "1", "max_rt_search_multiplier": "2"}}),
+    ]
+    sok_entries = [
+        entry("server", {"general": {"serverName": "sok"}}, sok),
+        entry("limits", {
+            "search": {"max_searches_per_cpu": "3"}, "scheduler": {"max_searches_perc": "50"},
+        }, home + "/etc/./system/local/"),
+    ]
+    earlier = pcrs if pcrs_form == "list" else {item["key"]: item["value"] for item in pcrs}
+    later = sok_entries if sok_form == "list" else {item["key"]: item["value"] for item in sok_entries}
+    merged = merge_dict({"splunk": {"conf": earlier}}, {"splunk": {"conf": later}})
+
+    run_playbook(str(tmp_path), home, merged["splunk"]["conf"], hash_behaviour)
+
+    assert read_conf(whisper + "/web.conf") == {
+        "settings": {"enableSplunkWebSSL": "true", "httpport": "8443"},
+    }
+    assert read_conf(whisper + "/server.conf") == {"general": {"serverName": "pcrs"}}
+    assert read_conf(sok + "/server.conf") == {"general": {"serverName": "sok"}}
+    assert read_conf(home + "/etc/system/local/limits.conf") == {
+        "search": {"max_searches_per_cpu": "3", "max_rt_search_multiplier": "2"},
+        "scheduler": {"max_searches_perc": "50"},
+    }
+    assert not os.path.exists(home + "/etc/system/local/key.conf")
+    assert not os.path.exists(home + "/etc/system/local/value.conf")
 
 
 @needs_ansible

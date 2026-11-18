@@ -33,6 +33,230 @@ def entry(key, content, directory=None):
     return {"key": key, "value": value}
 
 
+def conf_form(entries, form):
+    if form == "map":
+        return {item["key"]: item["value"] for item in entries}
+    return entries
+
+
+@pytest.mark.parametrize("earlier_form,later_form", [
+    ("map", "map"), ("list", "list"), ("map", "list"), ("list", "map"),
+])
+def test_defaults_merge_combines_settings_for_the_same_target(earlier_form, later_form):
+    earlier = conf_form([entry("server", {
+        "general": {"serverName": "idx", "site": "site1"},
+        "sslConfig": {"sslVersions": "tls1.2"},
+    }, SOK_LOCAL)], earlier_form)
+    later = conf_form([entry("server", {
+        "general": {"site": "site2", "parallelIngestionPipelines": "2"},
+        "kvstore": {"disabled": "true"},
+    }, SOK_LOCAL)], later_form)
+
+    merged = environ.merge_dict({"splunk": {"conf": earlier}}, {"splunk": {"conf": later}})
+    conf = merged["splunk"]["conf"]
+
+    if earlier_form == later_form == "map":
+        assert isinstance(conf, dict)
+    else:
+        # Deduplication belongs to the downstream boundary, where home is final.
+        assert isinstance(conf, list)
+        assert len(conf) == 2
+    assert writer_loop_items(merged["splunk"], combine(conf, SYSTEM_LOCAL)) == [entry("server", {
+        "general": {"serverName": "idx", "site": "site2", "parallelIngestionPipelines": "2"},
+        "sslConfig": {"sslVersions": "tls1.2"},
+        "kvstore": {"disabled": "true"},
+    }, SOK_LOCAL)]
+
+
+@pytest.mark.parametrize("earlier_form,later_form", [
+    ("map", "map"), ("list", "list"), ("map", "list"), ("list", "map"),
+])
+def test_defaults_merge_preserves_the_same_filename_in_different_directories(earlier_form, later_form):
+    first = entry("server", {"general": {"site": "site1"}}, SYSTEM_LOCAL)
+    second = entry("server", {"general": {"site": "site2"}}, SOK_LOCAL)
+    earlier = {"splunk": {"conf": conf_form([first], earlier_form)}}
+    later = {"splunk": {"conf": conf_form([second], later_form)}}
+
+    merged = environ.merge_dict(earlier, later)
+    conf = merged["splunk"]["conf"]
+
+    assert writer_loop_items(merged["splunk"], combine(conf, SYSTEM_LOCAL)) == [first, second]
+
+
+@pytest.mark.parametrize("earlier_form,later_form", [
+    ("map", "map"), ("list", "list"), ("map", "list"), ("list", "map"),
+])
+@pytest.mark.parametrize("explicit_first", [False, True])
+def test_defaults_merge_resolves_omitted_directory_using_final_home(earlier_form, later_form, explicit_first):
+    default_directory = "/srv/splunk/etc/system/local"
+    explicit_directory = "/srv/splunk/etc/./system//local/"
+    first = entry("server", {"general": {"site": "site1", "serverName": "idx"}},
+                  explicit_directory if explicit_first else None)
+    second = entry("server", {"general": {"site": "site2"}},
+                   None if explicit_first else explicit_directory)
+    merged = environ.merge_dict(
+        {"splunk": {"home": "/opt/splunk", "conf": conf_form([first], earlier_form)}},
+        {"splunk": {"conf": conf_form([second], later_form)}},
+    )
+    # The home override arrives after the conf sources have already been merged.
+    environ.merge_dict(merged, {"splunk": {"home": "/srv/splunk"}})
+    conf = merged["splunk"]["conf"]
+
+    assert writer_loop_items(merged["splunk"], combine(conf, default_directory)) == [entry("server", {
+        "general": {"site": "site2", "serverName": "idx"},
+    }, explicit_directory)]
+
+
+def test_map_only_defaults_keep_mapping_for_equivalent_explicit_directories():
+    merged = environ.merge_dict(
+        {"splunk": {"conf": {"server": {
+            "directory": SYSTEM_LOCAL, "content": {"general": {"serverName": "idx"}},
+        }}}},
+        {"splunk": {"conf": {"server": {
+            "directory": SYSTEM_LOCAL + "/./", "content": {"general": {"site": "site1"}},
+        }}}},
+    )
+
+    assert merged["splunk"]["conf"] == {"server": {
+        "directory": SYSTEM_LOCAL + "/./",
+        "content": {"general": {"serverName": "idx", "site": "site1"}},
+    }}
+
+
+@pytest.mark.parametrize("directory", [SYSTEM_LOCAL, "."])
+def test_map_only_defaults_keep_omitted_and_different_explicit_directories_separate(directory):
+    first = entry("server", {"general": {"site": "site1"}}, directory)
+    second = entry("server", {"general": {"site": "site2"}})
+    merged = environ.merge_dict(
+        {"splunk": {"conf": conf_form([first], "map")}},
+        {"splunk": {"conf": conf_form([second], "map")}},
+    )
+    default_directory = "/srv/splunk/etc/system/local"
+
+    assert writer_loop_items(merged["splunk"], combine(merged["splunk"]["conf"], default_directory)) == [
+        first, second,
+    ]
+
+
+@pytest.mark.parametrize("earlier_form,later_form", [("list", "map"), ("map", "list")])
+def test_pcrs_web_survives_sok_defaults_loaded_from_files(tmp_path, earlier_form, later_form):
+    web = entry("web", {"settings": {"enableSplunkWebSSL": True, "httpport": 8443}},
+                "/opt/splunk/etc/apps/100-whisper/local")
+    server = entry("server", {"general": {"serverName": "idx"}}, SOK_LOCAL)
+    defaults = {"splunk": {"home": "/opt/splunk"}}
+    sources = [
+        {"splunk": {"conf": conf_form([web], earlier_form)}},
+        {"splunk": {"password": "secret"}},
+        {"splunk": {"conf": conf_form([server], later_form)}},
+        {"splunk": {"conf": {"server": {"directory": SOK_LOCAL,
+                                           "content": {"general": {"pass4SymmKey": "key"}}}}}},
+    ]
+    for index, source in enumerate(sources):
+        source_file = tmp_path / ("defaults-%d.yml" % index)
+        source_file.write_text(yaml.safe_dump(source))
+        defaults = environ.mergeDefaultsFromFile(defaults, str(source_file))
+
+    conf = defaults["splunk"]["conf"]
+    assert writer_loop_items(defaults["splunk"], combine(conf, SYSTEM_LOCAL)) == [
+        web,
+        entry("server", {"general": {"serverName": "idx", "pass4SymmKey": "key"}}, SOK_LOCAL),
+    ]
+
+
+@pytest.mark.parametrize("filename,fact_name", [
+    ("splunk_common/tasks/configure_indexer_cluster_prestart.yml", "idxc_prestart_server_conf_content"),
+    ("splunk_indexer/tasks/indexer_clustering.yml", "idxc_server_conf_content"),
+    ("splunk_indexer/tasks/setup_multisite.yml", "multisite_server_conf_content"),
+])
+@pytest.mark.parametrize("earlier_form,later_form", [
+    ("map", "map"), ("list", "list"), ("map", "list"), ("list", "map"),
+])
+@pytest.mark.parametrize("earlier_directory", [None, SOK_LOCAL])
+def test_indexer_checks_read_later_merged_server_stanzas(
+        filename, fact_name, earlier_form, later_form, earlier_directory):
+    variables = environ.merge_dict(
+        {"splunk": {"home": "/opt/splunk", "conf": conf_form([
+            entry("server", {"general": {"serverName": "idx"}}, earlier_directory),
+        ], earlier_form)}},
+        {"splunk": {"conf": conf_form([
+            entry("server", {"replication_port-ssl://9887": {"disabled": "false"}}),
+        ], later_form)}},
+    )
+    with open(os.path.join(REPO_DIR, "roles", filename)) as stream:
+        tasks = yaml.safe_load(stream)
+    all_tasks = tasks + [child for task in tasks for child in task.get("block", [])]
+    list_form = isinstance(variables["splunk"]["conf"], list)
+    task = next(task for task in all_tasks if fact_name in task.get("set_fact", {})
+                and ("list format" in task.get("name", "")) == list_form)
+    env = jinja2.Environment(undefined=jinja2.StrictUndefined)
+    env.filters.update(splunk_conf.FilterModule().filters())
+
+    actual = ast.literal_eval(env.from_string(task["set_fact"][fact_name]).render(**variables))
+
+    assert actual == {
+        "general": {"serverName": "idx"},
+        "replication_port-ssl://9887": {"disabled": "false"},
+    }
+
+
+@pytest.mark.parametrize("filename,fact_name", [
+    ("indexer_clustering.yml", "idxc_server_conf_content"),
+    ("setup_multisite.yml", "multisite_server_conf_content"),
+])
+@pytest.mark.parametrize("form", ["map", "list"])
+def test_indexer_restores_only_system_local_ssl_stanzas(filename, fact_name, form):
+    from ansible.plugins.filter.core import FilterModule as CoreFilters
+    from ansible.plugins.test.core import TestModule as CoreTests
+
+    conf = conf_form([
+        entry("server", {
+            "general": {"serverName": "app"},
+            "replication_port-ssl://9999": {"disabled": "false"},
+        }, SOK_LOCAL),
+    ], form)
+    variables = environ.merge_dict(
+        {"splunk": {"home": "/opt/splunk", "conf": conf}},
+        {"splunk": {"conf": {"server": {"content": {
+            "general": {"site": "site1"},
+            "replication_port-ssl://9887": {"disabled": "false"},
+        }}}}},
+    )
+    # Detection content contains all targets, but restoration must keep their locations.
+    variables[fact_name] = {"general": {"serverName": "app", "site": "site1"},
+                            "replication_port-ssl://9999": {"disabled": "false"},
+                            "replication_port-ssl://9887": {"disabled": "false"}}
+    variables["has_ssl_replication_port_in_conf"] = True
+    variables["has_ssl_replication_port_in_conf_multisite"] = True
+    with open(os.path.join(REPO_DIR, "roles", "splunk_indexer", "tasks", filename)) as stream:
+        task = next(task for task in yaml.safe_load(stream)
+                    if task.get("name", "").startswith("Re-apply SSL replication port configuration"))
+    env = jinja2.Environment(undefined=jinja2.StrictUndefined)
+    env.filters.update(CoreFilters().filters())
+    env.filters.update(splunk_conf.FilterModule().filters())
+    env.tests.update(CoreTests().tests())
+    candidates = ast.literal_eval(env.from_string(task["with_dict"]).render(**variables))
+    restored = {}
+    for name, settings in candidates.items():
+        context = dict(variables, stanza={"key": name, "value": settings})
+        if all(env.compile_expression(condition)(**context) for condition in task["when"]):
+            restored[name] = settings
+
+    assert restored == {"replication_port-ssl://9887": {"disabled": "false"}}
+
+
+@pytest.mark.parametrize("filename", ["indexer_clustering.yml", "setup_multisite.yml"])
+@pytest.mark.parametrize("conf", [{}, {"conf": None}, {"conf": []}])
+def test_indexer_restoration_loop_tolerates_missing_or_empty_conf(filename, conf):
+    with open(os.path.join(REPO_DIR, "roles", "splunk_indexer", "tasks", filename)) as stream:
+        task = next(task for task in yaml.safe_load(stream)
+                    if task.get("name", "").startswith("Re-apply SSL replication port configuration"))
+    env = jinja2.Environment(undefined=jinja2.StrictUndefined)
+    env.filters.update(splunk_conf.FilterModule().filters())
+    variables = {"splunk": dict(conf, home="/opt/splunk")}
+
+    assert ast.literal_eval(env.from_string(task["with_dict"]).render(**variables)) == {}
+
+
 def test_entries_for_the_same_file_are_merged_into_one():
     entries = [
         entry("outputs", {"cloud_processing_queue": {"remote_queue.type": "sqs_smartbus"}}, SOK_LOCAL),

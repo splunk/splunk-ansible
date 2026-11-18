@@ -15,6 +15,7 @@ SPLUNK_CONFIG_PATH = os.path.abspath(
 SPLUNK_CONFIG = runpy.run_path(SPLUNK_CONFIG_PATH)
 normalize_conf_entries = SPLUNK_CONFIG["normalize_conf_entries"]
 normalize_path = SPLUNK_CONFIG["normalize_path"]
+conf_stanzas = SPLUNK_CONFIG["conf_stanzas"]
 
 
 class FilterModule(object):
@@ -22,4 +23,5 @@ class FilterModule(object):
         return {
             "normalize_splunk_conf_entries": normalize_conf_entries,
             "normalize_splunk_conf_path": normalize_path,
+            "splunk_conf_stanzas": conf_stanzas,
         }

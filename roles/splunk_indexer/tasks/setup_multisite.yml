@@ -27,9 +27,8 @@
 - name: Extract server.conf content from splunk.conf (list format, multisite)
   set_fact:
     multisite_server_conf_content: >-
-      {{ ((splunk_conf_effective | default(splunk.conf))
-          | selectattr('key', 'equalto', 'server') | first | default({}))
-          .get('value', {}).get('content', {}) }}
+      {{ (splunk_conf_effective | default(splunk.conf))
+          | splunk_conf_stanzas(splunk.home + '/etc/system/local', 'server') }}
   when:
     - "'conf' in splunk and splunk.conf"
     - splunk.conf is not mapping
@@ -71,8 +70,8 @@
     - use_ssl_replication | bool
     - not (idxc_cluster_preseeded | default(false) | bool)
 
-# set_config_stanza.yml expects stanza_name and stanza_settings per iteration;
-# the with_dict loop splits multisite_server_conf_content into individual stanzas.
+# The CLI changes system/local. Restore only its SSL stanzas; app configuration
+# stays in its original directory and must not be copied into system/local.
 - name: Re-apply SSL replication port configuration (multisite)
   include_tasks: ../../../roles/splunk_common/tasks/set_config_stanza.yml
   vars:
@@ -80,12 +79,16 @@
     conf_directory: "{{ splunk.home }}/etc/system/local"
     stanza_name: "{{ stanza.key }}"
     stanza_settings: "{{ stanza.value | default({}) }}"
-  with_dict: "{{ multisite_server_conf_content | default({}) }}"
+  with_dict: >-
+    {{ (splunk_conf_effective | default(splunk.conf | default([])))
+        | splunk_conf_stanzas(splunk.home + '/etc/system/local', 'server',
+                              splunk.home + '/etc/system/local') }}
   loop_control:
     loop_var: stanza
   when:
     - has_ssl_replication_port_in_conf_multisite | default(false) | bool
     - multisite_server_conf_content | default({}) | length > 0
+    - stanza.key is match('^replication_port-ssl://')
   no_log: "{{ hide_password }}"
 
 #INFRA-38882: Update
