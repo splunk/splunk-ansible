@@ -67,15 +67,13 @@
         - "'server' in splunk.conf"
         - "'content' in splunk.conf.server"
 
-    # List-form splunk.conf only occurs in Noah/operator deployments where
-    # splunk_noah/pre_auth.yml has already run normalize_conf.yml, so
-    # splunk_conf_effective is available here.
+    # Mixed defaults can produce server.conf entries in multiple directories.
+    # Inspect all of them for SSL listeners, including when Noah is disabled.
     - name: Extract server.conf content for pre-start SSL check (list format)
       set_fact:
         idxc_prestart_server_conf_content: >-
-          {{ ((splunk_conf_effective | default(splunk.conf))
-              | selectattr('key', 'equalto', 'server') | first | default({}))
-              .get('value', {}).get('content', {}) }}
+          {{ (splunk_conf_effective | default(splunk.conf))
+              | splunk_conf_stanzas(splunk.home + '/etc/system/local', 'server') }}
       when:
         - "'conf' in splunk and splunk.conf"
         - splunk.conf is not mapping

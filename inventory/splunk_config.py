@@ -10,19 +10,53 @@ import os
 # deep merging an entry would concatenate list values such as a user's roles.
 REPLACED_ENTRY_PATHS = frozenset([("splunk", "users")])
 
+
+def _conf_requires_list(earlier, later):
+    """Use entries when a filename alone cannot safely identify the target."""
+    if isinstance(earlier, list) or isinstance(later, list):
+        return True
+
+    for filename in earlier:
+        if (filename not in later or not isinstance(earlier[filename], dict)
+                or not isinstance(later[filename], dict)):
+            continue
+        # An omitted directory is resolved using the final splunk.home downstream.
+        # Keep it separate from an explicit path until that default is known.
+        earlier_directory = earlier[filename].get("directory")
+        later_directory = later[filename].get("directory")
+        earlier_directory = normalize_path(earlier_directory) if earlier_directory else None
+        later_directory = normalize_path(later_directory) if later_directory else None
+        if earlier_directory != later_directory:
+            return True
+    return False
+
+
+def _conf_as_list(conf):
+    if isinstance(conf, dict):
+        return [{"key": key, "value": value} for key, value in conf.items()]
+    return conf
+
+
 def merge_dict(dict1, dict2, path=None):
     """
     Merge two dictionaries such that keys in dict2 overwrite those in dict1.
 
     Preserve mappings when a later YAML section is empty, and merge dictionary
-    items from a later list into an existing mapping.
+    items from a later list into an existing mapping. For splunk.conf, preserve
+    mixed formats or different file targets as ordered entries; downstream
+    normalize_conf_entries combines matching targets using the final home.
     """
     if path is None:
         path = []
     replace_entries = tuple(path) in REPLACED_ENTRY_PATHS
     for key in dict2:
         if key in dict1 and not replace_entries:
-            if isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
+            if (path + [str(key)] == ["splunk", "conf"]
+                    and isinstance(dict1[key], (dict, list))
+                    and isinstance(dict2[key], (dict, list))
+                    and _conf_requires_list(dict1[key], dict2[key])):
+                dict1[key] = _conf_as_list(dict1[key]) + _conf_as_list(dict2[key])
+            elif isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
                 merge_dict(dict1[key], dict2[key], path + [str(key)])
             elif tuple(path + [str(key)]) in REPLACED_ENTRY_PATHS and isinstance(dict2[key], list):
                 # Keep the list so validation rejects it rather than folding it in
@@ -82,3 +116,25 @@ def normalize_conf_entries(entries, default_directory, file_keys=None):
         normalized.append(entry)
 
     return normalized
+
+
+def conf_stanzas(entries, default_directory, file_key, directory=None):
+    """Collect stanzas for inspection, optionally restricted to one directory.
+
+    Without a directory this only supports inspecting stanza presence across
+    targets; writing the result would discard their directory identities.
+    """
+    content = {}
+    for entry in normalize_conf_entries(_conf_as_list(entries), default_directory, [file_key]) or []:
+        if not isinstance(entry, dict) or entry.get("key") != file_key:
+            continue
+        value = entry.get("value")
+        if not isinstance(value, dict):
+            continue
+        effective_directory = value.get("directory") or default_directory
+        if directory is not None and normalize_path(effective_directory) != normalize_path(directory):
+            continue
+        stanzas = value.get("content")
+        if isinstance(stanzas, dict):
+            merge_dict(content, stanzas, path=["content"])
+    return content

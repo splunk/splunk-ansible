@@ -731,6 +731,20 @@ splunk:
 
 Any recent versions of `splunk-ansible` should still support this map type, however it is strongly recommended you move to the array type for future support.
 
+Defaults sources can use either format, in either order. Mixed formats are
+retained as an ordered list. Entries with the same filename in different
+directories remain separate. Entries for the same normalized directory and
+filename are combined before writing: unrelated stanzas and settings are kept,
+and later values win for conflicting settings. An omitted directory uses the
+final `splunk.home` plus `/etc/system/local`.
+
+Map-only sources keep the map representation unless the same filename has
+different directory specifications. In that case they become a list too, so
+each target is preserved and omitted directories can be resolved using the
+final home. List entries are combined by `normalize_conf_entries` at the
+configuration-writing boundary and before server configuration is inspected
+for Noah or indexer clustering.
+
 ---
 
 ## Example
