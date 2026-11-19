@@ -63,3 +63,10 @@
   delay: "{{ retry_delay }}"
   become: yes
   become_user: "{{ privileged_user }}"
+
+- name: Apply SELinux file context to Splunk install dir
+  ansible.builtin.command: "restorecon -irv {{ splunk.home }}"
+  when: ansible_facts.selinux.status | default('disabled') == 'enabled'
+  changed_when: false
+  become: yes
+  become_user: "{{ privileged_user }}"
